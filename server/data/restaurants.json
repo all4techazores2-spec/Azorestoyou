@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "R1",
     "name": "A Tasca",
@@ -6,8 +6,8 @@
     "cuisine": "Regional",
     "rating": 4.8,
     "reviews": 2450,
-    "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777121937458-908639801.jpg",
-    "description": "Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.",
+    "image": "/imagens/restaurantes/R1/image-1777121937458-908639801.jpg",
+    "description": "Cozinha tradicional aÃ§oriana num ambiente rÃºstico e animado. Famoso pelo bife de atum.",
     "adminEmail": "atasca@azores4you.com",
     "adminPassword": "admin",
     "phone": "+351 296 282 800",
@@ -17,9 +17,9 @@
     "latitude": "37.7408",
     "longitude": "-25.6686",
     "gallery": [
-      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142873349-80125572.jpg",
-      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142877549-486468951.jpg",
-      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142881907-288558141.jpg"
+      "/imagens/restaurantes/R1/image-1777142873349-80125572.jpg",
+      "/imagens/restaurantes/R1/image-1777142877549-486468951.jpg",
+      "/imagens/restaurantes/R1/image-1777142881907-288558141.jpg"
     ],
     "reservations": [
       {
@@ -123,7 +123,7 @@
         "tableId": "T2"
       },
       {
-        "customerName": "André braga",
+        "customerName": "AndrÃ© braga",
         "customerEmail": "traveler@azores4you.com",
         "customerPhone": "+351 912 345 678",
         "date": "2026-04-30",
@@ -153,7 +153,7 @@
         "tableId": "T2"
       },
       {
-        "customerName": "André ",
+        "customerName": "AndrÃ© ",
         "customerEmail": "traveler@azores4you.com",
         "customerPhone": "+351 912 345 678",
         "date": "2026-04-25",
@@ -195,16 +195,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -245,12 +245,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "id": "RES_1777134698761",
@@ -271,16 +271,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -305,7 +305,7 @@
         "preorder": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -315,12 +315,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "id": "RES_1777136938955",
@@ -341,16 +341,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -391,12 +391,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "id": "RES_1777137390746",
@@ -417,12 +417,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio"
+            "meatPoint": "MÃ©dio"
           }
         ],
         "id": "RES_1777139529799",
@@ -442,7 +442,7 @@
         "preorder": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -468,12 +468,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio"
+            "meatPoint": "MÃ©dio"
           }
         ],
         "id": "RES_1777143002082",
@@ -508,7 +508,7 @@
         "preorder": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -552,7 +552,7 @@
         "preorder": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -579,7 +579,7 @@
         "preorder": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -607,12 +607,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "prepRequested": true,
@@ -635,19 +635,19 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
             },
             "quantity": 1
           }
@@ -672,12 +672,12 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "prepRequested": true,
@@ -700,12 +700,12 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "prepRequested": true,
@@ -720,21 +720,21 @@
     "dishes": [
       {
         "name": "Bife da Casa",
-        "description": "Bife de atum fresco com sementes de sésamo.",
+        "description": "Bife de atum fresco com sementes de sÃ©samo.",
         "price": 18,
-        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+        "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
       },
       {
-        "name": "Polvo à Lagareiro",
+        "name": "Polvo Ã  Lagareiro",
         "description": "Polvo assado com batatas a murro.",
         "price": 22,
-        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+        "image": "/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
       },
       {
         "name": "Queijos",
-        "description": "Ananás local caramelizado.",
+        "description": "AnanÃ¡s local caramelizado.",
         "price": 6,
-        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146991736-716106949.jpg"
+        "image": "/imagens/restaurantes/R1/image-1777146991736-716106949.jpg"
       }
     ],
     "orders": [
@@ -743,16 +743,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -771,12 +771,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -790,16 +790,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -817,7 +817,7 @@
         "items": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -827,12 +827,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -846,16 +846,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -874,12 +874,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -893,12 +893,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio"
+            "meatPoint": "MÃ©dio"
           }
         ],
         "type": "pre-order",
@@ -911,7 +911,7 @@
         "items": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -930,12 +930,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio"
+            "meatPoint": "MÃ©dio"
           }
         ],
         "type": "pre-order",
@@ -948,7 +948,7 @@
         "items": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -966,7 +966,7 @@
         "items": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -984,7 +984,7 @@
         "items": [
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -1003,12 +1003,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -1022,19 +1022,19 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
             },
             "quantity": 1
           }
@@ -1050,12 +1050,12 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -1069,12 +1069,12 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "type": "pre-order",
@@ -1096,9 +1096,9 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
               "category": "Pratos"
             },
             "quantity": 1
@@ -1150,7 +1150,7 @@
     "products": [
       {
         "id": "P1777126265189",
-        "name": "Café",
+        "name": "CafÃ©",
         "description": "",
         "price": 0.6,
         "category": "Cafetaria",
@@ -1175,7 +1175,7 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
@@ -1191,16 +1191,16 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           },
           {
             "dish": {
-              "name": "Polvo à Lagareiro",
+              "name": "Polvo Ã  Lagareiro",
               "description": "Polvo assado com batatas a murro.",
               "price": 22,
               "image": "https://picsum.photos/300/200?random=22"
@@ -1219,12 +1219,12 @@
           {
             "dish": {
               "name": "Bife de Atum",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
               "image": "https://picsum.photos/300/200?random=21"
             },
             "quantity": 1,
-            "meatPoint": "Médio mal"
+            "meatPoint": "MÃ©dio mal"
           }
         ],
         "status": "delivered",
@@ -1238,7 +1238,7 @@
           {
             "dish": {
               "id": "P1777126265189",
-              "name": "Café",
+              "name": "CafÃ©",
               "description": "",
               "price": 0.6,
               "category": "Cafetaria",
@@ -1269,9 +1269,9 @@
           {
             "dish": {
               "name": "Bife da Casa",
-              "description": "Bife de atum fresco com sementes de sésamo.",
+              "description": "Bife de atum fresco com sementes de sÃ©samo.",
               "price": 18,
-              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
+              "image": "/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
               "category": "Pratos"
             },
             "quantity": 1
@@ -1307,15 +1307,15 @@
     "cuisine": "Marisco",
     "rating": 4.6,
     "reviews": 890,
-    "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147153001-833066704.jpg",
+    "image": "/imagens/restaurantes/R2/image-1777147153001-833066704.jpg",
     "description": "O melhor peixe fresco na Terceira, localizado junto ao porto.",
     "adminEmail": "opescador@azores4you.com",
     "adminPassword": "admin",
     "gallery": [
-      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147162462-367224803.jpg",
-      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147166392-102416464.jpg",
-      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147172960-67706744.jpg",
-      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147181096-624197075.jpg"
+      "/imagens/restaurantes/R2/image-1777147162462-367224803.jpg",
+      "/imagens/restaurantes/R2/image-1777147166392-102416464.jpg",
+      "/imagens/restaurantes/R2/image-1777147172960-67706744.jpg",
+      "/imagens/restaurantes/R2/image-1777147181096-624197075.jpg"
     ],
     "reservations": [],
     "updates": [],
@@ -1324,13 +1324,13 @@
         "name": "Lapas Grelhadas",
         "description": "Lapas grelhadas com manteiga de alho.",
         "price": 12,
-        "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147341474-183086231.jpg"
+        "image": "/imagens/restaurantes/R2/image-1777147341474-183086231.jpg"
       },
       {
         "name": "Alcatra",
         "description": "Prato de carne cozinhado lentamente em alguidar de barro.",
         "price": 19,
-        "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147352029-353139987.jpg"
+        "image": "/imagens/restaurantes/R2/image-1777147352029-353139987.jpg"
       }
     ],
     "orders": [],
@@ -1346,7 +1346,7 @@
         "number": 2,
         "seats": 4,
         "status": "available",
-        "customerName": "João Santos",
+        "customerName": "JoÃ£o Santos",
         "reservationTime": "13:00",
         "currentOrderId": "K1"
       },
@@ -1380,13 +1380,13 @@
   },
   {
     "id": "R3",
-    "name": "Peter Café Sport",
+    "name": "Peter CafÃ© Sport",
     "island": "HOR",
     "cuisine": "Bar/Pub",
     "rating": 4.9,
     "reviews": 5000,
     "image": "https://picsum.photos/400/300?random=27",
-    "description": "Bar de marinheiros mundialmente famoso. Conhecido pelo Gin Tónico e bolo de chocolate.",
+    "description": "Bar de marinheiros mundialmente famoso. Conhecido pelo Gin TÃ³nico e bolo de chocolate.",
     "adminEmail": "peter@azores4you.com",
     "adminPassword": "peter",
     "gallery": [],
@@ -1395,7 +1395,7 @@
     "dishes": [
       {
         "name": "Gin do Mar",
-        "description": "Gin Tónico de assinatura.",
+        "description": "Gin TÃ³nico de assinatura.",
         "price": 8,
         "image": "https://picsum.photos/300/200?random=28"
       },
@@ -1416,7 +1416,7 @@
     "rating": 4.5,
     "reviews": 320,
     "image": "https://picsum.photos/400/300?random=60",
-    "description": "Especialistas em Amêijoas da Caldeira e Queijo de São Jorge.",
+    "description": "Especialistas em AmÃªijoas da Caldeira e Queijo de SÃ£o Jorge.",
     "adminEmail": "velas@azores4you.com",
     "adminPassword": "velas",
     "gallery": [],
@@ -1424,14 +1424,14 @@
     "updates": [],
     "dishes": [
       {
-        "name": "Amêijoas",
-        "description": "Amêijoas frescas da Caldeira de Santo Cristo.",
+        "name": "AmÃªijoas",
+        "description": "AmÃªijoas frescas da Caldeira de Santo Cristo.",
         "price": 25,
         "image": "https://picsum.photos/300/200?random=61"
       },
       {
-        "name": "Tábua de Queijos",
-        "description": "Seleção de queijos de São Jorge curados.",
+        "name": "TÃ¡bua de Queijos",
+        "description": "SeleÃ§Ã£o de queijos de SÃ£o Jorge curados.",
         "price": 15,
         "image": "https://picsum.photos/300/200?random=62"
       }

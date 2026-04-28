@@ -1,4 +1,4 @@
-{
+﻿{
   "restaurants": [
     {
       "id": "R1",
@@ -7,8 +7,8 @@
       "cuisine": "Regional",
       "rating": 3.9,
       "reviews": 18,
-      "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229185430-304755087.jpg",
-      "description": "Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.",
+      "image": "/imagens/restaurantes/R1/image-1777229185430-304755087.jpg",
+      "description": "Cozinha tradicional aÃ§oriana num ambiente rÃºstico e animado. Famoso pelo bife de atum.",
       "adminEmail": "atasca@azorestoyou.com",
       "adminPassword": "admin",
       "phone": "+351 296 282 800",
@@ -71,7 +71,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -89,7 +89,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -107,7 +107,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             },
@@ -116,7 +116,7 @@
                 "name": "Queijos diversos",
                 "description": "Queijos diversos",
                 "price": 6,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
               },
               "quantity": 1
             }
@@ -132,12 +132,12 @@
             {
               "dish": {
                 "name": "Bife de Casa",
-                "description": "Bife da Casa fresco com sementes de sésamo.",
+                "description": "Bife da Casa fresco com sementes de sÃ©samo.",
                 "price": 18,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
               },
               "quantity": 1,
-              "meatPoint": "Médio mal"
+              "meatPoint": "MÃ©dio mal"
             }
           ],
           "type": "pre-order",
@@ -163,7 +163,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -221,7 +221,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -249,7 +249,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -281,7 +281,7 @@
           "tableId": "T1"
         },
         {
-          "customerName": "André ",
+          "customerName": "AndrÃ© ",
           "customerEmail": "andre@gmail.com",
           "customerPhone": "",
           "date": "2026-04-29",
@@ -295,7 +295,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             },
@@ -304,7 +304,7 @@
                 "name": "Queijos diversos",
                 "description": "Queijos diversos",
                 "price": 6,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
               },
               "quantity": 1
             }
@@ -330,12 +330,12 @@
             {
               "dish": {
                 "name": "Bife de Casa",
-                "description": "Bife da Casa fresco com sementes de sésamo.",
+                "description": "Bife da Casa fresco com sementes de sÃ©samo.",
                 "price": 18,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
               },
               "quantity": 1,
-              "meatPoint": "Médio mal"
+              "meatPoint": "MÃ©dio mal"
             }
           ],
           "prepRequested": true,
@@ -392,7 +392,7 @@
       "staff": [
         {
           "id": "S1",
-          "name": "João",
+          "name": "JoÃ£o",
           "email": "joao@atasca.pt",
           "password": "123",
           "role": "waiter",
@@ -418,34 +418,34 @@
           "id": "UPD_1",
           "type": "news",
           "title": "Novo Prato!",
-          "description": "Venha provar a nossa mais recente novidade: Bife de Atum com sésamo."
+          "description": "Venha provar a nossa mais recente novidade: Bife de Atum com sÃ©samo."
         }
       ],
       "dishes": [
         {
           "name": "Bife de Casa",
-          "description": "Bife da Casa fresco com sementes de sésamo.",
+          "description": "Bife da Casa fresco com sementes de sÃ©samo.",
           "price": 18,
-          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
+          "image": "/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
         },
         {
           "name": "Lapas",
           "description": "Lapas Grelhadas",
           "price": 22,
-          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+          "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
         },
         {
           "name": "Queijos diversos",
           "description": "Queijos diversos",
           "price": 6,
-          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+          "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
         }
       ],
       "gallery": [
-        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229190225-649461264.jpg",
-        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229193191-512209108.jpg",
-        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229196192-733127430.jpg",
-        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229198872-346852467.jpg"
+        "/imagens/restaurantes/R1/image-1777229190225-649461264.jpg",
+        "/imagens/restaurantes/R1/image-1777229193191-512209108.jpg",
+        "/imagens/restaurantes/R1/image-1777229196192-733127430.jpg",
+        "/imagens/restaurantes/R1/image-1777229198872-346852467.jpg"
       ],
       "products": [
         {
@@ -592,7 +592,7 @@
       "fiadoClients": [
         {
           "id": "F1",
-          "name": "João Amaral",
+          "name": "JoÃ£o Amaral",
           "phone": "+351 912 001 001",
           "balance": -0.5,
           "lastVisit": "2026-04-20"
@@ -606,7 +606,7 @@
         },
         {
           "id": "F3",
-          "name": "Pedro Ávila",
+          "name": "Pedro Ãvila",
           "phone": "+351 914 003 003",
           "balance": -12,
           "lastVisit": "2026-04-18"
@@ -664,7 +664,7 @@
       "cuisine": "Marisco",
       "rating": 4.6,
       "reviews": 890,
-      "image": "http://localhost:3001/imagens/restaurantes/R2/image-1777147352029-353139987.jpg",
+      "image": "/imagens/restaurantes/R2/image-1777147352029-353139987.jpg",
       "description": "O melhor peixe fresco na Terceira, localizado junto ao porto.",
       "adminEmail": "pescador@azores4you.com",
       "adminPassword": "admin",
@@ -818,7 +818,7 @@
     },
     {
       "id": "SP401",
-      "airline": "SATA Air Açores",
+      "airline": "SATA Air AÃ§ores",
       "flightNumber": "SP401",
       "origin": "PDL",
       "destination": "HOR",
@@ -831,7 +831,7 @@
     },
     {
       "id": "SP405",
-      "airline": "SATA Air Açores",
+      "airline": "SATA Air AÃ§ores",
       "flightNumber": "SP405",
       "origin": "PDL",
       "destination": "PIX",
@@ -844,7 +844,7 @@
     },
     {
       "id": "SP510",
-      "airline": "SATA Air Açores",
+      "airline": "SATA Air AÃ§ores",
       "flightNumber": "SP510",
       "origin": "TER",
       "destination": "PDL",
@@ -857,7 +857,7 @@
     },
     {
       "id": "SP620",
-      "airline": "SATA Air Açores",
+      "airline": "SATA Air AÃ§ores",
       "flightNumber": "SP620",
       "origin": "FLW",
       "destination": "PDL",
@@ -917,7 +917,7 @@
       "stars": 4,
       "pricePerNight": 120,
       "image": "https://picsum.photos/400/300?random=1",
-      "description": "Hotel de luxo com jardim japonês e spa."
+      "description": "Hotel de luxo com jardim japonÃªs e spa."
     },
     {
       "id": "H2",
@@ -935,7 +935,7 @@
       "stars": 4,
       "pricePerNight": 110,
       "image": "https://picsum.photos/400/300?random=3",
-      "description": "Quartos com vista mar e piscina de água salgada."
+      "description": "Quartos com vista mar e piscina de Ã¡gua salgada."
     },
     {
       "id": "H4",
@@ -948,12 +948,12 @@
     },
     {
       "id": "H5",
-      "name": "Hotel São Jorge Garden",
+      "name": "Hotel SÃ£o Jorge Garden",
       "island": "SJZ",
       "stars": 3,
       "pricePerNight": 90,
       "image": "https://picsum.photos/400/300?random=50",
-      "description": "Situado sobre as falésias com vista para o Pico."
+      "description": "Situado sobre as falÃ©sias com vista para o Pico."
     },
     {
       "id": "H6",
@@ -979,7 +979,7 @@
       "id": "C1",
       "model": "Renault Clio",
       "companyId": "comp1",
-      "type": "Económico",
+      "type": "EconÃ³mico",
       "fuelType": "Gasolina",
       "pricePerDay": 45,
       "seats": 5,
@@ -989,7 +989,7 @@
       "features": [
         "feature_AC",
         "feature_Bluetooth",
-        "feature_Económico",
+        "feature_EconÃ³mico",
         "feature_Manual"
       ]
     },
@@ -998,7 +998,7 @@
       "model": "Nissan Qashqai",
       "companyId": "comp2",
       "type": "SUV",
-      "fuelType": "Gasóleo",
+      "fuelType": "GasÃ³leo",
       "pricePerDay": 75,
       "seats": 5,
       "image": "https://picsum.photos/300/200?random=11",
@@ -1007,15 +1007,15 @@
       "features": [
         "feature_GPS",
         "feature_Camera",
-        "feature_Espaço",
-        "feature_Automático"
+        "feature_EspaÃ§o",
+        "feature_AutomÃ¡tico"
       ]
     },
     {
       "id": "C3",
       "model": "Fiat 500c",
       "companyId": "comp3",
-      "type": "Descapotável",
+      "type": "DescapotÃ¡vel",
       "fuelType": "Gasolina",
       "pricePerDay": 90,
       "seats": 4,
@@ -1033,7 +1033,7 @@
       "id": "C4",
       "model": "Volkswagen Polo",
       "companyId": "comp1",
-      "type": "Económico",
+      "type": "EconÃ³mico",
       "fuelType": "Gasolina",
       "pricePerDay": 48,
       "seats": 5,
@@ -1052,24 +1052,24 @@
       "model": "Toyota RAV4",
       "companyId": "comp2",
       "type": "SUV",
-      "fuelType": "Híbrido",
+      "fuelType": "HÃ­brido",
       "pricePerDay": 85,
       "seats": 5,
       "image": "https://picsum.photos/300/200?random=14",
       "isAvailable": false,
       "description": "car_desc_C5",
       "features": [
-        "feature_Híbrido",
+        "feature_HÃ­brido",
         "feature_4x4",
         "feature_Cruise",
-        "feature_Automático"
+        "feature_AutomÃ¡tico"
       ]
     },
     {
       "id": "C6",
       "model": "Mini Cooper Cab",
       "companyId": "comp3",
-      "type": "Descapotável",
+      "type": "DescapotÃ¡vel",
       "fuelType": "Gasolina",
       "pricePerDay": 110,
       "seats": 4,
@@ -1080,7 +1080,7 @@
         "feature_Sport",
         "feature_Sound",
         "feature_Pele",
-        "feature_Automático"
+        "feature_AutomÃ¡tico"
       ]
     },
     {
@@ -1088,7 +1088,7 @@
       "model": "Mercedes Vito",
       "companyId": "comp1",
       "type": "Carrinha",
-      "fuelType": "Gasóleo",
+      "fuelType": "GasÃ³leo",
       "pricePerDay": 120,
       "seats": 9,
       "image": "https://picsum.photos/300/200?random=16",
@@ -1106,14 +1106,14 @@
       "model": "Dacia Duster",
       "companyId": "comp2",
       "type": "SUV",
-      "fuelType": "Gasóleo",
+      "fuelType": "GasÃ³leo",
       "pricePerDay": 60,
       "seats": 5,
       "image": "https://picsum.photos/300/200?random=17",
       "isAvailable": true,
       "description": "car_desc_C8",
       "features": [
-        "feature_Económico",
+        "feature_EconÃ³mico",
         "feature_Robusto",
         "feature_Bluetooth",
         "feature_Manual"
@@ -1123,7 +1123,7 @@
       "id": "C9",
       "model": "Opel Corsa",
       "companyId": "comp3",
-      "type": "Económico",
+      "type": "EconÃ³mico",
       "fuelType": "Gasolina",
       "pricePerDay": 42,
       "seats": 5,
@@ -1133,7 +1133,7 @@
       "features": [
         "feature_AC",
         "feature_USB",
-        "feature_Confortável",
+        "feature_ConfortÃ¡vel",
         "feature_Manual"
       ]
     },
@@ -1142,7 +1142,7 @@
       "model": "Ford Transit Custom",
       "companyId": "comp2",
       "type": "Carrinha",
-      "fuelType": "Gasóleo",
+      "fuelType": "GasÃ³leo",
       "pricePerDay": 135,
       "seats": 9,
       "image": "https://picsum.photos/300/200?random=19",
@@ -1163,7 +1163,7 @@
       "type": "trail",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=30",
-      "description": "Caminhe à volta da cratera das lagoas azul e verde.",
+      "description": "Caminhe Ã  volta da cratera das lagoas azul e verde.",
       "distance": "12km",
       "duration": "4h",
       "difficulty": "Moderado"
@@ -1174,10 +1174,10 @@
       "type": "trail",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=130",
-      "description": "Trilho que desce até à praia da lagoa mais selvagem da ilha.",
+      "description": "Trilho que desce atÃ© Ã  praia da lagoa mais selvagem da ilha.",
       "distance": "11km",
       "duration": "4h 30m",
-      "difficulty": "Difícil"
+      "difficulty": "DifÃ­cil"
     },
     {
       "id": "A1_3",
@@ -1185,10 +1185,10 @@
       "type": "trail",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=131",
-      "description": "Caminhada circular que passa por uma cascata e central hidroelétrica.",
+      "description": "Caminhada circular que passa por uma cascata e central hidroelÃ©trica.",
       "distance": "8.5km",
       "duration": "3h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A1_4",
@@ -1196,10 +1196,10 @@
       "type": "trail",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=132",
-      "description": "Trilho místico que passa por túneis e aquedutos antigos.",
+      "description": "Trilho mÃ­stico que passa por tÃºneis e aquedutos antigos.",
       "distance": "7.6km",
       "duration": "2h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A1_5",
@@ -1207,29 +1207,29 @@
       "type": "trail",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=133",
-      "description": "Subida ao ponto mais alto da ilha de São Miguel.",
+      "description": "Subida ao ponto mais alto da ilha de SÃ£o Miguel.",
       "distance": "7km",
       "duration": "3h",
-      "difficulty": "Difícil"
+      "difficulty": "DifÃ­cil"
     },
     {
       "id": "A2",
-      "title": "Algar do Carvão",
+      "title": "Algar do CarvÃ£o",
       "type": "landscape",
       "island": "TER",
       "image": "https://picsum.photos/400/300?random=31",
-      "description": "Desça ao interior de uma antiga chaminé vulcânica."
+      "description": "DesÃ§a ao interior de uma antiga chaminÃ© vulcÃ¢nica."
     },
     {
       "id": "A2_2",
-      "title": "Mistérios Negros",
+      "title": "MistÃ©rios Negros",
       "type": "trail",
       "island": "TER",
       "image": "https://picsum.photos/400/300?random=134",
-      "description": "Trilho desafiante entre domos vulcânicos e vegetação densa.",
+      "description": "Trilho desafiante entre domos vulcÃ¢nicos e vegetaÃ§Ã£o densa.",
       "distance": "5km",
       "duration": "2h 30m",
-      "difficulty": "Difícil"
+      "difficulty": "DifÃ­cil"
     },
     {
       "id": "A2_3",
@@ -1248,21 +1248,21 @@
       "type": "trail",
       "island": "TER",
       "image": "https://picsum.photos/400/300?random=136",
-      "description": "Caminhada histórica com vistas sobre Angra do Heroísmo.",
+      "description": "Caminhada histÃ³rica com vistas sobre Angra do HeroÃ­smo.",
       "distance": "7.5km",
       "duration": "2h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A2_5",
-      "title": "Baía da Agualva",
+      "title": "BaÃ­a da Agualva",
       "type": "trail",
       "island": "TER",
       "image": "https://picsum.photos/400/300?random=137",
-      "description": "Trilho costeiro com formações geológicas impressionantes.",
+      "description": "Trilho costeiro com formaÃ§Ãµes geolÃ³gicas impressionantes.",
       "distance": "3.8km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A4_2",
@@ -1273,7 +1273,7 @@
       "description": "Caminhada circular em redor da enorme caldeira central.",
       "distance": "7km",
       "duration": "2h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A4_3",
@@ -1281,10 +1281,10 @@
       "type": "trail",
       "island": "HOR",
       "image": "https://picsum.photos/400/300?random=139",
-      "description": "Caminhe sobre as cinzas do último vulcão dos Açores.",
+      "description": "Caminhe sobre as cinzas do Ãºltimo vulcÃ£o dos AÃ§ores.",
       "distance": "3.2km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A4_4",
@@ -1292,7 +1292,7 @@
       "type": "trail",
       "island": "HOR",
       "image": "https://picsum.photos/400/300?random=140",
-      "description": "Um dos maiores trilhos de levada no arquipélago.",
+      "description": "Um dos maiores trilhos de levada no arquipÃ©lago.",
       "distance": "24km",
       "duration": "7h",
       "difficulty": "Moderado"
@@ -1303,10 +1303,10 @@
       "type": "trail",
       "island": "HOR",
       "image": "https://picsum.photos/400/300?random=141",
-      "description": "Trilho costeiro até à icónica formação rochosa branca.",
+      "description": "Trilho costeiro atÃ© Ã  icÃ³nica formaÃ§Ã£o rochosa branca.",
       "distance": "4km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A7",
@@ -1317,7 +1317,7 @@
       "description": "O maior desafio: subir ao ponto mais alto de Portugal.",
       "distance": "8km",
       "duration": "7h",
-      "difficulty": "Difícil"
+      "difficulty": "DifÃ­cil"
     },
     {
       "id": "A7_2",
@@ -1325,21 +1325,21 @@
       "type": "trail",
       "island": "PIX",
       "image": "https://picsum.photos/400/300?random=143",
-      "description": "Trilho pelo planalto central passando por várias lagoas.",
+      "description": "Trilho pelo planalto central passando por vÃ¡rias lagoas.",
       "distance": "22km",
       "duration": "6h 30m",
       "difficulty": "Moderado"
     },
     {
       "id": "A7_3",
-      "title": "Criação Velha",
+      "title": "CriaÃ§Ã£o Velha",
       "type": "trail",
       "island": "PIX",
       "image": "https://picsum.photos/400/300?random=144",
-      "description": "Caminhada pelas vinhas Património Mundial da UNESCO.",
+      "description": "Caminhada pelas vinhas PatrimÃ³nio Mundial da UNESCO.",
       "distance": "6.9km",
       "duration": "2h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A7_4",
@@ -1350,7 +1350,7 @@
       "description": "Trilho costeiro na ponta leste da ilha do Pico.",
       "distance": "10km",
       "duration": "3h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A7_5",
@@ -1358,33 +1358,33 @@
       "type": "trail",
       "island": "PIX",
       "image": "https://picsum.photos/400/300?random=146",
-      "description": "Trilho histórico ligado à tradição baleeira.",
+      "description": "Trilho histÃ³rico ligado Ã  tradiÃ§Ã£o baleeira.",
       "distance": "12km",
       "duration": "4h",
       "difficulty": "Moderado"
     },
     {
       "id": "A4",
-      "title": "Fajãs de São Jorge",
+      "title": "FajÃ£s de SÃ£o Jorge",
       "type": "landscape",
       "island": "SJZ",
       "image": "https://picsum.photos/400/300?random=33",
-      "description": "Explore as icónicas planícies costeiras formadas por lava."
+      "description": "Explore as icÃ³nicas planÃ­cies costeiras formadas por lava."
     },
     {
       "id": "A4_6",
-      "title": "Fajã dos Cubres",
+      "title": "FajÃ£ dos Cubres",
       "type": "trail",
       "island": "SJZ",
       "image": "https://picsum.photos/400/300?random=147",
-      "description": "Descida da Serra do Topo até à Fajã de Santo Cristo.",
+      "description": "Descida da Serra do Topo atÃ© Ã  FajÃ£ de Santo Cristo.",
       "distance": "10km",
       "duration": "3h 30m",
       "difficulty": "Moderado"
     },
     {
       "id": "A4_7",
-      "title": "Pico da Esperança",
+      "title": "Pico da EsperanÃ§a",
       "type": "trail",
       "island": "SJZ",
       "image": "https://picsum.photos/400/300?random=148",
@@ -1399,18 +1399,18 @@
       "type": "trail",
       "island": "SJZ",
       "image": "https://picsum.photos/400/300?random=149",
-      "description": "Trilho de montanha com vistas deslumbrantes sobre as fajãs.",
+      "description": "Trilho de montanha com vistas deslumbrantes sobre as fajÃ£s.",
       "distance": "5km",
       "duration": "2h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A4_9",
-      "title": "Fajã de São João",
+      "title": "FajÃ£ de SÃ£o JoÃ£o",
       "type": "trail",
       "island": "SJZ",
       "image": "https://picsum.photos/400/300?random=150",
-      "description": "Trilho tradicional que liga várias fajãs isoladas.",
+      "description": "Trilho tradicional que liga vÃ¡rias fajÃ£s isoladas.",
       "distance": "10km",
       "duration": "3h 30m",
       "difficulty": "Moderado"
@@ -1421,7 +1421,7 @@
       "type": "poi",
       "island": "GRW",
       "image": "https://picsum.photos/400/300?random=35",
-      "description": "Uma caverna vulcânica única com um lago subterrâneo."
+      "description": "Uma caverna vulcÃ¢nica Ãºnica com um lago subterrÃ¢neo."
     },
     {
       "id": "A6_2",
@@ -1432,18 +1432,18 @@
       "description": "Caminhada circular em redor da caldeira da ilha branca.",
       "distance": "10km",
       "duration": "3h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A6_3",
-      "title": "Baía da Folga",
+      "title": "BaÃ­a da Folga",
       "type": "trail",
       "island": "GRW",
       "image": "https://picsum.photos/400/300?random=152",
-      "description": "Trilho costeiro com vistas para o mar e falésias.",
+      "description": "Trilho costeiro com vistas para o mar e falÃ©sias.",
       "distance": "4km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A6_4",
@@ -1454,7 +1454,7 @@
       "description": "Caminhada pelo ponto mais alto da Graciosa.",
       "distance": "8km",
       "duration": "2h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A6_5",
@@ -1462,10 +1462,10 @@
       "type": "trail",
       "island": "GRW",
       "image": "https://picsum.photos/400/300?random=154",
-      "description": "Trilho que leva às antigas grutas de pescadores.",
+      "description": "Trilho que leva Ã s antigas grutas de pescadores.",
       "distance": "6km",
       "duration": "2h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A8",
@@ -1480,36 +1480,36 @@
     },
     {
       "id": "A8_2",
-      "title": "Fajã Grande a Ponta Delgada",
+      "title": "FajÃ£ Grande a Ponta Delgada",
       "type": "trail",
       "island": "FLW",
       "image": "https://picsum.photos/400/300?random=156",
-      "description": "Um dos trilhos mais bonitos e remotos dos Açores.",
+      "description": "Um dos trilhos mais bonitos e remotos dos AÃ§ores.",
       "distance": "13km",
       "duration": "5h",
-      "difficulty": "Difícil"
+      "difficulty": "DifÃ­cil"
     },
     {
       "id": "A8_3",
-      "title": "Poço do Bacalhau",
+      "title": "PoÃ§o do Bacalhau",
       "type": "trail",
       "island": "FLW",
       "image": "https://picsum.photos/400/300?random=157",
-      "description": "Caminhada curta até à impressionante cascata da Fajã Grande.",
+      "description": "Caminhada curta atÃ© Ã  impressionante cascata da FajÃ£ Grande.",
       "distance": "1km",
       "duration": "30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A8_4",
-      "title": "Rocha dos Bordões",
+      "title": "Rocha dos BordÃµes",
       "type": "trail",
       "island": "FLW",
       "image": "https://picsum.photos/400/300?random=158",
-      "description": "Trilho geológico junto à famosa formação de prismas basálticos.",
+      "description": "Trilho geolÃ³gico junto Ã  famosa formaÃ§Ã£o de prismas basÃ¡lticos.",
       "distance": "4km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A8_5",
@@ -1517,26 +1517,26 @@
       "type": "trail",
       "island": "FLW",
       "image": "https://picsum.photos/400/300?random=159",
-      "description": "Trilho histórico pela costa sul da ilha.",
+      "description": "Trilho histÃ³rico pela costa sul da ilha.",
       "distance": "8km",
       "duration": "3h",
       "difficulty": "Moderado"
     },
     {
       "id": "A5",
-      "title": "Caldeirão do Corvo",
+      "title": "CaldeirÃ£o do Corvo",
       "type": "landscape",
       "island": "CVU",
       "image": "https://picsum.photos/400/300?random=34",
-      "description": "A impressionante cratera vulcânica no coração do Corvo."
+      "description": "A impressionante cratera vulcÃ¢nica no coraÃ§Ã£o do Corvo."
     },
     {
       "id": "A5_2",
-      "title": "Cara do Índio",
+      "title": "Cara do Ãndio",
       "type": "trail",
       "island": "CVU",
       "image": "https://picsum.photos/400/300?random=160",
-      "description": "Caminhada pela crista da caldeira com vistas incríveis.",
+      "description": "Caminhada pela crista da caldeira com vistas incrÃ­veis.",
       "distance": "10km",
       "duration": "3h 30m",
       "difficulty": "Moderado"
@@ -1547,10 +1547,10 @@
       "type": "trail",
       "island": "CVU",
       "image": "https://picsum.photos/400/300?random=161",
-      "description": "Caminhada pela única povoação da ilha mais pequena.",
+      "description": "Caminhada pela Ãºnica povoaÃ§Ã£o da ilha mais pequena.",
       "distance": "5km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A5_4",
@@ -1558,7 +1558,7 @@
       "type": "trail",
       "island": "CVU",
       "image": "https://picsum.photos/400/300?random=162",
-      "description": "Trilho até ao farol isolado no norte da ilha.",
+      "description": "Trilho atÃ© ao farol isolado no norte da ilha.",
       "distance": "8km",
       "duration": "3h",
       "difficulty": "Moderado"
@@ -1583,18 +1583,18 @@
       "description": "Caminhada pelo deserto vermelho de Santa Maria.",
       "distance": "9km",
       "duration": "3h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A9_3",
-      "title": "Baía dos Anjos",
+      "title": "BaÃ­a dos Anjos",
       "type": "trail",
       "island": "SMA",
       "image": "https://picsum.photos/400/300?random=165",
-      "description": "Trilho costeiro histórico onde Colombo desembarcou.",
+      "description": "Trilho costeiro histÃ³rico onde Colombo desembarcou.",
       "distance": "5km",
       "duration": "1h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A9_4",
@@ -1602,10 +1602,10 @@
       "type": "trail",
       "island": "SMA",
       "image": "https://picsum.photos/400/300?random=166",
-      "description": "Trilho até uma das maiores cascatas de Portugal.",
+      "description": "Trilho atÃ© uma das maiores cascatas de Portugal.",
       "distance": "2km",
       "duration": "1h",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A9_5",
@@ -1613,18 +1613,18 @@
       "type": "trail",
       "island": "SMA",
       "image": "https://picsum.photos/400/300?random=167",
-      "description": "Trilho costeiro que liga a vila à praia de areia clara.",
+      "description": "Trilho costeiro que liga a vila Ã  praia de areia clara.",
       "distance": "7km",
       "duration": "2h 30m",
-      "difficulty": "Fácil"
+      "difficulty": "FÃ¡cil"
     },
     {
       "id": "A3",
-      "title": "Plantações de Chá",
+      "title": "PlantaÃ§Ãµes de ChÃ¡",
       "type": "culture",
       "island": "PDL",
       "image": "https://picsum.photos/400/300?random=32",
-      "description": "Visite as únicas plantações de chá da Europa na Gorreana."
+      "description": "Visite as Ãºnicas plantaÃ§Ãµes de chÃ¡ da Europa na Gorreana."
     }
   ],
   "busSchedules": [],
@@ -1662,7 +1662,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             }
@@ -1705,12 +1705,12 @@
             {
               "dish": {
                 "name": "Bife de Casa",
-                "description": "Bife da Casa fresco com sementes de sésamo.",
+                "description": "Bife da Casa fresco com sementes de sÃ©samo.",
                 "price": 18,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
               },
               "quantity": 1,
-              "meatPoint": "Médio mal"
+              "meatPoint": "MÃ©dio mal"
             }
           ],
           "prepRequested": true,
@@ -1839,7 +1839,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             },
@@ -1848,7 +1848,7 @@
                 "name": "Queijos diversos",
                 "description": "Queijos diversos",
                 "price": 6,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
               },
               "quantity": 1
             }
@@ -1866,7 +1866,7 @@
       "credits": 102,
       "reservations": [
         {
-          "customerName": "André ",
+          "customerName": "AndrÃ© ",
           "customerEmail": "andre@gmail.com",
           "customerPhone": "",
           "date": "2026-04-29",
@@ -1880,7 +1880,7 @@
                 "name": "Lapas",
                 "description": "Lapas Grelhadas",
                 "price": 22,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
               },
               "quantity": 1
             },
@@ -1889,7 +1889,7 @@
                 "name": "Queijos diversos",
                 "description": "Queijos diversos",
                 "price": 6,
-                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+                "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
               },
               "quantity": 1
             }
@@ -1929,7 +1929,7 @@
     {
       "email": "joao@atasca.pt",
       "password": "123",
-      "name": "João",
+      "name": "JoÃ£o",
       "role": "waiter",
       "credits": 0,
       "profile": {

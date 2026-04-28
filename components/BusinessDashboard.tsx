@@ -112,6 +112,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   staffRole
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
+  // Detetar automaticamente o endereço do backend
+  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? (window.location.port === '3000' ? 'http://localhost:3001' : window.location.origin)
+    : window.location.origin;
+
   const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : 'tables');
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
@@ -130,10 +135,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     formData.append('type', type);
     formData.append('image', file as File);
 
-    // Detetar automaticamente o endereço do backend
-    const API_BASE_URL = window.location.hostname === 'localhost' 
-      ? 'http://localhost:3001' 
-      : `http://${window.location.hostname}:3001`;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/upload`, {
@@ -1287,7 +1288,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                     onClick={async (e) => {
                                       e.stopPropagation();
                                       const reservation = reservations.find(r => r.tableId === table.id && (r.status === 'occupied' || r.status === 'accepted'));
-                                      const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : `http://${window.location.hostname}:3001`;
                                       try {
                                         const resp = await fetch(`${API_BASE_URL}/api/payment-confirm`, {
                                           method: 'POST',
