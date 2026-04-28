@@ -265,11 +265,11 @@ app.post('/api/users/:email/notifications', (req, res) => {
 // Teste de conexão
 app.get('/', (req, res) => res.send('Servidor Azores4you Ativo e Sincronizado!'));
 
-app.listen(PORT, LOCAL_IP, () => {
+app.listen(PORT, () => {
   console.log(`
 =========================================
 🚀 BACKEND RESTAURADO (HTTP)
-🔗 Endereço: http://${LOCAL_IP}:${PORT}
+🔗 Endereço: http://localhost:${PORT}
 =========================================
   `);
 });

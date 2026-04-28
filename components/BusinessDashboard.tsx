@@ -113,9 +113,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
-  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? (window.location.port === '3000' ? 'http://localhost:3001' : window.location.origin)
-    : window.location.origin;
+    : 'https://azorestoyou.onrender.com';
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : 'tables');
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');

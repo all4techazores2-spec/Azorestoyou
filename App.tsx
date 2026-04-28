@@ -64,10 +64,10 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('pt');
 
   // Detetar automaticamente se estamos em localhost ou no IP da rede
-  // Detetar automaticamente se estamos em localhost ou no IP da rede
-  const API_BASE_URL = window.location.port === '3000'
-    ? `http://${window.location.hostname}:3001`
-    : window.location.origin;
+  // Se estivermos no Netlify (azorestoyou.pt), o backend está no Render
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (window.location.port === '3000' ? 'http://localhost:3001' : window.location.origin)
+    : 'https://azorestoyou.onrender.com';
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
@@ -137,6 +137,18 @@ const App: React.FC = () => {
       let latestRestaurants: Restaurant[] = [];
       if (response.ok) {
         latestRestaurants = await response.json();
+        
+        // Normalizar caminhos de imagens (se forem relativos /imagens, adicionar o backend URL)
+        latestRestaurants = latestRestaurants.map(r => ({
+          ...r,
+          image: r.image?.startsWith('/imagens') ? `${API_BASE_URL}${r.image}` : r.image,
+          gallery: r.gallery?.map(img => img.startsWith('/imagens') ? `${API_BASE_URL}${img}` : img),
+          menu: r.menu?.map(item => ({
+            ...item,
+            image: item.image?.startsWith('/imagens') ? `${API_BASE_URL}${item.image}` : item.image
+          }))
+        }));
+
         setRestaurants(latestRestaurants);
       } else {
         // Fallback to constants if server is down but we need data to show
@@ -849,11 +861,23 @@ const App: React.FC = () => {
             }}
             onUpdateBusiness={async (updated) => {
               setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+              
+              // Desnormalizar caminhos antes de enviar para o servidor (manter relativo no db.json)
+              const denormalized = {
+                ...updated,
+                image: updated.image?.replace(API_BASE_URL, ''),
+                gallery: updated.gallery?.map(img => img.replace(API_BASE_URL, '')),
+                menu: updated.menu?.map(item => ({
+                  ...item,
+                  image: item.image?.replace(API_BASE_URL, '')
+                }))
+              };
+
               try {
                 await fetch(`${API_BASE_URL}/api/restaurants/${updated.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(updated),
+                  body: JSON.stringify(denormalized),
                 });
               } catch (error) {
                 console.error("Erro na sincronização automática:", error);
