@@ -1,0 +1,54 @@
+[
+  {
+    "email": "asd@gmail.com",
+    "credits": 0,
+    "profile": {
+      "phone": "",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+    },
+    "reservations": []
+  },
+  {
+    "email": "traveler@azores4you.com",
+    "credits": 102,
+    "profile": {
+      "phone": "+351 912 345 678",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+    },
+    "reservations": [
+      {
+        "id": "RES_1777227309737",
+        "restaurantName": "A Tasca",
+        "restaurantId": "R1",
+        "status": "occupied",
+        "tableId": "T1"
+      }
+    ],
+    "notifications": [
+      {
+        "id": "NOT_1777149635262",
+        "text": "✨ O seu pedido está pronto a ser servido! Bom proveito!",
+        "read": false,
+        "date": "20:40:35",
+        "reservationId": "RES_1777145948745",
+        "restaurantId": "R1"
+      },
+      {
+        "id": "NOT_1777149592391",
+        "text": "👨‍🍳 O seu pedido está a caminho da cozinha!",
+        "read": false,
+        "date": "20:39:52",
+        "reservationId": "RES_1777145948745",
+        "restaurantId": "R1"
+      },
+      {
+        "id": "NOT_1777149429694",
+        "text": "👨‍🍳 O seu pedido está a caminho da cozinha!",
+        "read": false,
+        "date": "20:37:09",
+        "reservationId": "RES_1777145948745",
+        "restaurantId": "R1"
+      }
+    ]
+  }
+]

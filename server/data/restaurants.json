@@ -1,0 +1,1441 @@
+[
+  {
+    "id": "R1",
+    "name": "A Tasca",
+    "island": "PDL",
+    "cuisine": "Regional",
+    "rating": 4.8,
+    "reviews": 2450,
+    "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777121937458-908639801.jpg",
+    "description": "Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.",
+    "adminEmail": "atasca@azores4you.com",
+    "adminPassword": "admin",
+    "phone": "+351 296 282 800",
+    "address": "Rua do Aljube 16, 9500-018 Ponta Delgada",
+    "publicEmail": "reservas@atasca.pt",
+    "mapsUrl": "https://maps.app.goo.gl/A4d55T6KjYVjLqV98",
+    "latitude": "37.7408",
+    "longitude": "-25.6686",
+    "gallery": [
+      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142873349-80125572.jpg",
+      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142877549-486468951.jpg",
+      "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777142881907-288558141.jpg"
+    ],
+    "reservations": [
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "date": "2026-04-30",
+        "time": "19:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777123531914",
+        "status": "cancelled",
+        "createdAt": "2026-04-25T13:25:31.914Z"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777123725233",
+        "status": "cancelled",
+        "createdAt": "2026-04-25T13:28:45.233Z"
+      },
+      {
+        "customerName": "andre braga",
+        "customerEmail": "teste@gmail.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777125683865",
+        "status": "cancelled",
+        "createdAt": "2026-04-25T14:01:23.865Z"
+      },
+      {
+        "customerName": "andre brag",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777126030304",
+        "status": "accepted",
+        "createdAt": "2026-04-25T14:07:10.304Z",
+        "tableId": "T3"
+      },
+      {
+        "customerName": "Francisco",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777126133277",
+        "status": "accepted",
+        "createdAt": "2026-04-25T14:08:53.277Z",
+        "tableId": "T6"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777127491034",
+        "status": "accepted",
+        "createdAt": "2026-04-25T14:31:31.034Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777127729680",
+        "status": "finished",
+        "createdAt": "2026-04-25T14:35:29.680Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "André braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777128027858",
+        "status": "accepted",
+        "createdAt": "2026-04-25T14:40:27.858Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "19:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777128169988",
+        "status": "accepted",
+        "createdAt": "2026-04-25T14:42:49.988Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "André ",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777132302138",
+        "status": "finished",
+        "createdAt": "2026-04-25T15:51:42.138Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Francisco",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777132551768",
+        "status": "accepted",
+        "createdAt": "2026-04-25T15:55:51.769Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "id": "RES_1777133653420",
+        "status": "accepted",
+        "createdAt": "2026-04-25T16:14:13.420Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777134599918",
+        "status": "accepted",
+        "createdAt": "2026-04-25T16:29:59.918Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "id": "RES_1777134698761",
+        "status": "occupied",
+        "createdAt": "2026-04-25T16:31:38.761Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "id": "RES_1777136346588",
+        "status": "finished",
+        "createdAt": "2026-04-25T16:59:06.588Z",
+        "tableId": "T3"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          },
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "id": "RES_1777136938955",
+        "status": "accepted",
+        "createdAt": "2026-04-25T17:08:58.955Z",
+        "tableId": "T4"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "id": "RES_1777136993624",
+        "status": "accepted",
+        "createdAt": "2026-04-25T17:09:53.624Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777137070791",
+        "status": "occupied",
+        "createdAt": "2026-04-25T17:11:10.791Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "id": "RES_1777137390746",
+        "status": "occupied",
+        "createdAt": "2026-04-25T17:16:30.746Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "francisco",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-27",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio"
+          }
+        ],
+        "id": "RES_1777139529799",
+        "status": "occupied",
+        "createdAt": "2026-04-25T17:52:09.799Z",
+        "tableId": "T3"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "id": "RES_1777139956027",
+        "status": "occupied",
+        "createdAt": "2026-04-25T17:59:16.027Z",
+        "tableId": "T4"
+      },
+      {
+        "customerName": "Francisco ",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "19:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio"
+          }
+        ],
+        "id": "RES_1777143002082",
+        "status": "occupied",
+        "createdAt": "2026-04-25T18:50:02.082Z",
+        "tableId": "T3"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-25",
+        "time": "19:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "id": "RES_1777143262648",
+        "status": "cancelled",
+        "createdAt": "2026-04-25T18:54:22.648Z",
+        "confirmedByRestaurant": false
+      },
+      {
+        "customerName": "andre",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-30",
+        "time": "13:30",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "15:00",
+        "id": "RES_1777145112875",
+        "status": "cancelled",
+        "createdAt": "2026-04-25T19:25:12.875Z",
+        "confirmedByRestaurant": false
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-28",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [],
+        "prepRequested": false,
+        "requestedTime": "at_reservation",
+        "id": "RES_1777145140217",
+        "status": "accepted",
+        "createdAt": "2026-04-25T19:25:40.217Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "15:00",
+        "id": "RES_1777145266977",
+        "status": "accepted",
+        "createdAt": "2026-04-25T19:27:46.977Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preorder": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "12:45",
+        "id": "RES_1777145450553",
+        "status": "accepted",
+        "createdAt": "2026-04-25T19:30:50.553Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-28",
+        "time": "13:00",
+        "guests": 1,
+        "notes": "",
+        "paymentType": "reserve",
+        "preOrder": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "12:50",
+        "id": "RES_1777145948745",
+        "status": "accepted",
+        "createdAt": "2026-04-25T19:39:08.745Z",
+        "tableId": "T2"
+      },
+      {
+        "customerName": "braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-28",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preOrder": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+            },
+            "quantity": 1
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "12:45",
+        "id": "RES_1777149354529",
+        "status": "accepted",
+        "createdAt": "2026-04-25T20:35:54.529Z",
+        "tableId": "T3"
+      },
+      {
+        "customerName": "Cliente Viajante",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "13:00",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preOrder": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "12:45",
+        "id": "RES_1777149549888",
+        "status": "accepted",
+        "createdAt": "2026-04-25T20:39:09.888Z",
+        "tableId": "T1"
+      },
+      {
+        "customerName": "braga",
+        "customerEmail": "traveler@azores4you.com",
+        "customerPhone": "+351 912 345 678",
+        "date": "2026-04-29",
+        "time": "12:30",
+        "guests": 2,
+        "notes": "",
+        "paymentType": "reserve",
+        "preOrder": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "prepRequested": true,
+        "requestedTime": "at_reservation",
+        "id": "RES_1777227309737",
+        "status": "occupied",
+        "createdAt": "2026-04-26T18:15:09.737Z",
+        "tableId": "T1"
+      }
+    ],
+    "updates": [],
+    "dishes": [
+      {
+        "name": "Bife da Casa",
+        "description": "Bife de atum fresco com sementes de sésamo.",
+        "price": 18,
+        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+      },
+      {
+        "name": "Polvo à Lagareiro",
+        "description": "Polvo assado com batatas a murro.",
+        "price": 22,
+        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+      },
+      {
+        "name": "Queijos",
+        "description": "Ananás local caramelizado.",
+        "price": 6,
+        "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146991736-716106949.jpg"
+      }
+    ],
+    "orders": [
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777133654756",
+        "status": "preparing",
+        "createdAt": "2026-04-25T16:14:14.756Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777134700593",
+        "status": "preparing",
+        "createdAt": "2026-04-25T16:31:40.593Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777136348037",
+        "status": "preparing",
+        "createdAt": "2026-04-25T16:59:08.037Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          },
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777136939921",
+        "status": "preparing",
+        "createdAt": "2026-04-25T17:08:59.921Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777136994452",
+        "status": "preparing",
+        "createdAt": "2026-04-25T17:09:54.452Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777137391604",
+        "status": "preparing",
+        "createdAt": "2026-04-25T17:16:31.604Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777139531151",
+        "status": "preparing",
+        "createdAt": "2026-04-25T17:52:11.151Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777139957390",
+        "status": "preparing",
+        "createdAt": "2026-04-25T17:59:17.390Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777143005567",
+        "status": "preparing",
+        "createdAt": "2026-04-25T18:50:05.567Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777145114620",
+        "status": "preparing",
+        "createdAt": "2026-04-25T19:25:14.620Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777145268494",
+        "status": "preparing",
+        "createdAt": "2026-04-25T19:27:48.494Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777145451876",
+        "status": "preparing",
+        "createdAt": "2026-04-25T19:30:51.876Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777145950052",
+        "status": "preparing",
+        "createdAt": "2026-04-25T19:39:10.052Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777146919970-509920206.jpg"
+            },
+            "quantity": 1
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777149355842",
+        "status": "preparing",
+        "createdAt": "2026-04-25T20:35:55.842Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777149551186",
+        "status": "preparing",
+        "createdAt": "2026-04-25T20:39:11.186Z"
+      },
+      {
+        "items": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "type": "pre-order",
+        "table": "Reserva Online",
+        "id": "ORD_1777227311478",
+        "status": "preparing",
+        "createdAt": "2026-04-26T18:15:11.478Z"
+      }
+    ],
+    "tables": [
+      {
+        "id": "T1",
+        "number": 1,
+        "seats": 2,
+        "status": "available",
+        "reservationTime": "12:30",
+        "alertStatus": "new_order",
+        "currentTab": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
+              "category": "Pratos"
+            },
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "id": "T2",
+        "number": 2,
+        "seats": 4,
+        "status": "available",
+        "reservationTime": "13:00",
+        "currentOrderId": "K1",
+        "alertStatus": "none",
+        "currentTab": []
+      },
+      {
+        "id": "T3",
+        "number": 3,
+        "seats": 4,
+        "status": "available",
+        "reservationTime": "13:00",
+        "alertStatus": "none",
+        "currentTab": []
+      },
+      {
+        "id": "T4",
+        "number": 4,
+        "seats": 6,
+        "status": "available",
+        "customerName": "Cliente Viajante",
+        "reservationTime": "12:30"
+      },
+      {
+        "id": "T5",
+        "number": 5,
+        "seats": 2,
+        "status": "available"
+      },
+      {
+        "id": "T6",
+        "number": 6,
+        "seats": 4,
+        "status": "available",
+        "customerName": "Francisco",
+        "reservationTime": "13:00"
+      }
+    ],
+    "products": [
+      {
+        "id": "P1777126265189",
+        "name": "Café",
+        "description": "",
+        "price": 0.6,
+        "category": "Cafetaria",
+        "image": ""
+      },
+      {
+        "id": "P1777126267782",
+        "name": "Superbock",
+        "description": "",
+        "price": 1.8,
+        "category": "Bebidas",
+        "image": ""
+      }
+    ],
+    "kitchenOrders": [
+      {
+        "id": "K1",
+        "tableId": "T2",
+        "status": "delivered",
+        "timestamp": "2026-04-25T19:29:52.467Z",
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "id": "ORD_1777146146454",
+        "tableId": "T1",
+        "reservationId": "RES_1777133653420",
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          },
+          {
+            "dish": {
+              "name": "Polvo à Lagareiro",
+              "description": "Polvo assado com batatas a murro.",
+              "price": 22,
+              "image": "https://picsum.photos/300/200?random=22"
+            },
+            "quantity": 1
+          }
+        ],
+        "status": "delivered",
+        "timestamp": "2026-04-25T19:42:26.454Z"
+      },
+      {
+        "id": "ORD_1777149589989",
+        "tableId": "T2",
+        "reservationId": "RES_1777145948745",
+        "items": [
+          {
+            "dish": {
+              "name": "Bife de Atum",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "https://picsum.photos/300/200?random=21"
+            },
+            "quantity": 1,
+            "meatPoint": "Médio mal"
+          }
+        ],
+        "status": "delivered",
+        "timestamp": "2026-04-25T20:39:49.989Z"
+      },
+      {
+        "id": "ORD_1777227802806",
+        "tableId": "T1",
+        "reservationId": "RES_1777227309737",
+        "items": [
+          {
+            "dish": {
+              "id": "P1777126265189",
+              "name": "Café",
+              "description": "",
+              "price": 0.6,
+              "category": "Cafetaria",
+              "image": ""
+            },
+            "quantity": 3
+          },
+          {
+            "dish": {
+              "id": "P1777126267782",
+              "name": "Superbock",
+              "description": "",
+              "price": 1.8,
+              "category": "Bebidas",
+              "image": ""
+            },
+            "quantity": 1
+          }
+        ],
+        "status": "sent_to_kitchen",
+        "timestamp": "2026-04-26T18:23:22.806Z"
+      },
+      {
+        "id": "ORD_1777227827798",
+        "tableId": "T1",
+        "reservationId": "RES_1777227309737",
+        "items": [
+          {
+            "dish": {
+              "name": "Bife da Casa",
+              "description": "Bife de atum fresco com sementes de sésamo.",
+              "price": 18,
+              "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777147011109-382411162.jpg",
+              "category": "Pratos"
+            },
+            "quantity": 1
+          }
+        ],
+        "status": "sent_to_kitchen",
+        "timestamp": "2026-04-26T18:23:47.798Z"
+      }
+    ],
+    "staff": [
+      {
+        "id": "STF_1777147674575",
+        "name": "andre",
+        "email": "andre@gmail.com",
+        "password": "admin",
+        "phone": "961582068",
+        "role": "waiter"
+      },
+      {
+        "id": "STF_1777149239637",
+        "name": "a",
+        "email": "a@gmail.com",
+        "password": "asd",
+        "phone": "91",
+        "role": "waiter"
+      }
+    ]
+  },
+  {
+    "id": "R2",
+    "name": "O Pescador",
+    "island": "TER",
+    "cuisine": "Marisco",
+    "rating": 4.6,
+    "reviews": 890,
+    "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147153001-833066704.jpg",
+    "description": "O melhor peixe fresco na Terceira, localizado junto ao porto.",
+    "adminEmail": "opescador@azores4you.com",
+    "adminPassword": "admin",
+    "gallery": [
+      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147162462-367224803.jpg",
+      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147166392-102416464.jpg",
+      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147172960-67706744.jpg",
+      "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147181096-624197075.jpg"
+    ],
+    "reservations": [],
+    "updates": [],
+    "dishes": [
+      {
+        "name": "Lapas Grelhadas",
+        "description": "Lapas grelhadas com manteiga de alho.",
+        "price": 12,
+        "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147341474-183086231.jpg"
+      },
+      {
+        "name": "Alcatra",
+        "description": "Prato de carne cozinhado lentamente em alguidar de barro.",
+        "price": 19,
+        "image": "http://192.168.1.194:3001/imagens/restaurantes/R2/image-1777147352029-353139987.jpg"
+      }
+    ],
+    "orders": [],
+    "tables": [
+      {
+        "id": "T1",
+        "number": 1,
+        "seats": 2,
+        "status": "available"
+      },
+      {
+        "id": "T2",
+        "number": 2,
+        "seats": 4,
+        "status": "available",
+        "customerName": "João Santos",
+        "reservationTime": "13:00",
+        "currentOrderId": "K1"
+      },
+      {
+        "id": "T3",
+        "number": 3,
+        "seats": 4,
+        "status": "available"
+      },
+      {
+        "id": "T4",
+        "number": 4,
+        "seats": 6,
+        "status": "available",
+        "customerName": "Maria Silva",
+        "reservationTime": "20:30"
+      },
+      {
+        "id": "T5",
+        "number": 5,
+        "seats": 2,
+        "status": "available"
+      },
+      {
+        "id": "T6",
+        "number": 6,
+        "seats": 4,
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "id": "R3",
+    "name": "Peter Café Sport",
+    "island": "HOR",
+    "cuisine": "Bar/Pub",
+    "rating": 4.9,
+    "reviews": 5000,
+    "image": "https://picsum.photos/400/300?random=27",
+    "description": "Bar de marinheiros mundialmente famoso. Conhecido pelo Gin Tónico e bolo de chocolate.",
+    "adminEmail": "peter@azores4you.com",
+    "adminPassword": "peter",
+    "gallery": [],
+    "reservations": [],
+    "updates": [],
+    "dishes": [
+      {
+        "name": "Gin do Mar",
+        "description": "Gin Tónico de assinatura.",
+        "price": 8,
+        "image": "https://picsum.photos/300/200?random=28"
+      },
+      {
+        "name": "Bolo de Chocolate do Peter",
+        "description": "Bolo de chocolate denso e rico.",
+        "price": 5,
+        "image": "https://picsum.photos/300/200?random=29"
+      }
+    ],
+    "orders": []
+  },
+  {
+    "id": "R4",
+    "name": "Restaurante Velas",
+    "island": "SJZ",
+    "cuisine": "Regional",
+    "rating": 4.5,
+    "reviews": 320,
+    "image": "https://picsum.photos/400/300?random=60",
+    "description": "Especialistas em Amêijoas da Caldeira e Queijo de São Jorge.",
+    "adminEmail": "velas@azores4you.com",
+    "adminPassword": "velas",
+    "gallery": [],
+    "reservations": [],
+    "updates": [],
+    "dishes": [
+      {
+        "name": "Amêijoas",
+        "description": "Amêijoas frescas da Caldeira de Santo Cristo.",
+        "price": 25,
+        "image": "https://picsum.photos/300/200?random=61"
+      },
+      {
+        "name": "Tábua de Queijos",
+        "description": "Seleção de queijos de São Jorge curados.",
+        "price": 15,
+        "image": "https://picsum.photos/300/200?random=62"
+      }
+    ],
+    "orders": []
+  }
+]

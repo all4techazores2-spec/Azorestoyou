@@ -1,0 +1,1320 @@
+{
+  "restaurants": [
+    {
+      "id": "R1",
+      "name": "A Tasca",
+      "island": "PDL",
+      "cuisine": "Regional",
+      "rating": 4.8,
+      "reviews": 2450,
+      "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229185430-304755087.jpg",
+      "description": "Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.",
+      "adminEmail": "atasca@azorestoyou.com",
+      "adminPassword": "admin",
+      "phone": "+351 296 282 800",
+      "address": "Rua do Aljube 16, 9500-018 Ponta Delgada",
+      "publicEmail": "reservas@atasca.pt",
+      "mapsUrl": "https://maps.app.goo.gl/A4d55T6KjYVjLqV98",
+      "latitude": "37.7408",
+      "longitude": "-25.6686",
+      "tables": [
+        {
+          "id": "T1",
+          "status": "available",
+          "capacity": 2,
+          "number": 1,
+          "currentTab": [],
+          "reservationTime": "14:30",
+          "alertStatus": "none"
+        },
+        {
+          "id": "T2",
+          "status": "available",
+          "capacity": 2,
+          "number": 2,
+          "currentTab": []
+        },
+        {
+          "id": "T3",
+          "status": "available",
+          "capacity": 4,
+          "number": 3,
+          "currentTab": []
+        },
+        {
+          "id": "T4",
+          "status": "available",
+          "capacity": 4,
+          "number": 4,
+          "currentTab": []
+        },
+        {
+          "id": "T5",
+          "status": "available",
+          "capacity": 6,
+          "number": 5,
+          "currentTab": []
+        },
+        {
+          "id": "T6",
+          "status": "available",
+          "capacity": 2,
+          "number": 6,
+          "currentTab": []
+        }
+      ],
+      "kitchenOrders": [
+        {
+          "items": [
+            {
+              "dish": {
+                "name": "Lapas",
+                "description": "Lapas Grelhadas",
+                "price": 22,
+                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+              },
+              "quantity": 1
+            }
+          ],
+          "type": "pre-order",
+          "table": "Reserva Online",
+          "id": "ORD_1777231555377",
+          "timestamp": "2026-04-26T19:25:55.377Z",
+          "status": "sent_to_kitchen"
+        },
+        {
+          "id": "ORD_1777231967173",
+          "tableId": "T1",
+          "reservationId": "RES_1777230225367",
+          "items": [
+            {
+              "dish": {
+                "name": "Lapas",
+                "description": "Lapas Grelhadas",
+                "price": 22,
+                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+              },
+              "quantity": 1
+            }
+          ],
+          "status": "delivered",
+          "timestamp": "2026-04-26T19:32:47.173Z"
+        }
+      ],
+      "reservations": [
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "traveler@azorestoyou.com",
+          "customerPhone": "+351 912 345 678",
+          "date": "2026-04-28",
+          "time": "12:30",
+          "guests": 2,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [
+            {
+              "dish": {
+                "name": "Lapas",
+                "description": "Lapas Grelhadas",
+                "price": 22,
+                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+              },
+              "quantity": 1
+            }
+          ],
+          "prepRequested": true,
+          "requestedTime": "at_reservation",
+          "id": "RES_1777230225367",
+          "restaurantId": "R1",
+          "status": "accepted",
+          "createdAt": "2026-04-26T19:03:45.367Z",
+          "tableId": "T1"
+        },
+        {
+          "customerName": "Tester",
+          "customerEmail": "asd@gmail.com",
+          "customerPhone": "+351 912 345 678",
+          "date": "2026-04-29",
+          "time": "20:00",
+          "guests": 4,
+          "notes": "Mesa de teste",
+          "paymentType": "reserve",
+          "status": "finished",
+          "tableId": "T2",
+          "id": "RES_TEST_ASD",
+          "restaurantId": "R1",
+          "createdAt": "2026-04-26T19:20:00.000Z"
+        },
+        {
+          "customerName": "Braga",
+          "customerEmail": "all4techazores@gmail.com",
+          "customerPhone": "+351 912 345 678",
+          "date": "2026-04-28",
+          "time": "13:00",
+          "guests": 2,
+          "notes": "",
+          "paymentType": "reserve",
+          "status": "accepted",
+          "tableId": "T1",
+          "id": "RES_1777229366337",
+          "restaurantId": "R1",
+          "createdAt": "2026-04-26T18:49:26.337Z"
+        },
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "traveler@azores4you.com",
+          "customerPhone": "+351 912 345 678",
+          "date": "2026-04-28",
+          "time": "14:30",
+          "guests": 2,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [
+            {
+              "dish": {
+                "name": "Lapas",
+                "description": "Lapas Grelhadas",
+                "price": 22,
+                "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+              },
+              "quantity": 1
+            }
+          ],
+          "prepRequested": true,
+          "requestedTime": "at_reservation",
+          "id": "RES_1777231552023",
+          "restaurantId": "R1",
+          "status": "accepted",
+          "createdAt": "2026-04-26T19:25:52.023Z",
+          "tableId": "T1"
+        }
+      ],
+      "staff": [
+        {
+          "id": "S1",
+          "name": "João",
+          "email": "joao@atasca.pt",
+          "password": "123",
+          "role": "waiter"
+        }
+      ],
+      "updates": [
+        {
+          "id": "UPD_1",
+          "type": "news",
+          "title": "Novo Prato!",
+          "description": "Venha provar a nossa mais recente novidade: Bife de Atum com sésamo."
+        }
+      ],
+      "dishes": [
+        {
+          "name": "Bife de Casa",
+          "description": "Bife da Casa fresco com sementes de sésamo.",
+          "price": 18,
+          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229207708-244692429.jpg"
+        },
+        {
+          "name": "Lapas",
+          "description": "Lapas Grelhadas",
+          "price": 22,
+          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229235263-925365155.jpg"
+        },
+        {
+          "name": "Queijos diversos",
+          "description": "Queijos diversos",
+          "price": 6,
+          "image": "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229253149-350708311.jpg"
+        }
+      ],
+      "gallery": [
+        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229190225-649461264.jpg",
+        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229193191-512209108.jpg",
+        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229196192-733127430.jpg",
+        "http://192.168.1.194:3001/imagens/restaurantes/R1/image-1777229198872-346852467.jpg"
+      ],
+      "products": []
+    },
+    {
+      "id": "R2",
+      "name": "O Pescador",
+      "island": "TER",
+      "cuisine": "Marisco",
+      "rating": 4.6,
+      "reviews": 890,
+      "image": "http://localhost:3001/imagens/restaurantes/R2/image-1777147352029-353139987.jpg",
+      "description": "O melhor peixe fresco na Terceira, localizado junto ao porto.",
+      "adminEmail": "pescador@azores4you.com",
+      "adminPassword": "admin",
+      "tables": [
+        {
+          "id": "T1",
+          "status": "available",
+          "capacity": 2,
+          "number": 1,
+          "currentTab": []
+        }
+      ],
+      "kitchenOrders": [],
+      "reservations": [],
+      "staff": [],
+      "dishes": []
+    }
+  ],
+  "flights": [
+    {
+      "id": "TP1869",
+      "airline": "TAP Air Portugal",
+      "flightNumber": "TP1869",
+      "origin": "LIS",
+      "destination": "PDL",
+      "departureTime": "08:00",
+      "arrivalTime": "10:25",
+      "price": 120,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "2h 25m"
+    },
+    {
+      "id": "S4121",
+      "airline": "SATA Azores Airlines",
+      "flightNumber": "S4121",
+      "origin": "LIS",
+      "destination": "PDL",
+      "departureTime": "14:30",
+      "arrivalTime": "16:55",
+      "price": 145,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "2h 25m"
+    },
+    {
+      "id": "FR2345",
+      "airline": "Ryanair",
+      "flightNumber": "FR2345",
+      "origin": "LIS",
+      "destination": "PDL",
+      "departureTime": "21:00",
+      "arrivalTime": "23:25",
+      "price": 65,
+      "status": "Atrasado",
+      "stops": 0,
+      "duration": "2h 25m"
+    },
+    {
+      "id": "S4172",
+      "airline": "SATA Azores Airlines",
+      "flightNumber": "S4172",
+      "origin": "OPO",
+      "destination": "PDL",
+      "departureTime": "11:15",
+      "arrivalTime": "13:40",
+      "price": 95,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "2h 25m"
+    },
+    {
+      "id": "FR7890",
+      "airline": "Ryanair",
+      "flightNumber": "FR7890",
+      "origin": "OPO",
+      "destination": "PDL",
+      "departureTime": "06:30",
+      "arrivalTime": "08:55",
+      "price": 45,
+      "status": "Embarque",
+      "stops": 0,
+      "duration": "2h 25m"
+    },
+    {
+      "id": "S4221",
+      "airline": "SATA Azores Airlines",
+      "flightNumber": "S4221",
+      "origin": "BOS",
+      "destination": "PDL",
+      "departureTime": "21:30",
+      "arrivalTime": "06:15",
+      "price": 450,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "4h 45m"
+    },
+    {
+      "id": "S4333",
+      "airline": "SATA Azores Airlines",
+      "flightNumber": "S4333",
+      "origin": "YYZ",
+      "destination": "TER",
+      "departureTime": "20:45",
+      "arrivalTime": "07:00",
+      "price": 480,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "6h 15m"
+    },
+    {
+      "id": "UA1234",
+      "airline": "United Airlines",
+      "flightNumber": "UA1234",
+      "origin": "JFK",
+      "destination": "PDL",
+      "departureTime": "22:10",
+      "arrivalTime": "07:20",
+      "price": 520,
+      "status": "Cancelado",
+      "stops": 0,
+      "duration": "5h 10m"
+    },
+    {
+      "id": "BA556",
+      "airline": "British Airways",
+      "flightNumber": "BA556",
+      "origin": "LHR",
+      "destination": "PDL",
+      "departureTime": "07:30",
+      "arrivalTime": "13:45",
+      "price": 210,
+      "status": "A Horas",
+      "stops": 1,
+      "duration": "6h 15m",
+      "layover": "Escala em LIS (1h 40m)"
+    },
+    {
+      "id": "LH987",
+      "airline": "Lufthansa",
+      "flightNumber": "LH987",
+      "origin": "FRA",
+      "destination": "PDL",
+      "departureTime": "09:00",
+      "arrivalTime": "15:30",
+      "price": 290,
+      "status": "A Horas",
+      "stops": 1,
+      "duration": "7h 30m",
+      "layover": "Escala em LIS (2h 10m)"
+    },
+    {
+      "id": "SP401",
+      "airline": "SATA Air Açores",
+      "flightNumber": "SP401",
+      "origin": "PDL",
+      "destination": "HOR",
+      "departureTime": "09:00",
+      "arrivalTime": "09:50",
+      "price": 60,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "0h 50m"
+    },
+    {
+      "id": "SP405",
+      "airline": "SATA Air Açores",
+      "flightNumber": "SP405",
+      "origin": "PDL",
+      "destination": "PIX",
+      "departureTime": "15:00",
+      "arrivalTime": "15:50",
+      "price": 65,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "0h 50m"
+    },
+    {
+      "id": "SP510",
+      "airline": "SATA Air Açores",
+      "flightNumber": "SP510",
+      "origin": "TER",
+      "destination": "PDL",
+      "departureTime": "18:30",
+      "arrivalTime": "19:15",
+      "price": 55,
+      "status": "Embarque",
+      "stops": 0,
+      "duration": "0h 45m"
+    },
+    {
+      "id": "SP620",
+      "airline": "SATA Air Açores",
+      "flightNumber": "SP620",
+      "origin": "FLW",
+      "destination": "PDL",
+      "departureTime": "11:30",
+      "arrivalTime": "13:45",
+      "price": 88,
+      "status": "A Horas",
+      "stops": 1,
+      "duration": "2h 15m",
+      "layover": "Escala na Horta (HOR)"
+    },
+    {
+      "id": "TP1871",
+      "airline": "TAP Air Portugal",
+      "flightNumber": "TP1871",
+      "origin": "LIS",
+      "destination": "TER",
+      "departureTime": "16:00",
+      "arrivalTime": "18:35",
+      "price": 135,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "2h 35m"
+    },
+    {
+      "id": "S4128",
+      "airline": "SATA Azores Airlines",
+      "flightNumber": "S4128",
+      "origin": "PDL",
+      "destination": "BOS",
+      "departureTime": "18:15",
+      "arrivalTime": "20:45",
+      "price": 410,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "5h 30m"
+    },
+    {
+      "id": "FR555",
+      "airline": "Ryanair",
+      "flightNumber": "FR555",
+      "origin": "LIS",
+      "destination": "TER",
+      "departureTime": "06:15",
+      "arrivalTime": "08:50",
+      "price": 55,
+      "status": "A Horas",
+      "stops": 0,
+      "duration": "2h 35m"
+    }
+  ],
+  "hotels": [
+    {
+      "id": "H1",
+      "name": "Azores Royal Garden",
+      "island": "PDL",
+      "stars": 4,
+      "pricePerNight": 120,
+      "image": "https://picsum.photos/400/300?random=1",
+      "description": "Hotel de luxo com jardim japonês e spa."
+    },
+    {
+      "id": "H2",
+      "name": "Terra Nostra Garden",
+      "island": "PDL",
+      "stars": 5,
+      "pricePerNight": 200,
+      "image": "https://picsum.photos/400/300?random=2",
+      "description": "Localizado nas Furnas com piscinas termais."
+    },
+    {
+      "id": "H3",
+      "name": "Terceira Mar Hotel",
+      "island": "TER",
+      "stars": 4,
+      "pricePerNight": 110,
+      "image": "https://picsum.photos/400/300?random=3",
+      "description": "Quartos com vista mar e piscina de água salgada."
+    },
+    {
+      "id": "H4",
+      "name": "Faial Resort Hotel",
+      "island": "HOR",
+      "stars": 4,
+      "pricePerNight": 130,
+      "image": "https://picsum.photos/400/300?random=4",
+      "description": "Com vista privilegiada para a montanha do Pico."
+    },
+    {
+      "id": "H5",
+      "name": "Hotel São Jorge Garden",
+      "island": "SJZ",
+      "stars": 3,
+      "pricePerNight": 90,
+      "image": "https://picsum.photos/400/300?random=50",
+      "description": "Situado sobre as falésias com vista para o Pico."
+    },
+    {
+      "id": "H6",
+      "name": "Graciosa Resort",
+      "island": "GRW",
+      "stars": 4,
+      "pricePerNight": 105,
+      "image": "https://picsum.photos/400/300?random=51",
+      "description": "Resort moderno numa ilha tranquila."
+    },
+    {
+      "id": "H7",
+      "name": "Guest House Comodoro",
+      "island": "CVU",
+      "stars": 3,
+      "pricePerNight": 75,
+      "image": "https://picsum.photos/400/300?random=52",
+      "description": "Alojamento acolhedor na ilha mais pequena."
+    }
+  ],
+  "cars": [
+    {
+      "id": "C1",
+      "model": "Renault Clio",
+      "companyId": "comp1",
+      "type": "Económico",
+      "fuelType": "Gasolina",
+      "pricePerDay": 45,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=10",
+      "isAvailable": true,
+      "description": "car_desc_C1",
+      "features": [
+        "feature_AC",
+        "feature_Bluetooth",
+        "feature_Económico",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C2",
+      "model": "Nissan Qashqai",
+      "companyId": "comp2",
+      "type": "SUV",
+      "fuelType": "Gasóleo",
+      "pricePerDay": 75,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=11",
+      "isAvailable": true,
+      "description": "car_desc_C2",
+      "features": [
+        "feature_GPS",
+        "feature_Camera",
+        "feature_Espaço",
+        "feature_Automático"
+      ]
+    },
+    {
+      "id": "C3",
+      "model": "Fiat 500c",
+      "companyId": "comp3",
+      "type": "Descapotável",
+      "fuelType": "Gasolina",
+      "pricePerDay": 90,
+      "seats": 4,
+      "image": "https://picsum.photos/300/200?random=12",
+      "isAvailable": true,
+      "description": "car_desc_C3",
+      "features": [
+        "feature_Teto",
+        "feature_Estilo",
+        "feature_Estacionar",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C4",
+      "model": "Volkswagen Polo",
+      "companyId": "comp1",
+      "type": "Económico",
+      "fuelType": "Gasolina",
+      "pricePerDay": 48,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=13",
+      "isAvailable": false,
+      "description": "car_desc_C4",
+      "features": [
+        "feature_Sensores",
+        "feature_CarPlay",
+        "feature_Seguro",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C5",
+      "model": "Toyota RAV4",
+      "companyId": "comp2",
+      "type": "SUV",
+      "fuelType": "Híbrido",
+      "pricePerDay": 85,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=14",
+      "isAvailable": false,
+      "description": "car_desc_C5",
+      "features": [
+        "feature_Híbrido",
+        "feature_4x4",
+        "feature_Cruise",
+        "feature_Automático"
+      ]
+    },
+    {
+      "id": "C6",
+      "model": "Mini Cooper Cab",
+      "companyId": "comp3",
+      "type": "Descapotável",
+      "fuelType": "Gasolina",
+      "pricePerDay": 110,
+      "seats": 4,
+      "image": "https://picsum.photos/300/200?random=15",
+      "isAvailable": true,
+      "description": "car_desc_C6",
+      "features": [
+        "feature_Sport",
+        "feature_Sound",
+        "feature_Pele",
+        "feature_Automático"
+      ]
+    },
+    {
+      "id": "C7",
+      "model": "Mercedes Vito",
+      "companyId": "comp1",
+      "type": "Carrinha",
+      "fuelType": "Gasóleo",
+      "pricePerDay": 120,
+      "seats": 9,
+      "image": "https://picsum.photos/300/200?random=16",
+      "isAvailable": true,
+      "description": "car_desc_C7",
+      "features": [
+        "feature_9Lugares",
+        "feature_Bagagem",
+        "feature_ACTraseiro",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C8",
+      "model": "Dacia Duster",
+      "companyId": "comp2",
+      "type": "SUV",
+      "fuelType": "Gasóleo",
+      "pricePerDay": 60,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=17",
+      "isAvailable": true,
+      "description": "car_desc_C8",
+      "features": [
+        "feature_Económico",
+        "feature_Robusto",
+        "feature_Bluetooth",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C9",
+      "model": "Opel Corsa",
+      "companyId": "comp3",
+      "type": "Económico",
+      "fuelType": "Gasolina",
+      "pricePerDay": 42,
+      "seats": 5,
+      "image": "https://picsum.photos/300/200?random=18",
+      "isAvailable": true,
+      "description": "car_desc_C9",
+      "features": [
+        "feature_AC",
+        "feature_USB",
+        "feature_Confortável",
+        "feature_Manual"
+      ]
+    },
+    {
+      "id": "C10",
+      "model": "Ford Transit Custom",
+      "companyId": "comp2",
+      "type": "Carrinha",
+      "fuelType": "Gasóleo",
+      "pricePerDay": 135,
+      "seats": 9,
+      "image": "https://picsum.photos/300/200?random=19",
+      "isAvailable": true,
+      "description": "car_desc_C10",
+      "features": [
+        "feature_9Lugares",
+        "feature_Camera360",
+        "feature_Sync3",
+        "feature_Manual"
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "id": "A1",
+      "title": "Trilho Sete Cidades",
+      "type": "trail",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=30",
+      "description": "Caminhe à volta da cratera das lagoas azul e verde.",
+      "distance": "12km",
+      "duration": "4h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A1_2",
+      "title": "Lagoa do Fogo",
+      "type": "trail",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=130",
+      "description": "Trilho que desce até à praia da lagoa mais selvagem da ilha.",
+      "distance": "11km",
+      "duration": "4h 30m",
+      "difficulty": "Difícil"
+    },
+    {
+      "id": "A1_3",
+      "title": "Salto do Cabrito",
+      "type": "trail",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=131",
+      "description": "Caminhada circular que passa por uma cascata e central hidroelétrica.",
+      "distance": "8.5km",
+      "duration": "3h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A1_4",
+      "title": "Janela do Inferno",
+      "type": "trail",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=132",
+      "description": "Trilho místico que passa por túneis e aquedutos antigos.",
+      "distance": "7.6km",
+      "duration": "2h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A1_5",
+      "title": "Pico da Vara",
+      "type": "trail",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=133",
+      "description": "Subida ao ponto mais alto da ilha de São Miguel.",
+      "distance": "7km",
+      "duration": "3h",
+      "difficulty": "Difícil"
+    },
+    {
+      "id": "A2",
+      "title": "Algar do Carvão",
+      "type": "landscape",
+      "island": "TER",
+      "image": "https://picsum.photos/400/300?random=31",
+      "description": "Desça ao interior de uma antiga chaminé vulcânica."
+    },
+    {
+      "id": "A2_2",
+      "title": "Mistérios Negros",
+      "type": "trail",
+      "island": "TER",
+      "image": "https://picsum.photos/400/300?random=134",
+      "description": "Trilho desafiante entre domos vulcânicos e vegetação densa.",
+      "distance": "5km",
+      "duration": "2h 30m",
+      "difficulty": "Difícil"
+    },
+    {
+      "id": "A2_3",
+      "title": "Rocha do Chambre",
+      "type": "trail",
+      "island": "TER",
+      "image": "https://picsum.photos/400/300?random=135",
+      "description": "Vistas espetaculares sobre a caldeira e o interior da ilha.",
+      "distance": "8.8km",
+      "duration": "3h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A2_4",
+      "title": "Monte Brasil",
+      "type": "trail",
+      "island": "TER",
+      "image": "https://picsum.photos/400/300?random=136",
+      "description": "Caminhada histórica com vistas sobre Angra do Heroísmo.",
+      "distance": "7.5km",
+      "duration": "2h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A2_5",
+      "title": "Baía da Agualva",
+      "type": "trail",
+      "island": "TER",
+      "image": "https://picsum.photos/400/300?random=137",
+      "description": "Trilho costeiro com formações geológicas impressionantes.",
+      "distance": "3.8km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A4_2",
+      "title": "Caldeira do Faial",
+      "type": "trail",
+      "island": "HOR",
+      "image": "https://picsum.photos/400/300?random=138",
+      "description": "Caminhada circular em redor da enorme caldeira central.",
+      "distance": "7km",
+      "duration": "2h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A4_3",
+      "title": "Trilho dos Capelinhos",
+      "type": "trail",
+      "island": "HOR",
+      "image": "https://picsum.photos/400/300?random=139",
+      "description": "Caminhe sobre as cinzas do último vulcão dos Açores.",
+      "distance": "3.2km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A4_4",
+      "title": "Levada do Faial",
+      "type": "trail",
+      "island": "HOR",
+      "image": "https://picsum.photos/400/300?random=140",
+      "description": "Um dos maiores trilhos de levada no arquipélago.",
+      "distance": "24km",
+      "duration": "7h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A4_5",
+      "title": "Morro de Castelo Branco",
+      "type": "trail",
+      "island": "HOR",
+      "image": "https://picsum.photos/400/300?random=141",
+      "description": "Trilho costeiro até à icónica formação rochosa branca.",
+      "distance": "4km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A7",
+      "title": "Subida ao Pico",
+      "type": "trail",
+      "island": "PIX",
+      "image": "https://picsum.photos/400/300?random=142",
+      "description": "O maior desafio: subir ao ponto mais alto de Portugal.",
+      "distance": "8km",
+      "duration": "7h",
+      "difficulty": "Difícil"
+    },
+    {
+      "id": "A7_2",
+      "title": "Caminho das Lagoas",
+      "type": "trail",
+      "island": "PIX",
+      "image": "https://picsum.photos/400/300?random=143",
+      "description": "Trilho pelo planalto central passando por várias lagoas.",
+      "distance": "22km",
+      "duration": "6h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A7_3",
+      "title": "Criação Velha",
+      "type": "trail",
+      "island": "PIX",
+      "image": "https://picsum.photos/400/300?random=144",
+      "description": "Caminhada pelas vinhas Património Mundial da UNESCO.",
+      "distance": "6.9km",
+      "duration": "2h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A7_4",
+      "title": "Ponta da Ilha",
+      "type": "trail",
+      "island": "PIX",
+      "image": "https://picsum.photos/400/300?random=145",
+      "description": "Trilho costeiro na ponta leste da ilha do Pico.",
+      "distance": "10km",
+      "duration": "3h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A7_5",
+      "title": "Calheta de Nesquim",
+      "type": "trail",
+      "island": "PIX",
+      "image": "https://picsum.photos/400/300?random=146",
+      "description": "Trilho histórico ligado à tradição baleeira.",
+      "distance": "12km",
+      "duration": "4h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A4",
+      "title": "Fajãs de São Jorge",
+      "type": "landscape",
+      "island": "SJZ",
+      "image": "https://picsum.photos/400/300?random=33",
+      "description": "Explore as icónicas planícies costeiras formadas por lava."
+    },
+    {
+      "id": "A4_6",
+      "title": "Fajã dos Cubres",
+      "type": "trail",
+      "island": "SJZ",
+      "image": "https://picsum.photos/400/300?random=147",
+      "description": "Descida da Serra do Topo até à Fajã de Santo Cristo.",
+      "distance": "10km",
+      "duration": "3h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A4_7",
+      "title": "Pico da Esperança",
+      "type": "trail",
+      "island": "SJZ",
+      "image": "https://picsum.photos/400/300?random=148",
+      "description": "Caminhada pelo cume da ilha com vistas para as ilhas vizinhas.",
+      "distance": "17km",
+      "duration": "5h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A4_8",
+      "title": "Serra do Topo",
+      "type": "trail",
+      "island": "SJZ",
+      "image": "https://picsum.photos/400/300?random=149",
+      "description": "Trilho de montanha com vistas deslumbrantes sobre as fajãs.",
+      "distance": "5km",
+      "duration": "2h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A4_9",
+      "title": "Fajã de São João",
+      "type": "trail",
+      "island": "SJZ",
+      "image": "https://picsum.photos/400/300?random=150",
+      "description": "Trilho tradicional que liga várias fajãs isoladas.",
+      "distance": "10km",
+      "duration": "3h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A6",
+      "title": "Furna do Enxofre",
+      "type": "poi",
+      "island": "GRW",
+      "image": "https://picsum.photos/400/300?random=35",
+      "description": "Uma caverna vulcânica única com um lago subterrâneo."
+    },
+    {
+      "id": "A6_2",
+      "title": "Caldeira da Graciosa",
+      "type": "trail",
+      "island": "GRW",
+      "image": "https://picsum.photos/400/300?random=151",
+      "description": "Caminhada circular em redor da caldeira da ilha branca.",
+      "distance": "10km",
+      "duration": "3h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A6_3",
+      "title": "Baía da Folga",
+      "type": "trail",
+      "island": "GRW",
+      "image": "https://picsum.photos/400/300?random=152",
+      "description": "Trilho costeiro com vistas para o mar e falésias.",
+      "distance": "4km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A6_4",
+      "title": "Serra Branca",
+      "type": "trail",
+      "island": "GRW",
+      "image": "https://picsum.photos/400/300?random=153",
+      "description": "Caminhada pelo ponto mais alto da Graciosa.",
+      "distance": "8km",
+      "duration": "2h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A6_5",
+      "title": "Porto Afonso",
+      "type": "trail",
+      "island": "GRW",
+      "image": "https://picsum.photos/400/300?random=154",
+      "description": "Trilho que leva às antigas grutas de pescadores.",
+      "distance": "6km",
+      "duration": "2h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A8",
+      "title": "Lagoas das Flores",
+      "type": "trail",
+      "island": "FLW",
+      "image": "https://picsum.photos/400/300?random=155",
+      "description": "Trilho que liga as sete lagoas da ilha das Flores.",
+      "distance": "7km",
+      "duration": "3h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A8_2",
+      "title": "Fajã Grande a Ponta Delgada",
+      "type": "trail",
+      "island": "FLW",
+      "image": "https://picsum.photos/400/300?random=156",
+      "description": "Um dos trilhos mais bonitos e remotos dos Açores.",
+      "distance": "13km",
+      "duration": "5h",
+      "difficulty": "Difícil"
+    },
+    {
+      "id": "A8_3",
+      "title": "Poço do Bacalhau",
+      "type": "trail",
+      "island": "FLW",
+      "image": "https://picsum.photos/400/300?random=157",
+      "description": "Caminhada curta até à impressionante cascata da Fajã Grande.",
+      "distance": "1km",
+      "duration": "30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A8_4",
+      "title": "Rocha dos Bordões",
+      "type": "trail",
+      "island": "FLW",
+      "image": "https://picsum.photos/400/300?random=158",
+      "description": "Trilho geológico junto à famosa formação de prismas basálticos.",
+      "distance": "4km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A8_5",
+      "title": "Lajes das Flores",
+      "type": "trail",
+      "island": "FLW",
+      "image": "https://picsum.photos/400/300?random=159",
+      "description": "Trilho histórico pela costa sul da ilha.",
+      "distance": "8km",
+      "duration": "3h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A5",
+      "title": "Caldeirão do Corvo",
+      "type": "landscape",
+      "island": "CVU",
+      "image": "https://picsum.photos/400/300?random=34",
+      "description": "A impressionante cratera vulcânica no coração do Corvo."
+    },
+    {
+      "id": "A5_2",
+      "title": "Cara do Índio",
+      "type": "trail",
+      "island": "CVU",
+      "image": "https://picsum.photos/400/300?random=160",
+      "description": "Caminhada pela crista da caldeira com vistas incríveis.",
+      "distance": "10km",
+      "duration": "3h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A5_3",
+      "title": "Trilho da Vila",
+      "type": "trail",
+      "island": "CVU",
+      "image": "https://picsum.photos/400/300?random=161",
+      "description": "Caminhada pela única povoação da ilha mais pequena.",
+      "distance": "5km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A5_4",
+      "title": "Farol do Canto",
+      "type": "trail",
+      "island": "CVU",
+      "image": "https://picsum.photos/400/300?random=162",
+      "description": "Trilho até ao farol isolado no norte da ilha.",
+      "distance": "8km",
+      "duration": "3h",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A9",
+      "title": "Pico Alto",
+      "type": "trail",
+      "island": "SMA",
+      "image": "https://picsum.photos/400/300?random=163",
+      "description": "Subida ao ponto mais alto da ilha amarela.",
+      "distance": "6km",
+      "duration": "2h 30m",
+      "difficulty": "Moderado"
+    },
+    {
+      "id": "A9_2",
+      "title": "Barreiro da Faneca",
+      "type": "trail",
+      "island": "SMA",
+      "image": "https://picsum.photos/400/300?random=164",
+      "description": "Caminhada pelo deserto vermelho de Santa Maria.",
+      "distance": "9km",
+      "duration": "3h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A9_3",
+      "title": "Baía dos Anjos",
+      "type": "trail",
+      "island": "SMA",
+      "image": "https://picsum.photos/400/300?random=165",
+      "description": "Trilho costeiro histórico onde Colombo desembarcou.",
+      "distance": "5km",
+      "duration": "1h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A9_4",
+      "title": "Cascata do Aveiro",
+      "type": "trail",
+      "island": "SMA",
+      "image": "https://picsum.photos/400/300?random=166",
+      "description": "Trilho até uma das maiores cascatas de Portugal.",
+      "distance": "2km",
+      "duration": "1h",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A9_5",
+      "title": "Praia Formosa",
+      "type": "trail",
+      "island": "SMA",
+      "image": "https://picsum.photos/400/300?random=167",
+      "description": "Trilho costeiro que liga a vila à praia de areia clara.",
+      "distance": "7km",
+      "duration": "2h 30m",
+      "difficulty": "Fácil"
+    },
+    {
+      "id": "A3",
+      "title": "Plantações de Chá",
+      "type": "culture",
+      "island": "PDL",
+      "image": "https://picsum.photos/400/300?random=32",
+      "description": "Visite as únicas plantações de chá da Europa na Gorreana."
+    }
+  ],
+  "busSchedules": [],
+  "itineraries": [],
+  "users": [
+    {
+      "email": "traveler@azores4you.com",
+      "credits": 100,
+      "profile": {
+        "phone": "+351 912 345 678",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+      },
+      "reservations": [
+        {
+          "id": "RES_1777230225367",
+          "restaurantId": "R1",
+          "restaurantName": "A Tasca",
+          "date": "2026-04-28",
+          "time": "12:30",
+          "guests": 2,
+          "status": "accepted",
+          "tableId": "T1"
+        }
+      ]
+    },
+    {
+      "email": "asd@gmail.com",
+      "credits": 0,
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=asd"
+      },
+      "reservations": [
+        {
+          "id": "RES_TEST_ASD",
+          "restaurantId": "R1",
+          "restaurantName": "A Tasca",
+          "date": "2026-04-29",
+          "time": "20:00",
+          "guests": 4,
+          "status": "finished",
+          "tableId": "T2"
+        }
+      ]
+    },
+    {
+      "email": "all4techazores@gmail.com",
+      "credits": 100,
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=all4tech"
+      },
+      "reservations": [
+        {
+          "id": "RES_1777229366337",
+          "restaurantId": "R1",
+          "restaurantName": "A Tasca",
+          "date": "2026-04-28",
+          "time": "13:00",
+          "guests": 2,
+          "status": "accepted",
+          "tableId": "T1"
+        }
+      ]
+    },
+    {
+      "email": "testes@mail.com",
+      "password": "admin",
+      "credits": 100,
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=testes"
+      },
+      "reservations": []
+    },
+    {
+      "email": "testes@gmail.com",
+      "password": "admin",
+      "name": "Utilizador de Testes",
+      "credits": 100,
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=testes_gmail"
+      },
+      "reservations": []
+    },
+    {
+      "email": "opescador@azores4you.com",
+      "password": "admin",
+      "credits": 0,
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+      },
+      "reservations": []
+    },
+    {
+      "email": "traveler@azores4you.com",
+      "credits": 100,
+      "reservations": [],
+      "profile": {
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=traveler@azores4you.com"
+      }
+    },
+    {
+      "email": "atasca@azorestoyou.com",
+      "password": "admin",
+      "credits": 100,
+      "reservations": [],
+      "profile": {
+        "phone": "",
+        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=atasca@azorestoyou.com"
+      }
+    }
+  ]
+}
