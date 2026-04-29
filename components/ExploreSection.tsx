@@ -4,7 +4,7 @@ import { Restaurant, Activity, ExploreCategory, Language, BusSchedule, Business 
 import { COLORS, ISLAND_LOCALITIES } from '../constants';
 import RestaurantModal from './RestaurantModal';
 import TrailModal from './TrailModal';
-import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush } from 'lucide-react';
 import { getTranslation } from '../translations';
 
 interface ExploreSectionProps {
@@ -25,6 +25,7 @@ interface ExploreSectionProps {
   onToggleFavorite?: (id: string) => void;
   onReserveSuccess?: (resData: any, restName: string, restId: string) => void;
   userProfile?: { email: string; name: string; phone: string };
+  onClose?: () => void;
 }
 
 const ExploreSection: React.FC<ExploreSectionProps> = ({ 
@@ -43,7 +44,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   favoriteRestaurantIds = [],
   onToggleFavorite,
   onReserveSuccess,
-  userProfile
+  userProfile,
+  onClose
 }) => {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Business | null>(null);
   const [selectedTrail, setSelectedTrail] = useState<Activity | null>(null);
@@ -354,12 +356,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const renderBeauty = () => {
     const subcats = [
-      { id: 'all', label: 'Todos' },
-      { id: 'beauty_salon', label: getTranslation(lang, 'beauty_salon') },
-      { id: 'hairdresser', label: getTranslation(lang, 'hairdresser') },
-      { id: 'barber', label: getTranslation(lang, 'barber') },
-      { id: 'manicure', label: getTranslation(lang, 'manicure') },
-      { id: 'massage', label: getTranslation(lang, 'massage') },
+      { id: 'all', label: 'Todos', icon: <LayoutDashboard size={24} /> },
+      { id: 'beauty_salon', label: getTranslation(lang, 'beauty_salon'), icon: <Sparkles size={24} /> },
+      { id: 'hairdresser', label: getTranslation(lang, 'hairdresser'), icon: <Scissors size={24} /> },
+      { id: 'barber', label: getTranslation(lang, 'barber'), icon: <User size={24} /> },
+      { id: 'manicure', label: getTranslation(lang, 'manicure'), icon: <Brush size={24} /> },
+      { id: 'massage', label: getTranslation(lang, 'massage'), icon: <Flower2 size={24} /> },
     ];
 
     const filtered = beauty.filter(b => {
@@ -369,19 +371,27 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     });
 
     return (
-      <div className="space-y-6">
-        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="space-y-10">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 md:gap-6">
           {subcats.map(cat => (
             <button
               key={cat.id}
               onClick={() => setBeautyFilter(cat.id)}
-              className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-                beautyFilter === cat.id 
-                  ? 'bg-pink-600 text-white shadow-lg' 
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-              }`}
+              className="flex flex-col items-center gap-3 group transition-all"
             >
-              {cat.label}
+              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
+                ${beautyFilter === cat.id 
+                  ? 'bg-pink-600 text-white shadow-pink-200 shadow-xl border-pink-500 scale-105' 
+                  : 'bg-white text-slate-400 border-slate-100 group-hover:border-pink-200 group-hover:text-pink-400 group-hover:shadow-md'
+                }`}
+              >
+                {cat.icon}
+              </div>
+              <span className={`text-[10px] md:text-xs font-black uppercase tracking-tight text-center leading-tight transition-colors
+                ${beautyFilter === cat.id ? 'text-pink-600' : 'text-slate-500 group-hover:text-slate-800'}`}
+              >
+                {cat.label}
+              </span>
             </button>
           ))}
         </div>
@@ -408,6 +418,29 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Category Selection Header (Photo 1 Style) */}
+      <div className="flex flex-col items-center mb-8">
+         <div className="relative group">
+            <div 
+              className="w-20 h-20 rounded-3xl text-white shadow-2xl flex items-center justify-center relative transform transition-transform group-hover:scale-105" 
+              style={{ backgroundColor: category === 'beauty' ? '#FF2D78' : category === 'restaurants' ? COLORS.secondary : COLORS.primary }}
+            >
+              {getCategoryIcon(category)}
+              {onClose && (
+                <button 
+                  onClick={onClose}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors border border-slate-100"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="text-center mt-3">
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800">{getCategoryTitle(category)}</span>
+            </div>
+         </div>
+      </div>
+
       <div className="flex items-center gap-3 mb-8">
         <div 
           className="p-3 rounded-xl text-white shadow-lg" 

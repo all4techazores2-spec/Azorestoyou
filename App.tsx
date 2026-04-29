@@ -1264,6 +1264,7 @@ const App: React.FC = () => {
                         status: 'pending' 
                       }]);
                     }}
+                    onClose={() => setExploreCategory(null)}
                   />
                 )}
               </div>
