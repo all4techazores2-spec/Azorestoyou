@@ -759,7 +759,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                                  {restaurant.dishes.map((dish, idx) => {
+                                  {(restaurant.dishes || []).map((dish, idx) => {
                                     const orderItem = orderItems.find(item => item.dish.name === dish.name);
                                     const isSelected = !!orderItem;
                                     

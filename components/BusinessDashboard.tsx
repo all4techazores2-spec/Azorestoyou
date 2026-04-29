@@ -1949,7 +1949,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {business.dishes.map((dish, idx) => (
+                 {(business.dishes || []).map((dish, idx) => (
                    <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
                       <div className="h-48 relative overflow-hidden bg-slate-100">
                         {dish.image ? (

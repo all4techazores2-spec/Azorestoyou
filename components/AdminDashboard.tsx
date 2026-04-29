@@ -37,7 +37,7 @@ interface AdminDashboardProps {
 type Tab = 'restaurants' | 'shops' | 'beauty' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants, shops, beauty, activities, flights, hotels, cars, busSchedules,
+  restaurants = [], shops = [], beauty = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
   onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
   onLogout, onFullSync,
   language = 'pt'
@@ -66,13 +66,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // -- ACCOUNT MANAGEMENT HANDLERS --
   const handleUpdateAdmin = (restId: string) => {
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, adminEmail: adminFormData.email, adminPassword: adminFormData.password };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndReplace = (list: any[]) => list.map(r => r.id === restId ? { ...r, adminEmail: adminFormData.email, adminPassword: adminFormData.password } : r);
+    onUpdateRestaurants(findAndReplace(restaurants));
+    onUpdateRestaurants(findAndReplace(shops));
+    onUpdateRestaurants(findAndReplace(beauty));
     setEditingAdminId(null);
     alert('Dados de administrador atualizados com sucesso!');
   };
@@ -82,13 +79,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       id: `STF_${Date.now()}`,
       ...staffFormData
     };
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, staff: [...(r.staff || []), newStaff] };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndAdd = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: [...(r.staff || []), newStaff] } : r);
+    onUpdateRestaurants(findAndAdd(restaurants));
+    onUpdateRestaurants(findAndAdd(shops));
+    onUpdateRestaurants(findAndAdd(beauty));
     setAddingStaffToId(null);
     setStaffFormData({ name: '', email: '', password: '', role: 'waiter' });
     alert('Funcionário adicionado com sucesso!');
@@ -96,13 +90,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleRemoveStaff = (restId: string, staffId: string) => {
     if (!window.confirm('Remover este funcionário?')) return;
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, staff: (r.staff || []).filter((s: any) => s.id !== staffId) };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndRemove = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: (r.staff || []).filter((s: any) => s.id !== staffId) } : r);
+    onUpdateRestaurants(findAndRemove(restaurants));
+    onUpdateRestaurants(findAndRemove(shops));
+    onUpdateRestaurants(findAndRemove(beauty));
   };
   
   const handleAddSupplier = (restId: string, data: any) => {
@@ -111,38 +102,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ...data,
       password: Math.random().toString(36).slice(-8)
     };
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, suppliers: [...(r.suppliers || []), newSup] };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndAddSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: [...(r.suppliers || []), newSup] } : r);
+    onUpdateRestaurants(findAndAddSup(restaurants));
+    onUpdateRestaurants(findAndAddSup(shops));
+    onUpdateRestaurants(findAndAddSup(beauty));
     setAddingSupplierToId(null);
     alert('Fornecedor adicionado com sucesso!');
   };
 
   const handleUpdateSupplier = (restId: string, supId: string, data: any) => {
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, suppliers: r.suppliers?.map(s => s.id === supId ? { ...s, ...data } : s) };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndUpdateSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: r.suppliers?.map(s => s.id === supId ? { ...s, ...data } : s) } : r);
+    onUpdateRestaurants(findAndUpdateSup(restaurants));
+    onUpdateRestaurants(findAndUpdateSup(shops));
+    onUpdateRestaurants(findAndUpdateSup(beauty));
     setEditingSupplierId(null);
     alert('Fornecedor atualizado com sucesso!');
   };
 
   const handleRemoveSupplier = (restId: string, supId: string) => {
     if (!window.confirm('Remover este fornecedor?')) return;
-    const updatedRestaurants = restaurants.map(r => {
-      if (r.id === restId) {
-        return { ...r, suppliers: (r.suppliers || []).filter((s: any) => s.id !== supId) };
-      }
-      return r;
-    });
-    onUpdateRestaurants(updatedRestaurants);
+    const findAndRemoveSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: (r.suppliers || []).filter((s: any) => s.id !== supId) } : r);
+    onUpdateRestaurants(findAndRemoveSup(restaurants));
+    onUpdateRestaurants(findAndRemoveSup(shops));
+    onUpdateRestaurants(findAndRemoveSup(beauty));
   };
 
   // -- CRUD HANDLERS --
@@ -680,7 +662,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
  
                 <div className="grid grid-cols-1 gap-6">
-                   {restaurants.map(rest => (
+                   {[...restaurants, ...shops, ...beauty].map(rest => (
                      <div key={rest.id} className="bg-white p-8 rounded-[3rem] shadow-sm space-y-6 border border-slate-100">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-100">
                             <div className="flex items-center gap-4">

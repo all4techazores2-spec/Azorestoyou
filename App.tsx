@@ -251,18 +251,10 @@ const App: React.FC = () => {
         })));
       }
 
-      // 7. Carros
+      // 9. Carros
       const carResp = await fetch(`${API_BASE_URL}/api/cars`);
       if (carResp.ok) setCars(await carResp.json());
       else setCars(getCars(language));
-
-      // 8. Lojas Regionais
-      const shopsResp = await fetch(`${API_BASE_URL}/api/shops`);
-      if (shopsResp.ok) setShops(await shopsResp.json());
-
-      // 9. Beleza e Bem-estar
-      const beautyResp = await fetch(`${API_BASE_URL}/api/beauty`);
-      if (beautyResp.ok) setBeauty(await beautyResp.json());
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
     }
