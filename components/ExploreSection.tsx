@@ -316,7 +316,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
-  const renderBusiness = (data: any[]) => {
+  const renderBusiness = (data: Business[]) => {
     const filtered = data.filter(b => isAllIslands || b.island === targetIsland);
     
     if (filtered.length === 0) return renderEmptyState();

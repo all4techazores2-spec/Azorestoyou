@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send
+  QrCode, Printer, ArrowRight, Send, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -156,7 +156,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         const currentGallery = business.gallery || [];
         onUpdateBusiness({ ...business, gallery: [...currentGallery, data.url] });
       } else if (type === 'dish' && dishIndex !== undefined) {
-        const updatedDishes = [...business.dishes];
+        const updatedDishes = [...(business.dishes || [])];
         updatedDishes[dishIndex] = { ...updatedDishes[dishIndex], image: data.url };
         onUpdateBusiness({ ...business, dishes: updatedDishes });
       }
@@ -923,12 +923,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar whitespace-nowrap">
           {([
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
-            { id: 'tables', label: isBeauty ? 'Agenda Diária' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
-            { id: 'kitchen', label: isShop ? 'Vendas' : 'Cozinha', icon: isShop ? <ShoppingBag size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: isBeauty && !isStaff },
-            { id: 'pos', label: 'POS Venda', icon: <ShoppingBag size={20} /> },
+            { id: 'tables', label: isBeauty ? 'Agenda Diária' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop || isBeauty },
+            { id: 'kitchen', label: isShop ? 'Vendas' : 'Cozinha', icon: isShop ? <ShoppingBag size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop) && !isStaff },
+            { id: 'pos', label: isShop ? 'Caixa / Venda' : 'POS Venda', icon: <ShoppingBag size={20} /> },
             { id: 'dishes', label: isBeauty ? 'Serviços' : isShop ? 'Catálogo' : 'Ementa', icon: isBeauty ? <Sparkles size={18} /> : <Edit size={20} />, hideForStaff: true },
-            { id: 'products', label: 'Produtos/Stock', icon: <ShoppingBag size={20} />, hideForStaff: true },
-            { id: 'updates', label: 'Comunicados', icon: <Megaphone size={20} />, hideForStaff: true },
+            { id: 'products', label: isShop ? 'Stock / Inventário' : 'Produtos/Stock', icon: <ShoppingBag size={20} />, hideForStaff: true },
+            { id: 'updates', label: isShop ? 'Promoções' : 'Comunicados', icon: <Megaphone size={20} />, hideForStaff: true },
             { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },

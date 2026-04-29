@@ -111,7 +111,7 @@ const App: React.FC = () => {
   };
 
   const [userCredits, setUserCredits] = useState(100);
-  const [myReservations, setMyReservations] = useState<{id: string, restaurantName: string, status: string}[]>([]);
+  const [myReservations, setMyReservations] = useState<any[]>([]);
 
 
   // Initialize other static data on language change
@@ -228,6 +228,28 @@ const App: React.FC = () => {
       const hotelResp = await fetch(`${API_BASE_URL}/api/hotels`);
       if (hotelResp.ok) setHotels(await hotelResp.json());
       else setHotels(getHotels(language));
+
+      // 7. Lojas Regionais
+      const shopsResp = await fetch(`${API_BASE_URL}/api/shops`);
+      if (shopsResp.ok) {
+        const shopsData = await shopsResp.json();
+        setShops(shopsData.map((s: any) => ({
+          ...s,
+          businessType: 'shop',
+          image: s.image?.startsWith('/imagens') ? `${API_BASE_URL}${s.image}` : s.image
+        })));
+      }
+
+      // 8. Serviços de Beleza
+      const beautyResp = await fetch(`${API_BASE_URL}/api/beauty`);
+      if (beautyResp.ok) {
+        const beautyData = await beautyResp.json();
+        setBeauty(beautyData.map((b: any) => ({
+          ...b,
+          businessType: 'beauty',
+          image: b.image?.startsWith('/imagens') ? `${API_BASE_URL}${b.image}` : b.image
+        })));
+      }
 
       // 7. Carros
       const carResp = await fetch(`${API_BASE_URL}/api/cars`);
@@ -747,6 +769,8 @@ const App: React.FC = () => {
       <AdminDashboard 
         // Data
         restaurants={restaurants}
+        shops={shops}
+        beauty={beauty}
         activities={activities}
         flights={flights}
         hotels={hotels}
@@ -761,11 +785,30 @@ const App: React.FC = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(updatedList),
             });
-            if (res.ok) alert('✅ Dados gravados com sucesso no servidor!');
-            else alert('❌ Erro ao gravar no servidor: ' + res.statusText);
-          } catch (error) {
-            alert('❌ Falha total na ligação ao servidor. Verifique se o backend está a correr.');
-          }
+            if (res.ok) alert('✅ Restaurantes gravados com sucesso!');
+          } catch (error) {}
+        }}
+        onUpdateShops={async (updatedList) => {
+          setShops(updatedList);
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/shops/bulk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedList),
+            });
+            if (res.ok) alert('✅ Lojas gravadas com sucesso!');
+          } catch (error) {}
+        }}
+        onUpdateBeauty={async (updatedList) => {
+          setBeauty(updatedList);
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/beauty/bulk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedList),
+            });
+            if (res.ok) alert('✅ Serviços de Beleza gravados com sucesso!');
+          } catch (error) {}
         }}
         onUpdateActivities={setActivities}
         onUpdateFlights={setFlights}
@@ -781,6 +824,8 @@ const App: React.FC = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 restaurants,
+                shops,
+                beauty,
                 activities,
                 flights,
                 hotels,
@@ -843,9 +888,12 @@ const App: React.FC = () => {
 
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
-    const currentBusiness = (restaurants || []).find(r => r.id === currentBusinessId);
+    const currentBusiness = [...(restaurants || []), ...(shops || []), ...(beauty || [])].find(b => b.id === currentBusinessId);
     
     if (currentBusiness) {
+      const bType = currentBusiness.businessType || 'restaurants';
+      const bEndpoint = bType === 'restaurant' ? 'restaurants' : bType; // Handle pluralization if needed
+
       return (
         <ErrorBoundary>
           <BusinessDashboard 
@@ -861,21 +909,27 @@ const App: React.FC = () => {
               setCurrentBusinessId(null); 
             }}
             onSync={(updated) => {
-               setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
-               fetch(`${API_BASE_URL}/api/restaurants/${updated.id}`, {
+               // Update local state
+               if (bType === 'shop') setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
+               else if (bType === 'beauty') setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
+               else setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+
+               fetch(`${API_BASE_URL}/api/${bEndpoint}/${updated.id}`, {
                  method: 'PUT',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify(updated),
                }).then(() => alert("✅ Sincronizado!"));
             }}
             onUpdateBusiness={async (updated) => {
-              setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+              if (bType === 'shop') setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
+              else if (bType === 'beauty') setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
+              else setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
               
               // Desnormalizar caminhos antes de enviar para o servidor (manter relativo no db.json)
               const denormalized = {
                 ...updated,
                 image: updated.image?.replace(API_BASE_URL, ''),
-                gallery: updated.gallery?.map(img => img.replace(API_BASE_URL, '')),
+                gallery: updated.gallery?.map(img => typeof img === 'string' ? img.replace(API_BASE_URL, '') : img),
                 menu: updated.menu?.map(item => ({
                   ...item,
                   image: item.image?.replace(API_BASE_URL, '')
@@ -883,7 +937,7 @@ const App: React.FC = () => {
               };
 
               try {
-                await fetch(`${API_BASE_URL}/api/restaurants/${updated.id}`, {
+                await fetch(`${API_BASE_URL}/api/${bEndpoint}/${updated.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(denormalized),

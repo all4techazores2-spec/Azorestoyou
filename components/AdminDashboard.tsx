@@ -12,6 +12,8 @@ import {
 
 interface AdminDashboardProps {
   restaurants: Restaurant[];
+  shops: Restaurant[];
+  beauty: Restaurant[];
   activities: Activity[];
   flights: Flight[];
   hotels: Hotel[];
@@ -19,6 +21,8 @@ interface AdminDashboardProps {
   busSchedules: BusSchedule[];
   
   onUpdateRestaurants: (newRestaurants: Restaurant[]) => void;
+  onUpdateShops: (newShops: Restaurant[]) => void;
+  onUpdateBeauty: (newBeauty: Restaurant[]) => void;
   onUpdateActivities: (newActivities: Activity[]) => void;
   onUpdateFlights: (newFlights: Flight[]) => void;
   onUpdateHotels: (newHotels: Hotel[]) => void;
@@ -30,11 +34,11 @@ interface AdminDashboardProps {
   language?: Language;
 }
 
-type Tab = 'restaurants' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
+type Tab = 'restaurants' | 'shops' | 'beauty' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants, activities, flights, hotels, cars, busSchedules,
-  onUpdateRestaurants, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
+  restaurants, shops, beauty, activities, flights, hotels, cars, busSchedules,
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
   onLogout, onFullSync,
   language = 'pt'
 }) => {
@@ -284,25 +288,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     switch (activeTab) {
       case 'restaurants':
+      case 'shops':
+      case 'beauty':
         return (
           <>
             {commonInput(t('item_name'), 'name')}
             {islandSelect()}
-            {commonInput(t('item_price'), 'rating', 'number')}
-            {commonInput('Cuisine', 'cuisine')}
-            {commonInput(t('admin_email'), 'adminEmail')}
-            {commonInput(t('admin_password'), 'adminPassword', 'password')}
+            {activeTab === 'restaurants' && commonInput(t('field_cuisine'), 'cuisine')}
+            {activeTab !== 'restaurants' && commonInput('Subcategoria', 'subcategory')}
+            {commonInput(t('item_rating'), 'rating', 'number')}
+            {commonInput(t('item_reviews'), 'reviews', 'number')}
             {commonInput(t('item_image'), 'image', 'text', true)}
+            {commonInput('Admin Email', 'adminEmail')}
+            {commonInput('Admin Password', 'adminPassword')}
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
             </div>
             
-            {/* Dishes Section */}
+            {/* Dishes/Services Section */}
             <div className="md:col-span-2 border-t pt-4 mt-2">
               <div className="flex justify-between items-center mb-2">
-                 <h4 className="font-bold">{t('dishes_management')}</h4>
-                 <button type="button" onClick={addDish} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">+ {t('add_dish')}</button>
+                 <h4 className="font-bold">{activeTab === 'beauty' ? 'Serviços' : activeTab === 'shops' ? 'Produtos em Destaque' : t('dishes_management')}</h4>
+                 <button type="button" onClick={addDish} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">+ {activeTab === 'beauty' ? 'Serviço' : activeTab === 'shops' ? 'Produto' : t('add_dish')}</button>
               </div>
               <div className="space-y-2">
                 {editingItem.dishes?.map((dish: Dish, idx: number) => (
@@ -425,6 +433,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const getListItems = () => {
     switch (activeTab) {
       case 'restaurants': return restaurants;
+      case 'shops': return shops;
+      case 'beauty': return beauty;
       case 'activities': return activities;
       case 'flights': return flights;
       case 'hotels': return hotels;
@@ -464,6 +474,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
           <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'restaurants' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <Utensils className="w-5 h-5" /> {t('manage_restaurants')}
+          </button>
+          <button onClick={() => { setActiveTab('shops'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'shops' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <ShoppingBag className="w-5 h-5" /> Lojas Regionais
+          </button>
+          <button onClick={() => { setActiveTab('beauty'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'beauty' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Sparkles className="w-5 h-5" /> Beleza Homem/Mulher
           </button>
           <button onClick={() => { setActiveTab('activities'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'activities' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <Mountain className="w-5 h-5" /> {t('manage_activities')}

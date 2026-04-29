@@ -219,12 +219,12 @@ export interface Restaurant {
   id: string;
   name: string;
   island: string;
-  cuisine: string;
+  cuisine?: string;
   rating: number;
   reviews: number;
   image: string;
   description: string;
-  dishes: Dish[];
+  dishes?: Dish[];
   products?: Product[];
   tables?: RestaurantTable[];
   reservations?: Reservation[];
