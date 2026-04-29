@@ -70,9 +70,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // -- ACCOUNT MANAGEMENT HANDLERS --
   const handleUpdateAdmin = (restId: string) => {
     const findAndReplace = (list: any[]) => list.map(r => r.id === restId ? { ...r, adminEmail: adminFormData.email, adminPassword: adminFormData.password } : r);
-    onUpdateRestaurants(findAndReplace(restaurants));
-    onUpdateRestaurants(findAndReplace(shops));
-    onUpdateRestaurants(findAndReplace(beauty));
+    
+    // Logic: Identify which list the business belongs to and update only that list
+    if (restaurants.some(r => r.id === restId)) {
+      onUpdateRestaurants(findAndReplace(restaurants));
+    } else if (shops.some(s => s.id === restId)) {
+      onUpdateShops(findAndReplace(shops));
+    } else if (beauty.some(b => b.id === restId)) {
+      onUpdateBeauty(findAndReplace(beauty));
+    }
+    
     setEditingAdminId(null);
     alert('Dados de administrador atualizados com sucesso!');
   };

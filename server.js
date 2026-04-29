@@ -563,7 +563,7 @@ app.post('/api/sync-all', (req, res) => {
     const db = readDB();
     if (restaurants) {
         db.restaurants = restaurants;
-        syncRestaurantUsers(db);
+        syncBusinessUsers(db);
         writeDB(db);
         res.json({ success: true });
     } else {
