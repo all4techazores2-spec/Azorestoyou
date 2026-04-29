@@ -26,7 +26,7 @@ import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
 import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle } from 'lucide-react';
 import { getTranslation } from './translations';
-import { motion, AnimatePresence } from 'motion/react';
+// import { motion, AnimatePresence } from 'motion/react';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {

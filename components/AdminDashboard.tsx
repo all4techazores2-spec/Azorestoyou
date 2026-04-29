@@ -6,8 +6,8 @@ import { getTranslation } from '../translations';
 import { 
   Utensils, Mountain, Edit, Trash2, Plus, Save, X, LogOut, 
   LayoutDashboard, Plane, BedDouble, Car as CarIcon, Bus, 
-  Image as ImageIcon, Lock, Users, CloudIcon as CloudSync,
-  ShoppingBag, Mail, MapPin, Phone
+  Image as ImageIcon, Lock, Users, Cloud as CloudSync,
+  ShoppingBag, Mail, MapPin, Phone, Sparkles
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -213,11 +213,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           description: '', 
           dishes: [],
           adminEmail: '',
-          adminPassword: ''
+          adminPassword: '',
+          subcategory: '',
+          services: []
         };
         break;
       case 'activities':
-        newItem = { id: `A${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '' };
+        newItem = { id: `A${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado' };
         break;
       case 'flights':
         newItem = { id: `F${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
@@ -226,7 +228,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         newItem = { id: `H${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '' };
         break;
       case 'cars':
-        newItem = { id: `C${timestamp}`, model: '', company: '', type: 'Económico', pricePerDay: 0, image: '', seats: 5 };
+        newItem = { id: `C${timestamp}`, model: '', companyId: '', type: 'Económico', fuelType: 'Gasolina', pricePerDay: 0, image: '', seats: 5, isAvailable: true, description: '', features: [] };
         break;
       case 'buses':
         newItem = { id: `B${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };

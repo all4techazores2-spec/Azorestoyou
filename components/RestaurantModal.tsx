@@ -495,19 +495,20 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </div>
 
                 <h4 className="font-black text-slate-300 text-[10px] uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                  {getTranslation(currentLang, 'signature_dishes')}
+                  {isBeauty ? 'Serviços Disponíveis' : isShop ? 'Produtos em Destaque' : getTranslation(currentLang, 'signature_dishes')}
                   <div className="h-[1px] flex-1 bg-slate-100" />
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {(restaurant.dishes || []).map((dish, idx) => (
+                  {/* Dynamic list based on business type */}
+                  {(isBeauty ? (restaurant.services || []) : isShop ? (restaurant.products || []) : (restaurant.dishes || [])).map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-all group">
                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                         <img src={dish.image} alt={dish.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                         <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                        </div>
                        <div className="min-w-0">
-                         <p className="font-bold text-slate-800 text-xs truncate">{dish.name}</p>
-                         <p className="text-[10px] text-slate-400 font-black">€{dish.price}</p>
+                         <p className="font-bold text-slate-800 text-xs truncate">{item.name}</p>
+                         <p className="text-[10px] text-slate-400 font-black">€{item.price}</p>
                        </div>
                     </div>
                   ))}
