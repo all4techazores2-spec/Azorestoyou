@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Plane, BedDouble, Car as CarIcon, Bus, 
   Image as ImageIcon, Lock, Users, Cloud as CloudSync,
   ShoppingBag, Mail, MapPin, Phone, Sparkles,
-  Scissors, User, Flower2, LayoutDashboard, Brush, ArrowRight
+  Scissors, User, Flower2, Brush, ArrowRight
 } from 'lucide-react';
 
 interface AdminDashboardProps {

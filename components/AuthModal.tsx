@@ -57,7 +57,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
 
       if (business) {
         setIsLoading(false);
-        onSuccess(false, business.id, normalizedEmail, business.businessType === 'restaurant' ? 'manager' : 'business');
+        const isRestaurant = restaurants.some(r => r.id === business.id);
+        onSuccess(false, business.id, normalizedEmail, isRestaurant ? 'manager' : 'business');
         return;
       }
 
