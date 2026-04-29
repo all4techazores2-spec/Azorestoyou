@@ -12,6 +12,8 @@ const DATA: Record<Language, {
   hotels: Hotel[];
   restaurants: Restaurant[];
   activities: Activity[];
+  beauty: Restaurant[];
+  shops: Restaurant[];
 }> = {
   pt: {
     airports: [
@@ -49,6 +51,7 @@ const DATA: Record<Language, {
           { name: 'Alcatra', description: 'Prato de carne cozinhado lentamente em alguidar de barro.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
         ]
       }
+    ],
     activities: [
       { id: 'A1', title: 'Trilho Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Caminhe à volta da cratera das lagoas azul e verde.', distance: '12km', duration: '4h', difficulty: 'Moderado' },
       { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Desça ao interior de uma antiga chaminé vulcânica.' },
@@ -223,10 +226,6 @@ const DATA: Record<Language, {
     ],
     shops: [
       { id: 'S1', name: 'Teeladen', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Regionale Produkte e Handwerkskunst.' },
-    ]
-  },
-};
-lkanschornstein hinab.' },
     ]
   },
 };
