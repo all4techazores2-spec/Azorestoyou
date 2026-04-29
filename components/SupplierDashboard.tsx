@@ -7,7 +7,7 @@ import {
   Filter, Bell, User, Users, Plus, Trash2, Edit, Calendar, Lock, ShieldCheck
 } from 'lucide-react';
 import { getTranslation } from '../translations';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SupplierDashboardProps {
   allRestaurants: Restaurant[];

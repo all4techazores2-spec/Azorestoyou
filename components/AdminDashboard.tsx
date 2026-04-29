@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Restaurant, Activity, Language, Dish, Flight, Hotel, Car, BusSchedule } from '../types';
 import { getTranslation } from '../translations';
 import { 
