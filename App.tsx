@@ -63,11 +63,10 @@ const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
 
-  // Detetar automaticamente se estamos em localhost ou no IP da rede
-  // Se estivermos no Netlify (azorestoyou.pt), o backend está no Render
+  // Detetar automaticamente se estamos em localhost ou no Render
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? (window.location.port === '3000' ? 'http://localhost:3001' : window.location.origin)
-    : 'https://azorestoyou.onrender.com';
+    ? 'http://localhost:3001'
+    : 'https://azores4you.onrender.com'; // <--- Verifique se este link condiz com o do seu painel Render
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
