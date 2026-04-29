@@ -5,8 +5,8 @@
       "name": "A Tasca",
       "island": "PDL",
       "cuisine": "Regional",
-      "rating": 3.9,
-      "reviews": 18,
+      "rating": 4.8,
+      "reviews": 2450,
       "image": "/imagens/restaurantes/R1/image-1777229185430-304755087.jpg",
       "description": "Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.",
       "adminEmail": "atasca@azorestoyou.com",
@@ -18,18 +18,31 @@
       "latitude": "37.7408",
       "longitude": "-25.6686",
       "tables": [
-        { "id": "T1", "status": "available", "capacity": 2, "number": 1, "currentTab": [], "alertStatus": "none" },
+        { "id": "T1", "status": "available", "capacity": 2, "number": 1, "currentTab": [], "reservationTime": "14:30", "alertStatus": "none" },
         { "id": "T2", "status": "available", "capacity": 2, "number": 2, "currentTab": [] },
-        { "id": "T3", "status": "available", "capacity": 4, "number": 3, "currentTab": [], "alertStatus": "none" }
+        { "id": "T3", "status": "available", "capacity": 4, "number": 3, "currentTab": [] },
+        { "id": "T4", "status": "available", "capacity": 4, "number": 4, "currentTab": [] },
+        { "id": "T5", "status": "available", "capacity": 6, "number": 5, "currentTab": [] },
+        { "id": "T6", "status": "available", "capacity": 2, "number": 6, "currentTab": [] }
       ],
       "kitchenOrders": [],
       "reservations": [],
       "staff": [
         { "id": "S1", "name": "João", "email": "joao@atasca.pt", "password": "123", "role": "waiter" }
       ],
+      "updates": [
+        { "id": "UPD_1", "type": "news", "title": "Novo Prato!", "description": "Venha provar a nossa mais recente novidade: Bife de Atum com sésamo." }
+      ],
       "dishes": [
         { "name": "Bife de Casa", "description": "Bife da Casa fresco com sementes de sésamo.", "price": 18, "image": "/imagens/restaurantes/R1/image-1777229207708-244692429.jpg" },
-        { "name": "Lapas", "description": "Lapas Grelhadas", "price": 22, "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg" }
+        { "name": "Lapas", "description": "Lapas Grelhadas", "price": 22, "image": "/imagens/restaurantes/R1/image-1777229235263-925365155.jpg" },
+        { "name": "Queijos diversos", "description": "Queijos diversos", "price": 6, "image": "/imagens/restaurantes/R1/image-1777229253149-350708311.jpg" }
+      ],
+      "gallery": [
+        "/imagens/restaurantes/R1/image-1777229190225-649461264.jpg",
+        "/imagens/restaurantes/R1/image-1777229193191-512209108.jpg",
+        "/imagens/restaurantes/R1/image-1777229196192-733127430.jpg",
+        "/imagens/restaurantes/R1/image-1777229198872-346852467.jpg"
       ]
     },
     {
@@ -43,7 +56,9 @@
       "description": "O melhor peixe fresco na Terceira, localizado junto ao porto.",
       "adminEmail": "pescador@azores4you.com",
       "adminPassword": "admin",
-      "tables": [],
+      "tables": [
+        { "id": "T1", "status": "available", "capacity": 2, "number": 1, "currentTab": [] }
+      ],
       "kitchenOrders": [],
       "reservations": [],
       "staff": [],
@@ -51,19 +66,26 @@
     }
   ],
   "flights": [
-    { "id": "TP1869", "airline": "TAP Air Portugal", "flightNumber": "TP1869", "origin": "LIS", "destination": "PDL", "departureTime": "08:00", "arrivalTime": "10:25", "price": 120, "status": "A Horas", "stops": 0, "duration": "2h 25m" }
+    { "id": "TP1869", "airline": "TAP Air Portugal", "flightNumber": "TP1869", "origin": "LIS", "destination": "PDL", "departureTime": "08:00", "arrivalTime": "10:25", "price": 120, "status": "A Horas", "stops": 0, "duration": "2h 25m" },
+    { "id": "S4121", "airline": "SATA Azores Airlines", "flightNumber": "S4121", "origin": "LIS", "destination": "PDL", "departureTime": "14:30", "arrivalTime": "16:55", "price": 145, "status": "A Horas", "stops": 0, "duration": "2h 25m" },
+    { "id": "FR2345", "airline": "Ryanair", "flightNumber": "FR2345", "origin": "LIS", "destination": "PDL", "departureTime": "21:00", "arrivalTime": "23:25", "price": 65, "status": "Atrasado", "stops": 0, "duration": "2h 25m" }
   ],
-  "hotels": [],
-  "cars": [],
-  "activities": [],
+  "hotels": [
+    { "id": "H1", "name": "Azores Royal Garden", "island": "PDL", "stars": 4, "pricePerNight": 120, "image": "https://picsum.photos/400/300?random=1", "description": "Hotel de luxo com jardim japonês e spa." },
+    { "id": "H2", "name": "Terra Nostra Garden", "island": "PDL", "stars": 5, "pricePerNight": 200, "image": "https://picsum.photos/400/300?random=2", "description": "Localizado nas Furnas com piscinas termais." },
+    { "id": "H3", "name": "Terceira Mar Hotel", "island": "TER", "stars": 4, "pricePerNight": 110, "image": "https://picsum.photos/400/300?random=3", "description": "Quartos com vista mar e piscina de água salgada." }
+  ],
+  "cars": [
+    { "id": "C1", "model": "Renault Clio", "companyId": "comp1", "type": "Económico", "fuelType": "Gasolina", "pricePerDay": 45, "seats": 5, "image": "https://picsum.photos/300/200?random=10", "isAvailable": true },
+    { "id": "C2", "model": "Nissan Qashqai", "companyId": "comp2", "type": "SUV", "fuelType": "Gasóleo", "pricePerDay": 75, "seats": 5, "image": "https://picsum.photos/300/200?random=11", "isAvailable": true }
+  ],
+  "activities": [
+    { "id": "A1", "title": "Trilho Sete Cidades", "type": "trail", "island": "PDL", "image": "https://picsum.photos/400/300?random=30", "description": "Caminhe à volta da cratera das lagoas azul e verde.", "distance": "12km", "duration": "4h", "difficulty": "Moderado" },
+    { "id": "A2", "title": "Algar do Carvão", "type": "landscape", "island": "TER", "image": "https://picsum.photos/400/300?random=31", "description": "Desça ao interior de uma antiga chaminé vulcânica." }
+  ],
   "busSchedules": [],
   "itineraries": [],
   "users": [
-    {
-      "email": "admin@azores4you.com",
-      "password": "admin",
-      "role": "admin",
-      "credits": 1000
-    }
+    { "email": "admin@azores4you.com", "password": "admin", "role": "admin", "credits": 1000 }
   ]
 }
