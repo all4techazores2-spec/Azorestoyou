@@ -12,11 +12,13 @@ interface AuthModalProps {
   onGuest?: () => void; // Optional: Only used in Landing Page
   language?: Language;
   restaurants?: Restaurant[];
+  shops?: Restaurant[];
+  beauty?: Restaurant[];
 }
 
 type AuthMode = 'login' | 'register';
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [] }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [], shops = [], beauty = [] }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const currentLang = language as Language;
@@ -45,24 +47,31 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
         return;
       }
 
-      // 2. Verificação de Restaurantes (Dados do Servidor)
-      if (restaurants.length === 0) {
-        setIsLoading(false);
-        setError("A carregar base de dados... Tente novamente em 1 segundo.");
-        return;
-      }
-
-      // 2.1 Verificação de Donos de Restaurantes
-      const business = restaurants.find(r => 
+      // 2. Verificação de Negócios (Dados do Servidor)
+      const allBusinesses = [...restaurants, ...shops, ...beauty];
+      
+      const business = allBusinesses.find(r => 
         r.adminEmail?.toLowerCase() === normalizedEmail && 
         r.adminPassword === normalizedPassword
       );
 
       if (business) {
         setIsLoading(false);
-        onSuccess(false, business.id, normalizedEmail); // Entra como Dono
+        onSuccess(false, business.id, normalizedEmail, business.businessType === 'restaurant' ? 'manager' : 'business');
         return;
       }
+
+      // 3. Se não encontrou e a base de dados ainda está vazia
+      if (allBusinesses.length === 0) {
+        setIsLoading(false);
+        setError("A carregar base de dados... Tente novamente em 1 segundo.");
+        return;
+      }
+
+      // 4. Se chegou aqui, as credenciais estão mesmo erradas
+      setIsLoading(false);
+      setError("Credenciais inválidas. Verifique o seu email e password.");
+
 
       // 2.2 Verificação de Funcionários
       for (const rest of restaurants) {

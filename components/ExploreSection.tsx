@@ -53,6 +53,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [busDestination, setBusDestination] = useState<string>('');
   const [showBusResults, setShowBusResults] = useState(false);
   const [beautyFilter, setBeautyFilter] = useState<string>('all');
+  const [shopsFilter, setShopsFilter] = useState<string>('all');
   
   const lang = currentLanguage as Language;
 
@@ -378,7 +379,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               className="flex flex-col items-center gap-3 group transition-all"
             >
               <div 
-                className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
+                className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
                   ${beautyFilter === cat.id 
                     ? 'text-white shadow-xl scale-105 border-transparent' 
                     : 'bg-white text-slate-400 border-slate-100 group-hover:border-slate-200 group-hover:text-slate-600 group-hover:shadow-md'
@@ -387,9 +388,56 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               >
                 {cat.icon}
               </div>
-              <span className={`text-[10px] md:text-xs font-black uppercase tracking-tight text-center leading-tight transition-colors
+              <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-tight text-center leading-tight transition-colors
                 ${beautyFilter === cat.id ? 'font-black' : 'text-slate-500 group-hover:text-slate-800'}`}
                 style={{ color: beautyFilter === cat.id ? cat.color : undefined }}
+              >
+                {cat.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {renderBusiness(filtered)}
+      </div>
+    );
+  };
+
+  const renderShops = () => {
+    const subcats = [
+      { id: 'all', label: 'Todas as Lojas', icon: <LayoutDashboard size={24} />, color: '#1A75BB' },
+      { id: 'crafts', label: 'Artesanato', icon: <ShoppingBag size={24} />, color: '#F59E0B' },
+      { id: 'food', label: 'Gastronomia', icon: <Utensils size={24} />, color: '#10B981' },
+    ];
+
+    const filtered = shops.filter(s => {
+      const matchIsland = isAllIslands || s.island === targetIsland;
+      const matchSubcat = shopsFilter === 'all' || s.subcategory === shopsFilter;
+      return matchIsland && matchSubcat;
+    });
+
+    return (
+      <div className="space-y-10">
+        <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6">
+          {subcats.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setShopsFilter(cat.id)}
+              className="flex flex-col items-center gap-3 group transition-all"
+            >
+              <div 
+                className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
+                  ${shopsFilter === cat.id 
+                    ? 'text-white shadow-xl scale-105 border-transparent' 
+                    : 'bg-white text-slate-400 border-slate-100 group-hover:border-slate-200 group-hover:text-slate-600 group-hover:shadow-md'
+                  }`}
+                style={{ backgroundColor: shopsFilter === cat.id ? cat.color : undefined }}
+              >
+                {cat.icon}
+              </div>
+              <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-tight text-center leading-tight transition-colors
+                ${shopsFilter === cat.id ? 'font-black' : 'text-slate-500 group-hover:text-slate-800'}`}
+                style={{ color: shopsFilter === cat.id ? cat.color : undefined }}
               >
                 {cat.label}
               </span>
@@ -411,7 +459,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'poi': return renderActivities('poi');
       case 'buses': return renderBusPlanner(); // Custom Bus Planner View
       case 'activities': return renderActivities('activity');
-      case 'shops': return renderBusiness(shops);
+      case 'shops': return renderShops();
       case 'beauty': return renderBeauty();
       default: return renderActivities();
     }

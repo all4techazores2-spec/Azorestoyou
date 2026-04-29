@@ -74,8 +74,8 @@ const App: React.FC = () => {
   const [hotels, setHotels] = useState<Hotel[]>(getHotels('pt'));
   const [cars, setCars] = useState<Car[]>(getCars('pt'));
   const [busSchedules, setBusSchedules] = useState<BusSchedule[]>(BUS_SCHEDULES);
-  const [shops, setShops] = useState<Business[]>([]);
-  const [beauty, setBeauty] = useState<Business[]>([]);
+  const [shops, setShops] = useState<Business[]>(getShops('pt'));
+  const [beauty, setBeauty] = useState<Business[]>(getBeauty('pt'));
 
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1293,7 +1293,7 @@ const App: React.FC = () => {
       />
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={handleAuthSuccess} language={language} restaurants={restaurants} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={handleAuthSuccess} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal isOpen={showBusIslandModal} onClose={() => setShowBusIslandModal(false)} onSelect={handleBusIslandSelect} language={language} />
       <ProfileModal 

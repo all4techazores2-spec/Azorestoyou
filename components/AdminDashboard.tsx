@@ -7,7 +7,8 @@ import {
   Utensils, Mountain, Edit, Trash2, Plus, Save, X, LogOut, 
   LayoutDashboard, Plane, BedDouble, Car as CarIcon, Bus, 
   Image as ImageIcon, Lock, Users, Cloud as CloudSync,
-  ShoppingBag, Mail, MapPin, Phone, Sparkles
+  ShoppingBag, Mail, MapPin, Phone, Sparkles,
+  Scissors, User, Flower2, LayoutDashboard, Brush, ArrowRight
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -46,6 +47,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [beautyFilter, setBeautyFilter] = useState<string>('all');
+  const [shopsFilter, setShopsFilter] = useState<string>('all');
   
   // Account management states
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
@@ -219,6 +222,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'buses':
         newItem = { id: `B${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };
         break;
+      case 'shops':
+        newItem = { 
+          id: `S${timestamp}`, name: '', island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
+          subcategory: shopsFilter !== 'all' ? shopsFilter : 'crafts',
+          adminEmail: '', adminPassword: ''
+        };
+        break;
+      case 'beauty':
+        newItem = { 
+          id: `B${timestamp}`, name: '', island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
+          subcategory: beautyFilter !== 'all' ? beautyFilter : 'beauty_salon',
+          adminEmail: '', adminPassword: '',
+          dishes: []
+        };
+        break;
       case 'suppliers':
         alert('Por favor, adicione fornecedores diretamente no cartão de cada restaurante abaixo.');
         return;
@@ -283,7 +301,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {commonInput(t('item_name'), 'name')}
             {islandSelect()}
             {activeTab === 'restaurants' && commonInput(t('field_cuisine'), 'cuisine')}
-            {activeTab !== 'restaurants' && commonInput('Subcategoria', 'subcategory')}
+            {activeTab === 'beauty' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="beauty_salon">Salão de Beleza</option>
+                  <option value="hairdresser">Cabeleireiro</option>
+                  <option value="barber">Barbearia</option>
+                  <option value="manicure">Manicure</option>
+                  <option value="massage">Massagem</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'shops' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="crafts">Artesanato</option>
+                  <option value="food">Produtos Regionais / Gastronomia</option>
+                </select>
+              </div>
+            )}
             {commonInput(t('item_rating'), 'rating', 'number')}
             {commonInput(t('item_reviews'), 'reviews', 'number')}
             {commonInput(t('item_image'), 'image', 'text', true)}
@@ -421,8 +459,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const getListItems = () => {
     switch (activeTab) {
       case 'restaurants': return restaurants;
-      case 'shops': return shops;
-      case 'beauty': return beauty;
+      case 'shops': 
+        return shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter);
+      case 'beauty': 
+        return beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter);
       case 'activities': return activities;
       case 'flights': return flights;
       case 'hotels': return hotels;
@@ -814,7 +854,53 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {/* LIST VIEW */}
           {activeTab !== 'accounts' && activeTab !== 'suppliers' && !editingItem && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
+              
+              {/* SUBCATEGORY FILTER BAR for Beauty/Shops */}
+              {activeTab === 'beauty' && (
+                <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+                  {[
+                    { id: 'all', label: 'Todos', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
+                    { id: 'beauty_salon', label: 'Salões', icon: <Sparkles size={18} />, color: '#FF2D78' },
+                    { id: 'hairdresser', label: 'Cabeleireiros', icon: <Scissors size={18} />, color: '#8B5CF6' },
+                    { id: 'barber', label: 'Barbeiros', icon: <User size={18} />, color: '#10B981' },
+                    { id: 'manicure', label: 'Manicure', icon: <Brush size={18} />, color: '#F59E0B' },
+                    { id: 'massage', label: 'Massagens', icon: <Flower2 size={18} />, color: '#EC4899' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setBeautyFilter(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border
+                        ${beautyFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                      style={{ borderBottom: beautyFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
+                    >
+                      <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'shops' && (
+                <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+                  {[
+                    { id: 'all', label: 'Todas as Lojas', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
+                    { id: 'crafts', label: 'Artesanato', icon: <ShoppingBag size={18} />, color: '#F59E0B' },
+                    { id: 'food', label: 'Gastronomia', icon: <Utensils size={18} />, color: '#10B981' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setShopsFilter(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border
+                        ${shopsFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                      style={{ borderBottom: shopsFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
+                    >
+                      <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {getListItems().map((item: any) => (
                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group relative">
                  
