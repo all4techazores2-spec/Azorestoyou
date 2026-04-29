@@ -4,7 +4,7 @@ import { Restaurant, Activity, ExploreCategory, Language, BusSchedule, Business 
 import { COLORS, ISLAND_LOCALITIES } from '../constants';
 import RestaurantModal from './RestaurantModal';
 import TrailModal from './TrailModal';
-import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X } from 'lucide-react';
 import { getTranslation } from '../translations';
 
 interface ExploreSectionProps {
