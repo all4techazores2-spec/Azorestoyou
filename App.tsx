@@ -1,6 +1,6 @@
 // Azores4you - Main Application Entry
 import React, { useState, useEffect } from 'react';
-import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem } from './types';
+import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
 import { getAirports, getFlights, COLORS, getRestaurants, getActivities, getHotels, getCars, BUS_SCHEDULES } from './constants';
 import FlightBoard from './components/FlightBoard';
 import BookingWizard from './components/BookingWizard';
@@ -74,8 +74,8 @@ const App: React.FC = () => {
   const [hotels, setHotels] = useState<Hotel[]>(getHotels('pt'));
   const [cars, setCars] = useState<Car[]>(getCars('pt'));
   const [busSchedules, setBusSchedules] = useState<BusSchedule[]>(BUS_SCHEDULES);
-  const [shops, setShops] = useState<any[]>([]);
-  const [beauty, setBeauty] = useState<any[]>([]);
+  const [shops, setShops] = useState<Business[]>([]);
+  const [beauty, setBeauty] = useState<Business[]>([]);
 
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);

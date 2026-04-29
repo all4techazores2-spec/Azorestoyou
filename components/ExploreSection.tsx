@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Restaurant, Activity, ExploreCategory, Language, BusSchedule } from '../types';
+import { Restaurant, Activity, ExploreCategory, Language, BusSchedule, Business } from '../types';
 import { COLORS, ISLAND_LOCALITIES } from '../constants';
 import RestaurantModal from './RestaurantModal';
 import TrailModal from './TrailModal';
-import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import { getTranslation } from '../translations';
 
 interface ExploreSectionProps {
@@ -17,8 +17,8 @@ interface ExploreSectionProps {
   restaurants: Restaurant[];
   activities: Activity[];
   busSchedules: BusSchedule[];
-  shops: any[];
-  beauty: any[];
+  shops: Business[];
+  beauty: Business[];
   userCredits?: number;
   setUserCredits?: (credits: number) => void;
   favoriteRestaurantIds?: string[];
@@ -43,7 +43,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onReserveSuccess,
   userProfile
 }) => {
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Business | null>(null);
   const [selectedTrail, setSelectedTrail] = useState<Activity | null>(null);
   const [busOrigin, setBusOrigin] = useState<string>('');
   const [busDestination, setBusDestination] = useState<string>('');
@@ -86,8 +86,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'activities': return <MountainSnow />;
       case 'buses': return <Bus />;
       case 'poi': return <MapPin />;
-      case 'shops': return <Ticket />;
-      case 'beauty': return <Info />;
+      case 'shops': return <ShoppingBag />;
+      case 'beauty': return <Sparkles />;
       default: return <LandPlot />;
     }
   };

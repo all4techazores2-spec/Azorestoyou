@@ -247,6 +247,7 @@ export interface Restaurant {
   isDrawerOpen?: boolean;
   currentDrawerAmount?: number;
   reviews_list?: { id: string, rating: number, comment: string, customerName: string, date: string }[];
+  businessType?: 'restaurant' | 'shop' | 'beauty';
 }
 
 export interface Activity {
@@ -316,7 +317,6 @@ export interface Service {
 }
 
 export interface Business extends Restaurant {
-  businessType: 'restaurant' | 'shop' | 'beauty';
   subcategory?: BeautySubCategory | string;
   services?: Service[];
 }
