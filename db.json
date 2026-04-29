@@ -67,13 +67,11 @@
   ],
   "flights": [
     { "id": "TP1869", "airline": "TAP Air Portugal", "flightNumber": "TP1869", "origin": "LIS", "destination": "PDL", "departureTime": "08:00", "arrivalTime": "10:25", "price": 120, "status": "A Horas", "stops": 0, "duration": "2h 25m" },
-    { "id": "S4121", "airline": "SATA Azores Airlines", "flightNumber": "S4121", "origin": "LIS", "destination": "PDL", "departureTime": "14:30", "arrivalTime": "16:55", "price": 145, "status": "A Horas", "stops": 0, "duration": "2h 25m" },
-    { "id": "FR2345", "airline": "Ryanair", "flightNumber": "FR2345", "origin": "LIS", "destination": "PDL", "departureTime": "21:00", "arrivalTime": "23:25", "price": 65, "status": "Atrasado", "stops": 0, "duration": "2h 25m" }
+    { "id": "S4121", "airline": "SATA Azores Airlines", "flightNumber": "S4121", "origin": "LIS", "destination": "PDL", "departureTime": "14:30", "arrivalTime": "16:55", "price": 145, "status": "A Horas", "stops": 0, "duration": "2h 25m" }
   ],
   "hotels": [
     { "id": "H1", "name": "Azores Royal Garden", "island": "PDL", "stars": 4, "pricePerNight": 120, "image": "https://picsum.photos/400/300?random=1", "description": "Hotel de luxo com jardim japonês e spa." },
-    { "id": "H2", "name": "Terra Nostra Garden", "island": "PDL", "stars": 5, "pricePerNight": 200, "image": "https://picsum.photos/400/300?random=2", "description": "Localizado nas Furnas com piscinas termais." },
-    { "id": "H3", "name": "Terceira Mar Hotel", "island": "TER", "stars": 4, "pricePerNight": 110, "image": "https://picsum.photos/400/300?random=3", "description": "Quartos com vista mar e piscina de água salgada." }
+    { "id": "H2", "name": "Terra Nostra Garden", "island": "PDL", "stars": 5, "pricePerNight": 200, "image": "https://picsum.photos/400/300?random=2", "description": "Localizado nas Furnas com piscinas termais." }
   ],
   "cars": [
     { "id": "C1", "model": "Renault Clio", "companyId": "comp1", "type": "Económico", "fuelType": "Gasolina", "pricePerDay": 45, "seats": 5, "image": "https://picsum.photos/300/200?random=10", "isAvailable": true },
