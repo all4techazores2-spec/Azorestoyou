@@ -1,4 +1,4 @@
-// Azores4you - Main Application Entry
+// Azores4you - Main Application Entry - Build v1.0.1
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
 import { getAirports, getFlights, COLORS, getRestaurants, getActivities, getHotels, getCars, BUS_SCHEDULES, getBeauty, getShops } from './constants';
