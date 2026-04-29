@@ -120,8 +120,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const handleFinalize = async () => {
     // Detetar automaticamente o endereço do backend
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? (window.location.port === '3000' ? 'http://localhost:3001' : window.location.origin)
-      : 'https://azorestoyou.onrender.com';
+      ? 'http://localhost:3001'
+      : 'https://azorestoyou-1.onrender.com';
     
     // Determine if paying online (credits for pre-order attributed immediately)
     const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';

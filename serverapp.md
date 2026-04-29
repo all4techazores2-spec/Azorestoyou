@@ -5,7 +5,7 @@ Este documento serve como referência para a configuração de produção da pla
 ## 1. Arquitetura de Produção
 A aplicação está dividida em duas partes para máxima performance:
 - **Frontend:** Alojado no **Netlify** (`azorestoyou.pt`).
-- **Backend (API):** Alojado no **Render** (`https://azorestoyou.onrender.com`).
+- **Backend (API):** Alojado no **Render** (`https://azorestoyou-1.onrender.com`).
 
 ## 2. Configurações Críticas de Conectividade
 O ficheiro `App.tsx` (e os dashboards) usa uma lógica dinâmica para detetar onde está a correr:
