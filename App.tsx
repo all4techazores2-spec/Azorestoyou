@@ -66,7 +66,7 @@ const App: React.FC = () => {
   // Detetar automaticamente se estamos em localhost ou no Render
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
-    : 'https://azores4you.onrender.com'; // <--- Verifique se este link condiz com o do seu painel Render
+    : 'https://azorestoyou-1.onrender.com'; 
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
