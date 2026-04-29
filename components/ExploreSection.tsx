@@ -101,10 +101,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   const renderEmptyState = () => (
-    <div className="py-20 text-center bg-white rounded-3xl shadow-sm border border-slate-100">
-      <Info className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-      <h3 className="text-xl font-bold text-slate-600">{getTranslation(lang, 'coming_soon')}</h3>
-      <p className="text-slate-400">{getTranslation(lang, 'coming_soon_desc')}</p>
+    <div className="py-12 text-center">
+      <p className="text-slate-400 font-medium">Nenhum resultado encontrado nesta ilha ou categoria.</p>
     </div>
   );
 
@@ -356,12 +354,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const renderBeauty = () => {
     const subcats = [
-      { id: 'all', label: 'Todos', icon: <LayoutDashboard size={24} /> },
-      { id: 'beauty_salon', label: getTranslation(lang, 'beauty_salon'), icon: <Sparkles size={24} /> },
-      { id: 'hairdresser', label: getTranslation(lang, 'hairdresser'), icon: <Scissors size={24} /> },
-      { id: 'barber', label: getTranslation(lang, 'barber'), icon: <User size={24} /> },
-      { id: 'manicure', label: getTranslation(lang, 'manicure'), icon: <Brush size={24} /> },
-      { id: 'massage', label: getTranslation(lang, 'massage'), icon: <Flower2 size={24} /> },
+      { id: 'all', label: 'Todos', icon: <LayoutDashboard size={24} />, color: '#1A75BB' },
+      { id: 'beauty_salon', label: getTranslation(lang, 'beauty_salon'), icon: <Sparkles size={24} />, color: '#FF2D78' },
+      { id: 'hairdresser', label: getTranslation(lang, 'hairdresser'), icon: <Scissors size={24} />, color: '#8B5CF6' },
+      { id: 'barber', label: getTranslation(lang, 'barber'), icon: <User size={24} />, color: '#10B981' },
+      { id: 'manicure', label: getTranslation(lang, 'manicure'), icon: <Brush size={24} />, color: '#F59E0B' },
+      { id: 'massage', label: getTranslation(lang, 'massage'), icon: <Flower2 size={24} />, color: '#EC4899' },
     ];
 
     const filtered = beauty.filter(b => {
@@ -379,16 +377,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               onClick={() => setBeautyFilter(cat.id)}
               className="flex flex-col items-center gap-3 group transition-all"
             >
-              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
-                ${beautyFilter === cat.id 
-                  ? 'bg-pink-600 text-white shadow-pink-200 shadow-xl border-pink-500 scale-105' 
-                  : 'bg-white text-slate-400 border-slate-100 group-hover:border-pink-200 group-hover:text-pink-400 group-hover:shadow-md'
-                }`}
+              <div 
+                className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border
+                  ${beautyFilter === cat.id 
+                    ? 'text-white shadow-xl scale-105 border-transparent' 
+                    : 'bg-white text-slate-400 border-slate-100 group-hover:border-slate-200 group-hover:text-slate-600 group-hover:shadow-md'
+                  }`}
+                style={{ backgroundColor: beautyFilter === cat.id ? cat.color : undefined }}
               >
                 {cat.icon}
               </div>
               <span className={`text-[10px] md:text-xs font-black uppercase tracking-tight text-center leading-tight transition-colors
-                ${beautyFilter === cat.id ? 'text-pink-600' : 'text-slate-500 group-hover:text-slate-800'}`}
+                ${beautyFilter === cat.id ? 'font-black' : 'text-slate-500 group-hover:text-slate-800'}`}
+                style={{ color: beautyFilter === cat.id ? cat.color : undefined }}
               >
                 {cat.label}
               </span>
@@ -418,33 +419,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Category Selection Header (Photo 1 Style) */}
-      <div className="flex flex-col items-center mb-8">
-         <div className="relative group">
-            <div 
-              className="w-20 h-20 rounded-3xl text-white shadow-2xl flex items-center justify-center relative transform transition-transform group-hover:scale-105" 
-              style={{ backgroundColor: category === 'beauty' ? '#FF2D78' : category === 'restaurants' ? COLORS.secondary : COLORS.primary }}
-            >
-              {getCategoryIcon(category)}
-              {onClose && (
-                <button 
-                  onClick={onClose}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors border border-slate-100"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <div className="text-center mt-3">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800">{getCategoryTitle(category)}</span>
-            </div>
-         </div>
-      </div>
-
       <div className="flex items-center gap-3 mb-8">
         <div 
           className="p-3 rounded-xl text-white shadow-lg" 
-          style={{ backgroundColor: category === 'restaurants' ? COLORS.secondary : COLORS.primary }}
+          style={{ backgroundColor: category === 'beauty' ? '#FF2D78' : category === 'restaurants' ? COLORS.secondary : COLORS.primary }}
         >
           {getCategoryIcon(category)}
         </div>

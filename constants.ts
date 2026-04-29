@@ -49,10 +49,21 @@ const DATA: Record<Language, {
           { name: 'Alcatra', description: 'Prato de carne cozinhado lentamente em alguidar de barro.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
         ]
       }
-    ],
     activities: [
       { id: 'A1', title: 'Trilho Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Caminhe à volta da cratera das lagoas azul e verde.', distance: '12km', duration: '4h', difficulty: 'Moderado' },
       { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Desça ao interior de uma antiga chaminé vulcânica.' },
+    ],
+    beauty: [
+      { id: 'B1', name: 'Glamour Açores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Especialistas em tratamentos faciais e corporais de luxo.', services: [{ id: 'S1', name: 'Limpeza de Pele', description: 'Tratamento profundo', price: 45, duration: 60, image: '' }] },
+      { id: 'B2', name: 'Tesoura de Ouro', island: 'PDL', subcategory: 'hairdresser', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=51', description: 'O melhor corte de cabelo tradicional e moderno em Ponta Delgada.' },
+      { id: 'B3', name: 'Barbearia Central', island: 'PDL', subcategory: 'barber', rating: 4.8, reviews: 210, image: 'https://picsum.photos/400/300?random=52', description: 'Barba e cabelo com estilo clássico e toalha quente.' },
+      { id: 'B4', name: 'Nails & Art', island: 'PDL', subcategory: 'manicure', rating: 4.6, reviews: 56, image: 'https://picsum.photos/400/300?random=53', description: 'Manicure e pedicure com as últimas tendências de design.' },
+      { id: 'B5', name: 'Zen Azores Spa', island: 'PDL', subcategory: 'massage', rating: 5.0, reviews: 42, image: 'https://picsum.photos/400/300?random=54', description: 'Massagens relaxantes com óleos essenciais das flores açorianas.' },
+      { id: 'B6', name: 'Estética Mar', island: 'TER', subcategory: 'beauty_salon', rating: 4.5, reviews: 30, image: 'https://picsum.photos/400/300?random=55', description: 'Beleza e bem-estar à beira-mar.' },
+    ],
+    shops: [
+      { id: 'S1', name: 'Loja do Chá', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Produtos regionais, chás da Gorreana e artesanato local.' },
+      { id: 'S2', name: 'Queijaria Açoriana', island: 'TER', rating: 4.8, reviews: 156, image: 'https://picsum.photos/400/300?random=61', description: 'A melhor seleção de queijos de todas as ilhas do arquipélago.' },
     ]
   },
   en: {
@@ -87,6 +98,17 @@ const DATA: Record<Language, {
     activities: [
       { id: 'A1', title: 'Sete Cidades Trail', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Walk around the crater of the blue and green lakes.', distance: '12km', duration: '4h', difficulty: 'Moderado' },
       { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Descend into an ancient volcanic chimney.' },
+    ],
+    beauty: [
+      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Specialists in luxury facial and body treatments.' },
+      { id: 'B2', name: 'Golden Scissors', island: 'PDL', subcategory: 'hairdresser', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=51', description: 'The best traditional and modern haircut in Ponta Delgada.' },
+      { id: 'B3', name: 'Central Barbershop', island: 'PDL', subcategory: 'barber', rating: 4.8, reviews: 210, image: 'https://picsum.photos/400/300?random=52', description: 'Beard and hair with classic style and hot towel.' },
+      { id: 'B4', name: 'Nails & Art', island: 'PDL', subcategory: 'manicure', rating: 4.6, reviews: 56, image: 'https://picsum.photos/400/300?random=53', description: 'Manicure and pedicure with the latest design trends.' },
+      { id: 'B5', name: 'Zen Azores Spa', island: 'PDL', subcategory: 'massage', rating: 5.0, reviews: 42, image: 'https://picsum.photos/400/300?random=54', description: 'Relaxing massages with essential oils from Azorean flowers.' },
+    ],
+    shops: [
+      { id: 'S1', name: 'The Tea Shop', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Regional products, Gorreana teas and local handicrafts.' },
+      { id: 'S2', name: 'Azorean Cheesery', island: 'TER', rating: 4.8, reviews: 156, image: 'https://picsum.photos/400/300?random=61', description: 'The best selection of cheeses from all the islands.' },
     ]
   },
   es: {
@@ -118,7 +140,13 @@ const DATA: Record<Language, {
     ],
     activities: [
       { id: 'A1', title: 'Sendero Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Camine alrededor del cráter de los lagos azul e verde.' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Descienda al interior de una antigua chimenea volcánica.' },
+      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Descienda al interior de uma antigua chimenea volcánica.' },
+    ],
+    beauty: [
+      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Especialistas en tratamientos faciales y corporales de lujo.' },
+    ],
+    shops: [
+      { id: 'S1', name: 'Tienda de Té', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Productos regionales y artesanía.' },
     ]
   },
   it: {
@@ -135,7 +163,7 @@ const DATA: Record<Language, {
         id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regionale', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
         description: 'Cucina tradizionale delle Azzorre in un\'atmosfera rustica e vivace.',
         dishes: [
-          { name: 'Bistecca di Tonno', description: 'Bistecca di tonno fresco con semi di sesamo.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
+          { name: 'Bistecca di Tonno', description: 'Bistecca di tonno fresco com semi di sesamo.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
           { name: 'Polvo à Lagareiro', description: 'Polpo arrosto con patate al forno.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
         ]
       },
@@ -151,6 +179,12 @@ const DATA: Record<Language, {
     activities: [
       { id: 'A1', title: 'Sentiero Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Cammina intorno al cratere dei laghi blu e verde.' },
       { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Scendi in un antico camino vulcanico.' },
+    ],
+    beauty: [
+      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Specialisti in trattamenti viso e corpo di lusso.' },
+    ],
+    shops: [
+      { id: 'S1', name: 'Negozio del Tè', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Prodotti regionali e artigianato.' },
     ]
   },
   de: {
@@ -183,6 +217,16 @@ const DATA: Record<Language, {
     activities: [
       { id: 'A1', title: 'Sete Cidades Wanderweg', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Wandern Sie um den Krater der blauen und grünen Seen.' },
       { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Steigen Sie in einen alten Vulkanschornstein hinab.' },
+    ],
+    beauty: [
+      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Spezialisten für luxuriöse Gesichts- und Körperbehandlungen.' },
+    ],
+    shops: [
+      { id: 'S1', name: 'Teeladen', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Regionale Produkte e Handwerkskunst.' },
+    ]
+  },
+};
+lkanschornstein hinab.' },
     ]
   },
 };
@@ -612,4 +656,12 @@ export const getCars = (lang: Language): Car[] => {
 export const getFlights = (lang: Language): Flight[] => {
   // Flight data is mostly codes and numbers, except status which is handled in UI
   return FLIGHTS;
+};
+
+export const getBeauty = (lang: Language): Business[] => {
+  return (DATA[lang] && (DATA[lang] as any).beauty) ? (DATA[lang] as any).beauty : (DATA['pt'] as any).beauty;
+};
+
+export const getShops = (lang: Language): Business[] => {
+  return (DATA[lang] && (DATA[lang] as any).shops) ? (DATA[lang] as any).shops : (DATA['pt'] as any).shops;
 };

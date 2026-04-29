@@ -1,7 +1,7 @@
 // Azores4you - Main Application Entry
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
-import { getAirports, getFlights, COLORS, getRestaurants, getActivities, getHotels, getCars, BUS_SCHEDULES } from './constants';
+import { getAirports, getFlights, COLORS, getRestaurants, getActivities, getHotels, getCars, BUS_SCHEDULES, getBeauty, getShops } from './constants';
 import FlightBoard from './components/FlightBoard';
 import BookingWizard from './components/BookingWizard';
 import SummaryView from './components/SummaryView';
@@ -238,6 +238,8 @@ const App: React.FC = () => {
           businessType: 'shop',
           image: s.image?.startsWith('/imagens') ? `${API_BASE_URL}${s.image}` : s.image
         })));
+      } else {
+        setShops(getShops(language));
       }
 
       // 8. Serviços de Beleza
@@ -249,6 +251,8 @@ const App: React.FC = () => {
           businessType: 'beauty',
           image: b.image?.startsWith('/imagens') ? `${API_BASE_URL}${b.image}` : b.image
         })));
+      } else {
+        setBeauty(getBeauty(language));
       }
 
       // 9. Carros

@@ -134,6 +134,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     
     switch (activeTab) {
       case 'restaurants': onUpdateRestaurants(restaurants.filter(r => r.id !== id)); break;
+      case 'shops': onUpdateShops(shops.filter(s => s.id !== id)); break;
+      case 'beauty': onUpdateBeauty(beauty.filter(b => b.id !== id)); break;
       case 'activities': onUpdateActivities(activities.filter(a => a.id !== id)); break;
       case 'flights': onUpdateFlights(flights.filter(f => f.id !== id)); break;
       case 'hotels': onUpdateHotels(hotels.filter(h => h.id !== id)); break;
@@ -160,6 +162,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     switch (activeTab) {
       case 'restaurants': updateList(restaurants, onUpdateRestaurants); break;
+      case 'shops': updateList(shops, onUpdateShops); break;
+      case 'beauty': updateList(beauty, onUpdateBeauty); break;
       case 'activities': updateList(activities, onUpdateActivities); break;
       case 'flights': updateList(flights, onUpdateFlights); break;
       case 'hotels': updateList(hotels, onUpdateHotels); break;
@@ -833,20 +837,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                      {item.island && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island}</span>}
                      {item.status && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
                      {item.price && <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">€{item.price}</span>}
-                   </div>
-                 </div>
+                  </div>
+                </div>
 
-                 <div className="p-4 flex-1">
-                   <h3 className="font-bold text-slate-800 leading-tight">{getItemName(item)}</h3>
-                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                     {item.description || item.type || item.company}
-                   </p>
-                 </div>
-               </div>
+                <div className="p-4 flex-1">
+                  <h3 className="font-bold text-slate-800 leading-tight">{getItemName(item)}</h3>
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                    {item.description || item.type || item.company}
+                  </p>
+                  
+                  {/* Credentials Preview for Businesses */}
+                  {['restaurants', 'shops', 'beauty'].includes(activeTab) && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 space-y-1">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                        <Mail size={12} className="text-blue-500" /> {item.adminEmail || 'Sem email'}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                        <Lock size={12} className="text-blue-500" /> {showPassword[item.id] ? item.adminPassword || '---' : '••••••••'}
+                        <button onClick={() => togglePassword(item.id)} className="ml-auto text-blue-500 hover:underline">Ver</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
              ))}
            </div>
          )}
-
          {/* EDIT FORM */}
          {editingItem && (
            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto border border-slate-200 animate-in fade-in slide-in-from-bottom-4 mb-20">

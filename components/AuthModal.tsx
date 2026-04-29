@@ -39,7 +39,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
       const normalizedPassword = password.trim();
 
       // 1. CHAVE MESTRA (Prioridade Total)
-      if (normalizedEmail === 'adminadmin@gmail.com' && normalizedPassword === 'admin') {
+      if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
         setIsLoading(false);
         onSuccess(true, undefined, normalizedEmail); // Entra como Super Admin
         return;
