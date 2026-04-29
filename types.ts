@@ -248,6 +248,8 @@ export interface Restaurant {
   currentDrawerAmount?: number;
   reviews_list?: { id: string, rating: number, comment: string, customerName: string, date: string }[];
   businessType?: 'restaurant' | 'shop' | 'beauty';
+  subcategory?: BeautySubCategory | string;
+  services?: Service[];
 }
 
 export interface Activity {
@@ -316,10 +318,8 @@ export interface Service {
   image: string;
 }
 
-export interface Business extends Restaurant {
-  subcategory?: BeautySubCategory | string;
-  services?: Service[];
-}
+// Business is now just an alias for Restaurant to maintain compatibility
+export type Business = Restaurant;
 
 export interface Itinerary {
   flight: Flight | null;

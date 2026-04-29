@@ -488,7 +488,6 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                      }}
                     onClick={startBooking}
                   >
-                  >
                     {isBeauty ? <Sparkles className="w-4 h-4" /> : isShop ? <ShoppingBag className="w-4 h-4" /> : <CalendarCheck className="w-4 h-4" />}
                     {isBeauty ? 'Agendar Serviço' : isShop ? 'Ver Catálogo' : getTranslation(currentLang, 'make_reservation')}
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -501,7 +500,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {restaurant.dishes.map((dish, idx) => (
+                  {(restaurant.dishes || []).map((dish, idx) => (
                     <div key={idx} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-all group">
                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                          <img src={dish.image} alt={dish.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
