@@ -12,6 +12,8 @@ import {
   Bus, 
   Map,
   MapPin,
+  ShoppingBag,
+  Sparkles,
   X
 } from 'lucide-react';
 
@@ -41,6 +43,8 @@ export const getNavigationCategories = (lang: Language = 'pt'): CategoryItem[] =
     { id: 'activities', label: t.nav_activities, icon: <MountainSnow className="w-6 h-6" />, color: '#FF9800' },
     { id: 'buses', label: t.nav_buses, icon: <Bus className="w-6 h-6" />, color: '#E91E63' },
     { id: 'poi', label: t.nav_poi, icon: <MapPin className="w-6 h-6" />, color: '#F44336' },
+    { id: 'shops', label: t.nav_shops, icon: <ShoppingBag className="w-6 h-6" />, color: '#9C27B0' },
+    { id: 'beauty', label: t.nav_beauty, icon: <Sparkles className="w-6 h-6" />, color: '#FF4081' },
   ];
 };
 

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Restaurant, Language, OrderItem, Dish } from '../types';
-import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info } from 'lucide-react';
+import { Restaurant, Language, OrderItem, Dish, Business, Service } from '../types';
+import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info, ShoppingBag, Sparkles } from 'lucide-react';
 import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface RestaurantModalProps {
-  restaurant: Restaurant | null;
+  restaurant: Business | null;
   onClose: () => void;
   language?: Language;
   isAuthenticated?: boolean;
@@ -81,10 +81,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   if (!restaurant) return null;
 
+  const isBeauty = restaurant.businessType === 'beauty';
+  const isShop = restaurant.businessType === 'shop';
+
   const slides = [
     { image: restaurant.image, title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
     ...(restaurant.gallery || []).map(img => ({ image: img, title: restaurant.name, desc: getTranslation(currentLang, 'environment') })),
-    ...restaurant.dishes.map(d => ({ image: d.image, title: d.name, desc: d.description }))
+    ...(restaurant.dishes || []).map(d => ({ image: d.image, title: d.name, desc: d.description })),
+    ...(restaurant.services || []).map(s => ({ image: s.image || restaurant.image, title: s.name, desc: s.description || '' }))
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -145,10 +149,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
     try {
       // 1. Enviar Reserva
-      const res = await fetch(`${API_BASE_URL}/api/restaurants/${restaurant.id}/reservations`, {
+      const endpoint = isBeauty 
+        ? `${API_BASE_URL}/api/beauty/${restaurant.id}/reservations`
+        : `${API_BASE_URL}/api/restaurants/${restaurant.id}/reservations`;
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reservationData),
+        body: JSON.stringify({ ...reservationData, businessType: restaurant.businessType }),
       });
 
       if (res.ok) {
@@ -403,7 +411,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">{restaurant.cuisine}</span>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">
+                        {isBeauty ? getTranslation(currentLang, 'nav_beauty') : isShop ? getTranslation(currentLang, 'nav_shops') : restaurant.cuisine}
+                      </span>
                       <div className="h-1 w-1 rounded-full bg-slate-200" />
                       <div className="flex items-center gap-1 text-yellow-500 font-black text-xs">
                         <Star className="w-3 h-3 fill-current" />
@@ -478,8 +488,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                      }}
                     onClick={startBooking}
                   >
-                    <CalendarCheck className="w-4 h-4" />
-                    {getTranslation(currentLang, 'make_reservation')}
+                  >
+                    {isBeauty ? <Sparkles className="w-4 h-4" /> : isShop ? <ShoppingBag className="w-4 h-4" /> : <CalendarCheck className="w-4 h-4" />}
+                    {isBeauty ? 'Agendar Serviço' : isShop ? 'Ver Catálogo' : getTranslation(currentLang, 'make_reservation')}
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>

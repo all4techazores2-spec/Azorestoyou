@@ -71,10 +71,12 @@ const writeDB = (data) => {
 };
 
 // Helper to sync restaurant admins and staff to users table
-const syncRestaurantUsers = (db) => {
+const syncBusinessUsers = (db) => {
     if (!db.users) db.users = [];
     
-    db.restaurants.forEach(rest => {
+    const businesses = [...(db.restaurants || []), ...(db.shops || []), ...(db.beauty || [])];
+    
+    businesses.forEach(rest => {
         // 1. Sync Admin
         if (rest.adminEmail && rest.adminPassword) {
             const normalizedEmail = normalizeEmail(rest.adminEmail);
@@ -125,7 +127,6 @@ const syncRestaurantUsers = (db) => {
                     const supIdx = db.users.findIndex(u => normalizeEmail(u.email) === normSupEmail);
                     
                     if (supIdx > -1) {
-                        // Update password if present in supplier object
                         if (sup.password) db.users[supIdx].password = sup.password;
                         db.users[supIdx].role = 'supplier';
                     } else {
@@ -167,7 +168,7 @@ app.post('/api/restaurants/bulk', (req, res) => {
     const restaurants = req.body;
     const db = readDB();
     db.restaurants = restaurants;
-    syncRestaurantUsers(db);
+    syncBusinessUsers(db);
     writeDB(db);
     res.status(200).json({ message: "Restaurants and Admin Users updated in bulk" });
 });
@@ -227,28 +228,68 @@ app.post('/api/restaurants/:id/reservations', (req, res) => {
         if (!restaurant.reservations) restaurant.reservations = [];
         restaurant.reservations.push(reservation);
         
-        // SYNC WITH USER PROFILE if email matches
-        if (customerEmail) {
-            const user = db.users?.find(u => normalizeEmail(u.email) === customerEmail);
-            if (user) {
-                if (!user.reservations) user.reservations = [];
-                user.reservations.push({
-                    id: reservation.id,
-                    restaurantId: id,
-                    restaurantName: restaurant.name,
-                    date: reservation.date,
-                    time: reservation.time,
-                    guests: reservation.guests,
-                    status: 'pending',
-                    preOrder: reservation.preOrder
-                });
-            }
-        }
-
         writeDB(db);
         res.status(201).json(reservation);
     } else {
-        res.status(404).send("Restaurant not found for reservation");
+        // Tentar encontrar em beleza se não for restaurante
+        const beautyBusiness = db.beauty?.find(b => b.id === id);
+        if (beautyBusiness) {
+            if (!beautyBusiness.reservations) beautyBusiness.reservations = [];
+            beautyBusiness.reservations.push(reservation);
+            
+            if (customerEmail) {
+                const user = db.users?.find(u => normalizeEmail(u.email) === customerEmail);
+                if (user) {
+                    if (!user.reservations) user.reservations = [];
+                    user.reservations.push({
+                        ...reservation,
+                        businessName: beautyBusiness.name,
+                        restaurantName: beautyBusiness.name // para retrocompatibilidade UI
+                    });
+                }
+            }
+            writeDB(db);
+            return res.status(201).json(reservation);
+        }
+        res.status(404).send("Business not found for reservation");
+    }
+});
+
+// SHOPS
+app.get('/api/shops', (req, res) => {
+    const db = readDB();
+    res.json(db.shops || []);
+});
+
+app.put('/api/shops/:id', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    const index = db.shops?.findIndex(s => s.id === id);
+    if (index !== -1) {
+        db.shops[index] = { ...db.shops[index], ...req.body };
+        writeDB(db);
+        res.json(db.shops[index]);
+    } else {
+        res.status(404).send("Shop not found");
+    }
+});
+
+// BEAUTY SERVICES
+app.get('/api/beauty', (req, res) => {
+    const db = readDB();
+    res.json(db.beauty || []);
+});
+
+app.put('/api/beauty/:id', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    const index = db.beauty?.findIndex(b => b.id === id);
+    if (index !== -1) {
+        db.beauty[index] = { ...db.beauty[index], ...req.body };
+        writeDB(db);
+        res.json(db.beauty[index]);
+    } else {
+        res.status(404).send("Beauty service not found");
     }
 });
 
@@ -499,7 +540,7 @@ app.post('/api/payment-confirm', (req, res) => {
 
 // Full Sync Endpoint
 app.post('/api/full-sync', (req, res) => {
-    const { restaurants, activities, flights, hotels, cars, busSchedules } = req.body;
+    const { restaurants, activities, flights, hotels, cars, busSchedules, shops, beauty } = req.body;
     const db = readDB();
     
     if (restaurants) db.restaurants = restaurants;
@@ -508,8 +549,10 @@ app.post('/api/full-sync', (req, res) => {
     if (hotels) db.hotels = hotels;
     if (cars) db.cars = cars;
     if (busSchedules) db.busSchedules = busSchedules;
+    if (shops) db.shops = shops;
+    if (beauty) db.beauty = beauty;
     
-    syncRestaurantUsers(db);
+    syncBusinessUsers(db);
     writeDB(db);
     res.json({ success: true, message: "Sincronização completa realizada com sucesso!" });
 });

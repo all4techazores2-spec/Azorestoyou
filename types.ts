@@ -299,8 +299,27 @@ export type ExploreCategory =
   | 'activities' 
   | 'buses' 
   | 'poi' 
-  | 'flights' 
+  | 'flights'
+  | 'shops'
+  | 'beauty'
   | null;
+
+export type BeautySubCategory = 'beauty_salon' | 'hairdresser' | 'barber' | 'manicure' | 'massage';
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number; // in minutes
+  image: string;
+}
+
+export interface Business extends Restaurant {
+  businessType: 'restaurant' | 'shop' | 'beauty';
+  subcategory?: BeautySubCategory | string;
+  services?: Service[];
+}
 
 export interface Itinerary {
   flight: Flight | null;

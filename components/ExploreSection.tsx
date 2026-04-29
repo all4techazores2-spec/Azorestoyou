@@ -17,6 +17,8 @@ interface ExploreSectionProps {
   restaurants: Restaurant[];
   activities: Activity[];
   busSchedules: BusSchedule[];
+  shops: any[];
+  beauty: any[];
   userCredits?: number;
   setUserCredits?: (credits: number) => void;
   favoriteRestaurantIds?: string[];
@@ -46,6 +48,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [busOrigin, setBusOrigin] = useState<string>('');
   const [busDestination, setBusDestination] = useState<string>('');
   const [showBusResults, setShowBusResults] = useState(false);
+  const [beautyFilter, setBeautyFilter] = useState<string>('all');
   
   const lang = currentLanguage as Language;
 
@@ -69,6 +72,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'activities': return t('nav_activities');
       case 'buses': return t('nav_buses');
       case 'poi': return t('nav_poi');
+      case 'shops': return t('nav_shops');
+      case 'beauty': return t('nav_beauty');
       default: return 'Explorar';
     }
   };
@@ -81,6 +86,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'activities': return <MountainSnow />;
       case 'buses': return <Bus />;
       case 'poi': return <MapPin />;
+      case 'shops': return <Ticket />;
+      case 'beauty': return <Info />;
       default: return <LandPlot />;
     }
   };
@@ -309,6 +316,79 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
+  const renderBusiness = (data: any[]) => {
+    const filtered = data.filter(b => isAllIslands || b.island === targetIsland);
+    
+    if (filtered.length === 0) return renderEmptyState();
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filtered.map(b => (
+          <div 
+            key={b.id} 
+            className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => setSelectedRestaurant(b)} // Use existing RestaurantModal for now
+          >
+            <div className="h-48 overflow-hidden relative">
+              <img src={b.image} alt={b.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                 <MapPin className="w-3 h-3 text-red-500" /> {b.island}
+              </div>
+            </div>
+            <div className="p-5">
+              <h3 className="text-xl font-bold text-slate-800 mb-1">{b.name}</h3>
+              <p className="text-sm text-slate-500 mb-3 line-clamp-2">{b.description}</p>
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                  {getTranslation(lang, 'more_info')} <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderBeauty = () => {
+    const subcats = [
+      { id: 'all', label: 'Todos' },
+      { id: 'beauty_salon', label: getTranslation(lang, 'beauty_salon') },
+      { id: 'hairdresser', label: getTranslation(lang, 'hairdresser') },
+      { id: 'barber', label: getTranslation(lang, 'barber') },
+      { id: 'manicure', label: getTranslation(lang, 'manicure') },
+      { id: 'massage', label: getTranslation(lang, 'massage') },
+    ];
+
+    const filtered = beauty.filter(b => {
+      const matchIsland = isAllIslands || b.island === targetIsland;
+      const matchSubcat = beautyFilter === 'all' || b.subcategory === beautyFilter;
+      return matchIsland && matchSubcat;
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {subcats.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setBeautyFilter(cat.id)}
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                beautyFilter === cat.id 
+                  ? 'bg-pink-600 text-white shadow-lg' 
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {renderBusiness(filtered)}
+      </div>
+    );
+  };
+
   const getContent = () => {
     switch (category) {
       case 'restaurants': return renderRestaurants();
@@ -318,6 +398,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'poi': return renderActivities('poi');
       case 'buses': return renderBusPlanner(); // Custom Bus Planner View
       case 'activities': return renderActivities('activity');
+      case 'shops': return renderBusiness(shops);
+      case 'beauty': return renderBeauty();
       default: return renderActivities();
     }
   };

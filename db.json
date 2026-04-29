@@ -78,8 +78,218 @@
     { "id": "C2", "model": "Nissan Qashqai", "companyId": "comp2", "type": "SUV", "fuelType": "Gasóleo", "pricePerDay": 75, "seats": 5, "image": "https://picsum.photos/300/200?random=11", "isAvailable": true }
   ],
   "activities": [
-    { "id": "A1", "title": "Trilho Sete Cidades", "type": "trail", "island": "PDL", "image": "https://picsum.photos/400/300?random=30", "description": "Caminhe à volta da cratera das lagoas azul e verde.", "distance": "12km", "duration": "4h", "difficulty": "Moderado" },
-    { "id": "A2", "title": "Algar do Carvão", "type": "landscape", "island": "TER", "image": "https://picsum.photos/400/300?random=31", "description": "Desça ao interior de uma antiga chaminé vulcânica." }
+    { "id": "A1", "title": "Trilho Sete Cidades", "type": "trail", "island": "PDL", "image": "https://picsum.photos/400/300?random=30", "description": "Caminhe à volta da cratera das lagoas azul e verde.", "distance": "12km", duration: "4h", "difficulty": "Moderado" },
+    { "id": "A2", "title": "Algar do Carvão", "type": "landscape", island: "TER", "image": "https://picsum.photos/400/300?random=31", "description": "Desça ao interior de uma antiga chaminé vulcânica." }
+  ],
+  "shops": [
+    {
+      "id": "SHOP1",
+      "name": "Artesanato Açoriano",
+      "island": "PDL",
+      "businessType": "shop",
+      "image": "https://picsum.photos/400/300?random=101",
+      "description": "Produtos tradicionais e artesanato local.",
+      "adminEmail": "artesanato@azores4you.com",
+      "adminPassword": "shop",
+      "products": [
+        { "id": "p1", "name": "Cesta de Vime", "price": 25, "stock": 10, "image": "https://picsum.photos/300/200?random=102" },
+        { "id": "p2", "name": "Boneca de Milho", "price": 12, "stock": 5, "image": "https://picsum.photos/300/200?random=103" }
+      ],
+      "cashDrawerLogs": [],
+      "suppliers": []
+    },
+    {
+      "id": "SHOP2",
+      "name": "Queijaria Central",
+      "island": "SJZ",
+      "businessType": "shop",
+      "image": "https://picsum.photos/400/300?random=104",
+      "description": "Os melhores queijos da ilha de São Jorge.",
+      "adminEmail": "queijaria@azores4you.com",
+      "adminPassword": "queijo",
+      "products": [
+        { "id": "p3", "name": "Queijo SJ de 7 meses", "price": 18, "stock": 20, "image": "https://picsum.photos/300/200?random=105" }
+      ],
+      "cashDrawerLogs": [],
+      "suppliers": []
+    }
+  ],
+  "beauty": [
+    {
+      "id": "B1",
+      "name": "Saloa Real Beauty",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "beauty_salon",
+      "image": "https://picsum.photos/400/300?random=201",
+      "description": "Tratamentos faciais e estética avançada.",
+      "adminEmail": "salao@azores4you.com",
+      "adminPassword": "beauty",
+      "services": [
+        { "id": "s1", "name": "Limpeza de Pele", "price": 30, "duration": 60, "image": "https://picsum.photos/300/200?random=202" },
+        { "id": "s2", "name": "Tratamento Anti-Age", "price": 50, "duration": 90, "image": "https://picsum.photos/300/200?random=203" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B2",
+      "name": "Glow Center",
+      "island": "TER",
+      "businessType": "beauty",
+      "subcategory": "beauty_salon",
+      "image": "https://picsum.photos/400/300?random=204",
+      "description": "O seu centro de estética na Terceira.",
+      "adminEmail": "glow@azores4you.com",
+      "adminPassword": "glow",
+      "services": [
+        { "id": "s3", "name": "Epilação Laser", "price": 40, "duration": 30, "image": "https://picsum.photos/300/200?random=205" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B3",
+      "name": "Cortes & Estilo",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "hairdresser",
+      "image": "https://picsum.photos/400/300?random=206",
+      "description": "Cabeleireiro unissexo com as últimas tendências.",
+      "adminEmail": "cabelo@azores4you.com",
+      "adminPassword": "hair",
+      "services": [
+        { "id": "s4", "name": "Corte e Secagem", "price": 25, "duration": 45, "image": "https://picsum.photos/300/200?random=207" },
+        { "id": "s5", "name": "Coloração", "price": 45, "duration": 120, "image": "https://picsum.photos/300/200?random=208" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B4",
+      "name": "Art Hair Studio",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "hairdresser",
+      "image": "https://picsum.photos/400/300?random=209",
+      "description": "Especialistas em penteados de noiva e eventos.",
+      "adminEmail": "art@azores4you.com",
+      "adminPassword": "art",
+      "services": [
+        { "id": "s6", "name": "Penteado Especial", "price": 60, "duration": 90, "image": "https://picsum.photos/300/200?random=210" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B5",
+      "name": "The Gentlemens Barber",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "barber",
+      "image": "https://picsum.photos/400/300?random=211",
+      "description": "Barbearia clássica com toalha quente e navalha.",
+      "adminEmail": "barbeiro1@azores4you.com",
+      "adminPassword": "barber",
+      "services": [
+        { "id": "s7", "name": "Corte de Cabelo", "price": 15, "duration": 30, "image": "https://picsum.photos/300/200?random=212" },
+        { "id": "s8", "name": "Barba Ritual", "price": 12, "duration": 30, "image": "https://picsum.photos/300/200?random=213" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B6",
+      "name": "Old School Barbershop",
+      "island": "TER",
+      "businessType": "beauty",
+      "subcategory": "barber",
+      "image": "https://picsum.photos/400/300?random=214",
+      "description": "Estilo vintage e cortes modernos.",
+      "adminEmail": "barbeiro2@azores4you.com",
+      "adminPassword": "barber",
+      "services": [
+        { "id": "s9", "name": "Corte + Barba", "price": 22, "duration": 60, "image": "https://picsum.photos/300/200?random=215" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B7",
+      "name": "Nails & Co",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "manicure",
+      "image": "https://picsum.photos/400/300?random=216",
+      "description": "Manicure e pedicure com gelinho e verniz gel.",
+      "adminEmail": "nails@azores4you.com",
+      "adminPassword": "nails",
+      "services": [
+        { "id": "s10", "name": "Manicure Gelinho", "price": 18, "duration": 45, "image": "https://picsum.photos/300/200?random=217" },
+        { "id": "s11", "name": "Pedicure Spa", "price": 25, "duration": 60, "image": "https://picsum.photos/300/200?random=218" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B8",
+      "name": "Diva Nails",
+      "island": "HOR",
+      "businessType": "beauty",
+      "subcategory": "manicure",
+      "image": "https://picsum.photos/400/300?random=219",
+      "description": "Especialistas em extensões de unhas.",
+      "adminEmail": "diva@azores4you.com",
+      "adminPassword": "diva",
+      "services": [
+        { "id": "s12", "name": "Unhas de Gel", "price": 35, "duration": 90, "image": "https://picsum.photos/300/200?random=220" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B9",
+      "name": "Zen Massage Azores",
+      "island": "PDL",
+      "businessType": "beauty",
+      "subcategory": "massage",
+      "image": "https://picsum.photos/400/300?random=221",
+      "description": "Massagens relaxantes e terapêuticas com óleos essenciais.",
+      "adminEmail": "zen@azores4you.com",
+      "adminPassword": "zen",
+      "services": [
+        { "id": "s13", "name": "Massagem Relaxamento", "price": 40, "duration": 60, "image": "https://picsum.photos/300/200?random=222" },
+        { "id": "s14", "name": "Massagem Pedras Quentes", "price": 55, "duration": 75, "image": "https://picsum.photos/300/200?random=223" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    },
+    {
+      "id": "B10",
+      "name": "Spa do Mar",
+      "island": "TER",
+      "businessType": "beauty",
+      "subcategory": "massage",
+      "image": "https://picsum.photos/400/300?random=224",
+      "description": "Tratamentos de spa inspirados no oceano.",
+      "adminEmail": "spa@azores4you.com",
+      "adminPassword": "spa",
+      "services": [
+        { "id": "s15", "name": "Massagem Desportiva", "price": 45, "duration": 50, "image": "https://picsum.photos/300/200?random=225" }
+      ],
+      "reservations": [],
+      "cashDrawerLogs": [],
+      "staff": []
+    }
   ],
   "busSchedules": [],
   "itineraries": [],

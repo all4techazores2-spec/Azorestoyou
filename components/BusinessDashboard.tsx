@@ -117,7 +117,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     ? 'http://localhost:3001'
     : 'https://azorestoyou-1.onrender.com';
 
-  const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : 'tables');
+  const isRestaurant = !business.businessType || business.businessType === 'restaurants';
+  const isBeauty = business.businessType === 'beauty';
+  const isShop = business.businessType === 'shop';
+
+  const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : (isShop ? 'pos' : (isBeauty ? 'reservations' : 'tables')));
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -617,12 +621,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const addDish = () => {
+    if (isBeauty) {
+      const newService: Service = { id: `S${Date.now()}`, name: 'Novo Serviço', description: '', price: 0, duration: 30, image: '' };
+      const newServices = [...(business.services || []), newService];
+      handleUpdate({ services: newServices });
+      return;
+    }
     const newDish: Dish = { name: 'Novo Prato', description: '', price: 0, image: '' };
     const newDishes = [...business.dishes, newDish];
     handleUpdate({ dishes: newDishes });
   };
 
   const removeDish = (idx: number) => {
+    if (isBeauty) {
+      const newServices = (business.services || []).filter((_, i) => i !== idx);
+      handleUpdate({ services: newServices });
+      return;
+    }
     const newDishes = business.dishes.filter((_, i) => i !== idx);
     handleUpdate({ dishes: newDishes });
   };
@@ -908,16 +923,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar whitespace-nowrap">
           {([
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
-            { id: 'tables', label: 'Mapa de Mesas', icon: <TableIcon size={20} />, hideForStaff: true },
-            { id: 'kitchen', label: 'Cozinha', icon: <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined },
+            { id: 'tables', label: isBeauty ? 'Agenda Diária' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
+            { id: 'kitchen', label: isShop ? 'Vendas' : 'Cozinha', icon: isShop ? <ShoppingBag size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: isBeauty && !isStaff },
             { id: 'pos', label: 'POS Venda', icon: <ShoppingBag size={20} /> },
-            { id: 'dishes', label: 'Ementa', icon: <Edit size={20} />, hideForStaff: true },
-            { id: 'products', label: 'Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
+            { id: 'dishes', label: isBeauty ? 'Serviços' : isShop ? 'Catálogo' : 'Ementa', icon: isBeauty ? <Sparkles size={18} /> : <Edit size={20} />, hideForStaff: true },
+            { id: 'products', label: 'Produtos/Stock', icon: <ShoppingBag size={20} />, hideForStaff: true },
             { id: 'updates', label: 'Comunicados', icon: <Megaphone size={20} />, hideForStaff: true },
-            { id: 'reservations', label: 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
+            { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
-          ] as any[]).filter(item => !isStaff || !item.hideForStaff).map(item => (
+          ] as any[]).filter(item => (!isStaff || !item.hideForStaff) && !item.hidden).map(item => (
             <button 
               key={item.id}
               onClick={() => setActiveTab(item.id as DashboardTab)}
@@ -975,7 +990,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   {isExpanded && (
                     <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
                       className="flex-1 flex items-center justify-between pr-4 overflow-hidden">
-                      <span className="text-sm font-bold tracking-tight">Staff Restaurante</span>
+                      <span className="text-sm font-bold tracking-tight">Equipa</span>
                       <ChevronRight size={14} className={`transition-transform duration-300 ${staffOpen ? 'rotate-90' : ''}`} />
                     </motion.div>
                   )}
@@ -993,7 +1008,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       style={{ marginTop: '-3rem' }}
                     >
                       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-slate-800" />
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-3 pt-2 pb-1">Staff Restaurante</p>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-3 pt-2 pb-1">Equipa Azores4you</p>
                       {([
                         { id: 'staff_list', label: 'Funcionários',      icon: <Users size={15}/> },
                         { id: 'ponto',      label: 'Relógio de Ponto',  icon: <Clock size={15}/> },
