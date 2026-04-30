@@ -582,5 +582,6 @@ if (fs.existsSync(distPath)) {
 }
 
 app.listen(PORT, () => {
-    console.log(`AzoresToyou Server running at port ${PORT}`);
+    console.log(`AzoresToyou Server v1.0.1 running at port ${PORT}`);
+    console.log(`API Base URL: https://azorestoyou-1.onrender.com`);
 });
