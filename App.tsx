@@ -281,10 +281,23 @@ const App: React.FC = () => {
   if (!hasEnteredApp) {
     return (
       <LandingPage 
-        onEnter={() => setHasEnteredApp(true)} 
-        onShowAuth={() => { setShowAuthModal(true); setHasEnteredApp(true); }}
-        language={language}
-        setLanguage={setLanguage}
+        onEnterBooking={() => setHasEnteredApp(true)}
+        onEnterExplore={() => setHasEnteredApp(true)}
+        onAuthSuccess={(admin, bizId, email, role) => {
+          setIsAuthenticated(true);
+          setIsAdmin(!!admin);
+          if (bizId) {
+            setIsBusiness(true);
+            setCurrentBusinessId(bizId);
+          }
+          setUserProfile(prev => ({ ...prev, email: email || '' }));
+          setHasEnteredApp(true);
+        }}
+        currentLanguage={language}
+        onLanguageChange={setLanguage}
+        restaurants={restaurants}
+        shops={shops}
+        beauty={beauty}
       />
     );
   }
