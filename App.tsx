@@ -83,6 +83,8 @@ const App: React.FC = () => {
   const [isBusiness, setIsBusiness] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isSupplier, setIsSupplier] = useState(false);
+  const [staffRole, setStaffRole] = useState<string | null>(null);
+  const [currentBusinessId, setCurrentBusinessId] = useState<string | null>(null);
   const [userCredits, setUserCredits] = useState(100);
   const [userProfile, setUserProfile] = useState({
     email: '', name: 'Cliente Viajante', phone: '', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
@@ -155,6 +157,19 @@ const App: React.FC = () => {
   }, [API_BASE_URL, isAuthenticated, userProfile.email]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    setIsBusiness(false);
+    setIsStaff(false);
+    setIsSupplier(false);
+    setStaffRole(null);
+    setCurrentBusinessId(null);
+    setUserProfile({ email: '', name: 'Cliente Viajante', phone: '', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' });
+    setExploreCategory(null);
+    setMobileMenuOpen(false);
+  };
 
   const handleReserveSuccess = async (resData: any, itemName: string, itemId: string) => {
     try {
@@ -262,6 +277,30 @@ const App: React.FC = () => {
     );
   };
 
+  // --- VIEW BRANCHING ---
+  if (!hasEnteredApp) {
+    return (
+      <LandingPage 
+        onEnter={() => setHasEnteredApp(true)} 
+        onShowAuth={() => { setShowAuthModal(true); setHasEnteredApp(true); }}
+        language={language}
+        setLanguage={setLanguage}
+      />
+    );
+  }
+
+  if (isAdmin) {
+    return <AdminDashboard onLogout={handleLogout} restaurants={restaurants} activities={activities} shops={shops} beauty={beauty} services={services} language={language} />;
+  }
+
+  if (isBusiness) {
+    return <BusinessDashboard onLogout={handleLogout} businessId={currentBusinessId!} businesses={[...restaurants, ...shops, ...beauty]} language={language} />;
+  }
+
+  if (isSupplier) {
+    return <SupplierDashboard onLogout={handleLogout} language={language} />;
+  }
+
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0`}>
       
@@ -300,12 +339,39 @@ const App: React.FC = () => {
         onHome={goHome}
         onShowProfile={() => setShowProfileModal(true)}
         onShowAuth={() => setShowAuthModal(true)}
+        onShowReservations={() => setShowMyReservationsModal(true)}
+        onShowNotifications={() => setShowNotificationsModal(true)}
         isAuthenticated={isAuthenticated}
         language={language}
       />
 
       {/* Modals Container */}
-      {showAuthModal && <AuthModal isOpen={true} onClose={() => setShowAuthModal(false)} onLogin={() => setIsAuthenticated(true)} />}
+      {showAuthModal && (
+        <AuthModal 
+          isOpen={true} 
+          onClose={() => setShowAuthModal(false)} 
+          restaurants={restaurants}
+          shops={shops}
+          beauty={beauty}
+          language={language}
+          onSuccess={(admin, bizId, email, role) => {
+            setIsAuthenticated(true);
+            setIsAdmin(!!admin);
+            if (bizId) {
+              setIsBusiness(true);
+              setCurrentBusinessId(bizId);
+            }
+            if (role === 'staff' || role === 'waiter' || role === 'chef') {
+              setIsStaff(true);
+              setStaffRole(role);
+            }
+            if (role === 'supplier') setIsSupplier(true);
+            
+            setUserProfile(prev => ({ ...prev, email: email || '' }));
+            setShowAuthModal(false);
+          }} 
+        />
+      )}
       {showProfileModal && <ProfileModal isOpen={true} onClose={() => setShowProfileModal(false)} profile={userProfile} />}
 
     </div>
