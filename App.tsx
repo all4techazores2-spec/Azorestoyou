@@ -425,9 +425,36 @@ const App: React.FC = () => {
             setUserProfile(prev => ({ ...prev, email: email || '' }));
             setShowAuthModal(false);
           }} 
+          onGuest={() => {
+            setShowAuthModal(false);
+            setHasEnteredApp(true);
+          }}
         />
       )}
-      {showProfileModal && <ProfileModal isOpen={true} onClose={() => setShowProfileModal(false)} profile={userProfile} />}
+
+      {showProfileModal && (
+        <ProfileModal 
+          isOpen={true}
+          onClose={() => setShowProfileModal(false)}
+          userProfile={userProfile}
+          onUpdateProfile={(updated) => setUserProfile({ ...userProfile, ...updated })}
+          onLogout={handleLogout}
+          userCredits={userCredits}
+          language={language}
+          onShowReservations={() => {
+            setShowProfileModal(false);
+            setShowMyReservationsModal(true);
+          }}
+          onShowCommunity={() => {
+            setShowProfileModal(false);
+            setExploreCategory('community');
+          }}
+          onShowSOS={() => {
+            setShowProfileModal(false);
+            setShowSOSModal(true);
+          }}
+        />
+      )}
 
     </div>
   );
