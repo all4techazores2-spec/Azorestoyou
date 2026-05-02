@@ -261,6 +261,44 @@ const handleReservation = (req, res) => {
 
 app.post('/api/reservations', handleReservation);
 
+app.delete('/api/reservations/:id', (req, res) => {
+    const { id } = req.params;
+    console.log(`--- ELIMINANDO RESERVA: ${id} ---`);
+    const db = readDB();
+    let found = false;
+
+    // Remover dos negócios
+    ['restaurants', 'beauty', 'shops', 'offices', 'services'].forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    const initialLen = biz.reservations.length;
+                    biz.reservations = biz.reservations.filter(r => r.id !== id);
+                    if (biz.reservations.length < initialLen) found = true;
+                }
+            });
+        }
+    });
+
+    // Remover dos perfis de utilizadores
+    if (db.users) {
+        db.users.forEach(u => {
+            if (u.reservations) {
+                u.reservations = u.reservations.filter(r => r.id !== id);
+            }
+        });
+    }
+
+    if (found) {
+        writeDB(db);
+        console.log('Reserva eliminada com sucesso da base de dados.');
+        res.status(200).send("Reservation deleted successfully");
+    } else {
+        console.error('Erro: Reserva não encontrada para eliminar.');
+        res.status(404).send("Reservation not found");
+    }
+});
+
 // Backward compatibility endpoints (Redirect to main handler)
 app.post('/api/restaurants/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
