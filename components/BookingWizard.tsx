@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Itinerary, Language, Hotel, Car } from '../types';
-import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown } from 'lucide-react';
+import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown, Hotel as HotelIcon, Home, SlidersHorizontal } from 'lucide-react';
 import { getTranslation } from '../translations';
 import DatePicker from './DatePicker';
 import { motion, AnimatePresence } from 'motion/react';
+import AccommodationDetailModal from './AccommodationDetailModal';
+import RoomExtrasModal from './RoomExtrasModal';
+import BookingCheckoutModal from './BookingCheckoutModal';
 
 interface BookingWizardProps {
   step: 'accommodation' | 'car';
@@ -15,6 +18,8 @@ interface BookingWizardProps {
   language?: Language;
   isAuthenticated?: boolean;
   onShowAuth?: () => void;
+  onComplete?: () => void;
+  onClose?: () => void;
   // Dynamic Data Props
   hotels?: Hotel[];
   cars?: Car[];
@@ -29,6 +34,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   language = 'pt', 
   isAuthenticated, 
   onShowAuth,
+  onComplete,
+  onClose,
   hotels = [],
   cars = []
 }) => {
@@ -39,6 +46,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   const [carUnavailableDates, setCarUnavailableDates] = useState<Date[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityError, setAvailabilityError] = useState<{title: string, desc: string} | null>(null);
+  const [accommodationType, setAccommodationType] = useState<'hotel' | 'al'>('hotel');
+  const [maxPrice, setMaxPrice] = useState<number>(300);
+  const [selectedAccommodationForDetail, setSelectedAccommodationForDetail] = useState<Hotel | null>(null);
+  const [showExtras, setShowExtras] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [isBooked, setIsBooked] = useState(false);
 
   const currentLang = language as Language;
 
@@ -72,7 +85,11 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   }, [nights, carDays, step]);
 
   const destinationCode = currentItinerary.flight?.destination || 'all';
-  const availableHotels = hotels.filter(h => destinationCode === 'all' || h.island === destinationCode);
+  const availableHotels = hotels.filter(h => 
+    (destinationCode === 'all' || h.island === destinationCode) && 
+    h.type === accommodationType &&
+    h.pricePerNight <= maxPrice
+  );
   const availableCars = cars; 
 
   const calculateDiff = (start: Date, end: Date) => {
@@ -139,6 +156,36 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
     }, 1200);
   };
 
+  const handleAccommodationConfirm = (hotel: Hotel, selectedRoom?: any, rentType?: 'room' | 'house') => {
+    onUpdateItinerary({ 
+      ...currentItinerary, 
+      hotel,
+      selectedRoom,
+      rentType
+    });
+    setSelectedAccommodationForDetail(null);
+    setShowExtras(true); // Open Extras instead of Car
+  };
+
+  const handleExtrasConfirm = (extras: any[]) => {
+    onUpdateItinerary({
+      ...currentItinerary,
+      selectedExtras: extras
+    });
+    setShowExtras(false);
+    setShowCheckout(true);
+  };
+
+  const handleBookingComplete = () => {
+    setShowCheckout(false);
+    setIsBooked(true);
+    if (onComplete) {
+      onComplete();
+    } else {
+      setStep('summary');
+    }
+  };
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '---';
     return new Date(dateStr).toLocaleDateString(currentLang === 'pt' ? 'pt-PT' : 'en-US', {
@@ -153,12 +200,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
         <div className="bg-white w-full max-w-6xl md:rounded-2xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
            
            {/* Compact Header */}
-           <div className="bg-white px-6 py-4 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+           <div className="bg-white px-6 py-4 border-b flex flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 <div className="bg-slate-900 p-2 rounded-xl shadow-md">
                   <BedDouble className="text-white w-5 h-5" />
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <h2 className="text-xl font-black text-slate-900 tracking-tight">
                     {getTranslation(currentLang, 'select_hotel')}
                   </h2>
@@ -169,31 +216,101 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
                 </div>
               </div>
 
-              <div 
-                onClick={() => setIsDatePickerOpen(true)}
-                className="flex items-center gap-4 bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
-              >
-                 <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_in')}</span>
-                      <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
+              <div className="flex items-center gap-3">
+                 <div 
+                  onClick={() => setIsDatePickerOpen(true)}
+                  className="hidden md:flex items-center gap-4 bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
+                >
+                   <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_in')}</span>
+                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
+                      </div>
+                   </div>
+                   <div className="w-px h-6 bg-slate-200" />
+                   <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_out')}</span>
+                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
+                      </div>
+                   </div>
+                   <div className="w-px h-6 bg-slate-200" />
+                   <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'nights')}</span>
+                        <span className="text-xs font-black text-slate-900">{nights}</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                   </div>
+                </div>
+
+                <button 
+                  onClick={onClose || onSkip}
+                  className="p-3 bg-slate-100 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-900 shadow-sm"
+                >
+                   <X className="w-6 h-6" />
+                </button>
+              </div>
+           </div>
+
+           {/* New Filter Bar */}
+           <div className="px-6 py-4 bg-white border-b flex flex-wrap items-center justify-between gap-6">
+              {/* Type Switcher */}
+              <div className="flex bg-slate-100 p-1 rounded-2xl gap-1">
+                 <button 
+                   onClick={() => setAccommodationType('hotel')}
+                   className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+                     ${accommodationType === 'hotel' 
+                       ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200' 
+                       : 'text-slate-400 hover:text-slate-600'}`}
+                 >
+                    <HotelIcon className={`w-4 h-4 ${accommodationType === 'hotel' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    Hotéis
+                 </button>
+                 <button 
+                   onClick={() => setAccommodationType('al')}
+                   className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+                     ${accommodationType === 'al' 
+                       ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200' 
+                       : 'text-slate-400 hover:text-slate-600'}`}
+                 >
+                    <Home className={`w-4 h-4 ${accommodationType === 'al' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    AL (Local)
+                 </button>
+              </div>
+
+              {/* Sophisticated Price Filter */}
+              <div className="flex-1 max-w-xs min-w-[200px]">
+                 <div className="flex justify-between items-end mb-3">
+                    <div className="flex items-center gap-2">
+                       <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Máximo</span>
                     </div>
+                    <span className="text-sm font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full ring-1 ring-blue-100">
+                       €{maxPrice}
+                    </span>
                  </div>
-                 <div className="w-px h-6 bg-slate-200" />
-                 <div className="flex items-center gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_out')}</span>
-                      <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
+                 <div className="relative h-6 flex items-center">
+                    <div className="absolute w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                       <div 
+                         className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-300"
+                         style={{ width: `${(maxPrice / 500) * 100}%` }}
+                       />
                     </div>
-                 </div>
-                 <div className="w-px h-6 bg-slate-200" />
-                 <div className="flex items-center gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'nights')}</span>
-                      <span className="text-xs font-black text-slate-900">{nights}</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                    <input 
+                      type="range" 
+                      min="40" 
+                      max="500" 
+                      step="5"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                      className="absolute w-full h-1.5 opacity-0 cursor-pointer z-10"
+                    />
+                    <div 
+                      className="absolute w-4 h-4 bg-white border-2 border-blue-600 rounded-full shadow-lg pointer-events-none transition-all duration-300"
+                      style={{ left: `calc(${(maxPrice / 500) * 100}% - 8px)` }}
+                    />
                  </div>
               </div>
            </div>
@@ -248,7 +365,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
                     return (
                       <div 
                         key={hotel.id} 
-                        onClick={() => handleSelection({ hotel, nights })}
+                        onClick={() => setSelectedAccommodationForDetail(hotel)}
                         className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer border-2 flex flex-col
                           ${isSelected 
                             ? 'border-blue-600 shadow-xl scale-[1.01]' 
@@ -354,6 +471,36 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
           initialEndDate={currentItinerary.hotelEndDate ? new Date(currentItinerary.hotelEndDate) : undefined}
           unavailableDates={hotelUnavailableDates}
         />
+
+        <AnimatePresence>
+          {selectedAccommodationForDetail && (
+            <AccommodationDetailModal 
+              accommodation={selectedAccommodationForDetail}
+              language={language}
+              onClose={() => setSelectedAccommodationForDetail(null)}
+              onConfirm={handleAccommodationConfirm}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showExtras && (
+            <RoomExtrasModal 
+              onClose={() => setShowExtras(false)}
+              onConfirm={handleExtrasConfirm}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showCheckout && (
+            <BookingCheckoutModal 
+              itinerary={currentItinerary}
+              onClose={() => setShowCheckout(false)}
+              onComplete={handleBookingComplete}
+            />
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -363,12 +510,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
       <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4">
         <div className="bg-white w-full max-w-6xl md:rounded-2xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
            {/* Header */}
-           <div className="bg-white px-6 py-4 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+           <div className="bg-white px-6 py-4 border-b flex flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 <div className="bg-green-600 p-2 rounded-xl shadow-md">
                   <CarIcon className="text-white w-5 h-5" />
                 </div>
-                <div>
+                <div className="hidden sm:block">
                   <h2 className="text-xl font-bold text-slate-800 tracking-tight">
                     {getTranslation(currentLang, 'rent_car')}
                   </h2>
@@ -379,32 +526,41 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
                 </div>
               </div>
 
-              <div 
-                onClick={() => setIsDatePickerOpen(true)}
-                className="flex items-center gap-4 bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
-              >
-                 <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-green-600" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'pickup_date')}</span>
-                      <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carStartDate)}</span>
-                    </div>
-                 </div>
-                 <div className="w-px h-6 bg-slate-200" />
-                 <div className="flex items-center gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'return_date')}</span>
-                      <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carEndDate)}</span>
-                    </div>
-                 </div>
-                 <div className="w-px h-6 bg-slate-200" />
-                 <div className="flex items-center gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'days')}</span>
-                      <span className="text-xs font-bold text-green-600">{carDays}</span>
-                    </div>
-                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-green-600 transition-colors" />
-                 </div>
+              <div className="flex items-center gap-3">
+                 <div 
+                  onClick={() => setIsDatePickerOpen(true)}
+                  className="hidden md:flex items-center gap-4 bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
+                >
+                   <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-green-600" />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'pickup_date')}</span>
+                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carStartDate)}</span>
+                      </div>
+                   </div>
+                   <div className="w-px h-6 bg-slate-200" />
+                   <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'return_date')}</span>
+                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carEndDate)}</span>
+                      </div>
+                   </div>
+                   <div className="w-px h-6 bg-slate-200" />
+                   <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'days')}</span>
+                        <span className="text-xs font-bold text-green-600">{carDays}</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-green-600 transition-colors" />
+                   </div>
+                </div>
+
+                <button 
+                  onClick={onClose || onSkip}
+                  className="p-3 bg-slate-100 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-900 shadow-sm"
+                >
+                   <X className="w-6 h-6" />
+                </button>
               </div>
            </div>
 

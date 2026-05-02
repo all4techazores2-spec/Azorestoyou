@@ -80,8 +80,11 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
               <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Mesa #{tableId.replace('T','')}</p>
               <h2 className="text-2xl font-black text-slate-800 tracking-tighter">Fazer Pedido Extra</h2>
            </div>
-           <button onClick={onClose} className="p-3 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
-             <X size={20} />
+           <button 
+             onClick={onClose} 
+             className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+           >
+             <X size={20} className="group-active:scale-90 transition-transform" />
            </button>
         </div>
 

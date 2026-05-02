@@ -49,6 +49,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const [beautyFilter, setBeautyFilter] = useState<string>('all');
   const [shopsFilter, setShopsFilter] = useState<string>('all');
+  const [hotelFilter, setHotelFilter] = useState<string>('all');
   
   // Account management states
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
@@ -221,7 +222,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         newItem = { id: `F${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
         break;
       case 'hotels':
-        newItem = { id: `H${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '' };
+        newItem = { id: `H${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel' };
         break;
       case 'cars':
         newItem = { id: `C${timestamp}`, model: '', companyId: '', type: 'Económico', fuelType: 'Gasolina', pricePerDay: 0, image: '', seats: 5, isAvailable: true, description: '', features: [] };
@@ -413,6 +414,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {islandSelect()}
             {commonInput(t('field_stars'), 'stars', 'number')}
             {commonInput(t('price_night'), 'pricePerNight', 'number')}
+            <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Alojamento</label>
+                <select 
+                  className="w-full border p-2 rounded-lg bg-white font-bold" 
+                  value={editingItem.type || 'hotel'} 
+                  onChange={e => setEditingItem({...editingItem, type: e.target.value})}
+                >
+                  <option value="hotel">Hotel</option>
+                  <option value="al">AL (Alojamento Local)</option>
+                </select>
+            </div>
             {commonInput(t('item_image'), 'image', 'text', true)}
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
@@ -472,7 +484,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter);
       case 'activities': return activities;
       case 'flights': return flights;
-      case 'hotels': return hotels;
+      case 'hotels': 
+        return hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter);
       case 'cars': return cars;
       case 'buses': return busSchedules;
       default: return [];
@@ -907,6 +920,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               )}
 
+              {activeTab === 'hotels' && (
+                <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+                  {[
+                    { id: 'all', label: 'Todos', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
+                    { id: 'hotel', label: 'Hotéis', icon: <BedDouble size={18} />, color: '#1A75BB' },
+                    { id: 'al', label: 'AL (Local)', icon: <Home size={18} />, color: '#F59E0B' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setHotelFilter(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border
+                        ${hotelFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                      style={{ borderBottom: hotelFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
+                    >
+                      <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {getListItems().map((item: any) => (
                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group relative">
@@ -938,6 +971,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                     {item.description || item.type || item.company}
                   </p>
+                  {activeTab === 'hotels' && item.type && (
+                    <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${item.type === 'al' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                       {item.type === 'al' ? 'AL (Local)' : 'Hotel'}
+                    </span>
+                  )}
                   
                   {/* Credentials Preview for Businesses */}
                   {['restaurants', 'shops', 'beauty'].includes(activeTab) && (
@@ -954,6 +992,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
              ))}
+             </div>
            </div>
          )}
          {/* EDIT FORM */}
@@ -961,7 +1000,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto border border-slate-200 animate-in fade-in slide-in-from-bottom-4 mb-20">
              <div className="flex justify-between items-center mb-6 pb-4 border-b">
                <h2 className="text-2xl font-bold text-slate-800">{isAddingNew ? t('add_new') : t('edit')}</h2>
-               <button onClick={() => setEditingItem(null)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
+               <button 
+                  onClick={() => setEditingItem(null)} 
+                  className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                >
+                  <X size={20} className="group-active:scale-90 transition-transform" />
+                </button>
+
              </div>
 
              <form onSubmit={handleSave} className="space-y-6">

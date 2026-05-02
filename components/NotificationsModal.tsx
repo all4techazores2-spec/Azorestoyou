@@ -55,9 +55,9 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({
           </div>
           <button 
             onClick={onClose}
-            className="w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 transition-colors"
+            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
           >
-            <X size={20} />
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 

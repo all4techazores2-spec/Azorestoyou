@@ -81,9 +81,9 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({
               setSelectedRestaurant(null);
               onClose();
             }}
-            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
           >
-            <X className="w-5 h-5" />
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 

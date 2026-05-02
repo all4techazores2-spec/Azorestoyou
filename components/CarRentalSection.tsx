@@ -333,9 +333,9 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
               />
               <button 
                 onClick={() => setSelectedCarForDetail(null)}
-                className="absolute top-6 right-6 p-2 bg-white/90 hover:bg-white rounded-full shadow-lg text-slate-400 hover:text-slate-600 transition-all active:scale-90"
+                className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
               >
-                <X className="w-5 h-5" />
+                <X size={20} className="group-active:scale-90 transition-transform" />
               </button>
               <div className="absolute top-6 left-6">
                  <span className="bg-blue-600/10 text-blue-600 text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full uppercase backdrop-blur-sm">

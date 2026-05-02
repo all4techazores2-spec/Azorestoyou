@@ -16,13 +16,18 @@ interface ProfileModalProps {
     email: string;
     phone: string;
     avatar: string;
+    nif?: string;
   };
-  onUpdateProfile: (update: { email: string; phone: string; avatar: string; password?: string }) => void;
+  onUpdateProfile: (update: { name: string; email: string; phone: string; avatar: string; nif?: string; password?: string }) => void;
   onShowReservations?: () => void;
   onLogout?: () => void;
+  onShowSOS?: () => void;
+  onShowCommunity?: () => void;
 }
 
 type ProfileView = 'menu' | 'edit';
+
+
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ 
   isOpen, 
@@ -32,11 +37,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   userProfile, 
   onUpdateProfile,
   onShowReservations,
-  onLogout
+  onLogout,
+  onShowSOS,
+  onShowCommunity
 }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [view, setView] = useState<ProfileView>('menu');
+  const [name, setName] = useState(userProfile?.name || '');
   const [email, setEmail] = useState(userProfile?.email || '');
   const [phone, setPhone] = useState(userProfile?.phone || '');
+  const [nif, setNif] = useState(userProfile?.nif || '');
   const [avatar, setAvatar] = useState(userProfile?.avatar || '');
   const [newPassword, setNewPassword] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -51,12 +61,30 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   ];
 
   const handleSave = () => {
-    onUpdateProfile({ email, phone, avatar, password: newPassword || undefined });
+    onUpdateProfile({ 
+      name, 
+      email, 
+      phone, 
+      avatar, 
+      nif, 
+      password: newPassword || undefined 
+    });
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
       setView('menu');
     }, 2000);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (!isOpen) return null;
@@ -77,8 +105,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             )}
             <h2 className="text-xl font-black text-slate-800 tracking-tight">Perfil</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full transition-all">
-            <X className="w-5 h-5 text-slate-400" />
+          <button 
+            onClick={onClose} 
+            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+          >
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 
@@ -140,11 +171,33 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                     <span className="font-bold text-slate-700">Mensagens</span>
                   </button>
 
-                  <button className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group">
+                  <button 
+                    onClick={() => onShowCommunity?.()}
+                    className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                  >
                     <div className="p-3 rounded-2xl bg-rose-500 text-white shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform">
                       <Users size={20} />
                     </div>
-                    <span className="font-bold text-slate-700">Comunidade Azores4You</span>
+                    <span className="font-bold text-slate-700">Comunidade AzoresToYou</span>
+                  </button>
+
+                  {/* SOS Button inside Profile */}
+                  <button 
+                    onClick={() => {
+                      // Immediate call
+                      window.location.href = 'tel:112';
+                      // Also open the modal for location info if the app is still open
+                      onShowSOS?.();
+                    }}
+                    className="flex items-center gap-4 w-full p-3 bg-red-600 hover:bg-red-700 rounded-2xl transition-all group shadow-lg shadow-red-100"
+                  >
+                    <div className="p-2 rounded-xl bg-white text-red-600 shadow-sm group-hover:scale-110 transition-transform animate-pulse">
+                      <Lock size={18} fill="currentColor" />
+                    </div>
+                    <div className="text-left text-white">
+                      <span className="font-black text-sm uppercase tracking-tight block leading-none">SOS EMERGÊNCIA</span>
+                      <span className="text-[8px] font-bold uppercase opacity-80 tracking-widest">Ligar 112</span>
+                    </div>
                   </button>
                 </div>
 
@@ -175,13 +228,23 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 ) : (
                   <>
                     <div className="flex flex-col items-center gap-4 mb-6">
-                      <div className="relative group">
-                        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-50 shadow-md">
+                      <div 
+                        className="relative group cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-50 shadow-lg group-hover:border-blue-200 transition-all">
                           <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
-                        <div className="absolute bottom-0 right-0 p-1.5 bg-blue-600 rounded-full text-white border-2 border-white">
-                          <Camera size={12} />
+                        <div className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full text-white border-4 border-white shadow-md group-hover:scale-110 transition-transform">
+                          <Camera size={16} />
                         </div>
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={handleFileChange} 
+                        />
                       </div>
                       <div className="flex gap-2">
                         {avatars.map((av, idx) => (
@@ -198,12 +261,43 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</p>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold" />
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Nome Completo</p>
+                        <div className="relative">
+                          <User className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Telemóvel</p>
-                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Email</p>
+                          <div className="relative">
+                             <Mail className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Telemóvel (Opcional)</p>
+                          <div className="relative">
+                             <Phone className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">NIF (Opcional)</p>
+                          <div className="relative">
+                             <CreditCard className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                             <input type="text" value={nif} onChange={(e) => setNif(e.target.value)} className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Nova Password</p>
+                          <div className="relative">
+                             <Lock className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
+                             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                          </div>
+                        </div>
                       </div>
                     </div>
 

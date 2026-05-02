@@ -13,6 +13,8 @@ interface LandingPageProps {
   currentLanguage: Language;
   onLanguageChange: (lang: Language) => void;
   restaurants: Restaurant[];
+  shops: Restaurant[];
+  beauty: Restaurant[];
 }
 
 const translations = {
@@ -51,7 +53,7 @@ const languageOptions: { code: Language; country: string; label: string }[] = [
   { code: 'de', country: 'de', label: 'Deutsch' },
 ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplore, onAuthSuccess, currentLanguage, onLanguageChange, restaurants }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplore, onAuthSuccess, currentLanguage, onLanguageChange, restaurants, shops, beauty }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const t = translations[currentLanguage];
@@ -148,6 +150,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
           onEnterBooking(); // Guest is never admin
         }}
         restaurants={restaurants}
+        shops={shops}
+        beauty={beauty}
         language={currentLanguage}
       />
     </div>

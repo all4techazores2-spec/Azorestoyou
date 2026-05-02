@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft, Sparkles, ShoppingBag, Home, Camera, Bell, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Restaurant, Itinerary } from '../types';
 import RatingModal from './RatingModal';
@@ -39,13 +39,26 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const activeReservations = reservations.filter(r => ['pending', 'accepted', 'occupied'].includes(r.status));
   const historyReservations = reservations.filter(r => ['finished', 'cancelled'].includes(r.status));
 
+  const restaurantReservations = activeReservations.filter(r => r.type === 'restaurant');
+  const beautyReservations = activeReservations.filter(r => r.type === 'beauty');
+  const shopReservations = activeReservations.filter(r => r.type === 'shop');
+  const hotelReservations = activeReservations.filter(r => r.type === 'hotel');
+  const alReservations = activeReservations.filter(r => r.type === 'al');
+  const carReservations = activeReservations.filter(r => r.type === 'car');
+  const flightReservations = activeReservations.filter(r => r.type === 'flight');
+  const landscapeReservations = activeReservations.filter(r => r.type === 'landscape');
+
   const categories = [
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
-    { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: activeReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
-    { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: itinerary.flight ? 1 : 0, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
-    { id: 'hotels', label: 'Alojamento', icon: <Hotel size={24} />, count: itinerary.hotel ? 1 : 0, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
-    { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: itinerary.car ? 1 : 0, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'restaurants' || cat.id === 'history');
+    { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
+    { id: 'landscapes', label: 'Paisagens', icon: <Camera size={24} />, count: landscapeReservations.length, color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
+    { id: 'hotels', label: 'Hotéis', icon: <Hotel size={24} />, count: hotelReservations.length, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
+    { id: 'al', label: 'Alojamento Local', icon: <Home size={24} />, count: alReservations.length, color: 'from-blue-400 to-blue-600', shadow: 'shadow-blue-500/20' },
+    { id: 'beauty', label: 'Beleza & Bem-Estar', icon: <Sparkles size={24} />, count: beautyReservations.length, color: 'from-fuchsia-500 to-pink-600', shadow: 'shadow-fuchsia-500/20' },
+    { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
+    { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
+    { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
+  ].filter(cat => cat.count > 0 || cat.id === 'history');
 
   const handleBack = () => setSelectedCategory(null);
 
@@ -86,9 +99,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
           </div>
           <button 
             onClick={onClose} 
-            className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all active:scale-90"
+            className="absolute top-8 right-8 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
           >
-            <X size={20} className="text-slate-500" />
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 
@@ -145,13 +158,22 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                {/* RESTAURANTS VIEW - ONLY ACTIVE */}
-                {selectedCategory === 'restaurants' && activeReservations.map((res, idx) => {
+                {/* RESTAURANTS, BEAUTY, SHOPS, LANDSCAPES ITEMS VIEW */}
+                {['restaurants', 'beauty', 'shops', 'landscapes'].includes(selectedCategory!) && (
+                  selectedCategory === 'restaurants' ? restaurantReservations : 
+                  selectedCategory === 'beauty' ? beautyReservations : 
+                  selectedCategory === 'shops' ? shopReservations :
+                  landscapeReservations
+                ).map((res) => {
                   const rest = restaurants.find(r => r.id === res.restaurantId || r.name === res.restaurantName);
+                  const isBeautyRes = res.type === 'beauty';
+                  const isShopRes = res.type === 'shop';
+                  const isLandscapeRes = res.type === 'landscape';
+                  
                   const statusConfig = {
                     pending: { label: 'Pendente', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
-                    accepted: { label: 'Confirmada', color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
-                    occupied: { label: 'Em Experiência', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
+                    accepted: { label: isBeautyRes ? 'Agendada' : isLandscapeRes ? 'Confirmada' : 'Confirmada', color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+                    occupied: { label: isBeautyRes ? 'Em Serviço' : isLandscapeRes ? 'Em Atividade' : 'Em Experiência', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
                     cancelled: { label: 'Cancelada', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
                     finished: { label: 'Concluída', color: 'bg-slate-800', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
                   };
@@ -166,22 +188,17 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${config.bg} ${config.text} ${config.border}`}>
                                {config.label}
                              </span>
-                             {res.tableId && res.status === 'accepted' && (
-                               <span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-blue-500/30">
-                                  Mesa #{res.tableId.replace('T', '')}
+                             {res.paymentType && (
+                               <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-200">
+                                 {res.paymentType === 'points' ? 'Créditos' : res.paymentType === 'mbway' ? 'MBWay' : 'Presencial'}
                                </span>
-                             )}
-                             {res.status === 'pending' && (
-                                <span className="bg-amber-100 text-amber-600 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-amber-200">
-                                   Aguardando Aprovação
-                                </span>
                              )}
                           </div>
                           <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
-                            {rest?.name || res.restaurantName}
+                            {res.itemName || rest?.name || res.restaurantName}
                           </h3>
                           <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-1.5">
-                            <MapPin size={12} /> {rest?.island || 'Açores'}
+                            <MapPin size={12} /> {isLandscapeRes ? 'Açores' : (rest?.island || 'Açores')}
                           </p>
                         </div>
                         <div className="bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 text-right min-w-[80px]">
@@ -196,67 +213,82 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                               <Users size={18} />
                            </div>
                            <div className="text-left">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pessoas</p>
-                              <p className="text-sm font-black text-slate-700">{res.guests || 2} Lugares</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Titular</p>
+                              <p className="text-sm font-black text-slate-700 truncate max-w-[120px]">{res.customerName}</p>
                            </div>
                         </div>
-                        {res.tableId && (
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
-                                <Receipt size={18} />
-                             </div>
-                             <div className="text-left">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Local</p>
-                                <p className="text-sm font-black text-slate-700">Mesa #{res.tableId.replace('T','')}</p>
-                             </div>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                              {isLandscapeRes ? <Camera size={18} /> : isBeautyRes ? <Sparkles size={18} /> : <Receipt size={18} />}
+                           </div>
+                           <div className="text-left">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipo</p>
+                              <p className="text-sm font-black text-slate-700">{isLandscapeRes ? 'Atividade' : isBeautyRes ? 'Beleza' : 'Reserva'}</p>
+                           </div>
+                        </div>
                       </div>
 
                       {res.status === 'accepted' && (
                         <div className="space-y-3">
-                           <button 
-                             onClick={() => onAddItems?.(res)}
-                             className="w-full py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm"
-                           >
-                             <UtensilsCrossed size={16} /> Fazer Pedido Antecipado
-                           </button>
-                           <button 
-                             onClick={() => onCheckIn(res.id, res.restaurantId || '', res.tableId)}
-                             className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                           >
-                             <CheckCircle size={18} /> Já cheguei ao Restaurante
-                           </button>
+                           {isLandscapeRes ? (
+                             <button 
+                               className="w-full py-5 bg-gradient-to-r from-orange-500 to-rose-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:shadow-lg hover:shadow-orange-500/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                             >
+                               <Navigation size={18} /> Ver Direções do Trilho
+                             </button>
+                           ) : (
+                             <>
+                               {!isBeautyRes && !isShopRes && (
+                                 <button 
+                                   onClick={() => onAddItems?.(res)}
+                                   className="w-full py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm"
+                                 >
+                                   <UtensilsCrossed size={16} /> Fazer Pedido Antecipado
+                                 </button>
+                               )}
+                               <button 
+                                 onClick={() => onCheckIn(res.id, res.restaurantId || '', res.tableId)}
+                                 className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                               >
+                                 <CheckCircle size={18} /> {isBeautyRes ? 'Já cheguei ao Salão' : isShopRes ? 'Já cheguei à Loja' : 'Já cheguei ao Restaurante'}
+                               </button>
+                             </>
+                           )}
                         </div>
                       )}
 
                       {res.status === 'occupied' && (
-                        <div className="space-y-3">
-                           <button 
-                             onClick={() => onAddItems?.(res)}
-                             className="w-full py-4 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm"
-                           >
-                             <UtensilsCrossed size={16} /> Fazer Pedido Adicional
-                           </button>
+                        <div className="space-y-4">
+                           {/* Row for Staff and Menu Actions */}
                            <div className="grid grid-cols-2 gap-3">
-                              <button 
-                                onClick={() => onTableAction?.(res.restaurantId || '', res.tableId!, 'calling_waiter')}
-                                className="py-4 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex flex-col items-center justify-center gap-2 border border-slate-200 shadow-sm"
-                              >
-                                 <Info size={16} className="text-amber-500" /> Chamar Staff
-                              </button>
-                              <button 
-                                onClick={() => onTableAction?.(res.restaurantId || '', res.tableId!, 'waiting_bill')}
-                                className="py-4 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex flex-col items-center justify-center gap-2 border border-slate-200 shadow-sm"
-                              >
-                                 <Receipt size={16} className="text-blue-500" /> Pedir a Conta
-                              </button>
+                             <button 
+                               onClick={() => onTableAction?.(res.restaurantId, res.tableId, 'calling_waiter')}
+                               className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                             >
+                               <Bell size={16} /> Chamar Staff
+                             </button>
+                             <button 
+                               onClick={() => onAddItems?.(res)}
+                               className="py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                             >
+                               <UtensilsCrossed size={16} /> Novo Pedido
+                             </button>
                            </div>
+
+                           {/* Request Bill Button */}
                            <button 
-                             onClick={() => onCheckOut(res.id, res.restaurantId || '', res.tableId)}
-                             className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                             onClick={() => onTableAction?.(res.restaurantId, res.tableId, 'waiting_bill')}
+                             className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2"
                            >
-                             <QrCode size={18} /> Dar Saída (Libertar Mesa)
+                             <Receipt size={18} /> Pedir a Conta
+                           </button>
+
+                           {/* Checkout Button */}
+                           <button 
+                             onClick={() => onCheckOut(res.id, res.restaurantId, res.tableId)}
+                             className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                           >
+                             <LogOut size={18} /> Fechar Conta & Sair
                            </button>
                         </div>
                       )}
@@ -272,27 +304,28 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                            </button>
                          </div>
                       )}
-
-                      {res.status === 'finished' && res.reviewed && (
-                         <div className="pt-4">
-                           <div className="w-full bg-slate-50 text-slate-400 h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 border border-slate-100">
-                             <CheckCircle size={20} />
-                             Já Avaliado
-                           </div>
-                         </div>
-                      )}
                     </div>
                   );
                 })}
-                {selectedCategory === 'restaurants' && activeReservations.length === 0 && (
+
+                {/* NO ITEMS PLACEHOLDER */}
+                {['restaurants', 'beauty', 'shops', 'landscapes'].includes(selectedCategory!) && (
+                  selectedCategory === 'restaurants' ? restaurantReservations : 
+                  selectedCategory === 'beauty' ? beautyReservations : 
+                  selectedCategory === 'shops' ? shopReservations :
+                  landscapeReservations
+                ).length === 0 && (
                    <div className="py-12 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
-                     <UtensilsCrossed size={48} className="mx-auto mb-4 text-slate-200" />
-                     <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Sem reservas ativas no momento</p>
+                     {selectedCategory === 'restaurants' ? <UtensilsCrossed size={48} className="mx-auto mb-4 text-slate-200" /> : 
+                      selectedCategory === 'beauty' ? <Sparkles size={48} className="mx-auto mb-4 text-slate-200" /> : 
+                      selectedCategory === 'landscapes' ? <Camera size={48} className="mx-auto mb-4 text-slate-200" /> :
+                      <ShoppingBag size={48} className="mx-auto mb-4 text-slate-200" />}
+                     <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Sem {selectedCategory === 'beauty' ? 'marcações' : 'reservas'} ativas no momento</p>
                    </div>
                 )}
 
                 {/* HISTORY VIEW */}
-                {selectedCategory === 'history' && historyReservations.map((res, idx) => {
+                {selectedCategory === 'history' && historyReservations.map((res) => {
                   const rest = restaurants.find(r => r.id === res.restaurantId || r.name === res.restaurantName);
                   return (
                     <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm overflow-hidden relative group">
@@ -303,9 +336,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       )}
                       
                       <div className="flex justify-between items-start mb-4">
-                         <div>
+                         <div className="text-left">
                             <h3 className="font-black text-lg text-slate-800">{rest?.name || res.restaurantName}</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{res.date} • {res.time}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{res.date} {res.time ? `• ${res.time}` : ''}</p>
                          </div>
                          {res.earnedCredits && (
                            <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-xl text-[10px] font-black border border-emerald-100">
@@ -316,7 +349,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
                       <div className="flex items-center gap-4 py-4 border-t border-slate-50">
                          {res.reviewed ? (
-                           <div className="flex-1">
+                           <div className="flex-1 text-left">
                               <div className="flex items-center gap-1 mb-1">
                                 {[1, 2, 3, 4, 5].map(star => (
                                   <Star key={star} size={12} className={star <= (res.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'} />
@@ -332,7 +365,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                              <Star size={14} className="fill-slate-900" /> Avaliar Experiência
                            </button>
                          ) : (
-                           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Reserva não concluída</p>
+                           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Reserva concluída</p>
                          )}
                       </div>
                     </div>
@@ -347,16 +380,16 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 )}
 
                 {/* FLIGHTS VIEW */}
-                {selectedCategory === 'flights' && itinerary.flight && (
-                   <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm text-left">
+                {selectedCategory === 'flights' && flightReservations.map((res) => (
+                   <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm text-left mb-6 last:mb-0">
                       <div className="flex justify-between items-center mb-8">
                          <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
                                <Plane size={24} />
                             </div>
                             <div className="text-left">
-                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{itinerary.flight.airline}</p>
-                               <h3 className="text-xl font-black text-slate-800 tracking-tight">{itinerary.flight.flightNumber}</h3>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{res.flight.airline}</p>
+                               <h3 className="text-xl font-black text-slate-800 tracking-tight">{res.flight.flightNumber}</h3>
                             </div>
                          </div>
                          <div className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
@@ -367,15 +400,15 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       <div className="flex justify-between items-center gap-6 mb-8 relative">
                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[2px] bg-slate-50 z-0"></div>
                          <div className="relative z-10 bg-white pr-4 text-left">
-                            <p className="text-3xl font-black text-slate-900">{itinerary.flight.origin}</p>
-                            <p className="text-xs font-bold text-slate-400 mt-1">{itinerary.flight.departureTime}</p>
+                            <p className="text-3xl font-black text-slate-900">{res.flight.origin}</p>
+                            <p className="text-xs font-bold text-slate-400 mt-1">{res.flight.departureTime}</p>
                          </div>
                          <div className="relative z-10 bg-white px-3 text-blue-500">
                             <Plane size={20} className="rotate-90" />
                          </div>
                          <div className="relative z-10 bg-white pl-4 text-right">
-                            <p className="text-3xl font-black text-slate-900">{itinerary.flight.destination}</p>
-                            <p className="text-xs font-bold text-slate-400 mt-1">{itinerary.flight.arrivalTime}</p>
+                            <p className="text-3xl font-black text-slate-900">{res.flight.destination}</p>
+                            <p className="text-xs font-bold text-slate-400 mt-1">{res.flight.arrivalTime}</p>
                          </div>
                       </div>
                       
@@ -384,63 +417,69 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ver Cartão de Embarque</span>
                       </div>
                    </div>
-                )}
+                ))}
 
-                {/* HOTELS VIEW */}
-                {selectedCategory === 'hotels' && itinerary.hotel && (
-                   <div className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left">
+                {/* HOTELS & AL VIEW */}
+                {(selectedCategory === 'hotels' || selectedCategory === 'al') && (selectedCategory === 'hotels' ? hotelReservations : alReservations).map((res) => (
+                   <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
                       <div className="h-40 relative">
-                         <img src={itinerary.hotel.image} alt={itinerary.hotel.name} className="w-full h-full object-cover" />
+                         <img src={res.hotel.image} alt={res.hotel.name} className="w-full h-full object-cover" />
                          <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-600 shadow-lg">
                             Reserva Ativa
                          </div>
                       </div>
                       <div className="p-8 text-left">
-                         <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">{itinerary.hotel.name}</h3>
+                         <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">{res.hotel.name}</h3>
                          <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mb-6">
-                            <MapPin size={14} /> {itinerary.hotel.island}, Açores
+                            <MapPin size={14} /> {res.hotel.island}, Açores
                          </p>
                          <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Check-in</p>
-                               <p className="text-sm font-black text-slate-800">{itinerary.hotelStartDate || '24 Jun 2026'}</p>
+                               <p className="text-sm font-black text-slate-800">{res.date}</p>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
-                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Check-out</p>
-                               <p className="text-sm font-black text-slate-800">{itinerary.hotelEndDate || '27 Jun 2026'}</p>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estadia</p>
+                               <p className="text-sm font-black text-slate-800">{res.nights} noites</p>
                             </div>
                          </div>
+                         {res.selectedRoom && (
+                            <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                               <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Quarto Selecionado</p>
+                               <p className="text-sm font-black text-blue-800">{res.selectedRoom.name}</p>
+                            </div>
+                         )}
                       </div>
                    </div>
-                )}
+                ))}
 
                 {/* CARS VIEW */}
-                {selectedCategory === 'cars' && itinerary.car && (
-                   <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm text-left">
+                {selectedCategory === 'cars' && carReservations.map((res) => (
+                   <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm text-left mb-6 last:mb-0">
                       <div className="flex justify-between items-start mb-6">
                          <div className="text-left">
-                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{itinerary.car.model}</h3>
-                            <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{itinerary.car.type}</p>
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{res.car.model}</h3>
+                            <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{res.car.type}</p>
                          </div>
                          <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-rose-500">
                             <Car size={32} />
                          </div>
                       </div>
                       <div className="h-32 mb-6">
-                         <img src={itinerary.car.image} alt={itinerary.car.model} className="w-full h-full object-contain mx-auto" />
+                         <img src={res.car.image} alt={res.car.model} className="w-full h-full object-contain mx-auto" />
                       </div>
                       <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Levantamento</span>
-                            <span className="text-sm font-black text-slate-800">{itinerary.carStartDate || '24 Jun'} - Aeroporto</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</span>
+                            <span className="text-sm font-black text-slate-800">{res.date}</span>
                          </div>
                          <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Devolução</span>
-                            <span className="text-sm font-black text-slate-800">{itinerary.carEndDate || '27 Jun'} - Aeroporto</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duração</span>
+                            <span className="text-sm font-black text-slate-800">{res.days} dias</span>
                          </div>
                       </div>
                    </div>
-                )}
+                ))}
               </motion.div>
             )}
           </AnimatePresence>

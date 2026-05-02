@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, Map, X, MapPin, Check } from 'lucide-react';
+import { Search, Map, X, MapPin, Check, Compass } from 'lucide-react';
 import { Language } from '../types';
 import { getAirports } from '../constants';
 import { getTranslation } from '../translations';
@@ -79,12 +79,54 @@ const IslandSearch: React.FC<IslandSearchProps> = ({ selectedIsland, onSelectIsl
                 <h3 className="text-lg font-bold text-slate-800">{getTranslation(language, 'select_island_modal')}</h3>
                 <p className="text-xs text-slate-500">{getTranslation(language, 'select_island_desc')}</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white rounded-full shadow-sm hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+              >
+                <X size={20} className="group-active:scale-90 transition-transform" />
               </button>
             </div>
             
-            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-2">
+            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-3">
+              {/* Locate Me Button */}
+              <button 
+                onClick={() => {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                      const { latitude, longitude } = position.coords;
+                      onSelectIsland(`nearby:${latitude},${longitude}`);
+                      setIsModalOpen(false);
+                    }, (error) => {
+                      console.error("Error detecting location:", error);
+                      alert("Não foi possível detetar a sua localização.");
+                    });
+                  }
+                }}
+                className="w-full p-4 rounded-xl flex items-center gap-4 transition-all border-2 border-blue-100 bg-blue-50/50 text-blue-600 hover:bg-blue-100/50 group"
+              >
+                <div className="p-2 rounded-lg bg-blue-600 text-white shadow-md group-hover:scale-110 transition-transform">
+                  <Compass className="w-6 h-6" />
+                </div>
+                <div className="text-left">
+                  <span className="font-bold block">Detetar Localização</span>
+                  <span className="text-xs opacity-70">Encontrar negócios perto de mim</span>
+                </div>
+                <div className="ml-auto w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+              </button>
+
+              {/* Simulation for testing: Toronto, Canada */}
+              <button 
+                onClick={() => {
+                  onSelectIsland(`nearby:43.6532,-79.3832`);
+                  setIsModalOpen(false);
+                }}
+                className="w-full p-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 hover:text-blue-400 transition-colors"
+              >
+                Simular Localização: Toronto, Canadá 🇨🇦
+              </button>
+
+              <div className="h-px bg-slate-100 my-2"></div>
+
               <button 
                 onClick={() => { onSelectIsland('all'); setQuery(''); setIsModalOpen(false); }}
                 className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all border-2 text-left

@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -26,6 +26,8 @@ interface BusinessDashboardProps {
 type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
+const BEAUTY_POS_CATEGORIES = ['Cabelo', 'Unhas', 'Estética', 'Massagem', 'Maquilhagem', 'Sobrancelhas', 'Depilação', 'Barba', 'Produtos'];
+const SHOP_POS_CATEGORIES = ['Vestuário', 'Calçado', 'Acessórios', 'Eletrónica', 'Casa', 'Promoções', 'Outros'];
 
 const MOCK_POS_PRODUCTS: Product[] = [
   // Entradas
@@ -102,6 +104,19 @@ const MOCK_POS_PRODUCTS: Product[] = [
   { id: 'pos_g7', name: 'Affogato', price: 4.00, category: 'Gelados', description: '', image: '' },
 ];
 
+const MOCK_BEAUTY_SERVICES: any[] = [
+  { id: 'b_s1', name: 'Corte de Cabelo Masculino', price: 15.00, category: 'Barba', description: 'Corte clássico ou moderno', image: '' },
+  { id: 'b_s2', name: 'Barba Tradicional', price: 10.00, category: 'Barba', description: 'Com toalha quente', image: '' },
+  { id: 'b_s3', name: 'Corte e Barba', price: 22.00, category: 'Barba', description: 'Pack completo', image: '' },
+  { id: 'b_s4', name: 'Corte Feminino', price: 25.00, category: 'Cabelo', description: 'Lavagem e corte', image: '' },
+  { id: 'b_s5', name: 'Coloração', price: 35.00, category: 'Cabelo', description: 'Tinta premium', image: '' },
+  { id: 'b_s6', name: 'Manicure Gel', price: 20.00, category: 'Unhas', description: 'Verniz gel duradouro', image: '' },
+  { id: 'b_s7', name: 'Pedicure', price: 18.00, category: 'Unhas', description: 'Tratamento completo', image: '' },
+  { id: 'b_s8', name: 'Limpeza de Pele', price: 30.00, category: 'Estética', description: 'Hidratação profunda', image: '' },
+  { id: 'b_s9', name: 'Massagem Relaxante', price: 40.00, category: 'Massagem', description: '60 minutos', image: '' },
+  { id: 'b_s10', name: 'Depilação Sobrancelha', price: 8.00, category: 'Sobrancelhas', description: 'Design com pinça', image: '' },
+];
+
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   business,
   onUpdateBusiness,
@@ -117,9 +132,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     ? 'http://localhost:3001'
     : 'https://azorestoyou-1.onrender.com';
 
-  const isRestaurant = !business.businessType || business.businessType === 'restaurants';
-  const isBeauty = business.businessType === 'beauty';
-  const isShop = business.businessType === 'shop';
+  const bType = (business.businessType || (business as any).type || '').toLowerCase();
+  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service');
+  const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
+  const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
+  const isRestaurant = !isBeauty && !isShop && !isService;
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : (isShop ? 'pos' : (isBeauty ? 'reservations' : 'tables')));
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
@@ -127,6 +144,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [walkInTableId, setWalkInTableId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   // Staff State already declared below
 
@@ -267,7 +285,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     longitude: business.longitude || '',
     nif: (business as any).nif || '',
     creditValue: (business as any).creditValue ?? 0.30,
-    creditsPerReservation: (business as any).creditsPerReservation ?? 0
+    creditsPerReservation: (business as any).creditsPerReservation ?? 0,
+    openingHours: business.openingHours || '09:00-13:00, 14:00-19:00'
   });
 
   // Staff Management State
@@ -621,7 +640,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const addDish = () => {
-    if (isBeauty) {
+    if (isBeauty || isShop) {
       const newService: Service = { id: `S${Date.now()}`, name: 'Novo Serviço', description: '', price: 0, duration: 30, image: '' };
       const newServices = [...(business.services || []), newService];
       handleUpdate({ services: newServices });
@@ -633,7 +652,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const removeDish = (idx: number) => {
-    if (isBeauty) {
+    if (isBeauty || isShop) {
       const newServices = (business.services || []).filter((_, i) => i !== idx);
       handleUpdate({ services: newServices });
       return;
@@ -643,6 +662,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
+    if (isBeauty && action === 'accepted') {
+      const newReservations = reservations.map(r => 
+        r.id === id ? { ...r, status: action, confirmedByRestaurant: true } : r
+      );
+      setReservations(newReservations);
+      handleUpdate({ reservations: newReservations });
+      alert("✅ Marcação aprovada com sucesso!");
+      return;
+    }
+
     if (action === 'accepted' && !tableId) {
       // Abrir selecionador de mesa
       const res = reservations.find(r => r.id === id);
@@ -879,8 +908,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         className="h-screen bg-slate-900 text-white flex flex-col fixed lg:sticky top-0 left-0 z-30 shadow-2xl flex-shrink-0 overflow-hidden"
       >
         <div className="p-4 h-24 border-b border-white/10 flex items-center gap-4 overflow-hidden">
-           <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Utensils size={32} />
+           <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
+              {isBeauty ? <Scissors size={26} /> : isShop ? <Store size={26} /> : isService ? <Wrench size={26} /> : <Utensils size={32} />}
            </div>
            <AnimatePresence>
              {isExpanded && (
@@ -923,12 +952,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar whitespace-nowrap">
           {([
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
-            { id: 'tables', label: isBeauty ? 'Agenda Diária' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop || isBeauty },
-            { id: 'kitchen', label: isShop ? 'Vendas' : 'Cozinha', icon: isShop ? <ShoppingBag size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop) && !isStaff },
-            { id: 'pos', label: isShop ? 'Caixa / Venda' : 'POS Venda', icon: <ShoppingBag size={20} /> },
-            { id: 'dishes', label: isBeauty ? 'Serviços' : isShop ? 'Catálogo' : 'Ementa', icon: isBeauty ? <Sparkles size={18} /> : <Edit size={20} />, hideForStaff: true },
-            { id: 'products', label: isShop ? 'Stock / Inventário' : 'Produtos/Stock', icon: <ShoppingBag size={20} />, hideForStaff: true },
-            { id: 'updates', label: isShop ? 'Promoções' : 'Comunicados', icon: <Megaphone size={20} />, hideForStaff: true },
+            { id: 'tables', label: isBeauty ? 'Agenda / Mapa' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
+            { id: 'kitchen', label: isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop) && !isStaff },
+            { id: 'pos', label: isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
+            { id: 'dishes', label: isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
+            { id: 'products', label: isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
+            { id: 'updates', label: isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
             { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
@@ -1039,13 +1068,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               <button
                 onClick={() => setSettingsOpen(prev => !prev)}
                 className={`w-full h-12 rounded-2xl flex items-center transition-all duration-300 group relative ${
-                  ['settings', 'business', 'staff', 'gallery', 'reviews'].includes(activeTab)
+                  ['settings', 'business', 'staff', 'gallery', 'reviews', 'openingHours'].includes(activeTab)
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                  <Settings size={20} className={['settings','business','staff','gallery','reviews'].includes(activeTab) ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'} />
+                  <Settings size={20} className={['settings','business','staff','gallery','reviews','openingHours'].includes(activeTab) ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'} />
                 </div>
                 <AnimatePresence>
                   {isExpanded && (
@@ -1180,8 +1209,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                  {currentTime.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
            </div>
-
-           <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live System</span>
@@ -1192,171 +1220,240 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         <div className="p-8 pb-32">
           {activeTab === 'tables' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-               {acceptingReservation && (
-                 <motion.div 
-                   initial={{ opacity: 0, scale: 0.9 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   className="bg-emerald-600 text-white p-6 rounded-[2.5rem] shadow-2xl shadow-emerald-600/30 flex items-center justify-between border-2 border-emerald-400"
-                 >
-                   <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center animate-pulse">
-                       <CheckCircle className="text-white" />
+               {isBeauty ? (
+                 <div className="space-y-6">
+                   <div className="flex justify-between items-center bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
+                     <div className="flex items-center gap-4">
+                       <button 
+                         onClick={() => {
+                           const d = new Date(selectedDate);
+                           d.setDate(d.getDate() - 7);
+                           setSelectedDate(d);
+                         }}
+                         className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-all"
+                       >
+                         <ChevronRight className="rotate-180 w-4 h-4" />
+                       </button>
+                       <div>
+                         <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Agenda Semanal</h3>
+                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                           Semana de {(() => {
+                             const d = new Date(selectedDate);
+                             const day = d.getDay() || 7;
+                             d.setDate(d.getDate() - day + 1);
+                             return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long' });
+                           })()}
+                         </p>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           const d = new Date(selectedDate);
+                           d.setDate(d.getDate() + 7);
+                           setSelectedDate(d);
+                         }}
+                         className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-all"
+                       >
+                         <ChevronRight className="w-4 h-4" />
+                       </button>
                      </div>
-                     <div>
-                       <p className="font-black text-xl tracking-tighter uppercase">Modo de Atribuição</p>
-                       <p className="text-sm opacity-80 font-bold italic">Selecione uma mesa livre para {acceptingReservation.customerName}</p>
+                     <div className="flex gap-4">
+                       <div className="flex items-center gap-2">
+                         <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupado</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Livre</span>
+                       </div>
                      </div>
                    </div>
-                   <button 
-                     onClick={() => setAcceptingReservation(null)}
-                     className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
-                   >
-                     Cancelar
-                   </button>
-                 </motion.div>
-               )}
 
-               <div className="flex justify-between items-center bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 mb-8">
-                  <div className="flex gap-8">
-                    <div className="flex items-center gap-2">
-                       <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponível</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="w-3 h-3 rounded-full bg-slate-900"></div>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupada</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reservada</span>
-                    </div>
-                  </div>
-                  <button onClick={addTable} className="px-6 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
-                    <Plus className="w-4 h-4" /> Nova Mesa
-                  </button>
-               </div>
+                   <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm overflow-x-auto">
+                     <div className="min-w-[800px]">
+                        <div className="grid grid-cols-8 gap-4 mb-6 border-b border-slate-50 pb-4">
+                          <div className="col-span-1"></div>
+                          {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((dia, i) => {
+                            const d = new Date(selectedDate);
+                            const currentDay = d.getDay() || 7;
+                            d.setDate(d.getDate() - currentDay + 1 + i);
+                            return (
+                              <div key={i} className="text-center">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{dia}</p>
+                                <p className={`text-lg font-black ${d.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-slate-800'}`}>
+                                  {d.getDate()}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
 
-               <div className="bg-slate-50 border border-slate-100 rounded-[3rem] p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 w-full max-w-4xl">
-                     {tables.map(table => (
-                       <motion.div 
-                         key={table.id}
-                         whileHover={{ scale: 1.05 }}
-                         className="relative"
-                       >
-                          <motion.button 
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => toggleTableStatus(table.id)}
-                            className={`aspect-square w-full rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-500 shadow-xl relative group ${
-                              acceptingReservation ? (table.status === 'available' ? 'bg-emerald-50 border-4 border-emerald-500 scale-110 shadow-emerald-500/20' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
-                              selectedResForTable ? (table.status === 'available' ? 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
-                              table.status === 'available' ? 'bg-white text-slate-800 border-2 border-slate-100' :
-                              table.status === 'occupied' ? 'bg-slate-900 text-white' : 'bg-blue-600 text-white'
-                            }`}
-                          >
-                             <TableIcon className={`w-10 h-10 mb-2 ${table.status === 'available' ? 'text-blue-500' : 'text-white/40'}`} />
-                             <span className="font-black text-2xl tracking-tighter">#{table.number}</span>
-                             <div className="flex gap-1 mt-2">
-                                {Array.from({ length: table.seats }).map((_, i) => (
-                                  <div key={i} className="w-2 h-2 rounded-full bg-current opacity-20"></div>
-                                ))}
-                             </div>
-                             
-                             {/* Hover Info Tooltip */}
-                             {table.status !== 'available' && (
-                               <div className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 rounded-[2.5rem] flex flex-col items-center justify-center p-4 text-center pointer-events-none">
-                                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
-                                     {table.status === 'occupied' ? 'Ocupada por' : 'Reservada para'}
-                                  </p>
-                                  <p className="text-sm font-bold text-white mb-1 truncate w-full px-2">{table.customerName || 'Cliente'}</p>
-                                  <p className="text-xs font-black text-white/50">{table.reservationTime || '--:--'}</p>
-                                  
-                                  {table.status === 'occupied' && table.currentTab && table.currentTab.length > 0 && (
-                                     <div className="mt-2 w-full text-left bg-white/5 rounded-xl p-2 max-h-16 overflow-y-hidden">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-white/10 pb-1">Consumo Atual</p>
-                                        {table.currentTab.slice(0, 2).map((item, i) => (
-                                           <div key={i} className="flex justify-between text-[9px] text-white/80">
-                                              <span className="truncate pr-1">{item.quantity}x {item.dish.name}</span>
-                                              <span>€{(Number(item.dish.price || 0) * item.quantity).toFixed(2)}</span>
-                                           </div>
-                                        ))}
-                                        {table.currentTab.length > 2 && <p className="text-[8px] text-blue-400 font-bold mt-1">+{table.currentTab.length - 2} itens...</p>}
-                                     </div>
-                                  )}
-                                  
-                                  {table.status === 'occupied' && (!table.currentTab || table.currentTab.length === 0) && (
-                                     <div className="mt-2 text-[10px] font-black px-2 py-1 bg-white/10 rounded-lg text-white">
-                                        Pedido: {table.currentOrderId ? 'Enviado 👨‍🍳' : 'Não enviado ⏳'}
-                                     </div>
-                                  )}
-                               </div>
-                             )}
+                        <div className="space-y-1">
+                          {(() => {
+                            const slots = [];
+                            const hours = (business.openingHours || '09:00-19:00').split('-').map(h => parseInt(h.split(':')[0]));
+                            const start = hours[0] || 9;
+                            const end = hours[1] || 19;
+                            
+                            for (let h = start; h < end; h++) {
+                              for (let m of ['00', '30']) {
+                                const time = `${String(h).padStart(2, '0')}:${m}`;
+                                slots.push(
+                                  <div key={time} className="grid grid-cols-8 gap-4 items-center group">
+                                    <div className="text-[10px] font-black text-slate-300 group-hover:text-slate-500 text-right pr-4 py-2 transition-colors">{time}</div>
+                                    {[0, 1, 2, 3, 4, 5, 6].map(i => {
+                                      const d = new Date(selectedDate);
+                                      const currentDay = d.getDay() || 7;
+                                      d.setDate(d.getDate() - currentDay + 1 + i);
+                                      const dateStr = d.toISOString().split('T')[0];
+                                      
+                                      // Check if there's an accepted reservation for this day and time
+                                      const res = reservations.find(r => 
+                                        r.status === 'accepted' && 
+                                        r.time === time && 
+                                        (r.date === dateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === dateStr))
+                                      );
 
-                             {/* Status Indicator Bubble */}
-                             {table.alertStatus === 'waiting_bill' && (
-                                <>
-                                  <div className="absolute -top-3 -left-3 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-red-500/50 animate-bounce z-10">
-                                    <Receipt size={18} />
+                                      return (
+                                        <div 
+                                          key={i} 
+                                          className={`h-10 rounded-lg border transition-all flex items-center justify-center cursor-pointer relative overflow-hidden group/slot ${
+                                            res ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-emerald-50/30 border-emerald-100/50 hover:bg-emerald-50 hover:border-emerald-200'
+                                          }`}
+                                          title={res ? `Reservado para: ${res.customerName}` : 'Disponível'}
+                                        >
+                                          {res && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                              <span className="text-[8px] font-black text-white/20 uppercase truncate px-1">{res.customerName.split(' ')[0]}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
-                                  {/* PAYMENT CONFIRM BUTTON */}
-                                  <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      const reservation = reservations.find(r => r.tableId === table.id && (r.status === 'occupied' || r.status === 'accepted'));
-                                      try {
-                                        const resp = await fetch(`${API_BASE_URL}/api/payment-confirm`, {
-                                          method: 'POST',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({
-                                            restaurantId: business.id,
-                                            reservationId: reservation?.id,
-                                            customerEmail: reservation?.customerEmail,
-                                            tableId: table.id
-                                          })
-                                        });
-                                        const data = await resp.json();
-                                        if (data.success) {
-                                          // Update local state
-                                          const newTables = tables.map(t => t.id === table.id ? { ...t, status: 'available' as const, alertStatus: 'none' as const, currentTab: [], customerName: undefined, reservationTime: undefined } : t);
-                                          const newReservations = reservations.map(r => r.id === reservation?.id ? { ...r, status: 'finished' as const, paymentConfirmed: true, earnedCredits: data.earnedCredits } : r);
-                                          setTables(newTables);
-                                          setReservations(newReservations);
-                                          onUpdateBusiness({ ...business, tables: newTables, reservations: newReservations });
-                                          alert(`✅ Pagamento confirmado! ${data.earnedCredits > 0 ? `${data.earnedCredits} créditos atribuídos ao cliente.` : 'Mesa libertada.'}`);
-                                        }
-                                      } catch (err) {
-                                        console.error(err);
-                                        alert('Erro ao confirmar pagamento.');
-                                      }
-                                    }}
-                                    className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-xl shadow-emerald-500/30 z-20 transition-all active:scale-95 flex items-center gap-1"
-                                  >
-                                    <CheckCircle size={10} /> Confirmar Pag.
-                                  </button>
-                                </>
-                             )}
-                             {table.alertStatus === 'calling_waiter' && (
-                               <div className="absolute -top-3 -left-3 w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-amber-500/50 animate-bounce z-10">
-                                  <Info size={18} />
-                               </div>
-                             )}
-                             {table.alertStatus === 'new_order' && (
-                               <div className="absolute -top-3 -left-3 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-blue-500/50 animate-bounce z-10">
-                                  <Utensils size={18} />
-                               </div>
-                             )}
+                                );
+                              }
+                            }
+                            return slots;
+                          })()}
+                        </div>
+                     </div>
+                   </div>
+                 </div>
+               ) : (
+                 <>
+                   {acceptingReservation && (
+                     <motion.div 
+                       initial={{ opacity: 0, scale: 0.9 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       className="bg-emerald-600 text-white p-6 rounded-[2.5rem] shadow-2xl shadow-emerald-600/30 flex items-center justify-between border-2 border-emerald-400"
+                     >
+                       <div className="flex items-center gap-4">
+                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center animate-pulse">
+                           <CheckCircle className="text-white" />
+                         </div>
+                         <div>
+                           <p className="font-black text-xl tracking-tighter uppercase">Modo de Atribuição</p>
+                           <p className="text-sm opacity-80 font-bold italic">Selecione uma mesa livre para {acceptingReservation.customerName}</p>
+                         </div>
+                       </div>
+                       <button 
+                         onClick={() => setAcceptingReservation(null)}
+                         className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                       >
+                         Cancelar
+                       </button>
+                     </motion.div>
+                   )}
 
-                             <div className={`absolute -top-3 -right-3 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl ring-4 ring-white z-10 ${
-                               table.status === 'available' ? 'bg-emerald-500 text-white' :
-                               table.status === 'occupied' ? 'bg-red-500 text-white' : 'bg-amber-400 text-slate-900'
-                             }`}>
-                               {selectedResForTable && table.status === 'available' ? 'Selec.' : table.status === 'available' ? 'Livre' : table.status === 'occupied' ? 'Em uso' : 'Reservada'}
-                             </div>
-                          </motion.button>
-                       </motion.div>
-                     ))}
-                  </div>
-               </div>
+                   <div className="flex justify-between items-center bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 mb-8">
+                      <div className="flex gap-8">
+                        <div className="flex items-center gap-2">
+                           <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponível</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <div className="w-3 h-3 rounded-full bg-slate-900"></div>
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupada</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reservada</span>
+                        </div>
+                      </div>
+                      <button onClick={addTable} className="px-6 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
+                        <Plus className="w-4 h-4" /> Nova Mesa
+                      </button>
+                   </div>
+
+                   <div className="bg-slate-50 border border-slate-100 rounded-[3rem] p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 w-full max-w-4xl">
+                         {tables.map(table => (
+                           <motion.div 
+                             key={table.id}
+                             whileHover={{ scale: 1.05 }}
+                             className="relative"
+                           >
+                              <motion.button 
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleTableStatus(table.id)}
+                                className={`aspect-square w-full rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-500 shadow-xl relative group ${
+                                  acceptingReservation ? (table.status === 'available' ? 'bg-emerald-50 border-4 border-emerald-500 scale-110 shadow-emerald-500/20' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
+                                  selectedResForTable ? (table.status === 'available' ? 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
+                                  table.status === 'available' ? 'bg-white text-slate-800 border-2 border-slate-100' :
+                                  table.status === 'occupied' ? 'bg-slate-900 text-white' : 'bg-blue-600 text-white'
+                                }`}
+                              >
+                                 <TableIcon className={`w-10 h-10 mb-2 ${table.status === 'available' ? 'text-blue-500' : 'text-white/40'}`} />
+                                 <span className="font-black text-2xl tracking-tighter">#{table.number}</span>
+                                 <div className="flex gap-1 mt-2">
+                                    {Array.from({ length: table.seats }).map((_, i) => (
+                                      <div key={i} className="w-2 h-2 rounded-full bg-current opacity-20"></div>
+                                    ))}
+                                 </div>
+                                 
+                                 {/* Hover Info Tooltip */}
+                                 {table.status !== 'available' && (
+                                   <div className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 rounded-[2.5rem] flex flex-col items-center justify-center p-4 text-center pointer-events-none">
+                                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
+                                         {table.status === 'occupied' ? 'Ocupada por' : 'Reservada para'}
+                                      </p>
+                                      <p className="text-sm font-bold text-white mb-1 truncate w-full px-2">{table.customerName || 'Cliente'}</p>
+                                      <p className="text-xs font-black text-white/50">{table.reservationTime || '--:--'}</p>
+                                      
+                                      {table.status === 'occupied' && table.currentTab && table.currentTab.length > 0 && (
+                                         <div className="mt-2 w-full text-left bg-white/5 rounded-xl p-2 max-h-16 overflow-y-hidden">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-white/10 pb-1">Consumo Atual</p>
+                                            {table.currentTab.slice(0, 2).map((item, i) => (
+                                               <div key={i} className="flex justify-between text-[9px] text-white/80">
+                                                  <span className="truncate pr-1">{item.quantity}x {item.dish.name}</span>
+                                                  <span>€{(Number(item.dish.price || 0) * item.quantity).toFixed(2)}</span>
+                                               </div>
+                                            ))}
+                                            {table.currentTab.length > 2 && <p className="text-[8px] text-blue-400 font-bold mt-1">+{table.currentTab.length - 2} itens...</p>}
+                                         </div>
+                                      )}
+                                      
+                                      {table.status === 'occupied' && (!table.currentTab || table.currentTab.length === 0) && (
+                                         <div className="mt-2 text-[10px] font-black px-2 py-1 bg-white/10 rounded-lg text-white">
+                                            Pedido: {table.currentOrderId ? 'Enviado 👨‍🍳' : 'Não enviado ⏳'}
+                                         </div>
+                                      )}
+                                   </div>
+                                 )}
+
+                                 <div className={`absolute -top-3 -right-3 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl ring-4 ring-white z-10 ${
+                                   table.status === 'available' ? 'bg-emerald-500 text-white' :
+                                   table.status === 'occupied' ? 'bg-red-500 text-white' : 'bg-amber-400 text-slate-900'
+                                 }`}>
+                                   {selectedResForTable && table.status === 'available' ? 'Selec.' : table.status === 'available' ? 'Livre' : table.status === 'occupied' ? (isBeauty ? 'Em Serviço' : 'Em uso') : (isBeauty ? 'Marcada' : 'Reservada')}
+                                 </div>
+                              </motion.button>
+                           </motion.div>
+                         ))}
+                      </div>
+                   </div>
+                 </>
+               )}
             </motion.div>
           )}
 
@@ -1485,25 +1582,35 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {activeTab === 'pos' && (() => {
             // POS-local state via closures — we use component-level state declared below
             const posProducts = [
-              ...(business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' })),
+              ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
               ...(products || []).map(p => ({ ...p })),
-              ...MOCK_POS_PRODUCTS.filter(mp => 
+              ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
+                !(business.services || []).some(s => s.name === ms.name) &&
+                !(products || []).some(p => p.name === ms.name)
+              ) : isShop ? [] : MOCK_POS_PRODUCTS.filter(mp => 
                 !(business.dishes || []).some(d => d.name === mp.name) &&
                 !(products || []).some(p => p.name === mp.name)
-              )
+              ))
             ];
+            
+            // Set initial category if not set or invalid for current business
+            const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
+            const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
+            const allCats = [...new Set([...availableCategories, ...currentCategories])].filter(cat => isBeauty ? BEAUTY_POS_CATEGORIES.includes(cat) : isShop ? SHOP_POS_CATEGORIES.includes(cat) : true);
+
             const filtered = posProducts.filter(p => p.category === posCategory);
 
             return (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-160px)] gap-0 -m-8">
+              <>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-160px)] gap-0 -m-8">
                 {/* POS Header Bar */}
                 <div className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
-                      <ShoppingBag size={16} />
+                      {isBeauty ? <Scissors size={16} /> : <ShoppingBag size={16} />}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">POS Terminal</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isBeauty ? 'Salon POS Terminal' : 'Retail POS Terminal'}</p>
                       <p className="font-black text-sm">{business.name}</p>
                     </div>
                   </div>
@@ -1512,25 +1619,29 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                   </div>
                 </div>
-
                 <div className="flex flex-1 min-h-0">
                   {/* LEFT: Categories */}
                   <div className="w-28 bg-slate-800 flex flex-col py-3 gap-1 px-2 flex-shrink-0 overflow-y-auto custom-scrollbar">
-                    {Array.from(new Set(posProducts.map(p => p.category))).map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => setPosCategory(cat)}
-                        className={`w-full py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-center ${
-                          posCategory === cat ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {cat === 'Bebidas' ? '🍺' : cat === 'Vinhos' ? '🍷' : cat === 'Sobremesas' ? '🍰' : cat === 'Pratos' ? '🍽️' : cat === 'Ementa' ? '📋' : cat === 'Entradas' ? '🥗' : cat === 'Sopas' ? '🍲' : cat === 'Gelados' ? '🍦' : cat === 'Bolos' ? '🎂' : cat === 'Aperitivos' ? '🥂' : cat === 'Cafetaria' ? '☕' : '📦'}
+                        {allCats.map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => setPosCategory(cat)}
+                            className={`w-full py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-center ${
+                              posCategory === cat ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                        {isBeauty ? (
+                          cat === 'Cabelo' ? '💇‍♀️' : cat === 'Unhas' ? '💅' : cat === 'Estética' ? '✨' : cat === 'Massagem' ? '💆‍♀️' : cat === 'Maquilhagem' ? '💄' : cat === 'Sobrancelhas' ? '👁️' : cat === 'Depilação' ? '🧴' : cat === 'Barba' ? '🧔' : cat === 'Produtos' ? '🛍️' : '✨'
+                        ) : isShop ? (
+                          cat === 'Vestuário' ? '👕' : cat === 'Calçado' ? '👟' : cat === 'Acessórios' ? '⌚' : cat === 'Eletrónica' ? '💻' : cat === 'Casa' ? '🏠' : cat === 'Promoções' ? '🏷️' : '📦'
+                        ) : (
+                          cat === 'Bebidas' ? '🍺' : cat === 'Vinhos' ? '🍷' : cat === 'Sobremesas' ? '🍰' : cat === 'Pratos' ? '🍽️' : cat === 'Ementa' ? '📋' : cat === 'Entradas' ? '🥗' : cat === 'Sopas' ? '🍲' : cat === 'Gelados' ? '🍦' : cat === 'Bolos' ? '🎂' : cat === 'Aperitivos' ? '🥂' : cat === 'Cafetaria' ? '☕' : '📦'
+                        )}
                         <br/>
                         <span className="truncate block">{cat}</span>
                       </button>
                     ))}
                   </div>
-
                   {/* MIDDLE: Products Grid */}
                   <div className="flex-1 bg-slate-50 overflow-y-auto custom-scrollbar p-4">
                     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -1546,7 +1657,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-4xl">
-                                {product.category === 'Vinhos' ? '🍷' : product.category === 'Bebidas' ? '🍺' : product.category === 'Sobremesas' ? '🍰' : product.category === 'Gelados' ? '🍦' : product.category === 'Sopas' ? '🍲' : product.category === 'Bolos' ? '🎂' : product.category === 'Aperitivos' ? '🥂' : product.category === 'Cafetaria' ? '☕' : '🍽️'}
+                                {isBeauty ? (
+                                  product.category === 'Cabelo' ? '💇‍♀️' : product.category === 'Unhas' ? '💅' : product.category === 'Estética' ? '✨' : product.category === 'Massagem' ? '💆‍♀️' : '✨'
+                                ) : (
+                                  product.category === 'Vinhos' ? '🍷' : product.category === 'Bebidas' ? '🍺' : product.category === 'Sobremesas' ? '🍰' : product.category === 'Gelados' ? '🍦' : product.category === 'Sopas' ? '🍲' : product.category === 'Bolos' ? '🎂' : product.category === 'Aperitivos' ? '🥂' : product.category === 'Cafetaria' ? '☕' : '🍽️'
+                                )}
                               </div>
                             )}
                             <div className="absolute top-1 right-1 w-6 h-6 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1589,7 +1704,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                         <motion.div
                           key={item.product.id}
                           initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
+                           animate={{ opacity: 1, x: 0 }}
                           className="flex items-center gap-2 py-2 border-b border-white/5 group"
                         >
                           <div className="flex items-center gap-1 bg-white/10 rounded-lg">
@@ -1618,7 +1733,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <span>€{posTotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-[10px] text-slate-500 font-bold">
-                          <span>IVA (16% Açores)</span>
+                          <span>IVA Açores (16%)</span>
                           <span>€{(posTotal * 0.16).toFixed(2)}</span>
                         </div>
                       </div>
@@ -1630,22 +1745,31 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       </div>
 
                       {/* Split Bill */}
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                        <Users size={14} className="text-slate-400 flex-shrink-0" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-1">Dividir por</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setPosSplitBy(prev => Math.max(1, prev - 1))}
-                            className="w-6 h-6 bg-white/10 rounded-lg text-xs font-black hover:bg-white/20 flex items-center justify-center"
-                          >−</button>
-                          <span className="text-sm font-black w-4 text-center">{posSplitBy}</span>
-                          <button
-                            onClick={() => setPosSplitBy(prev => Math.min(20, prev + 1))}
-                            className="w-6 h-6 bg-white/10 rounded-lg text-xs font-black hover:bg-white/20 flex items-center justify-center"
-                          >+</button>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
+                          <Users size={14} className="text-slate-400 flex-shrink-0" />
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-1">Dividir conta</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPosSplitBy(prev => Math.max(1, prev - 1))}
+                              className="w-7 h-7 bg-white/10 rounded-lg text-sm font-black hover:bg-white/20 flex items-center justify-center transition-colors"
+                            >−</button>
+                            <span className="text-base font-black w-6 text-center text-white">{posSplitBy}</span>
+                            <button
+                              onClick={() => setPosSplitBy(prev => Math.min(20, prev + 1))}
+                              className="w-7 h-7 bg-white/10 rounded-lg text-sm font-black hover:bg-white/20 flex items-center justify-center transition-colors"
+                            >+</button>
+                          </div>
+                          <span className="text-[10px] font-black text-slate-500 ml-1">{posSplitBy === 1 ? 'pessoa' : 'pessoas'}</span>
                         </div>
                         {posSplitBy > 1 && (
-                          <span className="text-[10px] font-black text-emerald-400 ml-1">= €{(posTotal / posSplitBy).toFixed(2)}/p</span>
+                          <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-xl px-3 py-2.5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">👤</span>
+                              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cada pessoa paga</span>
+                            </div>
+                            <span className="text-2xl font-black text-emerald-400 tracking-tighter">€{(posTotal / posSplitBy).toFixed(2)}</span>
+                          </div>
                         )}
                       </div>
 
@@ -1673,6 +1797,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     </div>
                   </div>
                 </div>
+              </motion.div>
 
                 {/* NIF + Payment Modal */}
                 <AnimatePresence>
@@ -1692,7 +1817,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             <p className="text-2xl font-black text-blue-400 mt-1">€{posTotal.toFixed(2)}</p>
                             {posSplitBy > 1 && <p className="text-xs text-slate-400 font-bold">({posSplitBy} pessoas × €{(posTotal/posSplitBy).toFixed(2)})</p>}
                           </div>
-                          <button onClick={() => { setPosPaymentModal(null); setPosNif(''); }} className="p-2 hover:bg-white/10 rounded-xl transition-colors"><X size={18}/></button>
+                          <button 
+                            onClick={() => { setPosPaymentModal(null); setPosNif(''); }} 
+                            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                          >
+                            <X size={20} className="group-active:scale-90 transition-transform" />
+                          </button>
                         </div>
 
                         {/* NIF Optional */}
@@ -1752,7 +1882,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     </div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </>
             );
           })()}
 
@@ -1788,8 +1918,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   {[
                     { label: 'Rating Médio', val: `★ ${averageRating}`, color: 'bg-blue-50 text-blue-700', icon: <Star className="fill-current" size={18}/> },
                     { label: 'Avaliações', val: (Number(business.reviews) || 0) + ratedReservations.length, color: 'bg-indigo-50 text-indigo-700', icon: <Users size={18}/> },
-                    { label: 'Pratos Ativos', val: (business.dishes || []).length, color: 'bg-emerald-50 text-emerald-700', icon: <Utensils size={18}/> },
-                    { label: 'Reservas Pend.', val: pendingCount, color: 'bg-amber-50 text-amber-700', icon: <Clock size={18}/> },
+                    { label: isBeauty ? 'Serviços Ativos' : isShop ? 'Produtos Ativos' : 'Pratos Ativos', val: (business.dishes || []).length, color: 'bg-emerald-50 text-emerald-700', icon: isBeauty ? <Sparkles size={18}/> : isShop ? <ShoppingBag size={18}/> : <Utensils size={18}/> },
+                    { label: isBeauty ? 'Marcações Pend.' : 'Reservas Pend.', val: pendingCount, color: 'bg-amber-50 text-amber-700', icon: <Clock size={18}/> },
                     { label: 'Total Equipa', val: totalStaff, color: 'bg-rose-50 text-rose-700', icon: <Users size={18}/> },
                     { label: 'Em Serviço', val: `${onDutyStaff}/${totalStaff}`, color: 'bg-emerald-50 text-emerald-700', icon: <CheckCircle size={18}/> },
                   ].map((stat, i) => (
@@ -1806,11 +1936,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h3 className="font-black text-slate-800 uppercase tracking-tighter">Mais Vendidos</h3>
-                        <p className="text-slate-400 text-xs font-bold mt-0.5">Pratos e produtos com mais pedidos</p>
+                        <h3 className="font-black text-slate-800 uppercase tracking-tighter">{isBeauty ? 'Serviços Mais Procurados' : 'Mais Vendidos'}</h3>
+                        <p className="text-slate-400 text-xs font-bold mt-0.5">{isBeauty ? 'Tratamentos e serviços com mais agendamentos' : 'Pratos e produtos com mais pedidos'}</p>
                       </div>
                       <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
-                        <Utensils size={16} className="text-blue-600" />
+                        {isBeauty ? <Sparkles size={16} className="text-blue-600" /> : <Utensils size={16} className="text-blue-600" />}
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -1837,8 +1967,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       ))}
                       {topSales.length === 0 && (
                         <div className="py-12 text-center text-slate-300">
-                          <Utensils size={32} className="mx-auto mb-2 opacity-30"/>
-                          <p className="text-xs font-bold uppercase tracking-widest">Sem dados de vendas ainda</p>
+                          {isBeauty ? <Sparkles size={32} className="mx-auto mb-2 opacity-30"/> : <Utensils size={32} className="mx-auto mb-2 opacity-30"/>}
+                          <p className="text-xs font-bold uppercase tracking-widest">{isBeauty ? 'Sem dados de agendamentos' : 'Sem dados de vendas ainda'}</p>
                         </div>
                       )}
                     </div>
@@ -1880,8 +2010,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       <h4 className="font-black text-slate-800 uppercase tracking-tighter">{business.island}</h4>
                       <p className="text-slate-400 text-xs font-medium">Localização Principal</p>
                       <div className="flex gap-2 mt-4">
-                        <button onClick={() => setActiveTab('reservations')} className="px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">Reservas</button>
-                        <button onClick={() => setActiveTab('dishes')} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">Ementa</button>
+                        <button onClick={() => setActiveTab('reservations')} className="px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">{isBeauty ? 'Marcações' : 'Reservas'}</button>
+                        <button onClick={() => setActiveTab('dishes')} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">{isBeauty ? 'Serviços' : isShop ? 'Catálogo' : 'Ementa'}</button>
                       </div>
                     </div>
                   </div>
@@ -1891,8 +2021,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="font-black text-slate-800 uppercase tracking-tighter">Fiado / Créditos de Restaurante</h3>
-                      <p className="text-slate-400 text-xs font-bold mt-0.5">Clientes com saldo em conta no restaurante</p>
+                      <h3 className="font-black text-slate-800 uppercase tracking-tighter">{isBeauty ? 'Fiado / Contas de Clientes' : 'Fiado / Créditos de Restaurante'}</h3>
+                      <p className="text-slate-400 text-xs font-bold mt-0.5">{isBeauty ? 'Clientes com saldo em conta no salão' : 'Clientes com saldo em conta no restaurante'}</p>
                     </div>
                     <div className="flex gap-3 text-[10px] font-black">
                       <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full">{debtClients.length} em dívida</span>
@@ -2295,19 +2425,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                       <div className="flex items-center gap-4 mt-2">
                                          <span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
                                          <span className="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-white tracking-widest">{res.time}</span>
-                                         <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>
+                                         {!isBeauty && !isShop && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>}
                                       </div>
                                    </div>
                                  </div>
                                  <div className="flex gap-3 w-full md:w-auto">
                                     <button 
                                       onClick={() => {
-                                        setAcceptingReservation(res);
-                                        setActiveTab('tables');
+                                        if (isBeauty || isShop) {
+                                          handleReservationAction(res.id, 'accepted');
+                                        } else {
+                                          setAcceptingReservation(res);
+                                          setActiveTab('tables');
+                                        }
                                       }}
                                       className="flex-1 md:flex-none px-10 py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
                                     >
-                                      Vincular Mesa
+                                      {(isBeauty || isShop) ? 'Aprovar Marcação' : 'Vincular Mesa'}
                                     </button>
                                     <button 
                                       onClick={() => handleReservationAction(res.id, 'cancelled')}
@@ -3137,7 +3271,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden">
                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Editar Prato</h3>
-                  <button onClick={() => setEditingDish(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
+                  <button 
+                    onClick={() => setEditingDish(null)} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form onSubmit={saveDishEdit} className="p-8 space-y-6">
                   <div className="space-y-4">
@@ -3230,7 +3369,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden">
                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Editar Produto</h3>
-                  <button onClick={() => setEditingProduct(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
+                  <button 
+                    onClick={() => setEditingProduct(null)} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form onSubmit={saveProductEdit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                   <div className="space-y-4">
@@ -3353,7 +3497,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
                     Editar {editingUpdate.update.type === 'event' ? 'Evento' : 'Novidade'}
                   </h3>
-                  <button type="button" onClick={() => setEditingUpdate(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
+                  <button 
+                    type="button" 
+                    onClick={() => setEditingUpdate(null)} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form onSubmit={saveUpdateEdit} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
                   <div className="space-y-4">
@@ -3439,7 +3589,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
                     Registo de Mesa #{tables.find(t => t.id === walkInTableId)?.number}
                   </h3>
-                  <button onClick={() => setWalkInTableId(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
+                  <button 
+                    onClick={() => setWalkInTableId(null)} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form onSubmit={handleWalkInSubmit} className="p-8 space-y-6">
                   <div className="space-y-4">
@@ -3499,7 +3654,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
                     {editingStaff ? 'Editar Funcionário' : 'Novo Funcionário'}
                   </h3>
-                  <button onClick={() => setShowAddStaff(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X/></button>
+                  <button 
+                    onClick={() => setShowAddStaff(false)} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form onSubmit={saveStaff} className="p-8 space-y-6">
                   <div className="space-y-4">
@@ -3578,7 +3738,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
                     {editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}
                   </h3>
-                  <button onClick={() => { setShowAddSupplier(false); setEditingSupplier(null); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"><X/></button>
+                  <button 
+                    onClick={() => { setShowAddSupplier(false); setEditingSupplier(null); }} 
+                    className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                  >
+                    <X size={20} className="group-active:scale-90 transition-transform" />
+                  </button>
                </div>
                <form 
                 onSubmit={(e) => {
@@ -3652,7 +3817,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <p className="text-xs font-black text-blue-600 uppercase tracking-widest">{selectedStaff.role}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedStaff(null)} className="p-3 hover:bg-white rounded-full transition-colors shadow-sm text-slate-400"><X/></button>
+                <button 
+                  onClick={() => setSelectedStaff(null)} 
+                  className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                >
+                  <X size={20} className="group-active:scale-90 transition-transform" />
+                </button>
               </div>
 
               <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
@@ -3784,3 +3954,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 };
 
 export default BusinessDashboard;
+
+
+

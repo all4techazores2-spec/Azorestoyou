@@ -37,71 +37,81 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     setIsLoading(true);
     setError(null);
     
-      const normalizedEmail = email.trim().toLowerCase();
-      const normalizedPassword = password.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
 
-      // 1. CHAVE MESTRA (Prioridade Total)
-      if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
-        setIsLoading(false);
-        onSuccess(true, undefined, normalizedEmail); // Entra como Super Admin
-        return;
-      }
+    // 1. CHAVE MESTRA
+    if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
+      setIsLoading(false);
+      onSuccess(true, undefined, normalizedEmail);
+      return;
+    }
 
-      // 2. Verificação de Negócios (Dados do Servidor)
-      const allBusinesses = [...restaurants, ...shops, ...beauty];
-      
-      const business = allBusinesses.find(r => 
-        r.adminEmail?.toLowerCase() === normalizedEmail && 
-        r.adminPassword === normalizedPassword
+    // 2. Verificação de Negócios e Staff (Dados do Servidor)
+    const allBusinesses = [...restaurants, ...shops, ...beauty];
+    
+    if (allBusinesses.length === 0) {
+      setIsLoading(false);
+      setError("A carregar base de dados... Tente novamente em instantes.");
+      return;
+    }
+
+    // 2.1 Verificar se é Admin de algum negócio
+    const business = allBusinesses.find(b => 
+      b.adminEmail?.toLowerCase() === normalizedEmail && 
+      b.adminPassword === normalizedPassword
+    );
+
+    if (business) {
+      setIsLoading(false);
+      const isRestaurant = restaurants.some(r => r.id === business.id);
+      const role = isRestaurant ? 'manager' : 'business';
+      onSuccess(false, business.id, normalizedEmail, role);
+      return;
+    }
+
+    // 2.2 Verificar se é Staff de algum negócio
+    for (const b of allBusinesses) {
+      const staffMember = b.staff?.find(s => 
+        s.email?.toLowerCase() === normalizedEmail && 
+        s.password === normalizedPassword
       );
-
-      if (business) {
+      if (staffMember) {
         setIsLoading(false);
-        const isRestaurant = restaurants.some(r => r.id === business.id);
-        onSuccess(false, business.id, normalizedEmail, isRestaurant ? 'manager' : 'business');
+        onSuccess(false, b.id, normalizedEmail, staffMember.role);
         return;
       }
 
-      // 3. Se não encontrou e a base de dados ainda está vazia
-      if (allBusinesses.length === 0) {
+      // 2.3 Verificar se é Fornecedor
+      const supplier = b.suppliers?.find(s => 
+        s.email?.toLowerCase() === normalizedEmail && 
+        s.password === normalizedPassword
+      );
+      if (supplier) {
         setIsLoading(false);
-        setError("A carregar base de dados... Tente novamente em 1 segundo.");
+        onSuccess(false, b.id, normalizedEmail, 'supplier');
+        return;
+      }
+    }
+
+    // 3. Se chegou aqui e é modo LOGIN, as credenciais estão erradas
+    if (authMode === 'login') {
+      setIsLoading(false);
+      // Permitir login como viajante se não for email de negócio conhecido ou se for apenas password genérica
+      // Mas se for um email de negócio e a pass estiver errada, mostramos erro
+      const isBusinessEmail = allBusinesses.some(b => b.adminEmail?.toLowerCase() === normalizedEmail);
+      if (isBusinessEmail) {
+        setError("Password incorreta para este negócio.");
         return;
       }
 
-      // 4. Se chegou aqui, as credenciais estão mesmo erradas
+      // Fallback para utilizador normal (viajante) - permitimos entrar se não for negócio
+      onSuccess(false, undefined, normalizedEmail);
+    } else {
+      // Registo de novo utilizador
       setIsLoading(false);
-      setError("Credenciais inválidas. Verifique o seu email e password.");
-
-
-      // 2.2 Verificação de Funcionários
-      for (const rest of restaurants) {
-        const staffMember = rest.staff?.find(s => 
-          s.email.toLowerCase() === normalizedEmail && 
-          s.password === normalizedPassword
-        );
-        if (staffMember) {
-          setIsLoading(false);
-          // Passamos o cargo como quarto argumento
-          onSuccess(false, rest.id, normalizedEmail, staffMember.role);
-          return;
-        }
-
-        // 2.3 Verificação de Fornecedores
-        const supplier = rest.suppliers?.find(s => 
-          s.email.toLowerCase() === normalizedEmail && 
-          s.password === normalizedPassword
-        );
-        if (supplier) {
-          setIsLoading(false);
-          onSuccess(false, rest.id, normalizedEmail, 'supplier');
-          return;
-        }
-      }
-      
-      // 3. Fallback/Normal User Logic or Error
-      setIsLoading(false);
-      onSuccess(false, undefined, normalizedEmail); // Normal user
+      onSuccess(false, undefined, normalizedEmail);
+    }
   };
 
   const t = (key: any) => getTranslation(currentLang, key);
@@ -119,9 +129,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
 
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition-colors hover:bg-white/10 rounded-full"
+            className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
           >
-            <X className="w-5 h-5" />
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
 
           <div className="relative z-10">

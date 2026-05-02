@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -10,29 +11,34 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, 'db.json');
 
-// Helper to normalize emails across domains
+// --- HELPERS ---
 const normalizeEmail = (email) => {
     if (!email) return email;
     return email.toLowerCase().trim();
 };
 
-// Ensure image directories exist
+// Ensure directories
 const imagesBaseDir = path.join(__dirname, 'imagens');
 if (!fs.existsSync(imagesBaseDir)) fs.mkdirSync(imagesBaseDir);
 const restDir = path.join(imagesBaseDir, 'restaurantes');
 if (!fs.existsSync(restDir)) fs.mkdirSync(restDir);
+const communityDir = path.join(imagesBaseDir, 'community');
+if (!fs.existsSync(communityDir)) fs.mkdirSync(communityDir);
 
-// Configure Multer for storage
+// Multer Storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const { restaurantId, type } = req.body;
-        let targetDir = restDir;
+        let targetDir = imagesBaseDir;
         
-        if (restaurantId) {
+        if (type === 'community') {
+            targetDir = communityDir;
+        } else if (restaurantId) {
             targetDir = path.join(restDir, restaurantId);
             if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir);
+        } else {
+            targetDir = restDir;
         }
-        
         cb(null, targetDir);
     },
     filename: (req, file, cb) => {
@@ -50,18 +56,25 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 
-// Helper to read DB
+// DB Handlers
 const readDB = () => {
     try {
         const data = fs.readFileSync(dbPath, 'utf8');
-        return JSON.parse(data);
+        const db = JSON.parse(data);
+        // Initialize missing keys
+        const defaults = { 
+            restaurants: [], flights: [], hotels: [], cars: [], 
+            activities: [], busSchedules: [], itineraries: [], 
+            shops: [], beauty: [], services: [], offices: [], 
+            users: [], posts: [] 
+        };
+        return { ...defaults, ...db };
     } catch (err) {
         console.error("Error reading db.json", err);
-        return { restaurants: [], flights: [], hotels: [], cars: [], activities: [], busSchedules: [], itineraries: [] };
+        return { restaurants: [], flights: [], hotels: [], cars: [], activities: [], busSchedules: [], itineraries: [], shops: [], beauty: [], services: [], offices: [], users: [], posts: [] };
     }
 };
 
-// Helper to write DB
 const writeDB = (data) => {
     try {
         fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
@@ -70,18 +83,20 @@ const writeDB = (data) => {
     }
 };
 
-// Helper to sync restaurant admins and staff to users table
+// User Sync
 const syncBusinessUsers = (db) => {
-    if (!db.users) db.users = [];
-    
-    const businesses = [...(db.restaurants || []), ...(db.shops || []), ...(db.beauty || [])];
+    const businesses = [
+        ...(db.restaurants || []), 
+        ...(db.shops || []), 
+        ...(db.beauty || []), 
+        ...(db.services || []),
+        ...(db.offices || [])
+    ];
     
     businesses.forEach(rest => {
-        // 1. Sync Admin
         if (rest.adminEmail && rest.adminPassword) {
             const normalizedEmail = normalizeEmail(rest.adminEmail);
             const userIndex = db.users.findIndex(u => normalizeEmail(u.email) === normalizedEmail);
-            
             if (userIndex > -1) {
                 db.users[userIndex].password = rest.adminPassword;
                 if (!db.users[userIndex].credits) db.users[userIndex].credits = 100;
@@ -95,304 +110,28 @@ const syncBusinessUsers = (db) => {
                 });
             }
         }
-
-        // 2. Sync Staff
-        if (rest.staff && Array.isArray(rest.staff)) {
-            rest.staff.forEach(s => {
-                if (s.email && s.password) {
-                    const normalizedStaffEmail = normalizeEmail(s.email);
-                    const staffIndex = db.users.findIndex(u => normalizeEmail(u.email) === normalizedStaffEmail);
-                    
-                    if (staffIndex > -1) {
-                        db.users[staffIndex].password = s.password;
-                    } else {
-                        db.users.push({
-                            email: s.email,
-                            password: s.password,
-                            name: s.name,
-                            role: s.role,
-                            credits: 0,
-                            profile: { phone: "", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + s.id },
-                            reservations: []
-                        });
-                    }
-                }
-            });
-        }
-        // 3. Sync Suppliers
-        if (rest.suppliers && Array.isArray(rest.suppliers)) {
-            rest.suppliers.forEach(sup => {
-                if (sup.email) {
-                    const normSupEmail = normalizeEmail(sup.email);
-                    const supIdx = db.users.findIndex(u => normalizeEmail(u.email) === normSupEmail);
-                    
-                    if (supIdx > -1) {
-                        if (sup.password) db.users[supIdx].password = sup.password;
-                        db.users[supIdx].role = 'supplier';
-                    } else {
-                        db.users.push({
-                            email: sup.email,
-                            password: sup.password || "admin",
-                            name: sup.name,
-                            role: 'supplier',
-                            credits: 0,
-                            profile: { phone: sup.phone || "", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + sup.id },
-                            reservations: []
-                        });
-                    }
-                }
-            });
-        }
     });
 };
 
-// --- ENDPOINTS ---
-app.post('/api/upload', upload.single('image'), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    
-    const { restaurantId } = req.body;
-    const protocol = req.protocol;
-    const host = req.get('host');
-    
-    // Caminho relativo para a imagem
-    const relativePath = restaurantId 
-        ? `imagens/restaurantes/${restaurantId}/${req.file.filename}`
-        : `imagens/restaurantes/${req.file.filename}`;
-    
-    const imageUrl = `${protocol}://${host}/${relativePath}`;
-    res.json({ url: imageUrl });
-});
-
-// Bulk update restaurants (from Super Admin)
-app.post('/api/restaurants/bulk', (req, res) => {
-    const restaurants = req.body;
-    const db = readDB();
-    db.restaurants = restaurants;
-    syncBusinessUsers(db);
-    writeDB(db);
-    res.status(200).json({ message: "Restaurants and Admin Users updated in bulk" });
-});
-
-// GET All Restaurants
-app.get('/api/restaurants', (req, res) => {
-    const db = readDB();
-    res.json(db.restaurants);
-});
-
-// UPDATE Restaurant (Tables, Kitchen, etc)
-app.put('/api/restaurants/:id', (req, res) => {
-    const { id } = req.params;
-    const db = readDB();
-    const index = db.restaurants.findIndex(r => r.id === id);
-    if (index !== -1) {
-        const oldRestaurant = db.restaurants[index];
-        const newRestaurant = { ...oldRestaurant, ...req.body };
-        db.restaurants[index] = newRestaurant;
-
-        // SYNC RESERVATIONS WITH USERS
-        if (req.body.reservations) {
-            req.body.reservations.forEach((res) => {
-                if (res.customerEmail) {
-                    const email = normalizeEmail(res.customerEmail);
-                    const user = db.users?.find(u => normalizeEmail(u.email) === email);
-                    if (user && user.reservations) {
-                        const userResIndex = user.reservations.findIndex((r) => r.id === res.id);
-                        if (userResIndex !== -1) {
-                            user.reservations[userResIndex] = {
-                                ...user.reservations[userResIndex],
-                                status: res.status,
-                                tableId: res.tableId
-                            };
-                        }
-                    }
-                }
-            });
-        }
-
-        writeDB(db);
-        res.json(db.restaurants[index]);
-    } else {
-        res.status(404).send("Restaurant not found");
-    }
-});
-
-// POST New Reservation (from RestaurantModal)
-app.post('/api/restaurants/:id/reservations', (req, res) => {
-    const { id } = req.params;
-    const customerEmail = normalizeEmail(req.body.customerEmail);
-    const reservation = { ...req.body, customerEmail, id: `RES_${Date.now()}`, restaurantId: id, status: 'pending', createdAt: new Date().toISOString() };
-    const db = readDB();
-    
-    const restaurant = db.restaurants.find(r => r.id === id);
-    if (restaurant) {
-        if (!restaurant.reservations) restaurant.reservations = [];
-        restaurant.reservations.push(reservation);
-        
-        writeDB(db);
-        res.status(201).json(reservation);
-    } else {
-        // Tentar encontrar em beleza se não for restaurante
-        const beautyBusiness = db.beauty?.find(b => b.id === id);
-        if (beautyBusiness) {
-            if (!beautyBusiness.reservations) beautyBusiness.reservations = [];
-            beautyBusiness.reservations.push(reservation);
-            
-            if (customerEmail) {
-                const user = db.users?.find(u => normalizeEmail(u.email) === customerEmail);
-                if (user) {
-                    if (!user.reservations) user.reservations = [];
-                    user.reservations.push({
-                        ...reservation,
-                        businessName: beautyBusiness.name,
-                        restaurantName: beautyBusiness.name // para retrocompatibilidade UI
-                    });
-                }
-            }
-            writeDB(db);
-            return res.status(201).json(reservation);
-        }
-        res.status(404).send("Business not found for reservation");
-    }
-});
-
-// SHOPS
-app.get('/api/shops', (req, res) => {
-    const db = readDB();
-    res.json(db.shops || []);
-});
-
-app.put('/api/shops/:id', (req, res) => {
-    const { id } = req.params;
-    const db = readDB();
-    const index = db.shops?.findIndex(s => s.id === id);
-    if (index !== -1) {
-        db.shops[index] = { ...db.shops[index], ...req.body };
-        writeDB(db);
-        res.json(db.shops[index]);
-    } else {
-        res.status(404).send("Shop not found");
-    }
-});
-
-// BEAUTY SERVICES
-app.get('/api/beauty', (req, res) => {
-    const db = readDB();
-    res.json(db.beauty || []);
-});
-
-app.put('/api/beauty/:id', (req, res) => {
-    const { id } = req.params;
-    const db = readDB();
-    const index = db.beauty?.findIndex(b => b.id === id);
-    if (index !== -1) {
-        db.beauty[index] = { ...db.beauty[index], ...req.body };
-        writeDB(db);
-        res.json(db.beauty[index]);
-    } else {
-        res.status(404).send("Beauty service not found");
-    }
-});
-
-// POST Orders (Pre-orders or table orders)
-app.post('/api/restaurants/:id/orders', (req, res) => {
-    const { id } = req.params;
-    const order = { ...req.body, id: `ORD_${Date.now()}`, timestamp: new Date().toISOString(), status: 'sent_to_kitchen' };
-    const db = readDB();
-    
-    const restaurant = db.restaurants.find(r => r.id === id);
-    if (restaurant) {
-        if (!restaurant.kitchenOrders) restaurant.kitchenOrders = [];
-        restaurant.kitchenOrders.push(order);
-        writeDB(db);
-        res.status(201).json(order);
-    } else {
-        res.status(404).send("Restaurant not found for order");
-    }
-});
-
-// BUS SCHEDULES
-app.get('/api/bus-schedules', (req, res) => {
-    const db = readDB();
-    res.json(db.busSchedules || []);
-});
-
-// ACTIVITIES
-app.get('/api/activities', (req, res) => {
-    const db = readDB();
-    res.json(db.activities || []);
-});
-
-// FLIGHTS
-app.get('/api/flights', (req, res) => {
-    const db = readDB();
-    res.json(db.flights || []);
-});
-
-// HOTELS
-app.get('/api/hotels', (req, res) => {
-    const db = readDB();
-    res.json(db.hotels || []);
-});
-
-// CARS
-app.get('/api/cars', (req, res) => {
-    const db = readDB();
-    res.json(db.cars || []);
-});
-
-// ITINERARIES (My Reservations)
-app.get('/api/itineraries/:userId', (req, res) => {
-    const db = readDB();
-    const userItinerary = db.itineraries.find(i => i.userId === req.params.userId);
-    res.json(userItinerary || { userId: req.params.userId, items: [] });
-});
-
-app.post('/api/itineraries', (req, res) => {
-    const db = readDB();
-    const { userId, item } = req.body;
-    let itinerary = db.itineraries.find(i => i.userId === userId);
-    if (!itinerary) {
-        itinerary = { userId, items: [] };
-        db.itineraries.push(itinerary);
-    }
-    itinerary.items.push(item);
-    writeDB(db);
-    res.json(itinerary);
-});
-
-// GET User (from App.tsx fetchData)
+// --- AUTH & USERS ---
 app.get('/api/users/:email', (req, res) => {
     const email = normalizeEmail(req.params.email);
     const db = readDB();
-    if (!db.users) db.users = [];
-    
     let user = db.users.find(u => normalizeEmail(u.email) === email);
-    
     if (!user) {
-        // Create user if doesn't exist to allow persistence
-        user = { 
-            email, 
-            credits: 100, // Dar 100 créditos a novos utilizadores para teste
-            reservations: [], 
-            profile: {
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + email
-            } 
-        };
+        user = { email, credits: 100, reservations: [], profile: { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + email } };
         db.users.push(user);
         writeDB(db);
     }
-    
     res.json(user);
 });
 
-// UPDATE User Data
 app.put('/api/users/:email', (req, res) => {
     const email = normalizeEmail(req.params.email);
     const db = readDB();
-    if (!db.users) db.users = [];
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
-        db.users[index] = { ...db.users[index], ...req.body, email }; // Keep normalized email
+        db.users[index] = { ...db.users[index], ...req.body, email };
     } else {
         db.users.push({ email, ...req.body });
     }
@@ -400,188 +139,193 @@ app.put('/api/users/:email', (req, res) => {
     res.json({ success: true });
 });
 
-// BULK UPDATE Restaurants (Admin)
-app.post('/api/restaurants/bulk', (req, res) => {
-    const db = readDB();
-    db.restaurants = req.body;
-    writeDB(db);
-    res.json({ success: true });
+// --- MEDIA UPLOAD ---
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { restaurantId, type } = req.body;
+    const protocol = req.protocol;
+    const host = req.get('host');
+    
+    let relativePath = '';
+    if (type === 'community') {
+        relativePath = `imagens/community/${req.file.filename}`;
+    } else if (restaurantId) {
+        relativePath = `imagens/restaurantes/${restaurantId}/${req.file.filename}`;
+    } else {
+        relativePath = `imagens/restaurantes/${req.file.filename}`;
+    }
+    
+    const imageUrl = `${protocol}://${host}/${relativePath}`;
+    res.json({ url: imageUrl });
 });
 
-// POST Review
-app.post('/api/restaurants/:id/reviews', (req, res) => {
-    const { id } = req.params;
-    const { rating, comment, customerEmail, customerName } = req.body;
+// --- BUSINESSES ---
+app.get('/api/restaurants', (req, res) => {
     const db = readDB();
+    const allBusinesses = [
+        ...(db.restaurants || []),
+        ...(db.beauty || []),
+        ...(db.shops || []),
+        ...(db.services || []),
+        ...(db.offices || [])
+    ];
+    res.json(allBusinesses);
+});
+
+app.put('/api/restaurants/:id', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    let targetArray = null;
+    let index = -1;
     
-    const restaurant = db.restaurants.find(r => r.id === id);
-    if (restaurant) {
-        if (!restaurant.reviews_list) restaurant.reviews_list = [];
-        const newReview = {
-            id: `REV_${Date.now()}`,
-            rating,
-            comment,
-            customerName: customerName || 'Cliente',
-            date: new Date().toISOString()
-        };
-        restaurant.reviews_list.push(newReview);
-        
-        // Update average rating
-        const totalRating = restaurant.reviews_list.reduce((sum, r) => sum + r.rating, 0);
-        restaurant.rating = Number((totalRating / restaurant.reviews_list.length).toFixed(1));
-        restaurant.reviews = restaurant.reviews_list.length;
-
-        // MARK RESERVATION AS REVIEWED
-        const { reservationId, customerEmail } = req.body;
-        console.log(`[Review] Processing review for Res: ${reservationId}, User: ${customerEmail}`);
-        
-        if (reservationId) {
-            // Update in restaurant array
-            const resIndex = restaurant.reservations?.findIndex((r) => r.id === reservationId);
-            console.log(`[Review] Found in restaurant at index: ${resIndex}`);
-            
-            if (resIndex !== -1 && restaurant.reservations) {
-                restaurant.reservations[resIndex].reviewed = true;
-                restaurant.reservations[resIndex].rating = rating;
-                restaurant.reservations[resIndex].reviewNote = comment;
-            }
-
-            // Update in user array
-            if (customerEmail) {
-                const email = normalizeEmail(customerEmail);
-                const user = db.users?.find((u) => normalizeEmail(u.email) === email);
-                if (user && user.reservations) {
-                    const userResIndex = user.reservations.findIndex((r) => r.id === reservationId);
-                    console.log(`[Review] Found in user ${email} at index: ${userResIndex}`);
-                    if (userResIndex !== -1) {
-                        user.reservations[userResIndex].reviewed = true;
-                        user.reservations[userResIndex].rating = rating;
-                        user.reservations[userResIndex].reviewNote = comment;
-                    }
-                } else {
-                    console.log(`[Review] User ${email} not found or has no reservations`);
-                }
-            }
+    ['restaurants', 'beauty', 'shops', 'services', 'offices'].forEach(key => {
+        if (db[key]) {
+            const idx = db[key].findIndex(item => item.id === id);
+            if (idx !== -1) { index = idx; targetArray = db[key]; }
         }
+    });
 
+    if (targetArray && index !== -1) {
+        targetArray[index] = { ...targetArray[index], ...req.body };
         writeDB(db);
-        console.log(`[Review] Success!`);
-        res.json({ success: true, review: newReview });
+        res.json(targetArray[index]);
     } else {
-        res.status(404).send("Restaurant not found");
+        res.status(404).send("Business not found");
     }
 });
 
-// PAYMENT CONFIRMATION — Attributes credits to user after restaurant confirms payment
+// --- RESERVATIONS ---
+app.post('/api/reservations', (req, res) => {
+    const { businessId, businessType, customerEmail } = req.body;
+    const db = readDB();
+    const normalEmail = normalizeEmail(customerEmail);
+    const reservation = { ...req.body, customerEmail: normalEmail, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
+
+    let business = null;
+    const typeMap = { 'restaurant': 'restaurants', 'beauty': 'beauty', 'shop': 'shops', 'office': 'offices', 'service': 'services' };
+    const key = typeMap[businessType] || 'restaurants';
+    
+    business = db[key]?.find(b => b.id === businessId);
+    if (business) {
+        if (!business.reservations) business.reservations = [];
+        business.reservations.push(reservation);
+        
+        // Sync with User
+        const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
+        if (user) {
+            if (!user.reservations) user.reservations = [];
+            user.reservations.push({ ...reservation, businessName: business.name });
+        }
+        
+        writeDB(db);
+        res.status(201).json(reservation);
+    } else {
+        res.status(404).send("Business not found for reservation");
+    }
+});
+
+// Backward compatibility aliases
+app.post('/api/restaurants/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'restaurant';
+    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+});
+app.post('/api/beauty/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'beauty';
+    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+});
+app.post('/api/shops/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'shop';
+    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+});
+app.post('/api/offices/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'office';
+    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+});
+app.post('/api/activities/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'service';
+    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+});
+
+// --- COMMUNITY (SOCIAL) ---
+app.get('/api/community/posts', (req, res) => {
+    const db = readDB();
+    res.json(db.posts || []);
+});
+
+app.post('/api/community/posts', (req, res) => {
+    const db = readDB();
+    const newPost = {
+        id: Date.now(),
+        ...req.body,
+        likes: 0,
+        comments: [],
+        createdAt: new Date().toISOString()
+    };
+    db.posts.unshift(newPost);
+    writeDB(db);
+    res.status(201).json(newPost);
+});
+
+app.post('/api/community/posts/:id/like', (req, res) => {
+    const { id } = req.params;
+    const { email } = req.body;
+    const db = readDB();
+    const post = db.posts.find(p => p.id == id);
+    if (post) {
+        if (!post.likedBy) post.likedBy = [];
+        const normEmail = normalizeEmail(email);
+        const idx = post.likedBy.indexOf(normEmail);
+        if (idx > -1) {
+            post.likedBy.splice(idx, 1);
+            post.likes = Math.max(0, post.likes - 1);
+        } else {
+            post.likedBy.push(normEmail);
+            post.likes += 1;
+        }
+        writeDB(db);
+        res.json({ likes: post.likes, liked: idx === -1 });
+    } else {
+        res.status(404).send("Post not found");
+    }
+});
+
+app.post('/api/community/posts/:id/comments', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    const post = db.posts.find(p => p.id == id);
+    if (post) {
+        const comment = { id: Date.now(), ...req.body, createdAt: new Date().toISOString() };
+        if (!post.comments) post.comments = [];
+        post.comments.push(comment);
+        writeDB(db);
+        res.status(201).json(comment);
+    } else {
+        res.status(404).send("Post not found");
+    }
+});
+
+// --- MISC ---
+app.get('/api/bus-schedules', (req, res) => res.json(readDB().busSchedules || []));
+app.get('/api/activities', (req, res) => res.json(readDB().activities || []));
+app.get('/api/flights', (req, res) => res.json(readDB().flights || []));
+app.get('/api/hotels', (req, res) => res.json(readDB().hotels || []));
+app.get('/api/cars', (req, res) => res.json(readDB().cars || []));
+
 app.post('/api/payment-confirm', (req, res) => {
     const { restaurantId, reservationId, customerEmail, tableId } = req.body;
     const db = readDB();
-
-    const restaurant = db.restaurants.find(r => r.id === restaurantId);
-    if (!restaurant) return res.status(404).json({ error: 'Restaurant not found' });
-
-    const reservation = restaurant.reservations?.find(r => r.id === reservationId);
-    const table = restaurant.tables?.find(t => t.id === tableId);
-
-    // Helper: sum credits from items array
-    const sumItemCredits = (items = []) =>
-        items.reduce((acc, item) => {
-            const credits = item?.dish?.credits ?? item?.product?.credits ?? 0;
-            return acc + credits * (item.quantity || 1);
-        }, 0);
-
-    const preOrderCredits = sumItemCredits(reservation?.preOrder || []);
-    const tabCredits = sumItemCredits(table?.currentTab || []);
-    const baseCredits = restaurant.creditsPerReservation ?? 0;
-
-    // If the customer already paid online and received pre-order credits at booking time,
-    // don't count them again — only count new table items + base bonus
-    const alreadyPaidPreOrder = reservation?.preOrderCreditsPaid === true;
-    const earnedCredits = (alreadyPaidPreOrder ? 0 : preOrderCredits) + tabCredits + baseCredits;
-
-    console.log(`[Payment] Res: ${reservationId}, Credits: ${earnedCredits} (preOrder:${alreadyPaidPreOrder ? 'skipped(already paid)' : preOrderCredits} tab:${tabCredits} base:${baseCredits})`);
-
-    // Mark reservation as paid + store earnedCredits
-    if (reservation) {
-        reservation.status = 'finished';
-        reservation.paymentConfirmed = true;
-        reservation.earnedCredits = earnedCredits;
-    }
-
-    // Clear the table
-    if (table) {
-        table.status = 'available';
-        table.alertStatus = 'none';
-        table.currentTab = [];
-        delete table.customerName;
-        delete table.reservationTime;
-    }
-
-    // Attribute credits to the user
-    if (customerEmail && earnedCredits > 0) {
-        const email = normalizeEmail(customerEmail);
-        const user = db.users?.find(u => normalizeEmail(u.email) === email);
-        if (user) {
-            user.credits = (user.credits || 0) + earnedCredits;
-            if (user.reservations) {
-                const userResIdx = user.reservations.findIndex(r => r.id === reservationId);
-                if (userResIdx !== -1) {
-                    user.reservations[userResIdx].status = 'finished';
-                    user.reservations[userResIdx].paymentConfirmed = true;
-                    user.reservations[userResIdx].earnedCredits = earnedCredits;
-                }
-            }
-        }
-    }
-
-    writeDB(db);
-    res.json({ success: true, earnedCredits });
-});
-
-// Full Sync Endpoint
-app.post('/api/full-sync', (req, res) => {
-    const { restaurants, activities, flights, hotels, cars, busSchedules, shops, beauty } = req.body;
-    const db = readDB();
-    
-    if (restaurants) db.restaurants = restaurants;
-    if (activities) db.activities = activities;
-    if (flights) db.flights = flights;
-    if (hotels) db.hotels = hotels;
-    if (cars) db.cars = cars;
-    if (busSchedules) db.busSchedules = busSchedules;
-    if (shops) db.shops = shops;
-    if (beauty) db.beauty = beauty;
-    
-    syncBusinessUsers(db);
-    writeDB(db);
-    res.json({ success: true, message: "Sincronização completa realizada com sucesso!" });
-});
-
-// Sync All (specifically for Restaurants bulk)
-app.post('/api/sync-all', (req, res) => {
-    const { restaurants } = req.body;
-    const db = readDB();
-    if (restaurants) {
-        db.restaurants = restaurants;
-        syncBusinessUsers(db);
+    // Simplified credit attribution logic (can be expanded)
+    const user = db.users.find(u => normalizeEmail(u.email) === normalizeEmail(customerEmail));
+    if (user) {
+        user.credits = (user.credits || 0) + 10; // Default bonus
         writeDB(db);
-        res.json({ success: true });
-    } else {
-        res.status(400).json({ error: "No restaurants provided" });
     }
+    res.json({ success: true });
 });
 
-// Serve Frontend Static Files (Vite Build)
-const distPath = path.join(__dirname, 'dist');
-if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
-    // Catch-all route for React Router (SPA)
-    app.get(/^(?!\/api).+/, (req, res) => {
-        res.sendFile(path.join(distPath, 'index.html'));
-    });
-}
-
-app.listen(PORT, () => {
-    console.log(`AzoresToyou Server v1.0.1 running at port ${PORT}`);
-    console.log(`API Base URL: https://azorestoyou-1.onrender.com`);
-});
+app.listen(PORT, () => console.log(`🚀 Master Backend running on port ${PORT}`));

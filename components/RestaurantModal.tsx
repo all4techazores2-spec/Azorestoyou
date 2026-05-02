@@ -35,7 +35,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [bookingStep, setBookingStep] = useState<BookingStep>('info');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [guests, setGuests] = useState(2);
+  const [licensePlate, setLicensePlate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [showBookingPopup, setShowBookingPopup] = useState(false);
   const [popupStep, setPopupStep] = useState<PopupStep>('notes');
@@ -44,11 +46,18 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [customPrepTime, setCustomPrepTime] = useState('');
   const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve' | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [guests, setGuests] = useState(2);
   const [customerEmail, setCustomerEmail] = useState(userProfile?.email || 'traveler@azorestoyou.com');
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '+351 912 345 678');
   const [customerName, setCustomerName] = useState(userProfile?.name || 'Cliente Viajante');
   const [preorderSelected, setPreorderSelected] = useState<boolean | null>(null);
+  
+  // Payment states for booking fee
+  const [mbwayPhone, setMbwayPhone] = useState(userProfile?.phone || '');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  
+  const bookingFee = 5.00; // Default booking fee for Beauty services
 
   // Sync user profile data when it changes
   useEffect(() => {
@@ -83,6 +92,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   const isBeauty = restaurant.businessType === 'beauty';
   const isShop = restaurant.businessType === 'shop';
+  const isAutoRepair = restaurant.businessType === 'auto_repair';
+  const isOffice = restaurant.businessType === 'office';
 
   const slides = [
     { image: restaurant.image, title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
@@ -121,53 +132,91 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     }
   };
 
-  const handleFinalize = async () => {
-    // Detetar automaticamente o endereço do backend
-    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3001'
-      : 'https://azorestoyou-1.onrender.com';
-    
-    // Determine if paying online (credits for pre-order attributed immediately)
-    const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';
+  const [isProcessing, setIsProcessing] = useState(false);
 
-    // Preparar dados da reserva
-    const reservationData = {
-      customerName: customerName,
-      customerEmail: customerEmail,
-      customerPhone: customerPhone,
-      date: selectedDate?.toISOString().split('T')[0],
-      time: selectedTime,
-      guests: guests,
-      notes: bookingNote,
-      paymentType: paymentType,
-      preOrder: preorderSelected ? orderItems : [],
-      prepRequested: preorderSelected,
-      requestedTime: prepTimeChoice === 'custom' ? customPrepTime : prepTimeChoice,
-      // Flag: if paid online, pre-order credits already given — don't double-count at restaurant payment confirmation
-      preOrderCreditsPaid: isPaidOnline && preorderSelected && orderItems.length > 0
-    };
+  const handleFinalize = async () => {
+    if (isProcessing) return;
+    
+    // Validar campos obrigatórios para pagamentos online
+    if (paymentType === 'mbway' && !mbwayPhone) {
+      alert(currentLang === 'pt' ? 'Por favor, insira o número MBWay.' : 'Please enter your MBWay number.');
+      return;
+    }
+    if (paymentType === 'transfer' && (!cardNumber || !cardExpiry || !cardCvv)) {
+      alert(currentLang === 'pt' ? 'Por favor, preencha todos os dados do cartão.' : 'Please fill in all card details.');
+      return;
+    }
+    if (paymentType === 'points' && isBeauty && userCredits < bookingFee) {
+      alert(currentLang === 'pt' ? 'Saldo de créditos insuficiente.' : 'Insufficient credits.');
+      return;
+    }
+
+    setIsProcessing(true);
 
     try {
+      // Detetar automaticamente o endereço do backend
+      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3001'
+        : 'https://azorestoyou-1.onrender.com';
+      
+      // Determine if paying online
+      const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';
+
+      // Preparar dados da reserva
+      const reservationData = {
+        customerName: customerName,
+        customerEmail: customerEmail,
+        customerPhone: customerPhone,
+        date: selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        time: selectedTime,
+        guests: (isBeauty || isAutoRepair || isOffice) ? 1 : guests,
+        notes: isAutoRepair ? `[MATRÍCULA: ${licensePlate}] ${bookingNote}` : bookingNote,
+        paymentType: paymentType,
+        preOrder: preorderSelected ? orderItems : [],
+        prepRequested: preorderSelected,
+        requestedTime: prepTimeChoice === 'custom' ? customPrepTime : prepTimeChoice,
+        status: 'pending',
+        // Payment details
+        paymentDetails: paymentType === 'mbway' ? { mbwayPhone } : paymentType === 'transfer' ? { cardNumber, cardExpiry, cardCvv } : null,
+        bookingFee: isBeauty ? bookingFee : 0,
+        preOrderCreditsPaid: isPaidOnline && preorderSelected && orderItems.length > 0,
+        businessType: restaurant.businessType
+      };
+
+      console.log('Iniciando handleFinalize...', reservationData);
+
       // 1. Enviar Reserva
       const endpoint = isBeauty 
         ? `${API_BASE_URL}/api/beauty/${restaurant.id}/reservations`
-        : `${API_BASE_URL}/api/restaurants/${restaurant.id}/reservations`;
+        : restaurant.businessType === 'shop'
+          ? `${API_BASE_URL}/api/shops/${restaurant.id}/reservations`
+          : restaurant.businessType === 'auto_repair'
+            ? `${API_BASE_URL}/api/auto_repair/${restaurant.id}/reservations`
+            : isOffice 
+              ? `${API_BASE_URL}/api/offices/${restaurant.id}/reservations`
+              : `${API_BASE_URL}/api/restaurants/${restaurant.id}/reservations`;
 
+      console.log('Enviando para endpoint:', endpoint);
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...reservationData, businessType: restaurant.businessType }),
+        body: JSON.stringify(reservationData),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        onReserveSuccess?.(data, restaurant.name, restaurant.id);
-      } else {
-        alert('❌ Erro ao enviar reserva: ' + res.statusText);
+      console.log('Resposta do servidor status:', res.status);
+      if (!res.ok) {
+        throw new Error('Server error: ' + res.status);
       }
 
-      // 2. Se houver pré-pedido, enviar para a cozinha
-      if (preorderSelected && orderItems.length > 0) {
+      const data = await res.json();
+      console.log('Dados recebidos:', data);
+
+      // 2. Notificar App Principal
+      onReserveSuccess?.(data, restaurant.name, restaurant.id);
+      
+      // 3. Se houver pré-pedido em restaurante, enviar para a cozinha
+      if (restaurant.businessType === 'restaurant' && preorderSelected && orderItems.length > 0) {
+        console.log('Enviando pedido para a cozinha...');
         await fetch(`${API_BASE_URL}/api/restaurants/${restaurant.id}/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -179,29 +228,37 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         });
       }
 
-      // CREDITS: Only attribute immediately if payment is made online (mbway/transfer)
-      // When paying at the restaurant (reserve), credits come from the restaurant's payment confirmation
-      const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';
+      // 4. Se pagou com pontos e é beleza, descontar créditos
+      if (paymentType === 'points' && isBeauty && setUserCredits) {
+        console.log('Descontando créditos...');
+        setUserCredits(userCredits - bookingFee);
+      }
+
+      console.log('Sucesso! Mudando para step success.');
+      setBookingStep('success');
+
+      // 5. Créditos por pré-pedido pago online
       if (isPaidOnline && preorderSelected && orderItems.length > 0 && setUserCredits) {
-        // Calculate credits from each pre-ordered dish
         const earnedFromItems = orderItems.reduce((acc, item) => {
           const dishCredits = (item.dish as any).credits ?? 0;
           return acc + dishCredits * item.quantity;
         }, 0);
 
         if (earnedFromItems > 0) {
+          console.log('Atribuindo créditos:', earnedFromItems);
           setUserCredits(userCredits + earnedFromItems);
-          alert(`✅ Reserva confirmada! Ganhou ${earnedFromItems} Créditos Azores4You pelo pagamento online.`);
         }
       }
 
-      setBookingStep('success');
       setTimeout(() => {
+        console.log('Fechando modal após sucesso.');
         onClose();
       }, 3500);
     } catch (error) {
-      console.error('Erro ao processar reserva no backend:', error);
-      alert('Erro ao ligar ao servidor. Verifique a sua conexão.');
+      console.error('Erro ao processar reserva:', error);
+      alert(currentLang === 'pt' ? 'Erro ao processar a marcação. Verifique a sua ligação ao servidor.' : 'Error processing appointment. Check your server connection.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -314,13 +371,13 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   }, [currentSlide, slides.length]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="bg-white rounded-none sm:rounded-[32px] w-full max-w-4xl h-full sm:h-auto sm:max-h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/20">
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 z-20 p-2.5 bg-black/20 hover:bg-black/40 rounded-full text-white backdrop-blur-md transition-all active:scale-90"
+          className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
         >
-          <X className="w-5 h-5" />
+          <X size={20} className="group-active:scale-90 transition-transform" />
         </button>
 
         {/* Left/Top: Slider */}
@@ -410,6 +467,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 <div className="flex justify-between items-start mb-8">
                   <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
+                    {restaurant.bookingPolicy === 'required' && (
+                      <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase tracking-widest">
+                        <AlertTriangle size={12} /> Reserva Obrigatória (Vagas Limitadas)
+                      </div>
+                    )}
+                    {restaurant.bookingPolicy === 'recommended' && (
+                      <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-600 text-[10px] font-black rounded-full uppercase tracking-widest">
+                        <Info size={12} /> Reserva Recomendada (Experiência Premium)
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">
                         {isBeauty ? getTranslation(currentLang, 'nav_beauty') : isShop ? getTranslation(currentLang, 'nav_shops') : restaurant.cuisine}
@@ -489,7 +556,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     onClick={startBooking}
                   >
                     {isBeauty ? <Sparkles className="w-4 h-4" /> : isShop ? <ShoppingBag className="w-4 h-4" /> : <CalendarCheck className="w-4 h-4" />}
-                    {isBeauty ? 'Agendar Serviço' : isShop ? 'Ver Catálogo' : getTranslation(currentLang, 'make_reservation')}
+                    {isBeauty ? 'Agendar Serviço' : isShop ? 'Ver Catálogo' : isOffice ? 'Agendar Visita' : getTranslation(currentLang, 'make_reservation')}
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
@@ -535,24 +602,26 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </div>
 
                 <div className="space-y-8 flex-1">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5" /> Quantas pessoas?
-                    </p>
-                    <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                      {[1,2,3,4,5,6,7,8].map(n => (
-                        <button
-                          key={n}
-                          onClick={() => setGuests(n)}
-                          className={`w-10 h-10 rounded-xl font-black text-sm transition-all ${
-                            guests === n ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-white/50'
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
+                  {!isBeauty && !isShop && (
+                    <div>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5" /> Quantas pessoas?
+                      </p>
+                      <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100 overflow-x-auto custom-scrollbar">
+                        {[1,2,3,4,5,6,7,8].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => setGuests(n)}
+                            className={`w-10 h-10 rounded-xl font-black text-sm transition-all flex-shrink-0 ${
+                              guests === n ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-white/50'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'select_date')}
@@ -641,7 +710,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                   </h4>
                                   <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                      {selectedDate?.toLocaleDateString()} • {selectedTime} • {guests} Pessoas
+                                      {selectedDate?.toLocaleDateString()} • {selectedTime} {!isBeauty && `• ${guests} Pessoas`}
                                     </span>
                                   </div>
                                 </div>
@@ -677,16 +746,29 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                       />
                                     </div>
                                   </div>
+                                  
+                                  {isAutoRepair && (
+                                    <div className="space-y-2">
+                                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">{getTranslation(currentLang, 'license_plate' as any)} (Opcional)</p>
+                                      <input 
+                                        type="text" 
+                                        value={licensePlate}
+                                        onChange={(e) => setLicensePlate(e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                        placeholder="00-AA-00"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="space-y-3">
                                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <Ear className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'booking_notes' as any)}
+                                    <Ear className="w-3.5 h-3.5" /> {isAutoRepair ? getTranslation(currentLang, 'problem_description' as any) : getTranslation(currentLang, 'booking_notes' as any)}
                                   </p>
                                   <textarea
                                     value={bookingNote}
                                     onChange={(e) => setBookingNote(e.target.value)}
-                                    placeholder={getTranslation(currentLang, 'booking_notes_placeholder' as any)}
+                                    placeholder={isAutoRepair ? "Descreva o problema do seu veículo..." : getTranslation(currentLang, 'booking_notes_placeholder' as any)}
                                     className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium text-slate-600 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all resize-none h-28"
                                   />
                                 </div>
@@ -697,9 +779,12 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                     boxShadow: `0 20px 25px -5px ${COLORS.primary}33`
                                   }}
                                   className="w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 text-white hover:opacity-90 transition-all active:scale-95 shadow-lg"
-                                  onClick={() => setPopupStep('preorder_choice')}
+                                  onClick={() => {
+                                    if (isBeauty || isShop) setPopupStep('payment_methods');
+                                    else setPopupStep('preorder_choice');
+                                  }}
                                 >
-                                  {getTranslation(currentLang, 'finish_reservation')}
+                                  {isBeauty ? 'Avançar para Pagamento' : getTranslation(currentLang, 'finish_reservation')}
                                   <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
                               </motion.div>
@@ -932,9 +1017,18 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                     <CreditCard className="w-6 h-6" />
                                   </div>
                                   <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    {getTranslation(currentLang, 'booking_payment')}
+                                    {isBeauty ? 'Pagamento da Taxa' : getTranslation(currentLang, 'booking_payment')}
                                   </h4>
-                                  {orderItems.length > 0 && (
+                                  {isBeauty ? (
+                                    <div className="flex flex-col items-center gap-1">
+                                      <div className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full border border-pink-100 font-black text-xs">
+                                        Taxa de Reserva: {bookingFee.toFixed(2)}€
+                                      </div>
+                                      <p className="text-[10px] text-slate-400 font-medium max-w-[200px]">
+                                        {getTranslation(currentLang, 'booking_fee_desc' as any).replace('{amount}', bookingFee.toFixed(2))}
+                                      </p>
+                                    </div>
+                                  ) : orderItems.length > 0 && (
                                     <div className="flex items-center gap-2 px-3 py-1 bg-orange-50 rounded-full border border-orange-100">
                                       <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">
                                         {orderItems.length} {getTranslation(currentLang, 'order_summary' as any)} • {totalCreditsCost} {getTranslation(currentLang, 'credits_balance' as any)}
@@ -963,9 +1057,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                         disabled={disabled}
                                         onClick={() => setPaymentType(opt.id as any)}
                                         style={{ 
-                                          borderColor: isSelected ? COLORS.primary : undefined,
-                                          backgroundColor: isSelected ? `${COLORS.primary}08` : undefined,
-                                          boxShadow: isSelected ? `0 10px 15px -3px ${COLORS.primary}15` : undefined
+                                          borderColor: isSelected ? (isBeauty ? '#FF2D78' : COLORS.primary) : undefined,
+                                          backgroundColor: isSelected ? (isBeauty ? '#FF2D7808' : `${COLORS.primary}08`) : undefined,
+                                          boxShadow: isSelected ? `0 10px 15px -3px ${isBeauty ? '#FF2D7815' : `${COLORS.primary}15`}` : undefined
                                         }}
                                         className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left group relative overflow-hidden
                                           ${isSelected 
@@ -973,7 +1067,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                             : disabled ? 'opacity-40 cursor-not-allowed border-slate-50 bg-slate-50/50' : 'border-slate-50 hover:border-slate-200 bg-slate-50/50'}`}
                                       >
                                         <div 
-                                          style={{ backgroundColor: isSelected ? COLORS.primary : undefined }}
+                                          style={{ backgroundColor: isSelected ? (isBeauty ? '#FF2D78' : COLORS.primary) : undefined }}
                                           className={`p-3 rounded-xl transition-all ${isSelected ? 'text-white' : 'bg-white text-slate-400 shadow-sm group-hover:scale-110'}`}
                                         >
                                           <opt.icon className="w-4 h-4" />
@@ -988,7 +1082,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                           <motion.div 
                                             layoutId="active-check"
                                             className="w-5 h-5 rounded-full flex items-center justify-center text-white"
-                                            style={{ backgroundColor: COLORS.primary }}
+                                            style={{ backgroundColor: isBeauty ? '#FF2D78' : COLORS.primary }}
                                           >
                                             <CheckCircle className="w-3 h-3" />
                                           </motion.div>
@@ -997,6 +1091,58 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                     );
                                   })}
                                 </div>
+
+                                {/* Dynamic Payment Inputs */}
+                                <AnimatePresence mode="wait">
+                                  {paymentType === 'mbway' && (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2 mt-2 px-1">
+                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'mbway_phone' as any)}</label>
+                                      <input 
+                                        type="tel" 
+                                        value={mbwayPhone}
+                                        onChange={(e) => setMbwayPhone(e.target.value)}
+                                        placeholder="912 345 678"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-pink-500 outline-none transition-all"
+                                      />
+                                    </motion.div>
+                                  )}
+                                  {paymentType === 'transfer' && (
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 mt-2 px-1">
+                                      <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_number' as any)}</label>
+                                        <input 
+                                          type="text" 
+                                          value={cardNumber}
+                                          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g,'').slice(0,16))}
+                                          placeholder="0000 0000 0000 0000"
+                                          className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1">
+                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_expiry' as any)}</label>
+                                          <input 
+                                            type="text" 
+                                            value={cardExpiry}
+                                            onChange={(e) => setCardExpiry(e.target.value)}
+                                            placeholder="MM/AA"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                          />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_cvv' as any)}</label>
+                                          <input 
+                                            type="text" 
+                                            value={cardCvv}
+                                            onChange={(e) => setCardCvv(e.target.value.replace(/\D/g,'').slice(0,3))}
+                                            placeholder="123"
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                          />
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
 
                                 {paymentType === 'points' && (
                                   <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
@@ -1007,21 +1153,43 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                   </div>
                                 )}
 
-                                <button 
-                                  disabled={!paymentType}
-                                  style={{ 
-                                    backgroundColor: !paymentType ? undefined : COLORS.primary,
-                                    boxShadow: !paymentType ? undefined : `0 20px 25px -5px ${COLORS.primary}33`
-                                  }}
-                                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95
-                                    ${!paymentType 
-                                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
-                                      : 'text-white hover:opacity-90'}`}
-                                  onClick={handleFinalize}
-                                >
-                                  {getTranslation(currentLang, 'finish_reservation')}
-                                  <CheckCircle className="w-3.5 h-3.5" />
-                                </button>
+                                  {(() => {
+                                    const isDisabled = isProcessing || !paymentType || (paymentType === 'mbway' && !mbwayPhone) || (paymentType === 'transfer' && (!cardNumber || !cardExpiry || !cardCvv)) || (paymentType === 'points' && isBeauty && userCredits < bookingFee);
+                                    console.log('DEBUG Button State:', { isDisabled, paymentType, isProcessing });
+                                    return (
+                                      <button 
+                                        disabled={isDisabled}
+                                        style={{ 
+                                          backgroundColor: isDisabled ? undefined : (isBeauty ? '#FF2D78' : COLORS.primary),
+                                          boxShadow: isDisabled ? undefined : `0 20px 25px -5px ${isBeauty ? '#FF2D78' : COLORS.primary}33`
+                                        }}
+                                        className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 mb-24
+                                          ${isDisabled
+                                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                                            : 'text-white hover:opacity-90 cursor-pointer'}`}
+                                        onClick={() => {
+                                          console.log('Botão Confirmar clicado. PaymentType:', paymentType);
+                                          handleFinalize();
+                                        }}
+                                      >
+                                        {isProcessing ? (
+                                          <>
+                                            <motion.div
+                                              animate={{ rotate: 360 }}
+                                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                              className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full"
+                                            />
+                                            Processando...
+                                          </>
+                                        ) : (
+                                          <>
+                                            {isBeauty ? 'Confirmar Marcação' : getTranslation(currentLang, 'finish_reservation')}
+                                            <CheckCircle className="w-3.5 h-3.5" />
+                                          </>
+                                        )}
+                                      </button>
+                                    );
+                                  })()}
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -1052,14 +1220,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 <div className="w-24 h-24 bg-green-50 text-green-600 rounded-[32px] flex items-center justify-center mb-8 animate-bounce shadow-xl shadow-green-100">
                   <CheckCircle className="w-12 h-12" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">{getTranslation(currentLang, 'booking_success')}</h3>
+                <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">{isBeauty ? 'Marcação Confirmada!' : getTranslation(currentLang, 'booking_success')}</h3>
                 <p className="text-slate-500 text-sm font-medium max-w-[280px] mx-auto leading-relaxed">
-                  {getTranslation(currentLang, 'booking_success_desc')}
+                  {isBeauty ? 'O seu serviço foi agendado com sucesso. Receberá um SMS de confirmação em breve.' : getTranslation(currentLang, 'booking_success_desc')}
                 </p>
                 
                 <div className="mt-10 p-6 bg-slate-50 rounded-3xl border border-slate-100 w-full">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Restaurante</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isBeauty ? 'Estabelecimento' : 'Restaurante'}</span>
                     <span className="font-bold text-slate-900">{restaurant.name}</span>
                   </div>
                   <div className="flex justify-between items-center">

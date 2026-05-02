@@ -46,8 +46,11 @@ const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({ isOpen, onClo
                <p className="text-xs text-slate-400">{t('current_selection')}</p>
              </div>
            </div>
-           <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-             <X className="w-5 h-5" />
+           <button 
+             onClick={onClose} 
+             className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+           >
+             <X size={20} className="group-active:scale-90 transition-transform" />
            </button>
         </div>
 

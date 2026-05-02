@@ -39,8 +39,11 @@ const IslandSelectionModal: React.FC<IslandSelectionModalProps> = ({ isOpen, onC
              <h2 className="text-2xl font-bold text-white">{getTranslation(language, 'select_island_bus_title')}</h2>
              <p className="text-pink-100 text-sm mt-1">{getTranslation(language, 'select_island_bus_desc')}</p>
            </div>
-           <button onClick={onClose} className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors relative z-10">
-             <X className="w-5 h-5" />
+           <button 
+             onClick={onClose} 
+             className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group relative z-10"
+           >
+             <X size={20} className="group-active:scale-90 transition-transform" />
            </button>
         </div>
 

@@ -8,6 +8,14 @@ export interface Airport {
   isAzores: boolean;
 }
 
+interface ExtraOption {
+  id: string;
+  name: string;
+  price: number;
+  icon: string | React.ReactNode;
+  description: string;
+}
+
 export interface Flight {
   id: string;
   airline: string;
@@ -23,6 +31,18 @@ export interface Flight {
   layover?: string;      // e.g., "Escala em LIS (1h 20m)"
 }
 
+export interface Room {
+  id: string;
+  name: string;
+  description: string;
+  pricePerNight: number;
+  image: string;
+  capacity: number;
+  amenities?: string[];
+  bedType?: 'Casal' | 'Dupla' | 'Individual';
+  gallery?: string[];
+}
+
 export interface Hotel {
   id: string;
   name: string;
@@ -31,6 +51,13 @@ export interface Hotel {
   pricePerNight: number;
   image: string;
   description: string;
+  type: 'hotel' | 'al';
+  email?: string;
+  phone?: string;
+  address?: string;
+  mapsUrl?: string;
+  gallery?: string[];
+  rooms?: Room[];
 }
 
 export interface Car {
@@ -250,6 +277,10 @@ export interface Restaurant {
   businessType?: 'restaurant' | 'shop' | 'beauty';
   subcategory?: BeautySubCategory | string;
   services?: Service[];
+  openingHours?: string;
+  bookingPolicy?: 'required' | 'recommended';
+  vehicles?: Car[];
+  featuredVehicles?: Car[];
 }
 
 export interface Activity {
@@ -263,6 +294,9 @@ export interface Activity {
   duration?: string;
   difficulty?: 'Fácil' | 'Moderado' | 'Difícil';
   mapUrl?: string;
+  isPaid?: boolean;
+  price?: number;
+  bookingPolicy?: 'required' | 'recommended';
 }
 
 export interface TourGuide {
@@ -305,9 +339,22 @@ export type ExploreCategory =
   | 'flights'
   | 'shops'
   | 'beauty'
+  | 'services'
+  | 'auto_repair'
+  | 'auto_electronics'
+  | 'used_market'
+  | 'animals'
+  | 'real_estate'
+  | 'gyms'
+  | 'stands'
+  | 'offices'
+  | 'it_services'
+  | 'perfumes'
+  | 'community'
   | null;
 
 export type BeautySubCategory = 'beauty_salon' | 'hairdresser' | 'barber' | 'manicure' | 'massage';
+export type AutoRepairSubCategory = 'parts' | 'workshop' | 'bodywork';
 
 export interface Service {
   id: string;
@@ -324,6 +371,8 @@ export type Business = Restaurant;
 export interface Itinerary {
   flight: Flight | null;
   hotel: Hotel | null;
+  selectedRoom?: Room;
+  rentType?: 'room' | 'house';
   hotelStartDate?: string;
   hotelEndDate?: string;
   nights: number;
@@ -331,4 +380,5 @@ export interface Itinerary {
   carStartDate?: string;
   carEndDate?: string;
   carDays: number;
+  selectedExtras?: ExtraOption[];
 }

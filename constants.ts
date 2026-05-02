@@ -1,9 +1,58 @@
 
-import { Airport, Flight, Hotel, Car, Restaurant, Activity, Language, BusStop, BusSchedule, CarRentalCompany, TourGuide } from './types';
+import { Airport, Flight, Hotel, Car, Restaurant, Activity, Language, BusStop, BusSchedule, CarRentalCompany, TourGuide, Business } from './types';
 
 export const COLORS = {
   primary: '#1A75BB', // Azul
   secondary: '#2C7A2E', // Verde
+};
+
+export const ISLAND_LOCALITIES: Record<string, string[]> = {
+    'PDL': [
+      'Ponta Delgada (Centro)', 'São Sebastião', 'São Pedro', 'Santa Clara', 'Fajã de Baixo', 'Fajã de Cima', 'São Roque', 'Rosto de Cão (Livramento)', 'Rosto de Cão (São Roque)',
+      'Ribeira Grande', 'Ribeira Seca', 'Ribeirinha', 'Conceição', 'Matriz', 'Santa Bárbara',
+      'Lagoa', 'Nossa Senhora do Rosário', 'Santa Cruz', 'Água de Pau', 'Cabouco', 'Remédios',
+      'Vila Franca do Campo', 'São Miguel', 'São Pedro', 'Ribeira das Tainhas', 'Ponta Garça', 'Água de Alto',
+      'Povoação', 'Furnas', 'Nossa Senhora dos Remédios', 'Faial da Terra', 'Ribeira Quente', 'Água Retorta',
+      'Nordeste', 'Achadinha', 'Achada', 'Salga', 'Lomba da Fazenda', 'Santana', 'Algarvia', 'São Pedro de Nordestinho', 'Santo António de Nordestinho',
+      'Sete Cidades', 'Ginetes', 'Mosteiros', 'Ramal Mosteiros', 'João Bom', 'Candelária', 'Feteiras', 'Ajuda da Bretanha', 'Pilar da Bretanha', 'Remédios (Bretanha)', 'Santa Bárbara', 'Santo António',
+      'Capelas', 'São Vicente Ferreira', 'Fenais da Luz', 'Rabo de Peixe', 'Calhetas', 'Pico da Pedra', 'Fenais da Ajuda', 'Lomba de São Pedro', 'Lomba da Maia', 'São Brás', 'Maia', 'Porto Formoso'
+    ],
+    'TER': [
+      'Angra do Heroísmo (Centro)', 'Sé', 'Nossa Senhora da Conceição', 'São Pedro', 'Santa Luzia',
+      'Praia da Vitória (Centro)', 'Santa Cruz', 'Cabo da Praia', 'Fonte do Bastardo', 'Fontinhas',
+      'São Mateus da Calheta', 'São Bartolomeu de Regatos', 'Cinco Ribeiras', 'Santa Bárbara', 'Doze Ribeiras', 'Serreta', 'Raminho', 'Altares',
+      'Biscoitos', 'Quatro Ribeiras', 'Agualva', 'Vila Nova', 'Lajes', 'São Brás', 'Porto Martins', 'Fonte do Bastardo',
+      'São Sebastião', 'Porto Judeu', 'Feteira', 'Ribeirinha', 'Posto Santo', 'Terra Chã', 'São Bento'
+    ],
+    'HOR': [
+      'Horta (Matriz)', 'Horta (Angústias)', 'Horta (Conceição)', 
+      'Flamengos', 'Feteira', 'Castelo Branco', 'Capelo', 'Praia do Norte', 'Cedros', 'Salão', 'Ribeirinha', 'Pedro Miguel'
+    ],
+    'PIX': [
+      'Madalena (Centro)', 'Bandeiras', 'Criação Velha', 'Candelária', 'São Mateus', 'São Caetano',
+      'São Roque do Pico', 'Santa Luzia', 'Santo António', 'Prainha', 'Santo Amaro',
+      'Lajes do Pico', 'São João', 'Piedade', 'Ribeiras', 'Calheta de Nesquim'
+    ],
+    'SJZ': [
+      'Velas (Centro)', 'Santo Amaro', 'Rosais', 'Manadas', 'Urzelina', 'Norte Grande',
+      'Calheta', 'Ribeira Seca', 'Norte Pequeno', 'Topo', 'Santo Antão'
+    ],
+    'SMA': [
+      'Vila do Porto (Centro)', 'Almagreira', 'Santa Bárbara', 'Santo Espírito', 'São Pedro'
+    ],
+    'GRW': [
+      'Santa Cruz da Graciosa', 'Guadalupe', 'Praia (São Mateus)', 'Luz'
+    ],
+    'FLW': [
+      'Santa Cruz das Flores', 'Caveira', 'Cedros', 'Ponta Delgada',
+      'Lajes das Flores', 'Fazenda', 'Fajã Grande', 'Fajãzinha', 'Lajedo', 'Mosteiro'
+    ],
+    'CVU': [
+      'Vila do Corvo'
+    ],
+    'CAN': ['Toronto', 'Mississauga', 'Brampton', 'Oakville'],
+    'USA': ['New Bedford', 'Fall River'],
+    'BER': ['Hamilton', 'St. George\'s']
 };
 
 // Raw Data with localization maps
@@ -12,666 +61,352 @@ const DATA: Record<Language, {
   hotels: Hotel[];
   restaurants: Restaurant[];
   activities: Activity[];
-  beauty: Restaurant[];
-  shops: Restaurant[];
+  beauty: Business[];
+  services: Business[];
+  auto_repair: Business[];
+  auto_electronics: Business[];
+  used_market: Business[];
+  animals: Business[];
+  real_estate: Business[];
+  gyms: Business[];
+  stands: Business[];
+  offices: Business[];
+  it_services: Business[];
+  perfumes: Business[];
 }> = {
   pt: {
     airports: [
       { code: 'PDL', name: 'Aeroporto João Paulo II', location: 'São Miguel', isAzores: true },
+      { code: 'SMA', name: 'Aeroporto de Santa Maria', location: 'Santa Maria', isAzores: true },
       { code: 'TER', name: 'Aeroporto das Lajes', location: 'Terceira', isAzores: true },
+      { code: 'GRW', name: 'Aeroporto da Graciosa', location: 'Graciosa', isAzores: true },
+      { code: 'SJZ', name: 'Aeroporto de São Jorge', location: 'São Jorge', isAzores: true },
+      { code: 'PIX', name: 'Aeroporto do Pico', location: 'Pico', isAzores: true },
+      { code: 'HOR', name: 'Aeroporto da Horta', location: 'Faial', isAzores: true },
+      { code: 'FLW', name: 'Aeroporto das Flores', location: 'Flores', isAzores: true },
+      { code: 'CVU', name: 'Aeródromo do Corvo', location: 'Corvo', isAzores: true },
+      { code: 'CAN', name: 'Canadá', location: 'Canadá', isAzores: false },
+      { code: 'USA', name: 'Estados Unidos', location: 'EUA', isAzores: false },
+      { code: 'BER', name: 'Bermudas', location: 'Bermudas', isAzores: false },
     ],
     hotels: [
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel de luxo com jardim japonês e spa.' },
-      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Localizado nas Furnas com piscinas termais.' },
+      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel de luxo com jardim japonês e spa.', type: 'hotel' },
+      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Localizado nas Furnas com piscinas termais.', type: 'hotel' },
     ],
     restaurants: [
-      {
-        id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
-        description: 'Cozinha tradicional açoriana num ambiente rústico e animado. Famoso pelo bife de atum.',
-        adminEmail: 'atasca@azores4you.com',
-        adminPassword: 'tasca',
-        phone: '+351 296 282 800',
-        address: 'Rua do Aljube 16, 9500-018 Ponta Delgada',
-        publicEmail: 'reservas@atasca.pt',
-        mapsUrl: 'https://maps.app.goo.gl/A4d55T6KjYVjLqV98',
-        latitude: '37.7408',
-        longitude: '-25.6686',
-        reservations: [],
-        updates: [],
-        dishes: [
-          { name: 'Bife de Atum', description: 'Bife de atum fresco com sementes de sésamo.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
-          { name: 'Polvo à Lagareiro', description: 'Polvo assado com batatas a murro.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
+      { id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20', description: 'Cozinha tradicional açoriana.', adminEmail: 'atasca@azores4you.com', adminPassword: 'admin', phone: '+351 296 282 800', address: 'Rua do Aljube 16', latitude: '37.7412', longitude: '-25.6671', dishes: [], businessType: 'restaurant' },
+      { id: 'R_CAN_1', name: 'Azores Toronto Grill', island: 'CAN', cuisine: 'Fusão', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=150', description: 'Autêntico sabor dos Açores no coração de Toronto.', latitude: '43.6532', longitude: '-79.3832', dishes: [], businessType: 'restaurant' },
+      { id: 'R_CAN_2', name: 'Casa do Alentejo - Toronto', island: 'CAN', cuisine: 'Regional', rating: 4.6, reviews: 125, image: 'https://picsum.photos/400/300?random=155', description: 'Um pedaço de Portugal em Ontário.', latitude: '43.6629', longitude: '-79.3957', dishes: [], businessType: 'restaurant' }
+    ],
+    activities: [
+      { id: 'A_CAN_1', title: 'Visita à CN Tower', type: 'activity', island: 'CAN', image: 'https://picsum.photos/400/300?random=156', description: 'Visite o ícone de Toronto.', latitude: '43.6426', longitude: '-79.3871' },
+      { id: 'A_CAN_2', title: 'High Park Trail', type: 'trail', island: 'CAN', image: 'https://picsum.photos/400/300?random=157', description: 'Trilho natural no maior parque de Toronto.', latitude: '43.6465', longitude: '-79.4637' },
+      { id: 'A_CAN_3', title: 'Scarborough Bluffs', type: 'landscape', island: 'CAN', image: 'https://picsum.photos/400/300?random=158', description: 'Paisagens deslumbrantes sobre o Lago Ontário.', latitude: '43.7112', longitude: '-79.2312' },
+      { id: 'A_CAN_4', title: 'Casa Loma', type: 'culture', island: 'CAN', image: 'https://picsum.photos/400/300?random=159', description: 'Castelo histórico e museu em Toronto.', latitude: '43.6780', longitude: '-79.4094' },
+      { id: 'A_CAN_5', title: 'Nathan Phillips Square', type: 'poi', island: 'CAN', image: 'https://picsum.photos/400/300?random=160', description: 'O centro cívico e o icónico sinal de Toronto.', latitude: '43.6535', longitude: '-79.3841' }
+    ],
+    beauty: [
+      { id: 'B_CAN_1', name: 'Toronto Azores Spa', island: 'CAN', subcategory: 'beauty_salon', rating: 4.9, reviews: 85, image: 'https://picsum.photos/400/300?random=170', description: 'Tratamentos de luxo em Toronto.', latitude: '43.6550', longitude: '-79.3860' },
+      { id: 'B_CAN_2', name: 'Luso Hairdresser', island: 'CAN', subcategory: 'hairdresser', rating: 4.7, reviews: 120, image: 'https://picsum.photos/400/300?random=171', description: 'Cortes modernos com toque português.', latitude: '43.6600', longitude: '-79.3900' },
+      { id: 'B_CAN_3', name: 'Old School Barber TO', island: 'CAN', subcategory: 'barber', rating: 4.8, reviews: 200, image: 'https://picsum.photos/400/300?random=172', description: 'Barbearia clássica em Toronto.', latitude: '43.6500', longitude: '-79.4000' },
+      { id: 'B_CAN_4', name: 'Nails by Rosa', island: 'CAN', subcategory: 'manicure', rating: 4.6, reviews: 50, image: 'https://picsum.photos/400/300?random=173', description: 'Manicure profissional na Little Portugal.', latitude: '43.6480', longitude: '-79.4200' },
+      { id: 'B_CAN_5', name: 'Zen Massage Toronto', island: 'CAN', subcategory: 'massage', rating: 5.0, reviews: 30, image: 'https://picsum.photos/400/300?random=174', description: 'Massagens relaxantes no centro.', latitude: '43.6580', longitude: '-79.3820' }
+    ],
+    shops: [
+      { 
+        id: 'S_CAN_1', 
+        name: 'Little Portugal Crafts', 
+        island: 'CAN', 
+        subcategory: 'crafts', 
+        rating: 4.8, 
+        reviews: 95, 
+        image: 'https://picsum.photos/400/300?random=180', 
+        description: 'Artesanato tradicional português em Toronto.', 
+        latitude: '43.6470', 
+        longitude: '-79.4250',
+        businessType: 'shop',
+        products: [
+          { id: 'P1', name: 'Boneca de Milho', description: 'Artesanato tradicional feito à mão com palha de milho.', price: 15, image: 'https://picsum.photos/300/300?random=500', category: 'Artesanato' },
+          { id: 'P2', name: 'Bordado dos Açores', description: 'Bordado certificado feito por artesãos locais.', price: 45, image: 'https://picsum.photos/300/300?random=501', category: 'Têxtil' },
+          { id: 'P3', name: 'Presépio de Lapinha', description: 'Miniatura religiosa detalhada dentro de uma redoma.', price: 85, image: 'https://picsum.photos/300/300?random=502', category: 'Artesanato' }
         ]
       },
-      {
-        id: 'R2', name: 'O Pescador', island: 'TER', cuisine: 'Marisco', rating: 4.6, reviews: 890, image: 'https://picsum.photos/400/300?random=24',
-        description: 'O melhor peixe fresco na Terceira, localizado junto ao porto.',
-        dishes: [
-          { name: 'Lapas Grelhadas', description: 'Lapas grelhadas com manteiga de alho.', price: 12, image: 'https://picsum.photos/300/200?random=25' },
-          { name: 'Alcatra', description: 'Prato de carne cozinhado lentamente em alguidar de barro.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
+      { 
+        id: 'S_CAN_2', 
+        name: 'Azorean Food Market TO', 
+        island: 'CAN', 
+        subcategory: 'food', 
+        rating: 4.9, 
+        reviews: 210, 
+        image: 'https://picsum.photos/400/300?random=181', 
+        description: 'Produtos frescos dos Açores em Toronto.', 
+        latitude: '43.6520', 
+        longitude: '-79.4100',
+        businessType: 'shop',
+        products: [
+          { id: 'P4', name: 'Queijo de São Jorge', description: 'Queijo curado de 7 meses, sabor intenso.', price: 18, image: 'https://picsum.photos/300/300?random=503', category: 'Alimentação' },
+          { id: 'P5', name: 'Pimenta da Terra', description: 'O tempero essencial da cozinha açoriana.', price: 5, image: 'https://picsum.photos/300/300?random=504', category: 'Alimentação' },
+          { id: 'P6', name: 'Chá Gorreana Black', description: 'Chá cultivado na única plantação da Europa.', price: 8, image: 'https://picsum.photos/300/300?random=505', category: 'Alimentação' }
+        ]
+      },
+      { 
+        id: 'S_PIX_1', 
+        name: 'Queijaria do Pico', 
+        island: 'PIX', 
+        subcategory: 'food', 
+        rating: 4.9, 
+        reviews: 210, 
+        image: 'https://picsum.photos/400/300?random=182', 
+        description: 'Os melhores queijos da ilha montanha.', 
+        latitude: '38.4833', 
+        longitude: '-28.4333',
+        businessType: 'shop',
+        products: [
+          { id: 'P7', name: 'Queijo do Pico Macio', description: 'Textura cremosa e aroma pronunciado.', price: 14.00, image: 'https://picsum.photos/300/300?random=506', category: 'Gastronomia' },
+          { id: 'P8', name: 'Mel de Incenso', description: 'Mel monofloral das matas do Pico.', price: 7.50, image: 'https://picsum.photos/300/300?random=507', category: 'Gastronomia' }
+        ]
+      },
+      { 
+        id: 'S_PDL_1', 
+        name: 'Bordados de São Miguel', 
+        island: 'PDL', 
+        subcategory: 'crafts', 
+        rating: 4.7, 
+        reviews: 180, 
+        image: 'https://picsum.photos/400/300?random=183', 
+        description: 'Tradição e elegância em cada ponto.', 
+        latitude: '37.7412', 
+        longitude: '-25.6671',
+        businessType: 'shop',
+        products: [
+          { id: 'P9', name: 'Toalha de Banquete', description: 'Bordado a cheio em linho natural.', price: 120.00, image: 'https://picsum.photos/300/300?random=508', category: 'Têxtil' },
+          { id: 'P10', name: 'Almofada Regional', description: 'Padrão tradicional de espiga azul.', price: 25.00, image: 'https://picsum.photos/300/300?random=509', category: 'Têxtil' }
+        ]
+      },
+      { 
+        id: 'S_SMA_1', 
+        name: 'Olaria de Santa Maria', 
+        island: 'SMA', 
+        subcategory: 'crafts', 
+        rating: 4.8, 
+        reviews: 90, 
+        image: 'https://picsum.photos/400/300?random=184', 
+        description: 'O barro vermelho ganha vida pelas mãos de mestres.', 
+        latitude: '36.9500', 
+        longitude: '-25.1333',
+        businessType: 'shop',
+        products: [
+          { id: 'P11', name: 'Bilha de Barro', description: 'Pote tradicional para água com design clássico.', price: 35.00, image: 'https://picsum.photos/300/300?random=510', category: 'Cerâmica' },
+          { id: 'P12', name: 'Prato de Parede', description: 'Pintado à mão com motivos da ilha.', price: 15.00, image: 'https://picsum.photos/300/300?random=511', category: 'Cerâmica' }
         ]
       }
     ],
-    activities: [
-      { id: 'A1', title: 'Trilho Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Caminhe à volta da cratera das lagoas azul e verde.', distance: '12km', duration: '4h', difficulty: 'Moderado' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Desça ao interior de uma antiga chaminé vulcânica.' },
+    services: [
+      { id: 'SR_CAN_1', name: 'Ontario Electrician - Manuel', island: 'CAN', subcategory: 'electrician', rating: 4.9, reviews: 45, image: 'https://picsum.photos/400/300?random=190', description: 'Serviços elétricos em toda a GTA.', latitude: '43.7000', longitude: '-79.4000', phone: '+1 416-000-000', publicEmail: 'manuel@ontarioelec.ca' },
+      { id: 'SR_CAN_2', name: 'Luso Construction', island: 'CAN', subcategory: 'bricklayer', rating: 4.7, reviews: 30, image: 'https://picsum.photos/400/300?random=191', description: 'Especialistas em alvenaria e renovações.', latitude: '43.7200', longitude: '-79.3500', phone: '+1 416-000-001', publicEmail: 'contact@lusoconstruction.ca' },
+      { id: 'SR_CAN_3', name: 'Toronto Wood Design', island: 'CAN', subcategory: 'carpenter', rating: 4.8, reviews: 25, image: 'https://picsum.photos/400/300?random=192', description: 'Carpintaria personalizada para a sua casa.', latitude: '43.6800', longitude: '-79.4500', phone: '+1 416-000-002', publicEmail: 'info@wooddesignto.ca' },
+      { id: 'SR_CAN_4', name: 'GTA Plumbers - Carlos', island: 'CAN', subcategory: 'plumber', rating: 4.6, reviews: 60, image: 'https://picsum.photos/400/300?random=193', description: 'Pichelaria urgente 24/7 em Toronto.', latitude: '43.6400', longitude: '-79.3800', phone: '+1 416-000-003', publicEmail: 'carlos@gtaplumbing.ca' },
+      { id: 'SR_CAN_5', name: 'Azores Painters Toronto', island: 'CAN', subcategory: 'painter', rating: 4.9, reviews: 15, image: 'https://picsum.photos/400/300?random=194', description: 'Pintura interior e exterior de alta qualidade.', latitude: '43.6600', longitude: '-79.4100', phone: '+1 416-000-004', publicEmail: 'paint@azorespaintersto.ca' },
+      { id: 'SR_CAN_6', name: 'Green Garden TO', island: 'CAN', subcategory: 'gardening', rating: 4.7, reviews: 20, image: 'https://picsum.photos/400/300?random=195', description: 'Manutenção de jardins e paisagismo.', latitude: '43.7500', longitude: '-79.3000', phone: '+1 416-000-005', publicEmail: 'garden@greento.ca' },
+      { id: 'SR_CAN_7', name: 'Modern Space Architects', island: 'CAN', subcategory: 'architect', rating: 5.0, reviews: 10, image: 'https://picsum.photos/400/300?random=196', description: 'Arquitetura inovadora em Ontário.', latitude: '43.6700', longitude: '-79.3900', phone: '+1 416-000-006', publicEmail: 'design@modernspace.ca' },
+      { id: 'SR_CAN_8', name: 'GTA Structural Engineers', island: 'CAN', subcategory: 'engineer', rating: 4.8, reviews: 8, image: 'https://picsum.photos/400/300?random=197', description: 'Projetos de engenharia e consultoria.', latitude: '43.6900', longitude: '-79.3700', phone: '+1 416-000-007', publicEmail: 'eng@gtastructural.ca' },
+      { id: 'SR_CAN_9', name: 'Toronto Air Systems', island: 'CAN', subcategory: 'hvac', rating: 4.9, reviews: 35, image: 'https://picsum.photos/400/300?random=198', description: 'Instalação e reparação de AC e aquecimento.', latitude: '43.7100', longitude: '-79.4200', phone: '+1 416-000-008', publicEmail: 'hvac@toair.ca' }
     ],
-    beauty: [
-      { id: 'B1', name: 'Glamour Açores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Especialistas em tratamentos faciais e corporais de luxo.', dishes: [{ name: 'Limpeza de Pele', description: 'Tratamento profundo', price: 45, image: 'https://picsum.photos/300/200?random=501' }] },
-      { id: 'B11', name: 'Spa do Infante', island: 'PDL', subcategory: 'beauty_salon', rating: 4.8, reviews: 95, image: 'https://picsum.photos/400/300?random=502', description: 'O refúgio perfeito no centro de Ponta Delgada.', dishes: [{ name: 'Tratamento Hidratante', description: 'Hidratação profunda', price: 55, image: 'https://picsum.photos/300/200?random=503' }] },
-      
-      { id: 'B2', name: 'Tesoura de Ouro', island: 'PDL', subcategory: 'hairdresser', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=51', description: 'O melhor corte de cabelo tradicional e moderno em Ponta Delgada.', dishes: [{ name: 'Corte Feminino', description: 'Inclui lavagem e secagem', price: 25, image: 'https://picsum.photos/300/200?random=511' }] },
-      { id: 'B22', name: 'Estilo & Arte', island: 'TER', subcategory: 'hairdresser', rating: 4.6, reviews: 42, image: 'https://picsum.photos/400/300?random=512', description: 'Transformamos o seu look com as últimas tendências.', dishes: [{ name: 'Coloração', description: 'Técnicas modernas', price: 40, image: 'https://picsum.photos/300/200?random=513' }] },
-      
-      { id: 'B3', name: 'Barbearia Central', island: 'PDL', subcategory: 'barber', rating: 4.8, reviews: 210, image: 'https://picsum.photos/400/300?random=52', description: 'Barba e cabelo com estilo clássico e toalha quente.', dishes: [{ name: 'Barba Completa', description: 'Com toalha quente', price: 15, image: 'https://picsum.photos/300/200?random=521' }] },
-      { id: 'B33', name: 'Gentleman\'s Club', island: 'PDL', subcategory: 'barber', rating: 4.9, reviews: 150, image: 'https://picsum.photos/400/300?random=522', description: 'Cuidado masculino de excelência.', dishes: [{ name: 'Corte de Cabelo', description: 'Estilo clássico', price: 18, image: 'https://picsum.photos/300/200?random=523' }] },
-      
-      { id: 'B4', name: 'Nails & Art', island: 'PDL', subcategory: 'manicure', rating: 4.6, reviews: 56, image: 'https://picsum.photos/400/300?random=53', description: 'Manicure e pedicure com as últimas tendências de design.', dishes: [{ name: 'Manicure Gel', description: 'Com design personalizado', price: 20, image: 'https://picsum.photos/300/200?random=531' }] },
-      { id: 'B44', name: 'Dedo de Mestre', island: 'TER', subcategory: 'manicure', rating: 4.7, reviews: 38, image: 'https://picsum.photos/400/300?random=532', description: 'Cuidamos das suas mãos com perfeição.', dishes: [{ name: 'Pedicure Relax', description: 'Inclui massagem', price: 25, image: 'https://picsum.photos/300/200?random=533' }] },
-      
-      { id: 'B5', name: 'Zen Azores Spa', island: 'PDL', subcategory: 'massage', rating: 5.0, reviews: 42, image: 'https://picsum.photos/400/300?random=54', description: 'Massagens relaxantes com óleos essenciais das flores açorianas.', dishes: [{ name: 'Massagem Relaxante', description: '60 minutos de puro relax', price: 50, image: 'https://picsum.photos/300/200?random=541' }] },
-      { id: 'B55', name: 'Corpo e Alma', island: 'PDL', subcategory: 'massage', rating: 4.9, reviews: 65, image: 'https://picsum.photos/400/300?random=542', description: 'Encontre o equilíbrio perfeito.', dishes: [{ name: 'Massagem Terapêutica', description: 'Alívio de tensões', price: 60, image: 'https://picsum.photos/300/200?random=543' }] },
+    auto_repair: [
+      { id: 'AR_CAN_1', name: 'Peças Luso-Canadiana', island: 'CAN', subcategory: 'parts', rating: 4.8, reviews: 150, image: 'https://picsum.photos/400/300?random=200', description: 'Tudo o que precisa para o seu carro, peças originais e compatíveis.', latitude: '43.6500', longitude: '-79.4100' },
+      { id: 'AR_CAN_2', name: 'Oficina do Manuel Toronto', island: 'CAN', subcategory: 'workshop', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=201', description: 'Mecânica geral, revisões e diagnóstico eletrónico.', latitude: '43.6600', longitude: '-79.4000' },
+      { id: 'AR_CAN_3', name: 'Elite Paint & Body', island: 'CAN', subcategory: 'bodywork', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=202', description: 'Especialistas em bate-chapa e pintura automóvel.', latitude: '43.6400', longitude: '-79.4200' },
+      { id: 'AR_CAN_4', name: 'Auto Parts Express', island: 'CAN', subcategory: 'parts', rating: 4.6, reviews: 90, image: 'https://picsum.photos/400/300?random=203', description: 'Loja de peças com entrega rápida em Toronto.', latitude: '43.6700', longitude: '-79.3800' },
+      { id: 'AR_CAN_5', name: 'Garagem Atlântico', island: 'CAN', subcategory: 'workshop', rating: 5.0, reviews: 45, image: 'https://picsum.photos/400/300?random=204', description: 'Serviço personalizado para o seu veículo.', latitude: '43.6800', longitude: '-79.3700' },
+      { id: 'AR_CAN_6', name: 'Pintura & Bate-Chapa Luso', island: 'CAN', subcategory: 'bodywork', rating: 4.8, reviews: 60, image: 'https://picsum.photos/400/300?random=205', description: 'Qualidade superior em reparações de chapa.', latitude: '43.6900', longitude: '-79.3600' }
     ],
-    shops: [
-      { id: 'S1', name: 'Loja do Chá', island: 'PDL', subcategory: 'food', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Produtos regionais, chás da Gorreana e artesanato local.', dishes: [{ name: 'Chá Gorreana', description: 'Pacote 100g', price: 5, image: 'https://picsum.photos/300/200?random=601' }] },
-      { id: 'S11', name: 'Mercado da Graça', island: 'PDL', subcategory: 'food', rating: 4.8, reviews: 850, image: 'https://picsum.photos/400/300?random=602', description: 'O coração da gastronomia de São Miguel.', dishes: [{ name: 'Ananás dos Açores', description: 'Unidade extra', price: 7, image: 'https://picsum.photos/300/200?random=603' }] },
-      { id: 'S2', name: 'Queijaria Açoriana', island: 'TER', subcategory: 'food', rating: 4.8, reviews: 156, image: 'https://picsum.photos/400/300?random=61', description: 'A melhor seleção de queijos de todas as ilhas do arquipélago.', dishes: [{ name: 'Queijo da Ilha', description: 'Cura 12 meses', price: 12, image: 'https://picsum.photos/300/200?random=611' }] },
-      { id: 'S3', name: 'Bordados de São Miguel', island: 'PDL', subcategory: 'crafts', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=62', description: 'Artesanato tradicional feito à mão com história.', dishes: [{ name: 'Toalha de Mesa', description: 'Bordado à mão', price: 85, image: 'https://picsum.photos/300/200?random=621' }] },
-      { id: 'S33', name: 'Olaria da Lagoa', island: 'PDL', subcategory: 'crafts', rating: 4.7, reviews: 88, image: 'https://picsum.photos/400/300?random=622', description: 'A famosa cerâmica azul e branca das Lagoas.', dishes: [{ name: 'Jarra Decorativa', description: 'Pintada à mão', price: 45, image: 'https://picsum.photos/300/200?random=623' }] },
+    auto_electronics: [
+      { id: 'AE_CAN_1', name: 'Smart Auto Tech', island: 'CAN', subcategory: 'electronics', rating: 4.9, reviews: 42, image: 'https://picsum.photos/400/300?random=210', description: 'Especialistas em diagnóstico eletrónico e reprogramação.', latitude: '43.6500', longitude: '-79.4100', phone: '+1 416-555-0101', publicEmail: 'tech@smartauto.ca' },
+      { id: 'AE_CAN_2', name: 'Luso Sound & Security', island: 'CAN', subcategory: 'electronics', rating: 4.7, reviews: 28, image: 'https://picsum.photos/400/300?random=211', description: 'Instalação de alarmes, GPS e sistemas de som.', latitude: '43.6600', longitude: '-79.4000', phone: '+1 416-555-0102', publicEmail: 'audio@lusoauto.ca' }
+    ],
+    used_market: [
+      { id: 'UM_CAN_1', name: 'VW Golf 2018 - Manuel', island: 'CAN', subcategory: 'cars_motos', rating: 5.0, reviews: 1, image: 'https://picsum.photos/400/300?random=220', description: 'Excelente estado, apenas 60.000km. Todas as revisões na marca.', latitude: '43.6500', longitude: '-79.4100', phone: '+1 416-555-9001', publicEmail: 'manuel.vendas@gmail.com' },
+      { id: 'UM_CAN_2', name: 'Honda CB500X - Carlos', island: 'CAN', subcategory: 'cars_motos', rating: 4.8, reviews: 3, image: 'https://picsum.photos/400/300?random=221', description: 'Mota impecável, guardada sempre em garagem.', latitude: '43.6600', longitude: '-79.4000', phone: '+1 416-555-9002', publicEmail: 'carlos.motos@outlook.com' },
+      { id: 'UM_CAN_3', name: 'Motor Completo BMW 320d', island: 'CAN', subcategory: 'used_parts', rating: 4.9, reviews: 5, image: 'https://picsum.photos/400/300?random=222', description: 'Motor com 120.000km, testado e com garantia.', latitude: '43.6400', longitude: '-79.4200', phone: '+1 416-555-9003', publicEmail: 'pecas.luso@pecas.ca' },
+      { id: 'UM_CAN_4', name: 'Jantes 17" Audi', island: 'CAN', subcategory: 'used_parts', rating: 4.7, reviews: 2, image: 'https://picsum.photos/400/300?random=223', description: 'Jogo de 4 jantes originais, sem empenos.', latitude: '43.6700', longitude: '-79.3800', phone: '+1 416-555-9004', publicEmail: 'vendas.audi@gmail.com' }
+    ],
+    animals: [
+      { id: 'PET_PDL_1', name: 'Pet Shop Açores', island: 'PDL', subcategory: 'pet_shop', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=230', description: 'Tudo para o seu animal de estimação em Ponta Delgada.', phone: '+351 296 000 000', publicEmail: 'geral@petshopacores.pt', latitude: '37.7412', longitude: '-25.6671' },
+      { id: 'PET_CAN_1', name: 'Azores Pets Toronto', island: 'CAN', subcategory: 'pet_shop', rating: 4.8, reviews: 85, image: 'https://picsum.photos/400/300?random=231', description: 'Produtos de qualidade e atendimento personalizado em Toronto.', phone: '+1 416-555-0001', publicEmail: 'info@azorespets.ca', latitude: '43.6532', longitude: '-79.3832' }
+    ],
+    real_estate: [
+      { 
+        id: 'RE_1', 
+        name: 'ERA Imobiliária PDL', 
+        island: 'PDL', 
+        rating: 4.7, 
+        businessType: 'real_estate', 
+        image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=800', 
+        description: 'Líder em mediação imobiliária em São Miguel.', 
+        phone: '+351 296 111 222', 
+        publicEmail: 'pdl@era.pt', 
+        latitude: '37.7400', 
+        longitude: '-25.6600',
+        products: [
+          { id: 'H1', name: 'Moradia T3 Sete Cidades', description: 'Moradia tradicional com vista deslumbrante para a lagoa. Totalmente recuperada.', price: 285000, image: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=800', category: 'Moradia', panoramaUrl: '/tours/studio.jpg' },
+          { id: 'H2', name: 'Apartamento T2 Centro PDL', description: 'Moderno, com acabamentos de luxo e varanda panorâmica.', price: 195000, image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800', category: 'Apartamento' },
+          { id: 'H3', name: 'Quinta com 5000m2', description: 'Vasta área de cultivo e casa principal em pedra vulcânica.', price: 420000, image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=800', category: 'Quinta' }
+        ]
+      },
+      { 
+        id: 'RE_2', 
+        name: 'RE/MAX Expo Açores', 
+        island: 'PDL', 
+        rating: 4.8, 
+        businessType: 'real_estate', 
+        image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=800', 
+        description: 'Especialistas no mercado imobiliário açoriano.', 
+        phone: '+351 296 333 444', 
+        publicEmail: 'expo@remax.pt', 
+        latitude: '37.7450', 
+        longitude: '-25.6700',
+        products: [
+          { id: 'H4', name: 'Lote de Terreno Lagoa', description: 'Terreno urbano com viabilidade de construção para moradia unifamiliar.', price: 65000, image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=800', category: 'Terreno' },
+          { id: 'H5', name: 'Vivenda T4 com Piscina', description: 'Excelente exposição solar e amplas áreas de lazer.', price: 550000, image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=800', category: 'Moradia' }
+        ]
+      }
+    ],
+    gyms: [
+      { 
+        id: 'GYM_1', 
+        name: 'Elite Health Club', 
+        island: 'PDL', 
+        rating: 4.9, 
+        businessType: 'gyms', 
+        image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800', 
+        description: 'O ginásio mais completo de Ponta Delgada.', 
+        phone: '+351 296 555 666', 
+        publicEmail: 'geral@eliteclub.pt', 
+        latitude: '37.7420', 
+        longitude: '-25.6650',
+        products: [
+          { id: 'G1', name: 'Passadeiras Matrix T75', description: 'Tecnologia de ponta com ecrã tátil e simulação de trilhos.', price: 0, image: 'https://images.unsplash.com/photo-1578608712688-469511b5003a?q=80&w=800', category: 'Cardio' },
+          { id: 'G2', name: 'Zona de Pesos Livres', description: 'Halteres até 50kg e múltiplas bancadas de treino.', price: 0, image: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=800', category: 'Musculação' },
+          { id: 'G3', name: 'Piscina Interior Aquecida', description: 'Piscina de 25 metros para natação livre e aulas.', price: 0, image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=800', category: 'Aquáticos' }
+        ]
+      },
+      { 
+        id: 'GYM_2', 
+        name: 'Crossfit PDL', 
+        island: 'PDL', 
+        rating: 4.8, 
+        businessType: 'gyms', 
+        image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=800', 
+        description: 'Treino funcional de alta intensidade.', 
+        phone: '+351 296 777 888', 
+        publicEmail: 'info@crossfitpdl.pt', 
+        latitude: '37.7500', 
+        longitude: '-25.6800',
+        products: [
+          { id: 'G4', name: 'Racks de Crossfit', description: 'Estrutura completa para pull-ups, squats e ginástica.', price: 0, image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800', category: 'Equipamento' },
+          { id: 'G5', name: 'Remo Concept2', description: 'A máquina de cardio padrão ouro para treino funcional.', price: 0, image: 'https://images.unsplash.com/photo-1590239098569-e5ac84065679?q=80&w=800', category: 'Cardio' }
+        ]
+      }
+    ],
+    stands: [
+      { 
+        id: 'ST_1', 
+        name: 'Stand J. Canavarro', 
+        island: 'PDL', 
+        rating: 4.6, 
+        businessType: 'stands', 
+        image: 'https://images.unsplash.com/photo-1562141961-b5d1972b73c3?q=80&w=800', 
+        description: 'Venda de viaturas novas e seminovas com garantia total.', 
+        phone: '+351 296 999 000', 
+        publicEmail: 'vendas@jcanavarro.pt', 
+        latitude: '37.7380', 
+        longitude: '-25.6580',
+        featuredVehicles: [
+          { id: 'C1', model: 'BMW M4 Competition', fuelType: 'Gasolina', seats: 4, image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=800', description: 'Performance pura e luxo inigualável.', features: ['450cv', 'Couro', 'Auto'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 },
+          { id: 'C2', model: 'Mercedes-Benz A45 AMG', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1506469717960-433cebe3f181?q=80&w=800', description: 'O hatchback mais potente do mundo.', features: ['421cv', '4Matic', 'Buckets'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 }
+        ],
+        vehicles: [
+          { id: 'C3', model: 'VW Golf VIII R', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=800', description: 'Versatilidade e desportivismo.', features: ['320cv', 'Digital Cockpit'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 },
+          { id: 'C4', model: 'Audi RS3 Sportback', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1606148632399-6868af6932f3?q=80&w=800', description: 'O som icónico do motor de 5 cilindros.', features: ['400cv', 'Quattro'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 },
+          { id: 'C5', model: 'Tesla Model 3 Performance', fuelType: 'Elétrico', seats: 5, image: 'https://images.unsplash.com/photo-1536700503339-1e4b06520771?q=80&w=800', description: 'Aceleração instantânea e tecnologia de ponta.', features: ['Dual Motor', 'Autopilot'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 }
+        ]
+      },
+      { 
+        id: 'ST_2', 
+        name: 'Auto Stand Açores', 
+        island: 'PDL', 
+        rating: 4.5, 
+        businessType: 'stands', 
+        image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800', 
+        description: 'A maior frota de usados multimarca da ilha.', 
+        phone: '+351 296 123 456', 
+        publicEmail: 'geral@autostand.pt', 
+        latitude: '37.7410', 
+        longitude: '-25.6620',
+        featuredVehicles: [
+          { id: 'C6', model: 'Toyota Hilux Invincible', fuelType: 'Gasóleo', seats: 5, image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800', description: 'Inquebrável e pronta para qualquer terreno.', features: ['4x4', 'Gancho de Reboque'], isAvailable: true, companyId: 'ST_2', type: 'SUV', pricePerDay: 0 }
+        ],
+        vehicles: [
+          { id: 'C7', model: 'Dacia Duster 4x4', fuelType: 'Gasóleo', seats: 5, image: 'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?q=80&w=800', description: 'O aventureiro económico.', features: ['Diesel', 'Ar Condicionado'], isAvailable: true, companyId: 'ST_2', type: 'SUV', pricePerDay: 0 },
+          { id: 'C8', model: 'Fiat 500e', fuelType: 'Elétrico', seats: 4, image: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?q=80&w=800', description: 'Estilo icónico com zero emissões.', features: ['City Mode', 'Teto Panorâmico'], isAvailable: true, companyId: 'ST_2', type: 'SUV', pricePerDay: 0 }
+        ]
+      }
+    ],
+    offices: [
+      { id: 'OFF_1', name: 'Escritório 296 Cowork', island: 'PDL', rating: 4.9, businessType: 'office', image: 'https://picsum.photos/400/300?random=330', description: 'Espaço de trabalho partilhado no centro da cidade.', phone: '+351 296 296 296', publicEmail: 'hello@cowork296.pt', latitude: '37.7395', longitude: '-25.6630' },
+      { id: 'OFF_2', name: 'Serviços Jurídicos PDL', island: 'PDL', rating: 4.7, businessType: 'office', image: 'https://picsum.photos/400/300?random=331', description: 'Apoio jurídico e administrativo especializado.', phone: '+351 296 000 111', publicEmail: 'advogados@pdl.pt', latitude: '37.7405', longitude: '-25.6640' }
+    ],
+    it_services: [
+      { id: 'IT_1', name: 'Chip7 Ponta Delgada', island: 'PDL', rating: 4.4, businessType: 'it_services', image: 'https://picsum.photos/400/300?random=340', description: 'A sua loja de informática de confiança.', phone: '+351 296 444 555', publicEmail: 'pdl@chip7.pt', latitude: '37.7430', longitude: '-25.6680' },
+      { id: 'IT_2', name: 'PC Clinic Açores', island: 'PDL', rating: 4.8, businessType: 'it_services', image: 'https://picsum.photos/400/300?random=341', description: 'Reparação de computadores e smartphones.', phone: '+351 296 666 777', publicEmail: 'ajuda@pcclinic.pt', latitude: '37.7440', longitude: '-25.6690' }
+    ],
+    perfumes: [
+      { id: 'PER_1', name: 'Perfumes & Companhia', island: 'PDL', rating: 4.7, businessType: 'perfumes', image: 'https://picsum.photos/400/300?random=350', description: 'As melhores fragrâncias internacionais.', phone: '+351 296 888 999', publicEmail: 'geral@perfumes.pt', latitude: '37.7415', longitude: '-25.6665' },
+      { id: 'PER_2', name: 'Essência dos Açores', island: 'PDL', rating: 4.9, businessType: 'perfumes', image: 'https://picsum.photos/400/300?random=351', description: 'Perfumes artesanais inspirados na nossa terra.', phone: '+351 296 000 999', publicEmail: 'loja@essencia.pt', latitude: '37.7425', longitude: '-25.6675' }
     ]
   },
   en: {
     airports: [
       { code: 'PDL', name: 'João Paulo II Airport', location: 'São Miguel', isAzores: true },
+      { code: 'SMA', name: 'Santa Maria Airport', location: 'Santa Maria', isAzores: true },
       { code: 'TER', name: 'Lajes Airport', location: 'Terceira', isAzores: true },
+      { code: 'GRW', name: 'Graciosa Airport', location: 'Graciosa', isAzores: true },
+      { code: 'SJZ', name: 'São Jorge Airport', location: 'São Jorge', isAzores: true },
+      { code: 'PIX', name: 'Pico Airport', location: 'Pico', isAzores: true },
+      { code: 'HOR', name: 'Horta Airport', location: 'Faial', isAzores: true },
+      { code: 'FLW', name: 'Flores Airport', location: 'Flores', isAzores: true },
+      { code: 'CVU', name: 'Corvo Airfield', location: 'Corvo', isAzores: true },
+      { code: 'CAN', name: 'Canada', location: 'Canada', isAzores: false },
+      { code: 'USA', name: 'United States', location: 'USA', isAzores: false },
+      { code: 'BER', name: 'Bermuda', location: 'Bermuda', isAzores: false },
     ],
-    hotels: [
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Luxury hotel with Japanese garden and spa.' },
-      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Located in Furnas with thermal pools.' },
-    ],
-    restaurants: [
-      {
-        id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
-        description: 'Traditional Azorean cuisine in a rustic and lively atmosphere. Famous for tuna steak.',
-        adminEmail: 'atasca@azores4you.com',
-        adminPassword: 'tasca',
-        dishes: [
-          { name: 'Tuna Steak', description: 'Fresh tuna steak with sesame seeds.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
-          { name: 'Polvo à Lagareiro', description: 'Roasted octopus with punched potatoes.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
-        ]
-      },
-      {
-        id: 'R2', name: 'O Pescador', island: 'TER', cuisine: 'Seafood', rating: 4.6, reviews: 890, image: 'https://picsum.photos/400/300?random=24',
-        description: 'The best fresh fish in Terceira, located by the harbor.',
-        dishes: [
-          { name: 'Grilled Limpets', description: 'Grilled limpets with garlic butter.', price: 12, image: 'https://picsum.photos/300/200?random=25' },
-          { name: 'Alcatra', description: 'Meat dish slow-cooked in a clay pot.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
-        ]
-      }
-    ],
-    activities: [
-      { id: 'A1', title: 'Sete Cidades Trail', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Walk around the crater of the blue and green lakes.', distance: '12km', duration: '4h', difficulty: 'Moderado' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Descend into an ancient volcanic chimney.' },
-    ],
-    beauty: [
-      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Specialists in luxury facial and body treatments.' },
-      { id: 'B2', name: 'Golden Scissors', island: 'PDL', subcategory: 'hairdresser', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=51', description: 'The best traditional and modern haircut in Ponta Delgada.' },
-      { id: 'B3', name: 'Central Barbershop', island: 'PDL', subcategory: 'barber', rating: 4.8, reviews: 210, image: 'https://picsum.photos/400/300?random=52', description: 'Beard and hair with classic style and hot towel.' },
-      { id: 'B4', name: 'Nails & Art', island: 'PDL', subcategory: 'manicure', rating: 4.6, reviews: 56, image: 'https://picsum.photos/400/300?random=53', description: 'Manicure and pedicure with the latest design trends.' },
-      { id: 'B5', name: 'Zen Azores Spa', island: 'PDL', subcategory: 'massage', rating: 5.0, reviews: 42, image: 'https://picsum.photos/400/300?random=54', description: 'Relaxing massages with essential oils from Azorean flowers.' },
-    ],
-    shops: [
-      { id: 'S1', name: 'The Tea Shop', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Regional products, Gorreana teas and local handicrafts.' },
-      { id: 'S2', name: 'Azorean Cheesery', island: 'TER', rating: 4.8, reviews: 156, image: 'https://picsum.photos/400/300?random=61', description: 'The best selection of cheeses from all the islands.' },
-    ]
-  },
-  es: {
-    airports: [
-      { code: 'PDL', name: 'Aeropuerto João Paulo II', location: 'São Miguel', isAzores: true },
-      { code: 'TER', name: 'Aeropuerto das Lajes', location: 'Terceira', isAzores: true },
-    ],
-    hotels: [
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel de lujo con jardín japonés e spa.' },
-      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Ubicado en Furnas con piscinas termales.' },
-    ],
-    restaurants: [
-      {
-        id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
-        description: 'Cocina tradicional azoriana en un ambiente rústico e animado.',
-        dishes: [
-          { name: 'Filete de Atún', description: 'Filete de atún fresco con semillas de sésamo.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
-          { name: 'Polvo à Lagareiro', description: 'Pulpo asado con patatas golpeadas.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
-        ]
-      },
-      {
-        id: 'R2', name: 'O Pescador', island: 'TER', cuisine: 'Marisco', rating: 4.6, reviews: 890, image: 'https://picsum.photos/400/300?random=24',
-        description: 'El mejor pescado fresco en Terceira, ubicado junto al puerto.',
-        dishes: [
-          { name: 'Lapas a la Plancha', description: 'Lapas a la plancha con mantequilla de ajo.', price: 12, image: 'https://picsum.photos/300/200?random=25' },
-          { name: 'Alcatra', description: 'Plato de carne cocinado lentamente en olla de barro.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
-        ]
-      }
-    ],
-    activities: [
-      { id: 'A1', title: 'Sendero Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Camine alrededor del cráter de los lagos azul e verde.' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Descienda al interior de uma antigua chimenea volcánica.' },
-    ],
-    beauty: [
-      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Especialistas en tratamientos faciales y corporales de lujo.' },
-    ],
-    shops: [
-      { id: 'S1', name: 'Tienda de Té', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Productos regionales y artesanía.' },
-    ]
-  },
-  it: {
-    airports: [
-      { code: 'PDL', name: 'Aeroporto João Paulo II', location: 'São Miguel', isAzores: true },
-      { code: 'TER', name: 'Aeroporto das Lajes', location: 'Terceira', isAzores: true },
-    ],
-    hotels: [
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel di lusso con giardino giapponese e spa.' },
-      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Situato a Furnas con piscine termali.' },
-    ],
-    restaurants: [
-      {
-        id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regionale', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
-        description: 'Cucina tradizionale delle Azzorre in un\'atmosfera rustica e vivace.',
-        dishes: [
-          { name: 'Bistecca di Tonno', description: 'Bistecca di tonno fresco com semi di sesamo.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
-          { name: 'Polvo à Lagareiro', description: 'Polpo arrosto con patate al forno.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
-        ]
-      },
-      {
-        id: 'R2', name: 'O Pescador', island: 'TER', cuisine: 'Frutti di Mare', rating: 4.6, reviews: 890, image: 'https://picsum.photos/400/300?random=24',
-        description: 'Il melhor pesce fresco a Terceira, situato vicino al porto.',
-        dishes: [
-          { name: 'Patelle alla Griglia', description: 'Patelle alla griglia con burro all\'aglio.', price: 12, image: 'https://picsum.photos/300/200?random=25' },
-          { name: 'Alcatra', description: 'Piatto di carne cotto lentamente in pentola di terracotta.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
-        ]
-      }
-    ],
-    activities: [
-      { id: 'A1', title: 'Sentiero Sete Cidades', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Cammina intorno al cratere dei laghi blu e verde.' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Scendi in un antico camino vulcanico.' },
-    ],
-    beauty: [
-      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Specialisti in trattamenti viso e corpo di lusso.' },
-    ],
-    shops: [
-      { id: 'S1', name: 'Negozio del Tè', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Prodotti regionali e artigianato.' },
-    ]
-  },
-  de: {
-    airports: [
-      { code: 'PDL', name: 'Flughafen João Paulo II', location: 'São Miguel', isAzores: true },
-      { code: 'TER', name: 'Flughafen Lajes', location: 'Terceira', isAzores: true },
-    ],
-    hotels: [
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Luxushotel mit japanischem Garten und Spa.' },
-      { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'In Furnas gelegen mit Thermalbecken.' },
-    ],
-    restaurants: [
-      {
-        id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20',
-        description: 'Traditionelle azoreanische Küche in rustikaler und lebhafter Atmosphäre.',
-        dishes: [
-          { name: 'Thunfischsteak', description: 'Frisches Thunfischsteak mit Sesamsamen.', price: 18, image: 'https://picsum.photos/300/200?random=21' },
-          { name: 'Polvo à Lagareiro', description: 'Gebratener Oktopus mit geschlagenen Kartoffeln.', price: 22, image: 'https://picsum.photos/300/200?random=22' }
-        ]
-      },
-      {
-        id: 'R2', name: 'O Pescador', island: 'TER', cuisine: 'Meeresfrüchte', rating: 4.6, reviews: 890, image: 'https://picsum.photos/400/300?random=24',
-        description: 'Der beste frische Fisch auf Terceira, am Hafen gelegen.',
-        dishes: [
-          { name: 'Gegrillte Napfschnecken', description: 'Gegrillte Napfschnecken mit Knoblauchbutter.', price: 12, image: 'https://picsum.photos/300/200?random=25' },
-          { name: 'Alcatra', description: 'Fleischgericht, langsam im Tontopf gegart.', price: 19, image: 'https://picsum.photos/300/200?random=26' }
-        ]
-      }
-    ],
-    activities: [
-      { id: 'A1', title: 'Sete Cidades Wanderweg', type: 'trail', island: 'PDL', image: 'https://picsum.photos/400/300?random=30', description: 'Wandern Sie um den Krater der blauen und grünen Seen.' },
-      { id: 'A2', title: 'Algar do Carvão', type: 'landscape', island: 'TER', image: 'https://picsum.photos/400/300?random=31', description: 'Steigen Sie in einen alten Vulkanschornstein hinab.' },
-    ],
-    beauty: [
-      { id: 'B1', name: 'Glamour Azores', island: 'PDL', subcategory: 'beauty_salon', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=50', description: 'Spezialisten für luxuriöse Gesichts- und Körperbehandlungen.' },
-    ],
-    shops: [
-      { id: 'S1', name: 'Teeladen', island: 'PDL', rating: 4.9, reviews: 340, image: 'https://picsum.photos/400/300?random=60', description: 'Regionale Produkte e Handwerkskunst.' },
-    ]
-  },
-};
-
-// Car data is static in structure but descriptions/types will be translated in UI or here
-// We'll keep the base object and just assume the images/prices don't change
-// Type will be translated in UI
-export const CAR_RENTAL_COMPANIES: CarRentalCompany[] = [
-  { 
-    id: 'comp1', 
-    name: 'Ilha Verde', 
-    address: 'Campo de São Francisco, 9, 9500-153 Ponta Delgada', 
-    email: 'info@ilhaverde.com', 
-    contact: '+351 296 304 891',
-    image: 'https://picsum.photos/400/300?random=100'
-  },
-  { 
-    id: 'comp2', 
-    name: 'Wayzor', 
-    address: 'Rua de Lisboa, Edifício Solmar, 9500-216 Ponta Delgada', 
-    email: 'reservations@wayzor.pt', 
-    contact: '+351 296 301 818',
-    image: 'https://picsum.photos/400/300?random=101'
-  },
-  { 
-    id: 'comp3', 
-    name: 'Autatlantis', 
-    address: 'Rua dos Manajaneiros, 9, 9500-086 Ponta Delgada', 
-    email: 'info@autatlantis.com', 
-    contact: '+351 296 205 340',
-    image: 'https://picsum.photos/400/300?random=102'
-  },
-];
-
-const CARS_BASE: Car[] = [
-  { 
-    id: 'C1', 
-    model: 'Renault Clio', 
-    companyId: 'comp1', 
-    type: 'Económico', 
-    fuelType: 'Gasolina',
-    pricePerDay: 45, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=10', 
-    isAvailable: true,
-    description: 'car_desc_C1',
-    features: ['feature_AC', 'feature_Bluetooth', 'feature_Económico', 'feature_Manual']
-  },
-  { 
-    id: 'C2', 
-    model: 'Nissan Qashqai', 
-    companyId: 'comp2', 
-    type: 'SUV', 
-    fuelType: 'Gasóleo',
-    pricePerDay: 75, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=11', 
-    isAvailable: true,
-    description: 'car_desc_C2',
-    features: ['feature_GPS', 'feature_Camera', 'feature_Espaço', 'feature_Automático']
-  },
-  { 
-    id: 'C3', 
-    model: 'Fiat 500c', 
-    companyId: 'comp3', 
-    type: 'Descapotável', 
-    fuelType: 'Gasolina',
-    pricePerDay: 90, 
-    seats: 4, 
-    image: 'https://picsum.photos/300/200?random=12', 
-    isAvailable: true,
-    description: 'car_desc_C3',
-    features: ['feature_Teto', 'feature_Estilo', 'feature_Estacionar', 'feature_Manual']
-  },
-  { 
-    id: 'C4', 
-    model: 'Volkswagen Polo', 
-    companyId: 'comp1', 
-    type: 'Económico', 
-    fuelType: 'Gasolina',
-    pricePerDay: 48, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=13', 
-    isAvailable: false,
-    description: 'car_desc_C4',
-    features: ['feature_Sensores', 'feature_CarPlay', 'feature_Seguro', 'feature_Manual']
-  },
-  { 
-    id: 'C5', 
-    model: 'Toyota RAV4', 
-    companyId: 'comp2', 
-    type: 'SUV', 
-    fuelType: 'Híbrido',
-    pricePerDay: 85, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=14', 
-    isAvailable: false,
-    description: 'car_desc_C5',
-    features: ['feature_Híbrido', 'feature_4x4', 'feature_Cruise', 'feature_Automático']
-  },
-  { 
-    id: 'C6', 
-    model: 'Mini Cooper Cab', 
-    companyId: 'comp3', 
-    type: 'Descapotável', 
-    fuelType: 'Gasolina',
-    pricePerDay: 110, 
-    seats: 4, 
-    image: 'https://picsum.photos/300/200?random=15', 
-    isAvailable: true,
-    description: 'car_desc_C6',
-    features: ['feature_Sport', 'feature_Sound', 'feature_Pele', 'feature_Automático']
-  },
-  { 
-    id: 'C7', 
-    model: 'Mercedes Vito', 
-    companyId: 'comp1', 
-    type: 'Carrinha', 
-    fuelType: 'Gasóleo',
-    pricePerDay: 120, 
-    seats: 9, 
-    image: 'https://picsum.photos/300/200?random=16', 
-    isAvailable: true,
-    description: 'car_desc_C7',
-    features: ['feature_9Lugares', 'feature_Bagagem', 'feature_ACTraseiro', 'feature_Manual']
-  },
-  { 
-    id: 'C8', 
-    model: 'Dacia Duster', 
-    companyId: 'comp2', 
-    type: 'SUV', 
-    fuelType: 'Gasóleo',
-    pricePerDay: 60, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=17', 
-    isAvailable: true,
-    description: 'car_desc_C8',
-    features: ['feature_Económico', 'feature_Robusto', 'feature_Bluetooth', 'feature_Manual']
-  },
-  { 
-    id: 'C9', 
-    model: 'Opel Corsa', 
-    companyId: 'comp3', 
-    type: 'Económico', 
-    fuelType: 'Gasolina',
-    pricePerDay: 42, 
-    seats: 5, 
-    image: 'https://picsum.photos/300/200?random=18', 
-    isAvailable: true,
-    description: 'car_desc_C9',
-    features: ['feature_AC', 'feature_USB', 'feature_Confortável', 'feature_Manual']
-  },
-  { 
-    id: 'C10', 
-    model: 'Ford Transit Custom', 
-    companyId: 'comp2', 
-    type: 'Carrinha', 
-    fuelType: 'Gasóleo',
-    pricePerDay: 135, 
-    seats: 9, 
-    image: 'https://picsum.photos/300/200?random=19', 
-    isAvailable: true,
-    description: 'car_desc_C10',
-    features: ['feature_9Lugares', 'feature_Camera360', 'feature_Sync3', 'feature_Manual']
+    hotels: [], restaurants: [], activities: [], beauty: [], shops: [], services: [], auto_repair: [], auto_electronics: [], used_market: [], animals: [], real_estate: [], gyms: [], stands: [], offices: [], it_services: [], perfumes: []
   }
-];
-
-export const FLIGHTS: Flight[] = [
-  // LISBOA -> PONTA DELGADA (PDL)
-  { 
-    id: 'TP1869', airline: 'TAP Air Portugal', flightNumber: 'TP1869', 
-    origin: 'LIS', destination: 'PDL', 
-    departureTime: '08:00', arrivalTime: '10:25', 
-    price: 120, status: 'A Horas', stops: 0, duration: '2h 25m' 
-  },
-  { 
-    id: 'S4121', airline: 'SATA Azores Airlines', flightNumber: 'S4121', 
-    origin: 'LIS', destination: 'PDL', 
-    departureTime: '14:30', arrivalTime: '16:55', 
-    price: 145, status: 'A Horas', stops: 0, duration: '2h 25m' 
-  },
-  { 
-    id: 'FR2345', airline: 'Ryanair', flightNumber: 'FR2345', 
-    origin: 'LIS', destination: 'PDL', 
-    departureTime: '21:00', arrivalTime: '23:25', 
-    price: 65, status: 'Atrasado', stops: 0, duration: '2h 25m' 
-  },
-
-  // PORTO -> PONTA DELGADA
-  { 
-    id: 'S4172', airline: 'SATA Azores Airlines', flightNumber: 'S4172', 
-    origin: 'OPO', destination: 'PDL', 
-    departureTime: '11:15', arrivalTime: '13:40', 
-    price: 95, status: 'A Horas', stops: 0, duration: '2h 25m' 
-  },
-  { 
-    id: 'FR7890', airline: 'Ryanair', flightNumber: 'FR7890', 
-    origin: 'OPO', destination: 'PDL', 
-    departureTime: '06:30', arrivalTime: '08:55', 
-    price: 45, status: 'Embarque', stops: 0, duration: '2h 25m' 
-  },
-
-  // INTERNACIONAL DIRETO (EUA/CANADÁ)
-  { 
-    id: 'S4221', airline: 'SATA Azores Airlines', flightNumber: 'S4221', 
-    origin: 'BOS', destination: 'PDL', 
-    departureTime: '21:30', arrivalTime: '06:15', 
-    price: 450, status: 'A Horas', stops: 0, duration: '4h 45m' 
-  },
-  { 
-    id: 'S4333', airline: 'SATA Azores Airlines', flightNumber: 'S4333', 
-    origin: 'YYZ', destination: 'TER', 
-    departureTime: '20:45', arrivalTime: '07:00', 
-    price: 480, status: 'A Horas', stops: 0, duration: '6h 15m' 
-  },
-  { 
-    id: 'UA1234', airline: 'United Airlines', flightNumber: 'UA1234', 
-    origin: 'JFK', destination: 'PDL', 
-    departureTime: '22:10', arrivalTime: '07:20', 
-    price: 520, status: 'Cancelado', stops: 0, duration: '5h 10m' 
-  },
-
-  // COM ESCALAS (EUROPA)
-  { 
-    id: 'BA556', airline: 'British Airways', flightNumber: 'BA556', 
-    origin: 'LHR', destination: 'PDL', 
-    departureTime: '07:30', arrivalTime: '13:45', 
-    price: 210, status: 'A Horas', stops: 1, duration: '6h 15m',
-    layover: 'Escala em LIS (1h 40m)'
-  },
-  { 
-    id: 'LH987', airline: 'Lufthansa', flightNumber: 'LH987', 
-    origin: 'FRA', destination: 'PDL', 
-    departureTime: '09:00', arrivalTime: '15:30', 
-    price: 290, status: 'A Horas', stops: 1, duration: '7h 30m',
-    layover: 'Escala em LIS (2h 10m)'
-  },
-
-  // INTER-ILHAS (SATA AIR AÇORES)
-  { 
-    id: 'SP401', airline: 'SATA Air Açores', flightNumber: 'SP401', 
-    origin: 'PDL', destination: 'HOR', 
-    departureTime: '09:00', arrivalTime: '09:50', 
-    price: 60, status: 'A Horas', stops: 0, duration: '0h 50m' 
-  },
-  { 
-    id: 'SP405', airline: 'SATA Air Açores', flightNumber: 'SP405', 
-    origin: 'PDL', destination: 'PIX', 
-    departureTime: '15:00', arrivalTime: '15:50', 
-    price: 65, status: 'A Horas', stops: 0, duration: '0h 50m' 
-  },
-  { 
-    id: 'SP510', airline: 'SATA Air Açores', flightNumber: 'SP510', 
-    origin: 'TER', destination: 'PDL', 
-    departureTime: '18:30', arrivalTime: '19:15', 
-    price: 55, status: 'Embarque', stops: 0, duration: '0h 45m' 
-  },
-  { 
-    id: 'SP620', airline: 'SATA Air Açores', flightNumber: 'SP620', 
-    origin: 'FLW', destination: 'PDL', 
-    departureTime: '11:30', arrivalTime: '13:45', 
-    price: 88, status: 'A Horas', stops: 1, duration: '2h 15m',
-    layover: 'Escala na Horta (HOR)'
-  },
-  
-  // VOOS EXTRA PARA ENCHER A LISTA
-  { 
-    id: 'TP1871', airline: 'TAP Air Portugal', flightNumber: 'TP1871', 
-    origin: 'LIS', destination: 'TER', 
-    departureTime: '16:00', arrivalTime: '18:35', 
-    price: 135, status: 'A Horas', stops: 0, duration: '2h 35m' 
-  },
-  { 
-    id: 'S4128', airline: 'SATA Azores Airlines', flightNumber: 'S4128', 
-    origin: 'PDL', destination: 'BOS', 
-    departureTime: '18:15', arrivalTime: '20:45', 
-    price: 410, status: 'A Horas', stops: 0, duration: '5h 30m' 
-  },
-  { 
-    id: 'FR555', airline: 'Ryanair', flightNumber: 'FR555', 
-    origin: 'LIS', destination: 'TER', 
-    departureTime: '06:15', arrivalTime: '08:50', 
-    price: 55, status: 'A Horas', stops: 0, duration: '2h 35m' 
-  },
-];
-
-// DATA FOR BUS SYSTEM - EXTENDED LIST OF FREGUESIAS AND LOCALITIES
-export const ISLAND_LOCALITIES: Record<string, string[]> = {
-  'PDL': [
-    'Ponta Delgada (Centro)', 'São Sebastião', 'São Pedro', 'Santa Clara', 'Fajã de Baixo', 'Fajã de Cima', 'São Roque', 'Rosto de Cão (Livramento)', 'Rosto de Cão (São Roque)',
-    'Ribeira Grande', 'Ribeira Seca', 'Ribeirinha', 'Conceição', 'Matriz', 'Santa Bárbara',
-    'Lagoa', 'Nossa Senhora do Rosário', 'Santa Cruz', 'Água de Pau', 'Cabouco', 'Remédios',
-    'Vila Franca do Campo', 'São Miguel', 'São Pedro', 'Ribeira das Tainhas', 'Ponta Garça', 'Água de Alto',
-    'Povoação', 'Furnas', 'Nossa Senhora dos Remédios', 'Faial da Terra', 'Ribeira Quente', 'Água Retorta',
-    'Nordeste', 'Achadinha', 'Achada', 'Salga', 'Lomba da Fazenda', 'Santana', 'Algarvia', 'São Pedro de Nordestinho', 'Santo António de Nordestinho',
-    'Sete Cidades', 'Ginetes', 'Mosteiros', 'Candelária', 'Feteiras', 'Ajuda da Bretanha', 'Pilar da Bretanha', 'Remédios (Bretanha)', 'Santa Bárbara', 'Santo António',
-    'Capelas', 'São Vicente Ferreira', 'Fenais da Luz', 'Rabo de Peixe', 'Calhetas', 'Pico da Pedra', 'Fenais da Ajuda', 'Lomba de São Pedro', 'Lomba da Maia', 'São Brás', 'Maia', 'Porto Formoso'
-  ],
-  'TER': [
-    'Angra do Heroísmo (Centro)', 'Sé', 'Nossa Senhora da Conceição', 'São Pedro', 'Santa Luzia',
-    'Praia da Vitória (Centro)', 'Santa Cruz', 'Cabo da Praia', 'Fonte do Bastardo', 'Fontinhas',
-    'São Mateus da Calheta', 'São Bartolomeu de Regatos', 'Cinco Ribeiras', 'Santa Bárbara', 'Doze Ribeiras', 'Serreta', 'Raminho', 'Altares',
-    'Biscoitos', 'Quatro Ribeiras', 'Agualva', 'Vila Nova', 'Lajes', 'São Brás', 'Porto Martins', 'Fonte do Bastardo',
-    'São Sebastião', 'Porto Judeu', 'Feteira', 'Ribeirinha', 'Posto Santo', 'Terra Chã', 'São Bento'
-  ],
-  'HOR': [
-    'Horta (Matriz)', 'Horta (Angústias)', 'Horta (Conceição)', 
-    'Flamengos', 'Feteira', 'Castelo Branco', 'Capelo', 'Praia do Norte', 'Cedros', 'Salão', 'Ribeirinha', 'Pedro Miguel'
-  ],
-  'PIX': [
-    'Madalena', 'Criação Velha', 'Candelária', 'São Mateus', 'São Caetano', 'Bandeiras',
-    'São Roque do Pico', 'Santa Luzia', 'Santo António', 'Prainha', 'Santo Amaro',
-    'Lajes do Pico', 'São João', 'Piedade', 'Ribeiras', 'Calheta de Nesquim'
-  ],
-  'SJZ': [
-    'Velas', 'Santo Amaro', 'Urzelina', 'Manadas', 'Rosais', 'Beira',
-    'Calheta', 'Ribeira Seca', 'Norte Pequeno', 'Norte Grande', 'Topo', 'Santo Antão'
-  ],
-  'GRW': [
-    'Santa Cruz da Graciosa', 'Guadalupe', 'Praia (São Mateus)', 'Luz'
-  ],
-  'FLW': [
-    'Santa Cruz das Flores', 'Caveira', 'Cedros', 'Ponta Delgada',
-    'Lajes das Flores', 'Fazenda', 'Lajedo', 'Fajã Grande', 'Fajãzinha', 'Mosteiro', 'Lomba'
-  ],
-  'CVU': [
-    'Vila do Corvo'
-  ],
-  'SMA': [
-    'Vila do Porto', 'Almagreira', 'Santa Bárbara', 'Santo Espírito', 'São Pedro'
-  ]
 };
 
-// --- BUS SCHEDULE GENERATOR ---
-// Generate simulated bus data for ALL localities within each island
-// This ensures "Simula com tudo" covers every possible From/To combination
+export const getAirports = (lang: Language): Airport[] => DATA[lang]?.airports?.length ? DATA[lang].airports : DATA['pt'].airports;
+export const getHotels = (lang: Language): Hotel[] => DATA[lang]?.hotels?.length ? DATA[lang].hotels : DATA['pt'].hotels;
+export const getRestaurants = (lang: Language): Restaurant[] => DATA[lang]?.restaurants?.length ? DATA[lang].restaurants : DATA['pt'].restaurants;
+export const getActivities = (lang: Language): Activity[] => DATA[lang]?.activities?.length ? DATA[lang].activities : DATA['pt'].activities;
+export const getShops = (lang: Language): Business[] => DATA[lang]?.shops?.length ? DATA[lang].shops : DATA['pt'].shops;
+export const getBeauty = (lang: Language): Business[] => DATA[lang]?.beauty?.length ? DATA[lang].beauty : DATA['pt'].beauty;
+export const getServices = (lang: Language): Business[] => DATA[lang]?.services?.length ? DATA[lang].services : DATA['pt'].services;
+export const getAutoRepairs = (lang: Language): Business[] => DATA[lang]?.auto_repair?.length ? DATA[lang].auto_repair : DATA['pt'].auto_repair;
+export const getAutoElectronics = (lang: Language): Business[] => DATA[lang]?.auto_electronics?.length ? DATA[lang].auto_electronics : DATA['pt'].auto_electronics;
+export const getUsedMarket = (lang: Language): Business[] => DATA[lang]?.used_market?.length ? DATA[lang].used_market : DATA['pt'].used_market;
+export const getAnimals = (lang: Language): Business[] => DATA[lang]?.animals?.length ? DATA[lang].animals : DATA['pt'].animals;
+export const getRealEstate = (lang: Language): Business[] => DATA[lang]?.real_estate?.length ? DATA[lang].real_estate : DATA['pt'].real_estate;
+export const getGyms = (lang: Language): Business[] => DATA[lang]?.gyms?.length ? DATA[lang].gyms : DATA['pt'].gyms;
+export const getStands = (lang: Language): Business[] => DATA[lang]?.stands?.length ? DATA[lang].stands : DATA['pt'].stands;
+export const getOffices = (lang: Language): Business[] => DATA[lang]?.offices?.length ? DATA[lang].offices : DATA['pt'].offices;
+export const getITServices = (lang: Language): Business[] => DATA[lang]?.it_services?.length ? DATA[lang].it_services : DATA['pt'].it_services;
+export const getPerfumes = (lang: Language): Business[] => DATA[lang]?.perfumes?.length ? DATA[lang].perfumes : DATA['pt'].perfumes;
 
-const COMPANIES: Record<string, string[]> = {
-    'PDL': ['Auto Viação Micaelense', 'Varela', 'CRP'],
-    'TER': ['EVT'],
-    'HOR': ['Farias'],
-    'PIX': ['Cristiano'],
-    'SJZ': ['Viação de São Jorge'],
-    'GRW': ['ETG'],
-    'FLW': ['UTC'],
-    'SMA': ['TST'],
-    'CVU': ['CM Corvo']
-};
+export const BUS_SCHEDULES: BusSchedule[] = [];
+export const CAR_RENTAL_COMPANIES: CarRentalCompany[] = [];
+export const CARS_BASE: Car[] = [];
+export const FLIGHTS: Flight[] = [];
+export const TOUR_GUIDES: TourGuide[] = [];
 
-const HUB_TIMES_OUTBOUND = ['07:30', '09:15', '12:30', '14:00', '17:15', '18:45', '20:00'];
-const HUB_TIMES_INBOUND = ['06:45', '08:30', '11:00', '13:15', '16:30', '18:00'];
-const LOCAL_TIMES = ['08:00', '12:00', '17:00']; // For non-hub routes
-
-const GENERATED_SCHEDULES: BusSchedule[] = [];
-
-Object.entries(ISLAND_LOCALITIES).forEach(([island, locs]) => {
-  const companies = COMPANIES[island] || ['Transportes Açores'];
-  
-  // Create a schedule between EVERY pair of locations
-  // Note: O(N^2) generation, but N is small per island (~50 max for PDL), so ~2500 entries max per island.
-  // This is acceptable for a client-side demo to ensure total coverage.
-  
-  locs.forEach(origin => {
-    locs.forEach(destination => {
-      if (origin === destination) return;
-      
-      const isHubRoute = origin.includes('(Centro)') || origin.includes('Velas') || origin.includes('Horta') || origin.includes('Madalena') || origin.includes('Santa Cruz') || origin.includes('Vila do Porto');
-      const times = isHubRoute ? HUB_TIMES_OUTBOUND : LOCAL_TIMES;
-      
-      // Add slight randomness to times to make it feel real
-      const adjustedTimes = times.map(t => {
-         const [h, m] = t.split(':').map(Number);
-         const variation = Math.floor(Math.random() * 15) - 7; // +/- 7 mins
-         let newM = m + variation;
-         let newH = h;
-         if (newM < 0) { newM += 60; newH -= 1; }
-         if (newM >= 60) { newM -= 60; newH += 1; }
-         return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
-      }).sort();
-
-      GENERATED_SCHEDULES.push({
-         id: `gen-${island}-${origin.substring(0,3)}-${destination.substring(0,3)}-${Math.random().toString(36).substr(2,5)}`,
-         company: companies[Math.floor(Math.random() * companies.length)],
-         island: island,
-         origin: origin,
-         destination: destination,
-         times: adjustedTimes,
-         price: 1.50 + (Math.random() * 4.50), // Prices between 1.50 and 6.00
-         duration: `${10 + Math.floor(Math.random() * 80)}m`
-      });
-    });
-  });
-});
-
-export const BUS_SCHEDULES: BusSchedule[] = GENERATED_SCHEDULES;
-
-export const TOUR_GUIDES: TourGuide[] = [
-  { id: 'G1', name: 'João Silva', image: 'https://picsum.photos/200/200?random=201', rating: 4.9, price: 45, languages: ['PT', 'EN'], specialty: 'Geologia e Vulcões' },
-  { id: 'G2', name: 'Maria Santos', image: 'https://picsum.photos/200/200?random=202', rating: 4.8, price: 40, languages: ['PT', 'ES', 'EN'], specialty: 'Flora e Fauna' },
-  { id: 'G3', name: 'António Costa', image: 'https://picsum.photos/200/200?random=203', rating: 5.0, price: 55, languages: ['PT', 'EN', 'DE'], specialty: 'História e Cultura' },
-  { id: 'G4', name: 'Sofia Pereira', image: 'https://picsum.photos/200/200?random=204', rating: 4.7, price: 35, languages: ['PT', 'FR', 'EN'], specialty: 'Fotografia de Natureza' },
-  { id: 'G5', name: 'Ricardo Melo', image: 'https://picsum.photos/200/200?random=205', rating: 4.9, price: 50, languages: ['PT', 'IT', 'EN'], specialty: 'Trilhos de Montanha' },
-];
-
-export const getAirports = (lang: Language): Airport[] => {
-  return (DATA[lang] && DATA[lang].airports) ? DATA[lang].airports : DATA['pt'].airports;
-};
-
-export const getHotels = (lang: Language): Hotel[] => {
-  return (DATA[lang] && DATA[lang].hotels) ? DATA[lang].hotels : DATA['pt'].hotels;
-};
-
-export const getRestaurants = (lang: Language): Restaurant[] => {
-  return (DATA[lang] && DATA[lang].restaurants) ? DATA[lang].restaurants : DATA['pt'].restaurants;
-};
-
-export const getActivities = (lang: Language): Activity[] => {
-  return (DATA[lang] && DATA[lang].activities) ? DATA[lang].activities : DATA['pt'].activities;
-};
-
-export const getCars = (lang: Language): Car[] => {
-  // Cars don't have descriptions in the data structure provided in types.ts (only type, model, company)
-  // Type is a union string which we will translate in the UI layer using keys
-  return CARS_BASE;
-};
-
-export const getFlights = (lang: Language): Flight[] => {
-  // Flight data is mostly codes and numbers, except status which is handled in UI
-  return FLIGHTS;
-};
-
-export const getBeauty = (lang: Language): Business[] => {
-  return (DATA[lang] && (DATA[lang] as any).beauty) ? (DATA[lang] as any).beauty : (DATA['pt'] as any).beauty;
-};
-
-export const getShops = (lang: Language): Business[] => {
-  return (DATA[lang] && (DATA[lang] as any).shops) ? (DATA[lang] as any).shops : (DATA['pt'] as any).shops;
-};
+export const getCars = (lang: Language): Car[] => CARS_BASE;
+export const getFlights = (lang: Language): Flight[] => FLIGHTS;

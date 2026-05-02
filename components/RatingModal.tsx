@@ -76,8 +76,11 @@ const RatingModal: React.FC<RatingModalProps> = ({
                   <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">Como foi a sua<br/>experiência?</h2>
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{restaurantName}</p>
                 </div>
-                <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-400">
-                  <X size={20} />
+                <button 
+                  onClick={onClose} 
+                  className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                >
+                  <X size={20} className="group-active:scale-90 transition-transform" />
                 </button>
               </div>
 

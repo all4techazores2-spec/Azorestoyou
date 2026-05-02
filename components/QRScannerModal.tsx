@@ -68,8 +68,11 @@ const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScan
             <h2 className="text-xl font-black tracking-tight">{title}</h2>
             <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em]">Aponte para o QR Code do Restaurante</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+          >
+            <X size={20} className="group-active:scale-90 transition-transform" />
           </button>
         </div>
 
