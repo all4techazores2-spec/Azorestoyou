@@ -303,11 +303,53 @@ const App: React.FC = () => {
   }
 
   if (isAdmin) {
-    return <AdminDashboard onLogout={handleLogout} restaurants={restaurants} activities={activities} shops={shops} beauty={beauty} services={services} language={language} />;
+    return (
+      <AdminDashboard 
+        onLogout={handleLogout} 
+        restaurants={restaurants} 
+        activities={activities} 
+        shops={shops} 
+        beauty={beauty} 
+        flights={[]} // Add missing arrays if needed
+        hotels={[]}
+        cars={[]}
+        busSchedules={[]}
+        onUpdateRestaurants={setRestaurants}
+        onUpdateShops={setShops}
+        onUpdateBeauty={setBeauty}
+        onUpdateActivities={setActivities}
+        onUpdateFlights={() => {}}
+        onUpdateHotels={() => {}}
+        onUpdateCars={() => {}}
+        onUpdateBusSchedules={() => {}}
+        language={language} 
+      />
+    );
   }
 
   if (isBusiness) {
-    return <BusinessDashboard onLogout={handleLogout} businessId={currentBusinessId!} businesses={[...restaurants, ...shops, ...beauty]} language={language} />;
+    const allBusinesses = [...restaurants, ...shops, ...beauty, ...services, ...offices, ...autoRepairs];
+    const biz = allBusinesses.find(b => b.id === currentBusinessId);
+    
+    if (!biz) return <div className="min-h-screen flex items-center justify-center bg-slate-50 font-bold">Carregando painel de gestão...</div>;
+
+    return (
+      <BusinessDashboard 
+        business={biz}
+        onUpdateBusiness={(updated) => {
+          // Update the correct state list
+          if (restaurants.some(r => r.id === updated.id)) setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+          else if (shops.some(s => s.id === updated.id)) setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
+          else if (beauty.some(b => b.id === updated.id)) setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
+          else if (services.some(s => s.id === updated.id)) setServices(prev => prev.map(s => s.id === updated.id ? updated : s));
+        }}
+        onSync={fetchData}
+        onLogout={handleLogout} 
+        language={language}
+        isStaff={isStaff}
+        staffRole={staffRole || undefined}
+      />
+    );
   }
 
   if (isSupplier) {
