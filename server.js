@@ -194,23 +194,36 @@ app.put('/api/restaurants/:id', (req, res) => {
     }
 });
 
-// --- RESERVATIONS ---
-app.post('/api/reservations', (req, res) => {
+// --- RESERVATIONS HANDLER ---
+const handleReservation = (req, res) => {
     const { businessId, businessType, customerEmail } = req.body;
     const db = readDB();
     const normalEmail = normalizeEmail(customerEmail);
-    const reservation = { ...req.body, customerEmail: normalEmail, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
+    const reservation = { 
+        ...req.body, 
+        customerEmail: normalEmail, 
+        id: `RES_${Date.now()}`, 
+        status: 'pending', 
+        createdAt: new Date().toISOString() 
+    };
 
-    let business = null;
-    const typeMap = { 'restaurant': 'restaurants', 'beauty': 'beauty', 'shop': 'shops', 'office': 'offices', 'service': 'services' };
-    const key = typeMap[businessType] || 'restaurants';
+    const typeMap = { 
+        'restaurant': 'restaurants', 
+        'beauty': 'beauty', 
+        'shop': 'shops', 
+        'office': 'offices', 
+        'service': 'services',
+        'auto_repair': 'restaurants' // Auto repairs are stored in restaurants array but tagged as auto_repair
+    };
     
-    business = db[key]?.find(b => b.id === businessId);
+    const key = typeMap[businessType] || 'restaurants';
+    const business = db[key]?.find(b => b.id === businessId);
+
     if (business) {
         if (!business.reservations) business.reservations = [];
         business.reservations.push(reservation);
         
-        // Sync with User
+        // Sync with User Profile
         const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
         if (user) {
             if (!user.reservations) user.reservations = [];
@@ -222,33 +235,45 @@ app.post('/api/reservations', (req, res) => {
     } else {
         res.status(404).send("Business not found for reservation");
     }
-});
+};
 
-// Backward compatibility aliases
+app.post('/api/reservations', handleReservation);
+
+// Backward compatibility endpoints (Redirect to main handler)
 app.post('/api/restaurants/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
-    req.body.businessType = 'restaurant';
-    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+    req.body.businessType = req.body.businessType || 'restaurant';
+    handleReservation(req, res);
 });
+
 app.post('/api/beauty/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
     req.body.businessType = 'beauty';
-    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+    handleReservation(req, res);
 });
+
 app.post('/api/shops/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
     req.body.businessType = 'shop';
-    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+    handleReservation(req, res);
 });
+
 app.post('/api/offices/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
     req.body.businessType = 'office';
-    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+    handleReservation(req, res);
 });
+
+app.post('/api/auto_repair/:id/reservations', (req, res) => {
+    req.body.businessId = req.params.id;
+    req.body.businessType = 'auto_repair';
+    handleReservation(req, res);
+});
+
 app.post('/api/activities/:id/reservations', (req, res) => {
     req.body.businessId = req.params.id;
     req.body.businessType = 'service';
-    app._router.handle({ method: 'POST', url: '/api/reservations', body: req.body }, res);
+    handleReservation(req, res);
 });
 
 // --- COMMUNITY (SOCIAL) ---
