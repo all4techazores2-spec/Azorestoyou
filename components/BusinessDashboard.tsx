@@ -234,9 +234,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // Auto-refresh: Atualiza os dados a cada 20 segundos automaticamente
   useEffect(() => {
     const refreshInterval = setInterval(() => {
-      console.log('Sincronizando dados do negócio em tempo real (2s)...');
+      console.log('Sincronizando dados do negócio (10s)...');
       onSync(business);
-    }, 2000);
+    }, 10000);
     return () => clearInterval(refreshInterval);
   }, [onSync, business.id]);
 
