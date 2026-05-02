@@ -196,44 +196,66 @@ app.put('/api/restaurants/:id', (req, res) => {
 
 // --- RESERVATIONS HANDLER ---
 const handleReservation = (req, res) => {
-    const { businessId, businessType, customerEmail } = req.body;
-    const db = readDB();
-    const normalEmail = normalizeEmail(customerEmail);
-    const reservation = { 
-        ...req.body, 
-        customerEmail: normalEmail, 
-        id: `RES_${Date.now()}`, 
-        status: 'pending', 
-        createdAt: new Date().toISOString() 
-    };
+    try {
+        console.log('--- NOVA TENTATIVA DE RESERVA ---');
+        console.log('Corpo recebido:', JSON.stringify(req.body));
 
-    const typeMap = { 
-        'restaurant': 'restaurants', 
-        'beauty': 'beauty', 
-        'shop': 'shops', 
-        'office': 'offices', 
-        'service': 'services',
-        'auto_repair': 'restaurants' // Auto repairs are stored in restaurants array but tagged as auto_repair
-    };
-    
-    const key = typeMap[businessType] || 'restaurants';
-    const business = db[key]?.find(b => b.id === businessId);
-
-    if (business) {
-        if (!business.reservations) business.reservations = [];
-        business.reservations.push(reservation);
+        const { businessId, businessType, customerEmail } = req.body;
         
-        // Sync with User Profile
-        const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
-        if (user) {
-            if (!user.reservations) user.reservations = [];
-            user.reservations.push({ ...reservation, businessName: business.name });
+        if (!businessId) {
+            console.error('Erro: businessId em falta');
+            return res.status(400).send("businessId is required");
         }
+
+        const db = readDB();
+        const normalEmail = normalizeEmail(customerEmail);
         
-        writeDB(db);
-        res.status(201).json(reservation);
-    } else {
-        res.status(404).send("Business not found for reservation");
+        const reservation = { 
+            ...req.body, 
+            customerEmail: normalEmail, 
+            id: `RES_${Date.now()}`, 
+            status: 'pending', 
+            createdAt: new Date().toISOString() 
+        };
+
+        const typeMap = { 
+            'restaurant': 'restaurants', 
+            'beauty': 'beauty', 
+            'shop': 'shops', 
+            'office': 'offices', 
+            'service': 'services',
+            'auto_repair': 'restaurants'
+        };
+        
+        const key = typeMap[businessType] || 'restaurants';
+        console.log(`Procurando em db.${key} por id: ${businessId}`);
+        
+        const business = db[key]?.find(b => b.id === businessId);
+
+        if (business) {
+            if (!business.reservations) business.reservations = [];
+            business.reservations.push(reservation);
+            
+            // Sync with User Profile (if exists)
+            if (normalEmail && db.users) {
+                const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
+                if (user) {
+                    if (!user.reservations) user.reservations = [];
+                    user.reservations.push({ ...reservation, businessName: business.name });
+                    console.log('Sincronizado com perfil do utilizador:', normalEmail);
+                }
+            }
+            
+            writeDB(db);
+            console.log('Reserva gravada com sucesso!');
+            res.status(201).json(reservation);
+        } else {
+            console.error(`Erro: Negócio ${businessId} não encontrado em ${key}`);
+            res.status(404).send(`Business not found: ${businessId} in ${key}`);
+        }
+    } catch (error) {
+        console.error('CRITICAL ERROR NA RESERVA:', error);
+        res.status(500).json({ error: "Internal Server Error", message: error.message });
     }
 };
 
