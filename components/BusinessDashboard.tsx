@@ -670,7 +670,26 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     handleUpdate({ dishes: newDishes });
   };
 
-  const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
+  const handleReservationAction = async (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
+    if (action === 'cancelled') {
+       if (!window.confirm("Deseja ELIMINAR permanentemente esta reserva de todo o sistema?")) return;
+       
+       try {
+          const res = await fetch(`${API_BASE_URL}/api/reservations/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+             const newReservations = reservations.filter(r => r.id !== id);
+             setReservations(newReservations);
+             alert("✅ Reserva eliminada permanentemente do servidor!");
+          } else {
+             alert("Erro ao eliminar no servidor. Tente novamente.");
+          }
+       } catch (err) {
+          console.error(err);
+          alert("Erro de ligação ao servidor.");
+       }
+       return;
+    }
+
     if (isBeauty && action === 'accepted') {
       const newReservations = reservations.map(r => 
         r.id === id ? { ...r, status: action, confirmedByRestaurant: true } : r
