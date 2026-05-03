@@ -291,7 +291,8 @@
       "reservations": [],
       "adminEmail": "pescador@azores4you.com",
       "adminPassword": "admin"
-    },
+  ],
+  "shops": [
     {
       "id": "SHOP1",
       "name": "Artesanato Açoriano",
@@ -87857,4 +87858,7 @@
       ]
     }
   ]
+  ],
+  "beauty": [],
+  "posts": []
 }

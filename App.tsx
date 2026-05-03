@@ -179,6 +179,10 @@ const App: React.FC = () => {
         }));
 
         setRestaurants(latestRestaurants.filter(r => !r.businessType || r.businessType === 'restaurant'));
+        setShops(latestRestaurants.filter(r => r.businessType === 'shop'));
+        setBeauty(latestRestaurants.filter(r => r.businessType === 'beauty'));
+        setServices(latestRestaurants.filter(r => r.businessType === 'service'));
+        setOffices(latestRestaurants.filter(r => r.businessType === 'office'));
       } else {
         setRestaurants(getRestaurants(language));
       }
