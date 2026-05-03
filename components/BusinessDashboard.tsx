@@ -964,8 +964,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 <AzoresLogo size={28} color="white" />
              </div>
              <div>
-                <h1 className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">Hotel Excellence</h1>
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">Boutique Hotel</p>
+                <h1 className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">{business.name}</h1>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">{isHotel ? 'Boutique Hotel' : isRentCar ? 'Rent-a-Car' : 'Gestão de Negócio'}</p>
              </div>
           </div>
 

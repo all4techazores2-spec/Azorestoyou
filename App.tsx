@@ -783,10 +783,10 @@ const App: React.FC = () => {
           let endpoint = 'restaurants';
 
           if (res.type === 'car') {
-            targetBizId = 'rentcar-1';
+            targetBizId = res.car?.id || 'rentcar-1';
             endpoint = 'cars';
           } else if (res.type === 'hotel' || res.type === 'al') {
-            targetBizId = 'hotel-1';
+            targetBizId = res.hotel?.id || 'hotel-1';
             endpoint = 'hotels';
           }
 
