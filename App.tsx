@@ -62,6 +62,50 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
+export const BUSINESS_TYPE_TO_ENDPOINT: Record<string, string> = {
+  'restaurant': 'restaurants',
+  'hotel': 'hotels',
+  'al': 'hotels',
+  'accommodation': 'hotels',
+  'car': 'cars',
+  'rentcar': 'cars',
+  'beauty': 'beauty',
+  'hair': 'beauty',
+  'barber': 'beauty',
+  'nails': 'beauty',
+  'spa': 'beauty',
+  'glow': 'beauty',
+  'zen': 'beauty',
+  'diva': 'beauty',
+  'art': 'beauty',
+  'shop': 'shops',
+  'clothing': 'shops',
+  'electronics': 'shops',
+  'grocery': 'shops',
+  'crafts': 'shops',
+  'perfume': 'perfumes',
+  'perfumes': 'perfumes',
+  'service': 'services',
+  'gardening': 'services',
+  'architect': 'services',
+  'engineer': 'services',
+  'hvac': 'services',
+  'office': 'offices',
+  'cowork': 'offices',
+  'it_services': 'it_services',
+  'animal': 'animals',
+  'animals': 'animals',
+  'real_estate': 'real_estate',
+  'gym': 'gyms',
+  'gyms': 'gyms',
+  'stand': 'stands',
+  'stands': 'stands',
+  'auto_repair': 'auto_repairs',
+  'auto_repairs': 'auto_repairs',
+  'auto_electronics': 'auto_electronics',
+  'used_market': 'used_market'
+};
+
 const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');

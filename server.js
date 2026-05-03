@@ -138,8 +138,12 @@ app.get('/api/restaurants', (req, res) => {
         ...(db.services || []),
         ...(db.offices || [])
     ];
-    res.json(allBusinesses);
-});
+const ALL_BUSINESS_COLLECTIONS = [
+    'restaurants', 'beauty', 'shops', 'services', 'offices', 
+    'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
+    'real_estate', 'gyms', 'stands', 'auto_repairs', 
+    'auto_electronics', 'used_market'
+];
 
 // Generic Business Update Handler
 const handleBusinessUpdate = (req, res) => {
@@ -148,7 +152,7 @@ const handleBusinessUpdate = (req, res) => {
     let targetArray = null;
     let index = -1;
     
-    ['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
         if (db[key]) {
             const idx = db[key].findIndex(item => item.id === id);
             if (idx !== -1) { index = idx; targetArray = db[key]; }
@@ -164,7 +168,7 @@ const handleBusinessUpdate = (req, res) => {
     }
 };
 
-['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
+ALL_BUSINESS_COLLECTIONS.forEach(key => {
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
 });
 
@@ -224,8 +228,8 @@ app.delete('/api/reservations/:id', (req, res) => {
     const db = readDB();
     let found = false;
 
-    // 1. Remover dos Negócios (Restaurantes, Beleza, Lojas, etc.)
-    ['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
+    // 1. Remover dos Negócios (Todas as Categorias)
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
         if (db[key]) {
             db[key].forEach(biz => {
                 if (biz.reservations) {

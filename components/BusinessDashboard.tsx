@@ -2486,15 +2486,25 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                       <p className="text-sm text-slate-400 font-medium">{res.customerPhone} • {res.customerEmail}</p>
                                       <div className="flex items-center gap-4 mt-2">
                                          <span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
-                                         <span className="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-white tracking-widest">{res.time}</span>
-                                         {!isBeauty && !isShop && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>}
+                                         {res.time && <span className="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-white tracking-widest">{res.time}</span>}
+                                         {!isBeauty && !isShop && !isHotel && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>}
+                                         {isHotel && (
+                                           <>
+                                             <span className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600">
+                                               <Hotel size={12}/> {res.selectedRoom ? `Quarto ${res.selectedRoom.number} (${res.selectedRoom.type})` : 'Quarto não definido'}
+                                             </span>
+                                             <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600">
+                                               <Calendar size={12}/> {res.nights || 1} Noites
+                                             </span>
+                                           </>
+                                         )}
                                       </div>
                                    </div>
                                  </div>
                                  <div className="flex gap-3 w-full md:w-auto">
                                     <button 
                                       onClick={() => {
-                                        if (isBeauty || isShop) {
+                                        if (isBeauty || isShop || isHotel) {
                                           handleReservationAction(res.id, 'accepted');
                                         } else {
                                           setAcceptingReservation(res);
@@ -2503,7 +2513,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                       }}
                                       className="flex-1 md:flex-none px-10 py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
                                     >
-                                      {(isBeauty || isShop) ? 'Aprovar Marcação' : 'Vincular Mesa'}
+                                      {(isBeauty || isShop || isHotel) ? 'Aprovar Reserva' : 'Vincular Mesa'}
                                     </button>
                                     <button 
                                       onClick={() => deleteReservation(res.id)}
