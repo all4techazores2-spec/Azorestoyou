@@ -1112,17 +1112,16 @@ const App: React.FC = () => {
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
     // Procurar o negócio nos estados sincronizados com o servidor
-    const currentBusiness = [
-      ...(hotels || []), 
-      ...(cars || []), 
-      ...(restaurants || []), 
-      ...(shops || []), 
-      ...(beauty || []), 
-      ...(services || [])
-    ].find(b => b.id === currentBusinessId);
+    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices].find(b => b.id === currentBusinessId);
     
-    if (currentBusiness) {
-      const bType = (currentBusiness.businessType || (currentBusiness as any).type || 'restaurant').toLowerCase();
+    // Fallback: Se não encontrou no estado (sincronização pendente), procurar nas constantes estáticas
+    if (!biz) {
+      const allStatic = [...getRestaurants(language), ...getHotels(language), ...getShops(language), ...getBeauty(language), ...getServices(language)];
+      biz = allStatic.find(b => b.id === currentBusinessId);
+    }
+
+    if (biz) {
+      const bType = (biz.businessType || (biz as any).type || 'restaurant').toLowerCase();
       const isBeauty = bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
       const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
@@ -1133,7 +1132,7 @@ const App: React.FC = () => {
       return (
         <ErrorBoundary>
           <BusinessDashboard 
-            business={currentBusiness}
+            business={biz}
             language={language}
             isStaff={isStaff}
             staffRole={staffRole || undefined}
