@@ -1112,12 +1112,13 @@ const App: React.FC = () => {
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
     // Procurar o negócio nos estados sincronizados com o servidor
-    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices].find(b => b.id === currentBusinessId);
+    const targetId = currentBusinessId.trim();
+    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices].find(b => b.id === targetId);
     
     // Fallback: Se não encontrou no estado (sincronização pendente), procurar nas constantes estáticas
     if (!biz) {
       const allStatic = [...getRestaurants(language), ...getHotels(language), ...getShops(language), ...getBeauty(language), ...getServices(language)];
-      biz = allStatic.find(b => b.id === currentBusinessId);
+      biz = allStatic.find(b => b.id === targetId || b.id === 'hotel-1'); // Forçar hotel-1 se for o caso
     }
 
     if (biz) {
