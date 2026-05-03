@@ -55,6 +55,13 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Redirecionar todas as outras rotas para o index.html (SPA)
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 // DB Handlers
 const readDB = () => {
