@@ -757,6 +757,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
         />
       </div>
     );
+  }
+
   if (step === 'checkout' && showCheckout) {
     return (
       <BookingCheckoutModal 
