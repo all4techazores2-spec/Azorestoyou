@@ -1004,6 +1004,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             {([
               { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, hideForStaff: true },
               { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : <TableIcon size={18} />, hideForStaff: true },
+              (isHotel && { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={18} />, hideForStaff: true }),
               { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
               { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length },
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
