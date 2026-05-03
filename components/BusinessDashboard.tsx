@@ -1004,16 +1004,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             {([
               { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, hideForStaff: true },
               { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : <TableIcon size={18} />, hideForStaff: true },
-              { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={18} />, hideForStaff: true },
+              { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
               { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length },
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
               { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
-              { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
-              { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount },
-              { id: 'reservas_hotel', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: 0 },
+              (!isHotel && !isRentCar && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
+              (isHotel && { id: 'reservations', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: pendingCount }),
               { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
               { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
-            ] as any[]).filter(item => (!isStaff || !item.hideForStaff)).map((item) => (
+            ] as any[]).filter(item => item && (!isStaff || !item.hideForStaff)).map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}

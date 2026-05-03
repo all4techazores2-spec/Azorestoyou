@@ -775,9 +775,13 @@ const App: React.FC = () => {
         packageId: packageId,
         type: itinerary.hotel.type, // 'hotel' or 'al'
         hotel: itinerary.hotel,
-        selectedRoom: itinerary.selectedRoom,
+        selectedRoom: itinerary.selectedRoom ? {
+          id: itinerary.selectedRoom.id,
+          number: itinerary.selectedRoom.number || itinerary.selectedRoom.roomNumber || '?',
+          type: itinerary.selectedRoom.type || 'Standard'
+        } : null,
         date: itinerary.hotelStartDate || new Date().toISOString().split('T')[0],
-        nights: itinerary.nights || 3,
+        nights: itinerary.nights || 1,
         status: 'pending',
         selectedExtras: itinerary.selectedExtras || []
       });
