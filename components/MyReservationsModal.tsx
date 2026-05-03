@@ -493,7 +493,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                   </div>
                                   <div className="text-left">
                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                        {item.type === 'car' ? 'Aluguer de Carro' : item.type === 'flight' ? 'Voo' : 'Alojamento'}
+                                        {item.type === 'car' ? `Rent-a-car (${item.companyName || 'Auto Açores'})` : item.type === 'flight' ? 'Voo' : 'Alojamento'}
                                      </p>
                                      <p className="text-sm font-black text-slate-800 leading-tight">
                                         {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}

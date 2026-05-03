@@ -747,6 +747,7 @@ const App: React.FC = () => {
         packageId: packageId,
         type: 'car',
         car: itinerary.car,
+        companyName: itinerary.car.companyName || 'Auto Açores Rent', // Guardar a companhia
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
         days: itinerary.carDays || 3,
         status: 'pending'
@@ -768,15 +769,48 @@ const App: React.FC = () => {
       const updatedList = [...myReservations, ...newReservations];
       setMyReservations(updatedList);
 
-      // PERSIST TO SERVER
+      // PERSIST TO USER ACCOUNT
       if (isAuthenticated && userProfile?.email) {
         fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reservations: updatedList })
         })
-        .then(() => console.log("✅ Pacote sincronizado com o servidor"))
+        .then(() => console.log("✅ Pacote sincronizado com o perfil do utilizador"))
         .catch(err => console.error("Erro ao sincronizar pacote:", err));
+
+        // PERSIST TO BUSINESSES (Hotel & Rent-a-car)
+        newReservations.forEach(async res => {
+          let targetBizId = '';
+          if (res.type === 'car') targetBizId = 'rentcar-1';
+          else if (res.type === 'hotel' || res.type === 'al') targetBizId = 'hotel-1';
+
+          if (targetBizId) {
+            try {
+              const bResp = await fetch(`${API_BASE_URL}/api/restaurants/${targetBizId}`);
+              if (bResp.ok) {
+                const bizData = await bResp.json();
+                const bizRes = bizData.reservations || [];
+                // Add new reservation to business list
+                const updatedBizRes = [...bizRes, {
+                  ...res,
+                  customerEmail: userProfile.email,
+                  customerName: userProfile.name,
+                  customerPhone: userProfile.phone
+                }];
+
+                await fetch(`${API_BASE_URL}/api/restaurants/${targetBizId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ reservations: updatedBizRes })
+                });
+                console.log(`✅ Reserva enviada para o parceiro: ${targetBizId}`);
+              }
+            } catch (e) {
+              console.error(`Erro ao enviar reserva para o parceiro ${targetBizId}:`, e);
+            }
+          }
+        });
       }
     }
 

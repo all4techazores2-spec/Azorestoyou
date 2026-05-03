@@ -136,9 +136,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service');
   const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
   const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
-  const isRestaurant = !isBeauty && !isShop && !isService;
+  const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
+  const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
+  const isRestaurant = !isBeauty && !isShop && !isService && !isHotel && !isRentCar;
 
-  const [activeTab, setActiveTab] = useState<DashboardTab>(isStaff ? 'kitchen' : (isShop ? 'pos' : (isBeauty ? 'reservations' : 'tables')));
+  const [activeTab, setActiveTab] = useState<DashboardTab>(
+    isStaff ? 'kitchen' : 
+    (isShop ? 'pos' : 
+    (isBeauty ? 'reservations' : 
+    (isHotel || isRentCar ? 'reservations' : 'tables')))
+  );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -952,13 +959,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar whitespace-nowrap">
           {([
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
-            { id: 'tables', label: isBeauty ? 'Agenda / Mapa' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas', icon: isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
-            { id: 'kitchen', label: isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop) && !isStaff },
-            { id: 'pos', label: isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
-            { id: 'dishes', label: isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
-            { id: 'products', label: isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
-            { id: 'updates', label: isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
-            { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
+            { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Estado da Frota' : isBeauty ? 'Agenda / Mapa' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas', icon: isHotel ? <Hotel size={20} /> : isRentCar ? <Car size={20} /> : isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
+            { id: 'kitchen', label: isHotel ? 'Serviço de Quartos' : isRentCar ? 'Monitor de Aluguer' : isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isHotel ? <Coffee size={20} /> : isRentCar ? <Clock size={20} /> : isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop || isHotel || isRentCar) && !isStaff },
+            { id: 'pos', label: isHotel ? 'Faturação Front' : isRentCar ? 'Contratos / POS' : isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
+            { id: 'dishes', label: isHotel ? 'Gestão de Quartos' : isRentCar ? 'Gestão de Frota' : isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
+            { id: 'products', label: isRentCar ? 'Peças / Consumíveis' : isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
+            { id: 'updates', label: isHotel ? 'Promoções Época' : isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
+            { id: 'reservations', label: isHotel ? 'Check-ins / Out' : isRentCar ? 'Reservas de Carros' : isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
           ] as any[]).filter(item => (!isStaff || !item.hideForStaff) && !item.hidden).map(item => (
