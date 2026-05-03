@@ -17,15 +17,15 @@ interface ProfileModalProps {
     phone: string;
     avatar: string;
     nif?: string;
-    reservations?: any[];
   };
   onUpdateProfile: (update: { name: string; email: string; phone: string; avatar: string; nif?: string; password?: string }) => void;
+  onShowReservations?: () => void;
   onLogout?: () => void;
   onShowSOS?: () => void;
   onShowCommunity?: () => void;
 }
 
-type ProfileView = 'menu' | 'edit' | 'reservations';
+type ProfileView = 'menu' | 'edit';
 
 
 
@@ -36,6 +36,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   userCredits, 
   userProfile, 
   onUpdateProfile,
+  onShowReservations,
   onLogout,
   onShowSOS,
   onShowCommunity
@@ -97,14 +98,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       >
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {view !== 'menu' && (
+            {view === 'edit' && (
               <button onClick={() => setView('menu')} className="p-2 hover:bg-slate-100 rounded-full transition-colors mr-2">
                 <ArrowLeft size={20} className="text-slate-400" />
               </button>
             )}
-            <h2 className="text-xl font-black text-slate-800 tracking-tight">
-              {view === 'edit' ? 'Editar Perfil' : view === 'reservations' ? 'Minhas Reservas' : 'Perfil'}
-            </h2>
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">Perfil</h2>
           </div>
           <button 
             onClick={onClose} 
@@ -149,7 +148,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   </button>
 
                   <button 
-                    onClick={() => setView('reservations')}
+                    onClick={() => onShowReservations?.()}
                     className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
                   >
                     <div className="p-3 rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
@@ -210,61 +209,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                     Sair da Aplicação
                   </button>
                 </div>
-              </motion.div>
-            ) : view === 'reservations' ? (
-              <motion.div 
-                key="reservations"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-4"
-              >
-                {(userProfile.reservations && userProfile.reservations.length > 0) ? (
-                  userProfile.reservations.map((res, idx) => (
-                    <div key={idx} className="p-5 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-black text-slate-800 text-sm leading-tight">{res.businessName || 'Negócio'}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Ref: {res.id?.slice(-6)}</p>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                          res.status === 'pending' || res.status === 'pendente' ? 'bg-amber-100 text-amber-600' :
-                          res.status === 'accepted' || res.status === 'aceite' ? 'bg-emerald-100 text-emerald-600' :
-                          res.status === 'finished' ? 'bg-blue-100 text-blue-600' :
-                          'bg-red-100 text-red-600'
-                        }`}>
-                          {res.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 border-t border-slate-200 pt-3">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={12} className="text-slate-400" />
-                          <span className="text-xs font-bold text-slate-600">{res.date}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle size={12} className="text-slate-400" />
-                          <span className="text-xs font-bold text-slate-600">{res.time}</span>
-                        </div>
-                        {res.guests && (
-                          <div className="flex items-center gap-1.5 ml-auto">
-                            <Users size={12} className="text-slate-400" />
-                            <span className="text-xs font-bold text-slate-600">{res.guests} Pax</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-12 text-center space-y-4">
-                    <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto text-slate-200">
-                      <Calendar size={40} />
-                    </div>
-                    <div>
-                      <p className="font-black text-slate-800 uppercase tracking-tighter text-lg">Sem reservas</p>
-                      <p className="text-slate-400 text-sm font-medium italic">Ainda não tens nenhuma marcação efetuada.</p>
-                    </div>
-                  </div>
-                )}
               </motion.div>
             ) : (
               <motion.div 

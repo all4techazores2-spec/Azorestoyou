@@ -72,6 +72,48 @@
           "businessId": "R1",
           "createdAt": "2026-05-01T19:13:50.462Z",
           "tableId": "T4"
+        },
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-05-05",
+          "time": "13:00",
+          "guests": 2,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": false,
+          "requestedTime": "at_reservation",
+          "status": "finished",
+          "paymentDetails": null,
+          "bookingFee": 0,
+          "preOrderCreditsPaid": false,
+          "id": "RES_1777715167011",
+          "businessId": "R1",
+          "createdAt": "2026-05-02T09:46:07.011Z",
+          "tableId": "T2"
+        },
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-05-14",
+          "time": "13:30",
+          "guests": 4,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": false,
+          "requestedTime": "at_reservation",
+          "status": "pending",
+          "paymentDetails": null,
+          "bookingFee": 0,
+          "preOrderCreditsPaid": false,
+          "businessType": "restaurant",
+          "id": "RES_1777715734298",
+          "businessId": "R1",
+          "createdAt": "2026-05-02T09:55:34.298Z"
         }
       ],
       "updates": [
@@ -2398,6 +2440,28 @@
         }
       ],
       "reservations": [
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-04-30",
+          "time": "13:30",
+          "guests": 1,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": null,
+          "requestedTime": "at_reservation",
+          "status": "accepted",
+          "paymentDetails": null,
+          "bookingFee": 5,
+          "preOrderCreditsPaid": false,
+          "businessType": "beauty",
+          "id": "RES_1777589623176",
+          "businessId": "B1",
+          "createdAt": "2026-04-30T22:53:43.176Z",
+          "confirmedByRestaurant": true
+        },
         {
           "customerName": "Cliente Viajante",
           "customerEmail": "asd@gmail.com",
@@ -87409,7 +87473,98 @@
     {
       "email": "andre@gmail.com",
       "credits": 100,
-      "reservations": [],
+      "reservations": [
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-04-30",
+          "time": "13:30",
+          "guests": 1,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": null,
+          "requestedTime": "at_reservation",
+          "status": "accepted",
+          "paymentDetails": null,
+          "bookingFee": 5,
+          "preOrderCreditsPaid": false,
+          "businessType": "beauty",
+          "id": "RES_1777589623176",
+          "businessId": "B1",
+          "createdAt": "2026-04-30T22:53:43.176Z",
+          "confirmedByRestaurant": true,
+          "restaurantId": "B1",
+          "restaurantName": "Saloa Real Beauty",
+          "type": "beauty"
+        },
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-05-05",
+          "time": "13:00",
+          "guests": 2,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": false,
+          "requestedTime": "at_reservation",
+          "status": "finished",
+          "paymentDetails": null,
+          "bookingFee": 0,
+          "preOrderCreditsPaid": false,
+          "id": "RES_1777715167011",
+          "businessId": "R1",
+          "createdAt": "2026-05-02T09:46:07.011Z",
+          "type": "restaurant",
+          "restaurantName": "A Tasca",
+          "restaurantId": "R1",
+          "tableId": "T2"
+        },
+        {
+          "customerName": "Cliente Viajante",
+          "customerEmail": "andre@gmail.com",
+          "customerPhone": "",
+          "date": "2026-05-14",
+          "time": "13:30",
+          "guests": 4,
+          "notes": "",
+          "paymentType": "reserve",
+          "preOrder": [],
+          "prepRequested": false,
+          "requestedTime": "at_reservation",
+          "status": "pending",
+          "paymentDetails": null,
+          "bookingFee": 0,
+          "preOrderCreditsPaid": false,
+          "businessType": "restaurant",
+          "id": "RES_1777715734298",
+          "businessId": "R1",
+          "createdAt": "2026-05-02T09:55:34.298Z",
+          "type": "restaurant",
+          "restaurantName": "A Tasca",
+          "restaurantId": "R1"
+        },
+        {
+          "id": "RES_1777730736942",
+          "officeId": "OFF_1",
+          "officeName": "Escritório 296 Cowork",
+          "date": "2026-05-02",
+          "time": "10:30",
+          "customerName": "andre braga",
+          "customerPhone": "andre braga",
+          "customerEmail": "andre@gmail.com",
+          "notes": "dvdvdv",
+          "status": "pending",
+          "type": "restaurant",
+          "businessId": "OFF_1",
+          "createdAt": "2026-05-02T14:05:36.942Z",
+          "restaurantName": "Escritório 296 Cowork",
+          "restaurantId": "OFF_1"
+        }
+      ],
       "profile": {
         "phone": "",
         "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
@@ -87436,65 +87591,10 @@
     {
       "email": "all4techazores@gmail.com",
       "credits": 100,
-      "reservations": [
-        {
-          "customerName": "Cliente Viajante",
-          "customerEmail": "all4techazores@gmail.com",
-          "customerPhone": "",
-          "date": "2026-05-07",
-          "time": "13:00",
-          "guests": 1,
-          "notes": "",
-          "paymentType": "reserve",
-          "preOrder": [],
-          "prepRequested": false,
-          "requestedTime": "at_reservation",
-          "status": "pending",
-          "paymentDetails": null,
-          "bookingFee": 0,
-          "preOrderCreditsPaid": false,
-          "businessType": "restaurant",
-          "businessId": "R1",
-          "id": "RES_1777755760827",
-          "createdAt": "2026-05-02T21:02:40.827Z",
-          "type": "restaurant",
-          "businessName": "A Tasca"
-        },
-        {
-          "customerName": "Cliente Viajante",
-          "customerEmail": "all4techazores@gmail.com",
-          "customerPhone": "",
-          "date": "2026-05-06",
-          "time": "13:00",
-          "guests": 2,
-          "notes": "",
-          "paymentType": "reserve",
-          "preOrder": [],
-          "prepRequested": false,
-          "requestedTime": "at_reservation",
-          "status": "pending",
-          "paymentDetails": null,
-          "bookingFee": 0,
-          "preOrderCreditsPaid": false,
-          "businessType": "restaurant",
-          "businessId": "R1",
-          "id": "RES_1777756388984",
-          "createdAt": "2026-05-02T21:13:08.984Z",
-          "type": "restaurant",
-          "businessName": "A Tasca"
-        }
-      ],
+      "reservations": [],
       "profile": {
         "phone": "",
         "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=all4techazores@gmail.com"
-      }
-    },
-    {
-      "email": "andreraposobraga@enta.pt",
-      "credits": 100,
-      "reservations": [],
-      "profile": {
-        "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=andreraposobraga@enta.pt"
       }
     }
   ],
@@ -87738,7 +87838,23 @@
     {
       "id": "OFF_1",
       "name": "Escritório 296 Cowork",
-      "reservations": []
+      "reservations": [
+        {
+          "id": "RES_1777730736942",
+          "officeId": "OFF_1",
+          "officeName": "Escritório 296 Cowork",
+          "date": "2026-05-02",
+          "time": "10:30",
+          "customerName": "andre braga",
+          "customerPhone": "andre braga",
+          "customerEmail": "andre@gmail.com",
+          "notes": "dvdvdv",
+          "status": "pending",
+          "type": "office_visit",
+          "businessId": "OFF_1",
+          "createdAt": "2026-05-02T14:05:36.942Z"
+        }
+      ]
     }
   ]
 }

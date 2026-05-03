@@ -162,8 +162,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       // Determine if paying online
       const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';
 
+      // Preparar dados da reserva
       const reservationData = {
-        id: `RES_${Date.now()}`,
         customerName: customerName,
         customerEmail: customerEmail,
         customerPhone: customerPhone,

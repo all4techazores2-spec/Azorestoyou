@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, RefreshCw
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -230,15 +230,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Auto-refresh: Atualiza os dados a cada 20 segundos automaticamente
-  useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      console.log('Sincronizando dados do negócio (10s)...');
-      onSync(business);
-    }, 10000);
-    return () => clearInterval(refreshInterval);
-  }, [onSync, business.id]);
 
   // Local state for management
   const [tables, setTables] = useState<RestaurantTable[]>(business.tables || [
@@ -670,26 +661,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     handleUpdate({ dishes: newDishes });
   };
 
-  const handleReservationAction = async (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
-    if (action === 'cancelled') {
-       if (!window.confirm("Deseja ELIMINAR permanentemente esta reserva de todo o sistema?")) return;
-       
-       try {
-          const res = await fetch(`${API_BASE_URL}/api/reservations/${id}`, { method: 'DELETE' });
-          if (res.ok) {
-             const newReservations = reservations.filter(r => r.id !== id);
-             setReservations(newReservations);
-             alert("✅ Reserva eliminada permanentemente do servidor!");
-          } else {
-             alert("Erro ao eliminar no servidor. Tente novamente.");
-          }
-       } catch (err) {
-          console.error(err);
-          alert("Erro de ligação ao servidor.");
-       }
-       return;
-    }
-
+  const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
     if (isBeauty && action === 'accepted') {
       const newReservations = reservations.map(r => 
         r.id === id ? { ...r, status: action, confirmedByRestaurant: true } : r
@@ -1237,15 +1209,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                  {currentTime.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
            </div>
-           <div className="flex items-center gap-4">
-              <button 
-                onClick={() => onSync(business)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all active:scale-95 group"
-                title="Atualizar dados agora"
-              >
-                <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Sincronizar</span>
-              </button>
+<div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live System</span>
