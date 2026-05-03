@@ -725,6 +725,8 @@ const App: React.FC = () => {
     const newReservations: any[] = [];
     const packageId = `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     
+    console.log("Criando novo pacote:", packageId, itinerary);
+
     if (itinerary.hotel) {
       newReservations.push({
         id: `RES_H_${Date.now()}`,
@@ -734,7 +736,7 @@ const App: React.FC = () => {
         selectedRoom: itinerary.selectedRoom,
         date: itinerary.hotelStartDate || new Date().toISOString().split('T')[0],
         nights: itinerary.nights || 3,
-        status: 'accepted',
+        status: 'pending',
         selectedExtras: itinerary.selectedExtras || []
       });
     }
@@ -747,7 +749,7 @@ const App: React.FC = () => {
         car: itinerary.car,
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
         days: itinerary.carDays || 3,
-        status: 'accepted'
+        status: 'pending'
       });
     }
 
@@ -758,7 +760,7 @@ const App: React.FC = () => {
         type: 'flight',
         flight: itinerary.flight,
         date: new Date().toISOString().split('T')[0],
-        status: 'accepted'
+        status: 'pending'
       });
     }
 
