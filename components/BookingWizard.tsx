@@ -41,7 +41,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
 }) => {
   const [nights, setNights] = useState(currentItinerary?.nights || 3);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
-  if (!currentItinerary) return null;
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [hotelUnavailableDates, setHotelUnavailableDates] = useState<Date[]>([]);
   const [carUnavailableDates, setCarUnavailableDates] = useState<Date[]>([]);
@@ -84,6 +83,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
       onUpdateItinerary({ carDays });
     }
   }, [nights, carDays, step]);
+
+  if (!currentItinerary) return null;
 
   const destinationCode = currentItinerary?.flight?.destination || 'all';
   const availableHotels = hotels.filter(h => 

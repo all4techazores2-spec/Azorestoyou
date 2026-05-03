@@ -30,8 +30,8 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   const [selectedCompany, setSelectedCompany] = useState<CarRentalCompany | null>(null);
   const [selectedCarForDetail, setSelectedCarForDetail] = useState<Car | null>(null);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
-  if (!currentItinerary) return null;
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  if (!currentItinerary) return null;
 
   // Simulate unavailable dates
   const getUnavailableDates = (seed: number) => {
