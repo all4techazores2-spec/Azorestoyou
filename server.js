@@ -213,7 +213,7 @@ const handleReservation = (req, res) => {
         const reservation = { 
             ...req.body, 
             customerEmail: normalEmail, 
-            id: `RES_${Date.now()}`, 
+            id: req.body.id || `RES_${Date.now()}`, 
             status: 'pending', 
             createdAt: new Date().toISOString() 
         };
@@ -234,20 +234,29 @@ const handleReservation = (req, res) => {
 
         if (business) {
             if (!business.reservations) business.reservations = [];
-            business.reservations.push(reservation);
             
-            // Sync with User Profile (if exists)
-            if (normalEmail && db.users) {
-                const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
-                if (user) {
-                    if (!user.reservations) user.reservations = [];
-                    user.reservations.push({ ...reservation, businessName: business.name });
-                    console.log('Sincronizado com perfil do utilizador:', normalEmail);
+            // Prevent duplicates
+            const isDuplicate = business.reservations.some(r => r.id === reservation.id);
+            if (!isDuplicate) {
+                business.reservations.push(reservation);
+                
+                // Sync with User Profile (if exists)
+                if (normalEmail && db.users) {
+                    const user = db.users.find(u => normalizeEmail(u.email) === normalEmail);
+                    if (user) {
+                        if (!user.reservations) user.reservations = [];
+                        if (!user.reservations.some(r => r.id === reservation.id)) {
+                            user.reservations.push({ ...reservation, businessName: business.name });
+                        }
+                        console.log('Sincronizado com perfil do utilizador:', normalEmail);
+                    }
                 }
+            } else {
+                console.log('Reserva ignorada por ser duplicada:', reservation.id);
             }
             
             writeDB(db);
-            console.log('Reserva gravada com sucesso!');
+            console.log('Reserva processada com sucesso!');
             res.status(201).json(reservation);
         } else {
             console.error(`Erro: Negócio ${businessId} não encontrado em ${key}`);

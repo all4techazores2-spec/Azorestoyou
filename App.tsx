@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
 
   // 2. DYNAMIC DATA STATE
+  const [lastManualUpdate, setLastManualUpdate] = useState<number>(0);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [shops, setShops] = useState<Business[]>([]);
@@ -178,14 +179,13 @@ const App: React.FC = () => {
 
       const newReservation = { ...resData, type, businessName: itemName, businessId: itemId, status: 'pending' };
       setMyReservations(prev => [...prev, newReservation]);
-
-      if (isAuthenticated && userProfile.email) {
-        await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reservations: [...myReservations, newReservation] })
-        });
+      
+      // Note: The server's handleReservation already syncs with the user profile.
+      // We only need to update local state here for immediate feedback.
+      if (isAuthenticated) {
+        console.log("Reserva efetuada com sucesso. Sincronização automática via servidor.");
       }
+      setLastManualUpdate(Date.now());
       fetchData();
     } catch (err) {
       console.error("Reservation error:", err);
@@ -336,12 +336,25 @@ const App: React.FC = () => {
     return (
       <BusinessDashboard 
         business={biz}
-        onUpdateBusiness={(updated) => {
-          // Update the correct state list
+        onUpdateBusiness={async (updated) => {
+          setLastManualUpdate(Date.now());
+          // 1. Update Local State for immediate UI feedback
           if (restaurants.some(r => r.id === updated.id)) setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
           else if (shops.some(s => s.id === updated.id)) setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
           else if (beauty.some(b => b.id === updated.id)) setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
           else if (services.some(s => s.id === updated.id)) setServices(prev => prev.map(s => s.id === updated.id ? updated : s));
+          
+          // 2. Persist to Server
+          try {
+            await fetch(`${API_BASE_URL}/api/restaurants/${updated.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updated)
+            });
+            console.log("✅ Dados sincronizados com o servidor!");
+          } catch (err) {
+            console.error("❌ Erro ao sincronizar com servidor:", err);
+          }
         }}
         onSync={fetchData}
         onLogout={handleLogout} 
@@ -436,7 +449,7 @@ const App: React.FC = () => {
         <ProfileModal 
           isOpen={true}
           onClose={() => setShowProfileModal(false)}
-          userProfile={userProfile}
+          userProfile={{ ...userProfile, reservations: myReservations }}
           onUpdateProfile={(updated) => setUserProfile({ ...userProfile, ...updated })}
           onLogout={handleLogout}
           userCredits={userCredits}
@@ -453,6 +466,44 @@ const App: React.FC = () => {
             setShowProfileModal(false);
             setShowSOSModal(true);
           }}
+        />
+      )}
+
+      {showMyReservationsModal && (
+        <MyReservationsModal 
+          isOpen={true}
+          onClose={() => setShowMyReservationsModal(false)}
+          reservations={myReservations}
+          language={language}
+        />
+      )}
+
+      {showFavoritesModal && (
+        <FavoritesModal 
+          isOpen={true}
+          onClose={() => setShowFavoritesModal(false)}
+          favoriteIds={favoriteRestaurantIds}
+          restaurants={restaurants}
+          onToggleFavorite={(id) => setFavoriteRestaurantIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+          language={language}
+        />
+      )}
+
+      {showNotificationsModal && (
+        <NotificationsModal 
+          isOpen={true}
+          onClose={() => setShowNotificationsModal(false)}
+          notifications={notifications}
+          onClear={() => setNotifications([])}
+          language={language}
+        />
+      )}
+
+      {showSOSModal && (
+        <SOSModal 
+          isOpen={true}
+          onClose={() => setShowSOSModal(false)}
+          language={language}
         />
       )}
 
