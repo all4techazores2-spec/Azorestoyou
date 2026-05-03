@@ -1752,6 +1752,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             }
             const topSales = Object.values(salesMap).sort((a, b) => b.count - a.count).slice(0, 6);
             const maxSales = Math.max(...topSales.map(s => s.count), 1);
+            
+            const onDutyStaff = staff.filter(m => m.onDuty && !m.vacationStart).length;
+            const onVacation = staff.filter(m => m.vacationStart).length;
 
             return (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
