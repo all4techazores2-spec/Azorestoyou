@@ -1202,34 +1202,56 @@ const App: React.FC = () => {
                });
             }}
             onUpdateBusiness={async (updated) => {
-              const typeMap: Record<string, any> = {
-                'shop': setShops,
-                'beauty': setBeauty,
-                'service': setServices,
-                'hotel': setHotels,
-                'car': setCars,
-                'restaurant': setRestaurants
-              };
-              const setter = typeMap[bType] || setRestaurants;
-              setter(prev => prev.map(item => item.id === updated.id ? updated : item));
+              // Encontrar o endpoint correto usando o mapa central
+              const endpoint = BUSINESS_TYPE_TO_ENDPOINT[updated.type] || 'restaurants';
               
-              // Desnormalizar caminhos antes de enviar para o servidor (manter relativo no db.json)
+              // Map de setters locais
+              const setters: Record<string, any> = {
+                'restaurants': setRestaurants,
+                'hotels': setHotels,
+                'cars': setCars,
+                'beauty': setBeauty,
+                'shops': setShops,
+                'services': setServices,
+                'offices': setOffices,
+                'it_services': setItServices,
+                'perfumes': setPerfumes,
+                'animals': setAnimals,
+                'real_estate': setRealEstate,
+                'gyms': setGyms,
+                'stands': setStands,
+                'auto_repairs': setAutoRepairs,
+                'auto_electronics': setAutoElectronics,
+                'used_market': setUsedMarket
+              };
+              
+              const setter = setters[endpoint];
+              if (setter) {
+                setter((prev: any[]) => prev.map(item => item.id === updated.id ? updated : item));
+              }
+
+              // Desnormalizar caminhos (manter relativo no db.json)
+              const cleanUrl = (url: string) => typeof url === 'string' ? url.replace(API_BASE_URL, '') : url;
+              
               const denormalized = {
                 ...updated,
-                image: updated.image?.replace(API_BASE_URL, ''),
-                gallery: updated.gallery?.map(img => typeof img === 'string' ? img.replace(API_BASE_URL, '') : img),
-                menu: updated.menu?.map(item => ({
-                  ...item,
-                  image: item.image?.replace(API_BASE_URL, '')
+                image: cleanUrl(updated.image),
+                gallery: updated.gallery?.map((img: any) => cleanUrl(img)),
+                menu: updated.menu?.map((item: any) => ({ ...item, image: cleanUrl(item.image) })),
+                // LIMPAR FOTOS DOS QUARTOS / MESAS
+                tables: updated.tables?.map((t: any) => ({
+                  ...t,
+                  images: t.images?.map((img: any) => cleanUrl(img))
                 }))
               };
 
               try {
-                await fetch(`${API_BASE_URL}/api/${bEndpoint}/${updated.id}`, {
+                await fetch(`${API_BASE_URL}/api/${endpoint}/${updated.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(denormalized),
                 });
+                console.log(`✅ Sincronização automática concluída para ${endpoint}`);
               } catch (error) {
                 console.error("Erro na sincronização automática:", error);
               }

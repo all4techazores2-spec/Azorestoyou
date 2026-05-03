@@ -316,6 +316,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // Settings State
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
+    name: business.name || '',
+    description: business.description || '',
+    stars: (business as any).stars || 4,
     phone: business.phone || '',
     publicEmail: business.publicEmail || '',
     address: business.address || '',
@@ -748,13 +751,31 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
-    if (isBeauty && action === 'accepted') {
+    if ((isBeauty || isShop || isHotel) && action === 'accepted') {
+      const resObj = reservations.find(r => r.id === id);
       const newReservations = reservations.map(r => 
         r.id === id ? { ...r, status: action, confirmedByRestaurant: true } : r
       );
       setReservations(newReservations);
-      handleUpdate({ reservations: newReservations });
-      alert("✅ Marcação aprovada com sucesso!");
+      // Sincronizar com a coleção global de reservas para o cliente ver
+      fetch(`${API_BASE_URL}/api/reservations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action, confirmedByRestaurant: true })
+      }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+
+      // Se for hotel, marcar o quarto como ocupado
+      if (isHotel && resObj?.selectedRoom?.id) {
+        const newTables = tables.map(t => 
+          t.id === resObj.selectedRoom.id ? { ...t, status: 'occupied' } : t
+        );
+        setTables(newTables);
+        handleUpdate({ reservations: newReservations, tables: newTables });
+      } else {
+        handleUpdate({ reservations: newReservations });
+      }
+      
+      alert(`✅ ${isHotel ? 'Reserva' : 'Marcação'} aprovada com sucesso!`);
       return;
     }
 
@@ -2839,6 +2860,44 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                </div>
                
                <form onSubmit={saveSettings} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                 {/* IDENTIDADE */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                       <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                         Nome do Negócio
+                       </label>
+                       <input
+                         type="text"
+                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                         value={settingsForm.name}
+                         onChange={e => setSettingsForm({...settingsForm, name: e.target.value})}
+                       />
+                    </div>
+                    <div>
+                       <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                         Classificação (Estrelas)
+                       </label>
+                       <select
+                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                         value={settingsForm.stars}
+                         onChange={e => setSettingsForm({...settingsForm, stars: parseInt(e.target.value)})}
+                       >
+                         {[1,2,3,4,5].map(s => <option key={s} value={s}>{s} Estrelas</option>)}
+                       </select>
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                      Descrição curta
+                    </label>
+                    <textarea 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none h-20 custom-scrollbar" 
+                      value={settingsForm.description} 
+                      onChange={e => setSettingsForm({...settingsForm, description: e.target.value})}
+                    />
+                 </div>
+
                  {/* NIF */}
                  <div>
                     <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
@@ -3549,7 +3608,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           </div>
         )}
 
-        {selectedResForTable && (
+        {selectedResForTable && !isHotel && (
           <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 px-8 py-6 bg-slate-900 text-white rounded-[2rem] shadow-2xl flex items-center gap-8 border border-white/10 animate-in fade-in slide-in-from-bottom-8 duration-500">
              <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center animate-pulse"><TableIcon size={20}/></div>
