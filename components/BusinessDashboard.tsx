@@ -298,6 +298,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   // Staff Management State
   const [staffOpen, setStaffOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<any | null>(null);
+  const [editingRoom, setEditingRoom] = useState<any | null>(null);
+  const [editingDish, setEditingDish] = useState<{idx: number, dish: any} | null>(null);
+  const [editingProduct, setEditingProduct] = useState<{idx: number, product: any} | null>(null);
   const [staffSubTab, setStaffSubTab] = useState<'staff_list' | 'ponto' | 'ferias'>('staff_list');
   const MOCK_STAFF_BASE = [
     { 
@@ -966,8 +970,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             { id: 'dishes', label: isHotel ? 'Ementa Restaurante' : isRentCar ? 'Gestão de Frota' : isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isHotel ? <Utensils size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
             { id: 'products', label: isRentCar ? 'Peças / Consumíveis' : isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
             { id: 'updates', label: isHotel ? 'Promoções Época' : isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
-            { id: 'reservations', label: isHotel ? 'Check-ins / Out' : isRentCar ? 'Reservas de Carros' : isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
-            { id: 'reservas_hotel', label: 'Reservas', icon: <Calendar size={20} />, hidden: !isHotel },
+            { id: 'reservations', label: isHotel ? 'Check-ins / Pacotes' : isRentCar ? 'Reservas de Carros' : isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
+            { id: 'reservas_hotel', label: 'Reservas Restaurante', icon: <Calendar size={20} />, hidden: !isHotel },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
           ] as any[]).filter(item => (!isStaff || !item.hideForStaff) && !item.hidden).map(item => (
@@ -2124,99 +2128,79 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
           {activeTab === 'room_management' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-               <div className="flex justify-between items-end">
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                   <div>
-                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Quartos e Preços</h3>
-                    <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Configuração de Comodidades e Tarifas Sazonais</p>
+                    <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Unidades Hoteleiras</h3>
+                    <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Edição de Tipologias, Comodidades e Preços</p>
                   </div>
-                  <div className="flex gap-4">
-                     <div className="flex bg-slate-100 p-1 rounded-xl">
-                        <button className="px-4 py-2 bg-white text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">Época Baixa</button>
-                        <button className="px-4 py-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Média</button>
-                        <button className="px-4 py-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Alta</button>
-                     </div>
-                  </div>
+                  <button 
+                    onClick={() => {
+                      const newRoom: any = { id: Date.now(), number: (business.tables?.length || 0) + 1, type: 'Standard', amenities: ['Wi-Fi'], prices: { baixa: 65, media: 95, alta: 145 }, gallery: [] };
+                      onUpdateBusiness({ ...business, tables: [...(business.tables || []), newRoom] });
+                    }}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
+                  >
+                    <Plus size={18} /> Adicionar Quarto / Unidade
+                  </button>
                </div>
 
-               {/* Preços por Época */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-blue-500">
-                     <div className="mb-6">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-2">Baixa Temporada</span>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nov, Jan, Fev, Mar</p>
-                     </div>
-                     <div className="flex items-center gap-3 mb-6">
-                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€65.00</span>
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
-                     </div>
-                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Alterar Preço</button>
-                  </div>
-                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-amber-500">
-                     <div className="mb-6">
-                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] block mb-2">Média Temporada</span>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Abr-Jun, Set-Out</p>
-                     </div>
-                     <div className="flex items-center gap-3 mb-6">
-                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€95.00</span>
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
-                     </div>
-                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">Alterar Preço</button>
-                  </div>
-                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-emerald-500">
-                     <div className="mb-6">
-                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] block mb-2">Alta Temporada</span>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Julho e Agosto</p>
-                     </div>
-                     <div className="flex items-center gap-3 mb-6">
-                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€145.00</span>
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
-                     </div>
-                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Alterar Preço</button>
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                   {(business.tables || []).map((room, idx) => (
-                    <div key={idx} className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm group hover:shadow-2xl transition-all duration-500">
-                       <div className="flex gap-8">
-                          <div className="w-48 h-48 bg-slate-50 rounded-[2rem] overflow-hidden relative group-hover:shadow-lg transition-all">
-                             <img src={`https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1974&auto=format&fit=crop`} className="w-full h-full object-cover" />
-                             <button className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
-                                <Plus size={24} />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Alterar Foto</span>
-                             </button>
+                    <div key={idx} className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full group">
+                       <div className="h-64 relative overflow-hidden bg-slate-100">
+                          <img 
+                            src={room.gallery?.[0] || 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1974&auto=format&fit=crop'} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                          />
+                          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full font-black text-blue-600 text-[10px] uppercase tracking-widest shadow-lg">
+                             {room.type || 'Standard'}
                           </div>
-                          <div className="flex-1">
-                             <div className="flex justify-between items-start mb-4">
-                                <div>
-                                   <h4 className="text-2xl font-black text-slate-800 tracking-tighter">Quarto #{room.number}</h4>
-                                   <p className="text-blue-500 text-[10px] font-black uppercase tracking-widest">Suite Superior</p>
+                          <button 
+                            onClick={() => setEditingRoom(room)}
+                            className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]"
+                          >
+                             <Plus size={32} />
+                             <span className="text-xs font-black uppercase tracking-widest">Editar Detalhes</span>
+                          </button>
+                       </div>
+                       
+                       <div className="p-8 flex-1 flex flex-col">
+                          <div className="flex justify-between items-start mb-6">
+                             <div>
+                                <h4 className="text-2xl font-black text-slate-800 tracking-tighter">Quarto #{room.number}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                   <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status: Livre / Limpo</span>
                                 </div>
-                                <button className="p-3 text-red-400 hover:bg-red-50 rounded-2xl transition-colors"><Trash2 size={18}/></button>
                              </div>
-                             
-                             <div className="space-y-4">
-                                <div className="flex flex-wrap gap-2">
-                                   <span className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Phone size={12}/> Wi-Fi Grátis</span>
-                                   <span className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><ShoppingBag size={12}/> Minibar</span>
-                                   <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Star size={12}/> Vista Mar</span>
-                                </div>
-                                <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
-                                   <div className="flex items-center gap-1.5">
-                                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado: Livre</span>
-                                   </div>
-                                   <button className="text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Configurar Comodidades</button>
-                                </div>
+                             <div className="text-right">
+                                <p className="text-2xl font-black text-blue-600 tracking-tighter">€{room.prices?.baixa || 65}</p>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Base Época Baixa</p>
+                             </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 mb-8">
+                             {(room.amenities || ['Wi-Fi', 'TV']).slice(0, 4).map((am, i) => (
+                               <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100">{am}</span>
+                             ))}
+                             {room.amenities?.length > 4 && <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest">+{room.amenities.length - 4}</span>}
+                          </div>
+
+                          <div className="mt-auto pt-6 border-t border-slate-50 flex gap-2">
+                             <button onClick={() => setEditingRoom(room)} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">Configurar</button>
+                             <button 
+                               onClick={() => {
+                                 const updated = (business.tables || []).filter(t => t.id !== room.id);
+                                 onUpdateBusiness({ ...business, tables: updated });
+                               }}
+                               className="p-4 text-red-400 hover:bg-red-50 rounded-2xl transition-colors"
+                             >
+                               <Trash2 size={20}/>
+                             </button>
                           </div>
                        </div>
                     </div>
-                  </div>
                   ))}
-                  <button className="border-4 border-dashed border-slate-100 rounded-[3rem] p-12 flex flex-col items-center justify-center text-slate-300 hover:border-blue-200 hover:text-blue-500 hover:bg-blue-50/10 transition-all group">
-                     <Plus className="w-10 h-10 mb-4 group-hover:scale-110 transition-transform" />
-                     <span className="font-black uppercase tracking-widest text-xs">Adicionar Novo Quarto</span>
-                  </button>
                </div>
             </motion.div>
           )}
@@ -2603,7 +2587,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <div className="space-y-6">
                        <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Pedidos de Reserva Pendentes</h3>
                        <AnimatePresence mode="popLayout">
-                         {reservations.filter(r => r.status === 'pending' || r.status === 'pendente').map(res => (
+                         {reservations.filter(r => r.status === 'pending' || r.status === 'pendente' || r.status === 'accepted').map(res => (
                            <motion.div 
                              layout
                              initial={{ opacity: 0, x: -20 }}
@@ -4142,6 +4126,118 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 >
                   Fechar Detalhes
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* --- MODAL: EDITAR QUARTO --- */}
+      <AnimatePresence>
+        {editingRoom && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingRoom(null)} className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="bg-white rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative z-10 p-12 border border-slate-100">
+              <div className="flex justify-between items-start mb-10">
+                <div>
+                   <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Configurar Quarto #{editingRoom.number}</h2>
+                   <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Definições de Tipologia, Conforto e Tarifas</p>
+                </div>
+                <button onClick={() => setEditingRoom(null)} className="p-4 bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-all"><X size={24} /></button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                 {/* Left Column: Basics & Photos */}
+                 <div className="space-y-8">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tipologia do Quarto</label>
+                      <select 
+                        value={editingRoom.type || 'Standard'} 
+                        onChange={(e) => setEditingRoom({...editingRoom, type: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                      >
+                         <option value="Standard">Standard Room</option>
+                         <option value="Deluxe">Deluxe Room</option>
+                         <option value="Suite">Premium Suite</option>
+                         <option value="Family">Family Room</option>
+                         <option value="Studio">Studio / T0</option>
+                      </select>
+                    </div>
+
+                    <div>
+                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Galeria de Fotos (URLs)</label>
+                       <textarea 
+                         placeholder="Insira os links das fotos separados por vírgula..."
+                         value={editingRoom.gallery?.join(', ') || ''}
+                         onChange={(e) => setEditingRoom({...editingRoom, gallery: e.target.value.split(',').map(s => s.trim())})}
+                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-medium text-slate-600 focus:ring-2 focus:ring-blue-500 transition-all outline-none min-h-[120px] text-sm"
+                       />
+                       <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-widest italic">* A primeira foto será a principal de destaque.</p>
+                    </div>
+
+                    <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100">
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6">Tarifário Sazonal (€)</h4>
+                       <div className="grid grid-cols-3 gap-4">
+                          <div>
+                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Baixa</label>
+                             <input type="number" value={editingRoom.prices?.baixa || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), baixa: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                          </div>
+                          <div>
+                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Média</label>
+                             <input type="number" value={editingRoom.prices?.media || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), media: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                          </div>
+                          <div>
+                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Alta</label>
+                             <input type="number" value={editingRoom.prices?.alta || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), alta: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Right Column: Amenities Checklist */}
+                 <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Comodidades Disponíveis</label>
+                    <div className="grid grid-cols-2 gap-3">
+                       {[
+                         'Wi-Fi Grátis', 'Smart TV', 'Ar Condicionado', 'Minibar', 'Máquina de Café', 'Cofre Forte', 
+                         'Varanda Privada', 'Vista Mar', 'Jacuzzi', 'Secador Cabelo', 'Pequeno Almoço Quarto', 'Secretária'
+                       ].map((amenity) => {
+                         const isSelected = editingRoom.amenities?.includes(amenity);
+                         return (
+                           <button 
+                             key={amenity}
+                             onClick={() => {
+                               const current = editingRoom.amenities || [];
+                               const updated = isSelected ? current.filter((a: string) => a !== amenity) : [...current, amenity];
+                               setEditingRoom({...editingRoom, amenities: updated});
+                             }}
+                             className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
+                               isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-blue-200'
+                             }`}
+                           >
+                              <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${isSelected ? 'bg-white text-blue-600 border-white' : 'bg-white border-slate-200'}`}>
+                                 {isSelected && <Check size={12} strokeWidth={4} />}
+                              </div>
+                              <span className="text-[11px] font-black uppercase tracking-tighter">{amenity}</span>
+                           </button>
+                         );
+                       })}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="mt-12 pt-8 border-t border-slate-50 flex gap-4">
+                 <button 
+                   onClick={() => {
+                     const updated = (business.tables || []).map((r: any) => r.id === editingRoom.id ? editingRoom : r);
+                     onUpdateBusiness({...business, tables: updated});
+                     setEditingRoom(null);
+                     alert("✅ Quarto atualizado com sucesso!");
+                   }}
+                   className="flex-1 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all"
+                 >
+                   Guardar Alterações
+                 </button>
+                 <button onClick={() => setEditingRoom(null)} className="px-12 py-5 bg-slate-100 text-slate-400 rounded-[2rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Cancelar</button>
               </div>
             </motion.div>
           </div>
