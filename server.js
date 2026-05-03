@@ -124,7 +124,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
         relativePath = `imagens/restaurantes/${req.file.filename}`;
     }
     
-    const imageUrl = `${protocol}://${host}/${relativePath}`;
+    const imageUrl = `/${relativePath}`;
     res.json({ url: imageUrl });
 });
 
@@ -223,6 +223,46 @@ app.post('/api/reservations', (req, res) => {
         res.status(201).json(reservation);
     } else {
         res.status(404).send("Business not found");
+    }
+});
+
+app.put('/api/reservations/:id', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    let found = false;
+
+    // 1. Atualizar nos Negócios
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    const idx = biz.reservations.findIndex(r => r.id === id);
+                    if (idx !== -1) {
+                        biz.reservations[idx] = { ...biz.reservations[idx], ...req.body };
+                        found = true;
+                    }
+                }
+            });
+        }
+    });
+
+    // 2. Sincronizar com o Perfil do Utilizador
+    if (db.users) {
+        db.users.forEach(user => {
+            if (user.reservations) {
+                const idx = user.reservations.findIndex(r => r.id === id);
+                if (idx !== -1) {
+                    user.reservations[idx] = { ...user.reservations[idx], ...req.body };
+                }
+            }
+        });
+    }
+
+    if (found) {
+        writeDB(db);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: "Reservation not found" });
     }
 });
 

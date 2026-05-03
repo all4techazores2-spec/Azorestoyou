@@ -111,9 +111,9 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('pt');
 
   // Detetar automaticamente se estamos em localhost ou no Render
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
+  const API_BASE_URL = window.location.origin.includes('localhost') 
     ? `http://${window.location.hostname}:3001`
-    : 'https://azorestoyou-1.onrender.com'; 
+    : window.location.origin;
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));

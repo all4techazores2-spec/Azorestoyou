@@ -4303,7 +4303,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                              key={amenity}
                              onClick={() => {
                                const updated = isSelected ? current.filter((a: string) => a !== amenity) : [...current, amenity];
-                               setEditingRoom({...editingRoom, amenities: updated});
+                               setEditingRoom({...editingRoom, room: {...editingRoom.room, amenities: updated}});
                              }}
                              className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
                                isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-blue-200'
