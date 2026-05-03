@@ -374,14 +374,21 @@
   ],
   "hotels": [
     {
-      "id": "H1",
+      "id": "hotel-1",
       "name": "Azores Royal Garden",
       "island": "PDL",
       "stars": 4,
       "pricePerNight": 120,
       "image": "https://picsum.photos/400/300?random=1",
       "description": "Hotel de luxo com jardim japonês e spa.",
-      "type": "hotel"
+      "type": "hotel",
+      "adminEmail": "hotel@azores4you.com",
+      "adminPassword": "admin",
+      "reservations": [],
+      "tables": [
+        { "id": "T1", "number": 1, "type": "Standard", "status": "available", "amenities": ["Wi-Fi", "Smart TV"] },
+        { "id": "T2", "number": 2, "type": "Deluxe", "status": "available", "amenities": ["Wi-Fi", "Jacuzzi"] }
+      ]
     },
     {
       "id": "H2",
@@ -496,15 +503,19 @@
   ],
   "cars": [
     {
-      "id": "C1",
+      "id": "rentcar-1",
       "model": "Renault Clio",
+      "name": "Auto Açores Rent - Clio",
       "companyId": "comp1",
       "type": "Económico",
       "fuelType": "Gasolina",
       "pricePerDay": 45,
       "seats": 5,
       "image": "https://picsum.photos/300/200?random=10",
-      "isAvailable": true
+      "isAvailable": true,
+      "adminEmail": "rentcar@azores4you.com",
+      "adminPassword": "admin",
+      "reservations": []
     },
     {
       "id": "C2",

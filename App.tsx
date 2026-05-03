@@ -812,12 +812,19 @@ const App: React.FC = () => {
         // PERSIST TO BUSINESSES (Hotel & Rent-a-car)
         newReservations.forEach(async res => {
           let targetBizId = '';
-          if (res.type === 'car') targetBizId = 'rentcar-1';
-          else if (res.type === 'hotel' || res.type === 'al') targetBizId = 'hotel-1';
+          let endpoint = 'restaurants';
+
+          if (res.type === 'car') {
+            targetBizId = 'rentcar-1';
+            endpoint = 'cars';
+          } else if (res.type === 'hotel' || res.type === 'al') {
+            targetBizId = 'hotel-1';
+            endpoint = 'hotels';
+          }
 
           if (targetBizId) {
             try {
-              const bResp = await fetch(`${API_BASE_URL}/api/restaurants/${targetBizId}`);
+              const bResp = await fetch(`${API_BASE_URL}/api/${endpoint}/${targetBizId}`);
               if (bResp.ok) {
                 const bizData = await bResp.json();
                 const bizRes = bizData.reservations || [];
@@ -829,15 +836,15 @@ const App: React.FC = () => {
                   customerPhone: userProfile.phone
                 }];
 
-                await fetch(`${API_BASE_URL}/api/restaurants/${targetBizId}`, {
+                await fetch(`${API_BASE_URL}/api/${endpoint}/${targetBizId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ reservations: updatedBizRes })
+                  body: JSON.stringify({ ...bizData, reservations: updatedBizRes })
                 });
-                console.log(`✅ Reserva enviada para o parceiro: ${targetBizId}`);
+                console.log(`✅ Reserva enviada para o parceiro ${endpoint}: ${targetBizId}`);
               }
             } catch (e) {
-              console.error(`Erro ao enviar reserva para o parceiro ${targetBizId}:`, e);
+              console.error(`Erro ao enviar reserva para o parceiro ${endpoint} (${targetBizId}):`, e);
             }
           }
         });
