@@ -1498,206 +1498,226 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             
             const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
-            const allCats = [...new Set([...availableCategories, ...currentCategories])].filter(cat => isBeauty ? BEAUTY_POS_CATEGORIES.includes(cat) : isShop ? SHOP_POS_CATEGORIES.includes(cat) : true);
+            const allCats = ['Todos', ...new Set([...availableCategories, ...currentCategories])].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
 
-            const filtered = posProducts.filter(p => p.category === posCategory);
+            const filtered = posCategory === 'Todos' ? posProducts : posProducts.filter(p => p.category === posCategory);
 
             return (
-              <>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-160px)] gap-0 -m-8">
-                {/* POS Header Bar */}
-                <div className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
-                      {isBeauty ? <Scissors size={16} /> : <ShoppingBag size={16} />}
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isBeauty ? 'Salon POS Terminal' : 'Retail POS Terminal'}</p>
-                      <p className="font-black text-sm">{business.name}</p>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-140px)] bg-[#f8f9fa] -m-8 overflow-hidden">
+                {/* POS TOP BAR (Search & Table) */}
+                <div className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between shadow-sm z-10">
+                  <div className="flex items-center gap-8 flex-1 max-w-3xl">
+                    <h2 className="text-xl font-black text-slate-800 tracking-tighter whitespace-nowrap">POS - Vendas</h2>
+                    <div className="relative flex-1">
+                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                       <input 
+                         type="text" 
+                         placeholder="Buscar produtos... (Ctrl + K)" 
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-12 pr-4 font-bold text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                       />
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-200 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-black">Ctrl + K</div>
                     </div>
                   </div>
+                  
                   <div className="flex items-center gap-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
+                       <TableIcon size={16} className="text-slate-400" />
+                       <select className="bg-transparent font-black text-xs uppercase outline-none">
+                          <option>Mesa 05</option>
+                          <option>Balcão</option>
+                          <option>Take-away</option>
+                       </select>
+                    </div>
+                    <button className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all">
+                       <Users size={16} className="text-slate-400" />
+                       <span className="font-black text-xs uppercase tracking-widest">Cliente +</span>
+                    </button>
                   </div>
                 </div>
+
                 <div className="flex flex-1 min-h-0">
-                  {/* LEFT: Categories */}
-                  <div className="w-28 bg-slate-800 flex flex-col py-3 gap-1 px-2 flex-shrink-0 overflow-y-auto custom-scrollbar">
-                        {allCats.map(cat => (
-                          <button
-                            key={cat}
-                            onClick={() => setPosCategory(cat)}
-                            className={`w-full py-3 px-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-center ${
-                              posCategory === cat ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                        {isBeauty ? (
-                          cat === 'Cabelo' ? '💇‍♀️' : cat === 'Unhas' ? '💅' : cat === 'Estética' ? '✨' : cat === 'Massagem' ? '💆‍♀️' : cat === 'Maquilhagem' ? '💄' : cat === 'Sobrancelhas' ? '👁️' : cat === 'Depilação' ? '🧴' : cat === 'Barba' ? '🧔' : cat === 'Produtos' ? '🛍️' : '✨'
-                        ) : isShop ? (
-                          cat === 'Vestuário' ? '👕' : cat === 'Calçado' ? '👟' : cat === 'Acessórios' ? '⌚' : cat === 'Eletrónica' ? '💻' : cat === 'Casa' ? '🏠' : cat === 'Promoções' ? '🏷️' : '📦'
-                        ) : (
-                          cat === 'Bebidas' ? '🍺' : cat === 'Vinhos' ? '🍷' : cat === 'Sobremesas' ? '🍰' : cat === 'Pratos' ? '🍽️' : cat === 'Ementa' ? '📋' : cat === 'Entradas' ? '🥗' : cat === 'Sopas' ? '🍲' : cat === 'Gelados' ? '🍦' : cat === 'Bolos' ? '🎂' : cat === 'Aperitivos' ? '🥂' : cat === 'Cafetaria' ? '☕' : '📦'
-                        )}
-                        <br/>
-                        <span className="truncate block">{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {/* MIDDLE: Products Grid */}
-                  <div className="flex-1 bg-slate-50 overflow-y-auto custom-scrollbar p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {filtered.map((product) => (
-                        <motion.button
-                          key={product.id}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => addToPosCart(product as Product)}
-                          className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all text-left flex flex-col group relative"
-                        >
-                          <div className="h-24 bg-gradient-to-br from-slate-100 to-slate-50 relative overflow-hidden">
-                            {product.image ? (
-                              <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-4xl">
-                                {isBeauty ? (
-                                  product.category === 'Cabelo' ? '💇‍♀️' : product.category === 'Unhas' ? '💅' : product.category === 'Estética' ? '✨' : product.category === 'Massagem' ? '💆‍♀️' : '✨'
-                                ) : (
-                                  product.category === 'Vinhos' ? '🍷' : product.category === 'Bebidas' ? '🍺' : product.category === 'Sobremesas' ? '🍰' : product.category === 'Gelados' ? '🍦' : product.category === 'Sopas' ? '🍲' : product.category === 'Bolos' ? '🎂' : product.category === 'Aperitivos' ? '🥂' : product.category === 'Cafetaria' ? '☕' : '🍽️'
-                                )}
-                              </div>
-                            )}
-                            <div className="absolute top-1 right-1 w-6 h-6 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Plus size={12} />
+                  {/* MAIN CONTENT AREA */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    {/* Horizontal Categories */}
+                    <div className="px-8 py-4 bg-white/50 border-b border-slate-100 overflow-x-auto custom-scrollbar flex gap-3 flex-shrink-0">
+                       {allCats.map(cat => (
+                         <button
+                           key={cat}
+                           onClick={() => setPosCategory(cat)}
+                           className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                             posCategory === cat 
+                               ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20' 
+                               : 'bg-white text-slate-400 border-slate-200 hover:border-slate-400 hover:text-slate-600'
+                           }`}
+                         >
+                           {cat}
+                         </button>
+                       ))}
+                    </div>
+
+                    {/* Products Grid */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                         {filtered.map((product) => (
+                           <motion.button
+                             key={product.id}
+                             whileTap={{ scale: 0.98 }}
+                             onClick={() => addToPosCart(product as Product)}
+                             className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left flex flex-col group border border-slate-100"
+                           >
+                             <div className="aspect-square bg-slate-100 relative overflow-hidden">
+                               {product.image ? (
+                                 <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                               ) : (
+                                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                   <Utensils size={40} className="mb-2 opacity-20" />
+                                   <p className="text-[10px] font-black uppercase opacity-40">Sem Foto</p>
+                                 </div>
+                               )}
+                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                             </div>
+                             <div className="p-5 flex-1 flex flex-col">
+                               <p className="font-black text-slate-800 text-sm leading-tight mb-2 flex-1">{product.name}</p>
+                               <p className="font-black text-slate-800 text-lg">€{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
+                             </div>
+                           </motion.button>
+                         ))}
+                       </div>
+                    </div>
+
+                    {/* SHORTCUTS BAR (Rodapé da área central) */}
+                    <div className="px-8 py-4 bg-white border-t border-slate-100 grid grid-cols-5 gap-4 flex-shrink-0">
+                       {[
+                         { icon: <DollarSign size={18} />, label: 'Desconto', key: 'F4', color: 'text-emerald-600 bg-emerald-50' },
+                         { icon: <Info size={18} />, label: 'Observação', key: 'F5', color: 'text-blue-600 bg-blue-50' },
+                         { icon: <Users size={18} />, label: 'Cliente', key: 'F6', color: 'text-purple-600 bg-purple-50' },
+                         { icon: <X size={18} />, label: 'Cancelar item', key: 'Del', color: 'text-red-600 bg-red-50' },
+                         { icon: <RefreshCw size={18} />, label: 'Limpar venda', key: 'F7', color: 'text-orange-600 bg-orange-50' },
+                       ].map((btn, i) => (
+                         <button key={i} className="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-slate-50 transition-all border border-slate-100 group">
+                            <div className={`w-10 h-10 ${btn.color} rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                               {btn.icon}
                             </div>
-                          </div>
-                          <div className="p-3 flex-1">
-                            <p className="font-black text-slate-800 text-xs leading-tight truncate mb-1">{product.name}</p>
-                            <p className="font-black text-blue-600 text-sm">€{(Number(product.price) || 0).toFixed(2)}</p>
-                          </div>
-                        </motion.button>
-                      ))}
+                            <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{btn.label}</p>
+                            <span className="text-[9px] font-bold text-slate-400 mt-0.5">{btn.key}</span>
+                         </button>
+                       ))}
                     </div>
                   </div>
 
-                  {/* RIGHT: Ticket / Cart */}
-                  <div className="w-80 bg-slate-900 text-white flex flex-col flex-shrink-0 shadow-2xl">
-                    {/* Ticket Header */}
-                    <div className="px-6 pt-5 pb-3 border-b border-white/10">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <Receipt size={16} className="text-blue-400" />
-                          <span className="font-black text-sm tracking-tight">Ticket</span>
-                        </div>
-                        {posCart.length > 0 && (
-                          <button onClick={() => setPosCart([])} className="text-[10px] font-black text-red-400 hover:text-red-300 uppercase tracking-widest">Limpar</button>
-                        )}
+                  {/* RIGHT SIDEBAR: TICKET */}
+                  <div className="w-[400px] bg-white border-l border-slate-100 flex flex-col shadow-2xl z-20">
+                    <div className="p-8 border-b border-slate-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-black text-slate-800 tracking-tighter">Pedido atual</h3>
+                        <span className="px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-full uppercase">{posCart.reduce((a,i) => a + i.quantity, 0)} itens</span>
                       </div>
-                      <p className="text-[9px] text-slate-500 font-bold">#{Math.floor(Date.now() / 1000).toString().slice(-6)}</p>
+                      <div className="flex items-center gap-2 text-slate-400">
+                         <Receipt size={16} />
+                         <span className="text-[10px] font-black uppercase tracking-widest italic">#{Math.floor(Date.now() / 1000).toString().slice(-6)}</span>
+                      </div>
                     </div>
 
-                    {/* Items */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-3 space-y-2">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 space-y-4">
                       {posCart.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full opacity-20 py-12">
-                          <ShoppingBag size={40} className="mb-3" />
-                          <p className="text-[10px] font-black uppercase tracking-widest">Sem itens</p>
+                        <div className="flex flex-col items-center justify-center h-full opacity-10 py-12">
+                          <ShoppingBag size={80} className="mb-4" />
+                          <p className="text-lg font-black uppercase tracking-widest text-center">Inicie uma venda adicionando produtos</p>
                         </div>
                       ) : posCart.map((item) => (
                         <motion.div
                           key={item.product.id}
                           initial={{ opacity: 0, x: 20 }}
-                           animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center gap-2 py-2 border-b border-white/5 group"
+                          animate={{ opacity: 1, x: 0 }}
+                          className="flex gap-4 group"
                         >
-                          <div className="flex items-center gap-1 bg-white/10 rounded-lg">
-                            <button onClick={() => updatePosQuantity(item.product.id, -1)} className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white font-black">−</button>
-                            <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                            <button onClick={() => updatePosQuantity(item.product.id, 1)} className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-white font-black">+</button>
+                          <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 font-black border border-slate-100 overflow-hidden">
+                             {item.product.image ? <img src={item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold truncate">{item.product.name}</p>
-                            <p className="text-[10px] text-slate-400">€{item.product.price.toFixed(2)}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs font-black text-blue-400">€{(item.product.price * item.quantity).toFixed(2)}</p>
-                            <button onClick={() => removeFromPosCart(item.product.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"><X size={12}/></button>
+                          <div className="flex-1">
+                             <div className="flex justify-between items-start mb-1">
+                               <p className="font-black text-slate-800 text-sm leading-tight">{item.product.name}</p>
+                               <button onClick={() => removeFromPosCart(item.product.id)} className="text-red-400 hover:text-red-600 transition-colors"><X size={14} /></button>
+                             </div>
+                             <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                   <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                                      <button onClick={() => updatePosQuantity(item.product.id, -1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">-</button>
+                                      <span className="px-2 text-xs font-black text-slate-600 min-w-[20px] text-center">{item.quantity}</span>
+                                      <button onClick={() => updatePosQuantity(item.product.id, 1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">+</button>
+                                   </div>
+                                   <span className="text-[10px] font-bold text-slate-400">€{item.product.price.toFixed(2)} / un</span>
+                                </div>
+                                <p className="font-black text-slate-800 text-sm">€{(item.product.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                             </div>
                           </div>
                         </motion.div>
                       ))}
                     </div>
 
-                    {/* Total + Actions */}
-                    <div className="px-6 pb-6 pt-4 border-t border-white/10 space-y-3 flex-shrink-0">
-                      {/* Subtotal lines */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-slate-500 font-bold">
-                          <span>Subtotal ({posCart.reduce((a,i) => a + i.quantity, 0)} items)</span>
-                          <span>€{posTotal.toFixed(2)}</span>
+                    <div className="p-8 bg-slate-50/50 border-t border-slate-100 space-y-6">
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-xs font-bold text-slate-400">
+                          <span>Subtotal</span>
+                          <span className="text-slate-600 uppercase tracking-tighter font-black text-sm">€{posTotal.toFixed(2).replace('.', ',')}</span>
                         </div>
-                        <div className="flex justify-between text-[10px] text-slate-500 font-bold">
-                          <span>IVA Açores (16%)</span>
-                          <span>€{(posTotal * 0.16).toFixed(2)}</span>
+                        <div className="flex justify-between text-xs font-bold text-slate-400">
+                          <span>Desconto</span>
+                          <span className="text-orange-500 font-black">- €0,00</span>
+                        </div>
+                        <div className="flex justify-between text-xs font-bold text-slate-400">
+                          <span>Taxa de serviço (10%)</span>
+                          <span className="text-slate-600 font-black">€{(posTotal * 0.10).toFixed(2).replace('.', ',')}</span>
                         </div>
                       </div>
 
-                      {/* Total */}
-                      <div className="flex justify-between items-end py-2 border-t border-white/10">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</span>
-                        <span className="text-3xl font-black text-blue-400 tracking-tighter">€{posTotal.toFixed(2)}</span>
+                      <div className="flex justify-between items-end">
+                        <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">Total</span>
+                        <span className="text-4xl font-black text-emerald-600 tracking-tighter">€{(posTotal * 1.10).toFixed(2).replace('.', ',')}</span>
                       </div>
 
-                      {/* Split Bill */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2">
-                          <Users size={14} className="text-slate-400 flex-shrink-0" />
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-1">Dividir conta</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setPosSplitBy(prev => Math.max(1, prev - 1))}
-                              className="w-7 h-7 bg-white/10 rounded-lg text-sm font-black hover:bg-white/20 flex items-center justify-center transition-colors"
-                            >−</button>
-                            <span className="text-base font-black w-6 text-center text-white">{posSplitBy}</span>
-                            <button
-                              onClick={() => setPosSplitBy(prev => Math.min(20, prev + 1))}
-                              className="w-7 h-7 bg-white/10 rounded-lg text-sm font-black hover:bg-white/20 flex items-center justify-center transition-colors"
-                            >+</button>
-                          </div>
-                          <span className="text-[10px] font-black text-slate-500 ml-1">{posSplitBy === 1 ? 'pessoa' : 'pessoas'}</span>
-                        </div>
-                        {posSplitBy > 1 && (
-                          <div className="bg-emerald-900/40 border border-emerald-500/30 rounded-xl px-3 py-2.5 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">👤</span>
-                              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cada pessoa paga</span>
-                            </div>
-                            <span className="text-2xl font-black text-emerald-400 tracking-tighter">€{(posTotal / posSplitBy).toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Payment Buttons */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          disabled={posCart.length === 0}
-                          onClick={() => setPosPaymentModal('cash')}
-                          className="py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex flex-col items-center gap-1"
+                      <div className="grid grid-cols-1 gap-3 pt-4">
+                        <button className="w-full py-5 bg-orange-100 text-orange-600 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-200 transition-all flex items-center justify-center gap-3">
+                           <Save size={18} /> Salvar Pedido (F8)
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (posCart.length === 0) return;
+                            alert(`Venda finalizada: €${(posTotal * 1.10).toFixed(2)}`);
+                            setPosCart([]);
+                          }}
+                          className="w-full py-6 bg-orange-500 text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] shadow-2xl shadow-orange-500/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                         >
-                          <span className="text-lg">💵</span>
-                          Dinheiro
-                        </motion.button>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          disabled={posCart.length === 0}
-                          onClick={() => setPosPaymentModal('card')}
-                          className="py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex flex-col items-center gap-1"
-                        >
-                          <span className="text-lg">💳</span>
-                          Cartão
-                        </motion.button>
+                           <DollarSign size={20} /> Finalizar Venda (F9)
+                        </button>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* POS FOOTER BAR */}
+                <div className="bg-white border-t border-slate-100 px-8 py-3 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+                   <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-2">
+                         <span className="text-slate-300">Caixa:</span>
+                         <span className="text-slate-600">CAIXA 01</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <span className="text-slate-300">Atendente:</span>
+                         <span className="text-slate-600">GUSTAVO PEREIRA</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <span className="text-slate-300">Turno:</span>
+                         <span className="text-slate-600">MANHÃ</span>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                         <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                         <span className="text-emerald-600">Online</span>
+                      </div>
+                      <RefreshCw size={14} className="hover:rotate-180 transition-transform duration-500 cursor-pointer" />
+                   </div>
                 </div>
               </motion.div>
 
