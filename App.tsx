@@ -286,45 +286,6 @@ const App: React.FC = () => {
       if (hotelResp.ok) setHotels(await hotelResp.json());
       else setHotels(getHotels(language));
 
-      // 7. Lojas Regionais
-      const shopsResp = await fetch(`${API_BASE_URL}/api/shops`);
-      if (shopsResp.ok) {
-        const shopsData = await shopsResp.json();
-        setShops(shopsData.map((s: any) => ({
-          ...s,
-          businessType: 'shop',
-          image: s.image?.startsWith('/imagens') ? `${API_BASE_URL}${s.image}` : s.image
-        })));
-      } else {
-        setShops(getShops(language));
-      }
-
-      // 8. Serviços de Beleza
-      const beautyResp = await fetch(`${API_BASE_URL}/api/beauty`);
-      if (beautyResp.ok) {
-        const beautyData = await beautyResp.json();
-        setBeauty(beautyData.map((b: any) => ({
-          ...b,
-          businessType: 'beauty',
-          image: b.image?.startsWith('/imagens') ? `${API_BASE_URL}${b.image}` : b.image
-        })));
-      } else {
-        setBeauty(getBeauty(language));
-      }
-
-      // 9. Serviços Técnicos
-      const servicesResp = await fetch(`${API_BASE_URL}/api/services`);
-      if (servicesResp.ok) {
-        const servicesData = await servicesResp.json();
-        setServices(servicesData.map((s: any) => ({
-          ...s,
-          businessType: 'service',
-          image: s.image?.startsWith('/imagens') ? `${API_BASE_URL}${s.image}` : s.image
-        })));
-      } else {
-        setServices(getServices(language));
-      }
-
       // 9. Carros
       const carResp = await fetch(`${API_BASE_URL}/api/cars`);
       if (carResp.ok) setCars(await carResp.json());

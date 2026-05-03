@@ -11,6 +11,7 @@ import {
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import AzoresLogo from './AzoresLogo';
 
 
 interface BusinessDashboardProps {
