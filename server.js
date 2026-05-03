@@ -138,6 +138,9 @@ app.get('/api/restaurants', (req, res) => {
         ...(db.services || []),
         ...(db.offices || [])
     ];
+    res.json(allBusinesses);
+});
+
 const ALL_BUSINESS_COLLECTIONS = [
     'restaurants', 'beauty', 'shops', 'services', 'offices', 
     'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
