@@ -90,6 +90,7 @@ const DATA: Record<Language, {
       { code: 'BER', name: 'Bermudas', location: 'Bermudas', isAzores: false },
     ],
     hotels: [
+      { id: 'hotel-1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', description: 'Hotel de luxo com jardim japonês e spa.', type: 'hotel', adminEmail: 'hotel@azores4you.com', adminPassword: 'admin', reservations: [], tables: [] },
       { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel de luxo com jardim japonês e spa.', type: 'hotel' },
       { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Localizado nas Furnas com piscinas termais.', type: 'hotel' },
     ],
