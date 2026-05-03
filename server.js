@@ -60,7 +60,12 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Redirecionar todas as outras rotas para o index.html (SPA)
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+        if (err) {
+            console.error("❌ Erro ao enviar index.html:", err);
+            res.status(500).send("Erro ao carregar a aplicação.");
+        }
+    });
 });
 
 // DB Handlers
