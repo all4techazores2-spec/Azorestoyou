@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Itinerary, Language, Hotel, Car } from '../types';
-import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown, Hotel as HotelIcon, Home, SlidersHorizontal } from 'lucide-react';
+import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown, Hotel as HotelIcon, Home, SlidersHorizontal, X } from 'lucide-react';
 import { getTranslation } from '../translations';
 import DatePicker from './DatePicker';
 import { motion, AnimatePresence } from 'motion/react';
