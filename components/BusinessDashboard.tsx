@@ -298,10 +298,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   // Staff Management State
   const [staffOpen, setStaffOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<any | null>(null);
   const [editingRoom, setEditingRoom] = useState<any | null>(null);
-  const [editingDish, setEditingDish] = useState<{idx: number, dish: any} | null>(null);
-  const [editingProduct, setEditingProduct] = useState<{idx: number, product: any} | null>(null);
   const [staffSubTab, setStaffSubTab] = useState<'staff_list' | 'ponto' | 'ferias'>('staff_list');
   const MOCK_STAFF_BASE = [
     { 
