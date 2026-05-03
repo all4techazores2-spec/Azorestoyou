@@ -1024,7 +1024,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       </div>
 
       {/* Main Container */}
-      <div className="flex-1 ml-80 min-h-screen flex flex-col relative overflow-hidden">
+      <main className="flex-1 ml-80 min-h-screen flex flex-col relative overflow-hidden">
         {/* Top Header - Estilo Foto 2 */}
         <header className="sticky top-0 bg-white border-b border-slate-100 h-24 flex items-center justify-between px-10 z-40 shadow-sm">
             <div className="flex items-center gap-6">
@@ -1056,7 +1056,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                      <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
                   </button>
                </div>
-            </div>
             </div>
         </header>
 
@@ -1426,6 +1425,99 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             </motion.div>
           )}
 
+          {activeTab === 'rooms' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+               <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                  <div>
+                     <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter flex items-center gap-3">
+                        <Hotel className="text-blue-600" /> Gestão de Unidades Hoteleiras
+                     </h3>
+                     <p className="text-slate-400 text-xs font-black uppercase tracking-widest mt-1">Controlo de disponibilidade e tarifas por piso</p>
+                  </div>
+                  <div className="flex gap-4">
+                     <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+                        {['Todos', 'Piso 1', 'Piso 2'].map(floor => (
+                          <button 
+                            key={floor}
+                            onClick={() => setRoomFilter(floor)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                              roomFilter === floor ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                          >
+                            {floor}
+                          </button>
+                        ))}
+                     </div>
+                     <button 
+                       onClick={() => {
+                         const newId = 'ROOM_' + Date.now();
+                         const newRoom = { id: newId, number: tables.length + 1, status: 'free', floor: 'Piso 1', amenities: [], images: [] };
+                         setEditingRoom({ idx: tables.length, room: newRoom });
+                       }}
+                       className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                     >
+                       <Plus size={18} /> Adicionar Quarto
+                     </button>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {tables.filter(t => roomFilter === 'Todos' || t.floor === roomFilter).map((room, idx) => (
+                     <div key={room.id} className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all group border-b-4 border-b-blue-500/10">
+                        <div className="relative h-48 bg-slate-100">
+                           {room.images && room.images[0] ? (
+                             <img src={room.images[0]} alt="Room" className="w-full h-full object-cover" />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                <ImageIcon size={40} strokeWidth={1} />
+                             </div>
+                           )}
+                           <div className="absolute top-4 left-4 px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl shadow-sm">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quarto</p>
+                              <p className="text-xl font-black text-slate-800 leading-none mt-0.5">{room.number}</p>
+                           </div>
+                           <div className={`absolute top-4 right-4 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                              room.status === 'free' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+                           }`}>
+                              {room.status === 'free' ? 'Disponível' : 'Ocupado'}
+                           </div>
+                        </div>
+                        <div className="p-8">
+                           <div className="flex justify-between items-start mb-6">
+                              <div>
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{room.floor || 'Piso 1'}</p>
+                                 <p className="text-sm font-black text-slate-800 uppercase tracking-tight mt-1">{room.type || 'Standard Suite'}</p>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Base</p>
+                                 <p className="text-lg font-black text-blue-600 mt-0.5">€{room.price_low || 85}</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-2">
+                              <button 
+                                onClick={() => setEditingRoom({ idx, room })}
+                                className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all"
+                              >
+                                Configurar
+                              </button>
+                              <button 
+                                onClick={() => {
+                                   const updated = tables.filter(t => t.id !== room.id);
+                                   setTables(updated);
+                                   handleUpdate({ tables: updated });
+                                }}
+                                className="p-3 text-red-400 bg-red-50 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-100"
+                               >
+                                <Trash2 size={16} />
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </motion.div>
+          )}
+
           {activeTab === 'pos' && (() => {
             // POS-local state via closures — we use component-level state declared below
             const posProducts = [
@@ -1718,6 +1810,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               setPosCashReceived('');
                               setPosCart([]);
                               setPosSplitBy(1);
+                            }}
                             className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
                           >
                             <CheckCircle size={18} /> Confirmar Venda
@@ -1909,17 +2002,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 </div>
               </motion.div>
             );
-          })()}
-   handleUpdate({ fiadoClients: updated });
-                          }} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-red-500 font-black hover:bg-red-50 text-sm border border-red-100">−</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })()}
+
+
+
 
           {activeTab === 'dishes' && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
@@ -2417,7 +2502,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
                        )}
                     </div>
-                  </div>
+                  </button>
                </div>
 
                <div className="grid grid-cols-1">
@@ -4151,6 +4236,3 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 };
 
 export default BusinessDashboard;
-
-
-
