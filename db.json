@@ -291,6 +291,7 @@
       "reservations": [],
       "adminEmail": "pescador@azores4you.com",
       "adminPassword": "admin"
+    }
   ],
   "shops": [
     {
@@ -87897,7 +87898,6 @@
         }
       ]
     }
-  ]
   ],
   "beauty": [],
   "posts": []
