@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
