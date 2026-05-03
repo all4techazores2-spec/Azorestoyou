@@ -226,114 +226,59 @@ const App: React.FC = () => {
   // Function to fetch data from Backend
   const fetchData = async () => {
     try {
-      // 1. Restaurantes
-      const response = await fetch(`${API_BASE_URL}/api/restaurants`);
-      let latestRestaurants: Restaurant[] = [];
-      if (response.ok) {
-        latestRestaurants = await response.json();
-        
-        // Normalizar caminhos de imagens (se forem relativos /imagens, adicionar o backend URL)
-        latestRestaurants = latestRestaurants.map(r => ({
-          ...r,
-          image: r.image?.startsWith('/imagens') ? `${API_BASE_URL}${r.image}` : r.image,
-          gallery: r.gallery?.map(img => img.startsWith('/imagens') ? `${API_BASE_URL}${img}` : img),
-          menu: r.menu?.map(item => ({
-            ...item,
-            image: item.image?.startsWith('/imagens') ? `${API_BASE_URL}${item.image}` : item.image
-          }))
-        }));
+      const normalizeBusiness = (b: any) => ({
+        ...b,
+        image: b.image?.startsWith('/imagens') ? `${API_BASE_URL}${b.image}` : b.image,
+        gallery: b.gallery?.map((img: any) => typeof img === 'string' && img.startsWith('/imagens') ? `${API_BASE_URL}${img}` : img),
+        menu: b.menu?.map((item: any) => ({
+          ...item,
+          image: item.image?.startsWith('/imagens') ? `${API_BASE_URL}${item.image}` : item.image
+        })),
+        tables: b.tables?.map((t: any) => ({
+          ...t,
+          images: t.images?.map((img: any) => typeof img === 'string' && img.startsWith('/imagens') ? `${API_BASE_URL}${img}` : img)
+        }))
+      });
 
-        setRestaurants(latestRestaurants.filter(r => !r.businessType || r.businessType === 'restaurant'));
-        setShops(latestRestaurants.filter(r => r.businessType === 'shop'));
-        setBeauty(latestRestaurants.filter(r => r.businessType === 'beauty'));
-        setServices(latestRestaurants.filter(r => r.businessType === 'service'));
-        setOffices(latestRestaurants.filter(r => r.businessType === 'office'));
-      } else {
-        setRestaurants(getRestaurants(language));
+      // 1. Restaurantes e categorias base
+      const response = await fetch(`${API_BASE_URL}/api/restaurants`);
+      if (response.ok) {
+        const raw = await response.json();
+        const latest = raw.map(normalizeBusiness);
+        setRestaurants(latest.filter((r: any) => !r.businessType || r.businessType === 'restaurant'));
+        setShops(latest.filter((r: any) => r.businessType === 'shop'));
+        setBeauty(latest.filter((r: any) => r.businessType === 'beauty'));
+        setServices(latest.filter((r: any) => r.businessType === 'service'));
+        setOffices(latest.filter((r: any) => r.businessType === 'office'));
       }
 
-      // 2. Utilizador (se logado)
+      // 2. Utilizador (Sincronização de Reservas)
       if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
         const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`);
         if (userResp.ok) {
           const userData = await userResp.json();
           setUserCredits(userData.credits || 0);
-          
-          // Sincronizar estados de reservas locais e DESCOBRIR novas reservas pelo e-mail
-          let allUserReservations: any[] = userData.reservations || [];
-          
-          // Escanear todos os restaurantes, lojas e atividades para encontrar reservas com este e-mail
-          const allBusinesses = [...restaurants, ...shops, ...beauty, ...services, 
-            { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [] } as any,
-            { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [] } as any
-          ];
-
-          allBusinesses.forEach(biz => {
-            if (biz.reservations) {
-              biz.reservations.forEach(serverRes => {
-                if (serverRes.customerEmail?.toLowerCase() === userProfile.email.toLowerCase()) {
-                  const existingIdx = allUserReservations.findIndex(r => r.id === serverRes.id);
-                  const bizType = (biz as any).businessType || (biz as any).type || 'restaurant';
-                  
-                  if (existingIdx === -1) {
-                    allUserReservations.push({
-                      ...serverRes,
-                      restaurantId: biz.id,
-                      restaurantName: (biz as any).name || (biz as any).title,
-                      type: bizType,
-                    });
-                  } else {
-                    allUserReservations[existingIdx] = {
-                      ...allUserReservations[existingIdx],
-                      type: bizType,
-                      status: serverRes.status,
-                      restaurantName: (biz as any).name || (biz as any).title
-                    };
-                  }
-                }
-              });
-            }
-          });
-
-          setMyReservations([...allUserReservations]);
+          setMyReservations(userData.reservations || []);
           setIsDataLoaded(true);
-          console.log(`✅ Sincronizadas ${allUserReservations.length} reservas para ${userProfile.email}`);
         }
       }
 
-      // 3. Autocarros
-      const busResp = await fetch(`${API_BASE_URL}/api/bus-schedules`);
-      if (busResp.ok) {
-        const busData = await busResp.json();
-        setBusSchedules(busData);
-      } else {
-        setBusSchedules(BUS_SCHEDULES);
-      }
+      // 3. Outras Categorias (Hotéis, Carros, Atividades)
+      const fetchAndSet = async (endpoint: string, setter: Function, fallback: any) => {
+        try {
+          const resp = await fetch(`${API_BASE_URL}/api/${endpoint}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            setter(data.map(normalizeBusiness));
+          } else setter(fallback);
+        } catch (e) { setter(fallback); }
+      };
 
-      // 4. Atividades
-      const actResp = await fetch(`${API_BASE_URL}/api/activities`);
-      if (actResp.ok) {
-        const data = await actResp.json();
-        if (data && data.length > 0) setActivities(data);
-        else setActivities(getActivities(language));
-      } else {
-        setActivities(getActivities(language));
-      }
-
-      // 5. Voos
-      const flightResp = await fetch(`${API_BASE_URL}/api/flights`);
-      if (flightResp.ok) setFlights(await flightResp.json());
-      else setFlights(getFlights(language));
-
-      // 6. Hotéis
-      const hotelResp = await fetch(`${API_BASE_URL}/api/hotels`);
-      if (hotelResp.ok) setHotels(await hotelResp.json());
-      else setHotels(getHotels(language));
-
-      // 9. Carros
-      const carResp = await fetch(`${API_BASE_URL}/api/cars`);
-      if (carResp.ok) setCars(await carResp.json());
-      else setCars(getCars(language));
+      await fetchAndSet('hotels', setHotels, getHotels(language));
+      await fetchAndSet('cars', setCars, getCars(language));
+      await fetchAndSet('activities', setActivities, getActivities(language));
+      await fetchAndSet('bus-schedules', setBusSchedules, BUS_SCHEDULES);
+      await fetchAndSet('flights', setFlights, getFlights(language));
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
     }
