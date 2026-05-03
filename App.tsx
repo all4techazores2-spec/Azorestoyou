@@ -723,10 +723,12 @@ const App: React.FC = () => {
 
     // Add itinerary items to reservations before clearing
     const newReservations: any[] = [];
+    const packageId = `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     
     if (itinerary.hotel) {
       newReservations.push({
         id: `RES_H_${Date.now()}`,
+        packageId: packageId,
         type: itinerary.hotel.type, // 'hotel' or 'al'
         hotel: itinerary.hotel,
         selectedRoom: itinerary.selectedRoom,
@@ -739,7 +741,8 @@ const App: React.FC = () => {
 
     if (itinerary.car) {
       newReservations.push({
-        id: `RES_C_${Date.now()}`,
+        id: `RES_C_${Date.now() + 1}`,
+        packageId: packageId,
         type: 'car',
         car: itinerary.car,
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
@@ -750,7 +753,8 @@ const App: React.FC = () => {
 
     if (itinerary.flight) {
       newReservations.push({
-        id: `RES_F_${Date.now()}`,
+        id: `RES_F_${Date.now() + 2}`,
+        packageId: packageId,
         type: 'flight',
         flight: itinerary.flight,
         date: new Date().toISOString().split('T')[0],

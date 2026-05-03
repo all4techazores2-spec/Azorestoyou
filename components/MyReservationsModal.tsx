@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft, Sparkles, ShoppingBag, Home, Camera, Bell, LogOut } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft, Sparkles, ShoppingBag, Home, Camera, Bell, LogOut, Briefcase, Package as PackageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Restaurant, Itinerary } from '../types';
 import RatingModal from './RatingModal';
@@ -39,16 +39,34 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const activeReservations = reservations.filter(r => ['pending', 'accepted', 'occupied'].includes(r.status));
   const historyReservations = reservations.filter(r => ['finished', 'cancelled'].includes(r.status));
 
+  // Filter packages (reservations that have a packageId and are NOT restaurant/shop/beauty)
+  const packageReservations = activeReservations.filter(r => r.packageId && (r.type === 'hotel' || r.type === 'al' || r.type === 'car' || r.type === 'flight'));
+  
+  // Group by packageId
+  const packagesMap = packageReservations.reduce((acc: any, res) => {
+    if (!acc[res.packageId]) acc[res.packageId] = [];
+    acc[res.packageId].push(res);
+    return acc;
+  }, {});
+
+  const packagesList = Object.keys(packagesMap).map(id => ({
+    id,
+    items: packagesMap[id],
+    date: packagesMap[id][0].date,
+    status: packagesMap[id].every((r: any) => r.status === 'accepted') ? 'accepted' : 'pending'
+  }));
+
   const restaurantReservations = activeReservations.filter(r => r.type === 'restaurant');
   const beautyReservations = activeReservations.filter(r => r.type === 'beauty');
   const shopReservations = activeReservations.filter(r => r.type === 'shop');
-  const hotelReservations = activeReservations.filter(r => r.type === 'hotel');
-  const alReservations = activeReservations.filter(r => r.type === 'al');
-  const carReservations = activeReservations.filter(r => r.type === 'car');
-  const flightReservations = activeReservations.filter(r => r.type === 'flight');
+  const hotelReservations = activeReservations.filter(r => r.type === 'hotel' && !r.packageId);
+  const alReservations = activeReservations.filter(r => r.type === 'al' && !r.packageId);
+  const carReservations = activeReservations.filter(r => r.type === 'car' && !r.packageId);
+  const flightReservations = activeReservations.filter(r => r.type === 'flight' && !r.packageId);
   const landscapeReservations = activeReservations.filter(r => r.type === 'landscape');
 
   const categories = [
+    { id: 'packages', label: 'Pacotes', icon: <Briefcase size={24} />, count: packagesList.length, color: 'from-blue-600 to-indigo-700', shadow: 'shadow-blue-600/20' },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
     { id: 'landscapes', label: 'Paisagens', icon: <Camera size={24} />, count: landscapeReservations.length, color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
@@ -58,7 +76,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
     { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
     { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'history');
+  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages');
 
   const handleBack = () => setSelectedCategory(null);
 
@@ -453,6 +471,70 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                    </div>
                 ))}
 
+                {/* PACKAGES VIEW */}
+                {selectedCategory === 'packages' && packagesList.map((pkg) => (
+                   <div key={pkg.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
+                      <div className="bg-slate-900 p-6 flex justify-between items-center">
+                         <div className="flex items-center gap-3 text-white">
+                            <Briefcase size={20} className="text-blue-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Pacote de Viagem</span>
+                         </div>
+                         <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-blue-500">
+                            {pkg.id}
+                         </div>
+                      </div>
+                      
+                      <div className="p-6 space-y-4">
+                         {pkg.items.map((item: any) => (
+                            <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                               <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
+                                     {item.type === 'car' ? <Car size={18} /> : item.type === 'flight' ? <Plane size={18} /> : <Hotel size={18} />}
+                                  </div>
+                                  <div className="text-left">
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                        {item.type === 'car' ? 'Aluguer de Carro' : item.type === 'flight' ? 'Voo' : 'Alojamento'}
+                                     </p>
+                                     <p className="text-sm font-black text-slate-800 leading-tight">
+                                        {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
+                                     </p>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                  <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                  <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                     {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
+                                  </span>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+
+                      <div className="px-6 pb-6 pt-2">
+                         <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                               <PackageIcon size={16} className="text-blue-500" />
+                               <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Estado Geral do Pacote</span>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${pkg.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                               {pkg.status === 'accepted' ? 'Reserva Finalizada' : 'Aguardar Aprovação'}
+                            </span>
+                         </div>
+                      </div>
+                   </div>
+                ))}
+
+                {selectedCategory === 'packages' && packagesList.length === 0 && (
+                   <div className="py-24 text-center">
+                     <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
+                       <Briefcase size={48} className="text-slate-200" />
+                       <div className="absolute top-0 right-0 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
+                     </div>
+                     <h3 className="text-xl font-black text-slate-800 mb-2">Ainda não tem pacotes?</h3>
+                     <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">Reserve Hotel + Carro para criar o seu primeiro pacote de viagem.</p>
+                   </div>
+                )}
+
                 {/* CARS VIEW */}
                 {selectedCategory === 'cars' && carReservations.map((res) => (
                    <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm text-left mb-6 last:mb-0">
@@ -480,6 +562,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       </div>
                    </div>
                 ))}
+
+
               </motion.div>
             )}
           </AnimatePresence>
