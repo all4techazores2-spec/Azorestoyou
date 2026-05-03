@@ -1373,23 +1373,43 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                    )}
 
                    <div className="flex justify-between items-center bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 mb-8">
-                      <div className="flex gap-8">
-                        <div className="flex items-center gap-2">
-                           <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponível</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <div className="w-3 h-3 rounded-full bg-slate-900"></div>
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupada</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reservada</span>
-                        </div>
+                      <div>
+                        <h3 className="text-xl font-black text-slate-800 tracking-tighter uppercase">
+                          {isHotel ? 'Mapa de Quartos' : isRentCar ? 'Estado da Frota' : isBeauty ? 'Agenda de Serviços' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas'}
+                        </h3>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                          {isHotel ? 'Gestão de Ocupação e Limpeza' : isRentCar ? 'Monitorização de Veículos' : isBeauty ? 'Controlo de Marcações' : isShop ? 'Gestão de Secções' : 'Gestão de Lotação em Tempo Real'}
+                        </p>
                       </div>
-                      <button onClick={addTable} className="px-6 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
-                        <Plus className="w-4 h-4" /> Nova Mesa
-                      </button>
+                      <div className="flex items-center gap-3">
+                         {/* Legend */}
+                         <div className="hidden md:flex items-center gap-6 mr-8">
+                            <div className="flex items-center gap-2">
+                               <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isHotel ? 'LIVRE' : isRentCar ? 'DISPONÍVEL' : 'LIVRE'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <div className="w-3 h-3 rounded-full bg-slate-900 shadow-lg shadow-slate-900/20"></div>
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isHotel ? 'OCUPADO' : isRentCar ? 'ALUGADO' : 'OCUPADA'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <div className="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/20"></div>
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isHotel ? 'RESERVADO' : isRentCar ? 'MANUTENÇÃO' : 'RESERVADA'}</span>
+                            </div>
+                         </div>
+
+                         <button 
+                           onClick={() => {
+                             const newTableNum = business.tables ? business.tables.length + 1 : 1;
+                             const newTable: any = { id: Date.now(), number: newTableNum, status: 'available', seats: 4, x: 100, y: 100 };
+                             onUpdateBusiness({ ...business, tables: [...(business.tables || []), newTable] });
+                           }}
+                           className="px-6 py-3 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                         >
+                           <Plus size={16} />
+                           {isHotel ? 'Novo Quarto' : isRentCar ? 'Novo Veículo' : isBeauty ? 'Nova Cadeira' : isShop ? 'Nova Secção' : 'Nova Mesa'}
+                         </button>
+                      </div>
                    </div>
 
                    <div className="bg-slate-50 border border-slate-100 rounded-[3rem] p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
@@ -1410,50 +1430,34 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                   table.status === 'occupied' ? 'bg-slate-900 text-white' : 'bg-blue-600 text-white'
                                 }`}
                               >
-                                 <TableIcon className={`w-10 h-10 mb-2 ${table.status === 'available' ? 'text-blue-500' : 'text-white/40'}`} />
-                                 <span className="font-black text-2xl tracking-tighter">#{table.number}</span>
-                                 <div className="flex gap-1 mt-2">
-                                    {Array.from({ length: table.seats }).map((_, i) => (
-                                      <div key={i} className="w-2 h-2 rounded-full bg-current opacity-20"></div>
-                                    ))}
-                                 </div>
-                                 
-                                 {/* Hover Info Tooltip */}
-                                 {table.status !== 'available' && (
-                                   <div className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 rounded-[2.5rem] flex flex-col items-center justify-center p-4 text-center pointer-events-none">
-                                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
-                                         {table.status === 'occupied' ? 'Ocupada por' : 'Reservada para'}
-                                      </p>
-                                      <p className="text-sm font-bold text-white mb-1 truncate w-full px-2">{table.customerName || 'Cliente'}</p>
-                                      <p className="text-xs font-black text-white/50">{table.reservationTime || '--:--'}</p>
-                                      
-                                      {table.status === 'occupied' && table.currentTab && table.currentTab.length > 0 && (
-                                         <div className="mt-2 w-full text-left bg-white/5 rounded-xl p-2 max-h-16 overflow-y-hidden">
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 border-b border-white/10 pb-1">Consumo Atual</p>
-                                            {table.currentTab.slice(0, 2).map((item, i) => (
-                                               <div key={i} className="flex justify-between text-[9px] text-white/80">
-                                                  <span className="truncate pr-1">{item.quantity}x {item.dish.name}</span>
-                                                  <span>€{(Number(item.dish.price || 0) * item.quantity).toFixed(2)}</span>
-                                               </div>
-                                            ))}
-                                            {table.currentTab.length > 2 && <p className="text-[8px] text-blue-400 font-bold mt-1">+{table.currentTab.length - 2} itens...</p>}
-                                         </div>
-                                      )}
-                                      
-                                      {table.status === 'occupied' && (!table.currentTab || table.currentTab.length === 0) && (
-                                         <div className="mt-2 text-[10px] font-black px-2 py-1 bg-white/10 rounded-lg text-white">
-                                            Pedido: {table.currentOrderId ? 'Enviado 👨‍🍳' : 'Não enviado ⏳'}
-                                         </div>
-                                      )}
-                                   </div>
-                                 )}
-
-                                 <div className={`absolute -top-3 -right-3 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl ring-4 ring-white z-10 ${
-                                   table.status === 'available' ? 'bg-emerald-500 text-white' :
-                                   table.status === 'occupied' ? 'bg-red-500 text-white' : 'bg-amber-400 text-slate-900'
-                                 }`}>
-                                   {selectedResForTable && table.status === 'available' ? 'Selec.' : table.status === 'available' ? 'Livre' : table.status === 'occupied' ? (isBeauty ? 'Em Serviço' : 'Em uso') : (isBeauty ? 'Marcada' : 'Reservada')}
-                                 </div>
+                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                                    table.status === 'occupied' ? 'bg-white/10 text-white' : 
+                                    table.status === 'reserved' ? 'bg-blue-500/20 text-blue-600' : 
+                                    'bg-blue-50 text-blue-600'
+                                  }`}>
+                                    {isHotel ? <Hotel size={24} /> : isRentCar ? <Car size={24} /> : isBeauty ? <Scissors size={24} /> : isShop ? <Store size={24} /> : <TableIcon size={24} />}
+                                  </div>
+                                  <div className="text-center">
+                                    <span className={`text-xl font-black block leading-none ${table.status === 'occupied' ? 'text-white' : 'text-slate-800'}`}>
+                                      #{table.number}
+                                    </span>
+                                    <div className="flex items-center justify-center gap-1 mt-1.5 opacity-30">
+                                       {[...Array(isHotel ? 2 : isRentCar ? 5 : 4)].map((_, i) => (
+                                         <div key={i} className={`w-1.5 h-1.5 rounded-full ${table.status === 'occupied' ? 'bg-white' : 'bg-slate-800'}`}></div>
+                                       ))}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Status Badge */}
+                                  <div className={`absolute -top-2 -right-2 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg ${
+                                    table.status === 'occupied' ? 'bg-red-500 text-white' : 
+                                    table.status === 'reserved' ? 'bg-orange-500 text-white' : 
+                                    'bg-emerald-500 text-white'
+                                  }`}>
+                                    {table.status === 'occupied' ? (isHotel ? 'EM USO' : isRentCar ? 'ALUGADO' : 'EM USO') : 
+                                     table.status === 'reserved' ? (isHotel ? 'RESERVADO' : isRentCar ? 'INDISP.' : 'RESERVADA') : 
+                                     'LIVRE'}
+                                  </div>
                               </motion.button>
                            </motion.div>
                          ))}
