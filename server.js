@@ -318,4 +318,17 @@ app.get('/api/flights', (req, res) => res.json(readDB().flights || []));
 app.get('/api/hotels', (req, res) => res.json(readDB().hotels || []));
 app.get('/api/cars', (req, res) => res.json(readDB().cars || []));
 
-app.listen(PORT, () => console.log(`🚀 Master Backend running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Master Backend running on port ${PORT}`);
+    
+    // Truque para manter o Render sempre ativo (Self-Ping cada 10 min)
+    const selfPing = () => {
+        const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+        fetch(`${url}/api/bus-schedules`)
+            .then(() => console.log('💓 Keep-alive ping enviado com sucesso'))
+            .catch(err => console.log('⚠️ Erro no self-ping (normal em startup):', err.message));
+    };
+    
+    setInterval(selfPing, 600000); // 10 minutos
+    setTimeout(selfPing, 5000); // Primeiro ping após 5 segundos
+});
