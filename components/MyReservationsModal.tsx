@@ -442,8 +442,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                    <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
                       <div className="h-40 relative">
                          <img src={res.hotel.image} alt={res.hotel.name} className="w-full h-full object-cover" />
-                         <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-600 shadow-lg">
-                            Reserva Ativa
+                         <div className={`absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 ${res.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${res.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                            {res.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
                          </div>
                       </div>
                       <div className="p-8 text-left">

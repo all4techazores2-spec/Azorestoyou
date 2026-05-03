@@ -753,15 +753,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
     if ((isBeauty || isShop || isHotel) && action === 'accepted') {
       const resObj = reservations.find(r => r.id === id);
-      const newReservations = reservations.map(r => 
-        r.id === id ? { ...r, status: action, confirmedByRestaurant: true } : r
-      );
+      const updatedRes = { ...resObj, status: action, confirmedByRestaurant: true };
+      const newReservations = reservations.map(r => r.id === id ? updatedRes : r);
       setReservations(newReservations);
+      
       // Sincronizar com a coleção global de reservas para o cliente ver
       fetch(`${API_BASE_URL}/api/reservations/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action, confirmedByRestaurant: true })
+        body: JSON.stringify(updatedRes)
       }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
 
       // Se for hotel, marcar o quarto como ocupado
@@ -2533,10 +2533,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                          {isHotel && (
                                            <>
                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600">
-                                               <Hotel size={12}/> {res.selectedRoom ? `Quarto ${res.selectedRoom.number} (${res.selectedRoom.type})` : 'Quarto não definido'}
+                                               <Hotel size={12}/> {
+                                                 res.selectedRoom ? `Quarto ${res.selectedRoom.number} (${res.selectedRoom.type})` : 
+                                                 res.roomName ? `${res.roomName} (${res.roomType || 'Alojamento'})` : 
+                                                 'Quarto não definido'
+                                               }
                                              </span>
                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600">
                                                <Calendar size={12}/> {res.nights || 1} Noites
+                                             </span>
+                                             <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400">
+                                               <Receipt size={12}/> ID: #{res.id.slice(-6).toUpperCase()}
                                              </span>
                                            </>
                                          )}
