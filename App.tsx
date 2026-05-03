@@ -765,7 +765,19 @@ const App: React.FC = () => {
     }
 
     if (newReservations.length > 0) {
-      setMyReservations(prev => [...prev, ...newReservations]);
+      const updatedList = [...myReservations, ...newReservations];
+      setMyReservations(updatedList);
+
+      // PERSIST TO SERVER
+      if (isAuthenticated && userProfile?.email) {
+        fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reservations: updatedList })
+        })
+        .then(() => console.log("✅ Pacote sincronizado com o servidor"))
+        .catch(err => console.error("Erro ao sincronizar pacote:", err));
+      }
     }
 
     setItinerary(DEFAULT_ITINERARY);
