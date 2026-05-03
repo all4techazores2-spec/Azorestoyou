@@ -321,16 +321,25 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                     <div className="w-24 h-24 bg-green-50 text-green-600 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-xl shadow-green-100 animate-bounce">
                        <CheckCircle size={48} />
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-2">Reserva Confirmada!</h2>
+                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-2">Pedido Enviado!</h2>
                     
-                    <div className="bg-slate-50 px-4 py-2 rounded-full border border-slate-100 mb-4">
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">ID Reserva:</span>
-                       <span className="text-xs font-black text-blue-600">#AZ-{(Math.random() * 100000).toFixed(0)}</span>
+                    <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl border-2 border-blue-700 mb-6 shadow-lg transform -rotate-2">
+                       <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Ticket Único de Reserva</p>
+                       <span className="text-xl font-black tracking-widest">#AZ-{(Math.random() * 100000).toFixed(0)}-{new Date().getFullYear()}</span>
                     </div>
 
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-xs mb-8">
-                       O seu quarto no <span className="text-slate-900 font-bold">{itinerary.hotel?.name}</span> foi reservado com sucesso. Receberá a confirmação por email e na aplicação em breve.
-                    </p>
+                    <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 max-w-sm text-center">
+                       <p className="text-sm text-slate-600 font-bold leading-relaxed">
+                          {itinerary.car 
+                            ? "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte do Hotel e da Rent-a-car."
+                            : "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte do Hotel."
+                          }
+                       </p>
+                       <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                          <Clock size={14} className="animate-pulse" />
+                          Tempo médio de resposta: 15 min
+                       </div>
+                    </div>
                     <button 
                       onClick={onComplete}
                       className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-900/20"
