@@ -451,6 +451,46 @@
       "image": "https://picsum.photos/400/300?random=13",
       "description": "Design contemporâneo numa antiga quinta açoriana.",
       "type": "al"
+    },
+    {
+      "id": "H5",
+      "name": "Hotel Caravelas",
+      "island": "PIC",
+      "stars": 4,
+      "pricePerNight": 105,
+      "image": "https://picsum.photos/400/300?random=14",
+      "description": "Localizado na Madalena com vista para o canal e para o Faial.",
+      "type": "hotel"
+    },
+    {
+      "id": "H6",
+      "name": "Hotel do Canal",
+      "island": "FAI",
+      "stars": 4,
+      "pricePerNight": 115,
+      "image": "https://picsum.photos/400/300?random=15",
+      "description": "Elegância e conforto na Horta, em frente à marina.",
+      "type": "hotel"
+    },
+    {
+      "id": "AL5",
+      "name": "Cantinho das Pipas",
+      "island": "PIC",
+      "stars": 3,
+      "pricePerNight": 75,
+      "image": "https://picsum.photos/400/300?random=16",
+      "description": "Alojamento tradicional em zona de vinhas protegidas.",
+      "type": "al"
+    },
+    {
+      "id": "AL6",
+      "name": "Moinho da Lomba",
+      "island": "FLO",
+      "stars": 3,
+      "pricePerNight": 90,
+      "image": "https://picsum.photos/400/300?random=17",
+      "description": "Moinho recuperado com vista deslumbrante sobre o oceano.",
+      "type": "al"
     }
   ],
   "cars": [
