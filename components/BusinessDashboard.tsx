@@ -1,6 +1,6 @@
 // Dashboard de Gestão Restaurantes - AzoresToyou
 import React, { useState, useEffect } from 'react';
-import { Restaurant, Language, Dish, Product, RestaurantTable, Reservation, RestaurantUpdate, KitchenOrder, StaffMember } from '../types';
+import { Restaurant, Language, Dish, Product, RestaurantTable, Reservation, RestaurantUpdate, KitchenOrder, StaffMember, Service } from '../types';
 import { getTranslation } from '../translations';
 import { 
   Utensils, Edit, Trash2, Plus, Save, X, LogOut, 
@@ -1498,11 +1498,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             
             const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
-            const allCats = ['Todos', ...new Set([...availableCategories, ...currentCategories])].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
+            const allCats = ['Todos', ...Array.from(new Set([...availableCategories, ...currentCategories]))].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
 
             const filtered = posCategory === 'Todos' ? posProducts : posProducts.filter(p => p.category === posCategory);
 
             return (
+              <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-140px)] bg-[#f8f9fa] -m-8 overflow-hidden">
                 {/* POS TOP BAR (Search & Table) */}
                 <div className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between shadow-sm z-10">

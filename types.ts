@@ -1,3 +1,4 @@
+import React from 'react';
 
 export type Language = 'pt' | 'en' | 'es' | 'it' | 'de';
 
