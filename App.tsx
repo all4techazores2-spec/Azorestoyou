@@ -198,7 +198,11 @@ const App: React.FC = () => {
           let allUserReservations: any[] = userData.reservations || [];
           
           // Escanear todos os restaurantes, lojas e atividades para encontrar reservas com este e-mail
-          const allBusinesses = [...latestRestaurants, ...(activities || [])];
+          const allBusinesses = [...restaurants, ...shops, ...beauty, ...services, 
+            { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [] } as any,
+            { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [] } as any
+          ];
+
           allBusinesses.forEach(biz => {
             if (biz.reservations) {
               biz.reservations.forEach(serverRes => {
@@ -1093,13 +1097,16 @@ const App: React.FC = () => {
 
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
-    const currentBusiness = [...(beauty || []), ...(shops || []), ...(restaurants || [])].find(b => b.id === currentBusinessId);
+    const currentBusiness = [...(beauty || []), ...(shops || []), ...(restaurants || []), ...(hotels || []), ...(cars || [])].find(b => b.id === currentBusinessId);
     
     if (currentBusiness) {
       const bType = (currentBusiness.businessType || (currentBusiness as any).type || 'restaurant').toLowerCase();
       const isBeauty = bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
-      const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : 'restaurants');
+      const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
+      const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
+      
+      const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
 
       return (
         <ErrorBoundary>
