@@ -440,7 +440,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estadia</p>
-                               <p className="text-sm font-black text-slate-800">{res.nights} noites</p>
+                               <p className="text-sm font-black text-slate-800">{(res?.nights || 0)} noites</p>
                             </div>
                          </div>
                          {res.selectedRoom && (

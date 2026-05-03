@@ -17,7 +17,8 @@ const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({ isOpen, onClo
   if (!isOpen) return null;
 
   const flightCost = itinerary.flight?.price || 0;
-  const hotelCost = itinerary.hotel ? (itinerary.hotel.pricePerNight * itinerary.nights) : 0;
+  if (!itinerary) return null;
+  const hotelCost = (itinerary.hotel && itinerary.nights) ? (itinerary.hotel.pricePerNight * itinerary.nights) : 0;
   const carCost = itinerary.car ? (itinerary.car.pricePerDay * itinerary.carDays) : 0;
   const totalCost = flightCost + hotelCost + carCost;
   const currentLang = language as Language;

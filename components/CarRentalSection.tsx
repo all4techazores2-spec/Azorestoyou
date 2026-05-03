@@ -27,9 +27,11 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   isAuthenticated,
   onShowAuth
 }) => {
+  if (!currentItinerary) return null;
+
   const [selectedCompany, setSelectedCompany] = useState<CarRentalCompany | null>(null);
   const [selectedCarForDetail, setSelectedCarForDetail] = useState<Car | null>(null);
-  const [carDays, setCarDays] = useState(currentItinerary.carDays || 3);
+  const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Simulate unavailable dates
@@ -106,8 +108,8 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   const getFuelIcon = (fuel: string) => {
     return <Fuel className="w-4 h-4" />;
   };
-
-  const destinationCode = currentItinerary.flight?.destination || 'all';
+  
+  const destinationCode = currentItinerary?.flight?.destination || 'all';
 
   return (
     <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4">
@@ -138,14 +140,14 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                 <Calendar className="w-4 h-4 text-green-600" />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(language, 'pickup_date')}</span>
-                  <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carStartDate)}</span>
+                  <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary?.carStartDate)}</span>
                 </div>
              </div>
              <div className="w-px h-6 bg-slate-200" />
              <div className="flex items-center gap-2">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">{getTranslation(language, 'return_date')}</span>
-                  <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.carEndDate)}</span>
+                  <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary?.carEndDate)}</span>
                 </div>
              </div>
              <div className="w-px h-6 bg-slate-200" />
@@ -309,9 +311,9 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 
           <button 
             onClick={onNext}
-            disabled={!currentItinerary.car}
+            disabled={!currentItinerary?.car}
             className={`px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center gap-2 active:scale-95 text-sm
-              ${!currentItinerary.car 
+              ${!currentItinerary?.car 
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
                 : 'bg-green-600 hover:bg-green-700 shadow-green-100'}`}
           >

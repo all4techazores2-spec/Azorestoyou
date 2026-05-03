@@ -12,9 +12,10 @@ interface SummaryViewProps {
 }
 
 const SummaryView: React.FC<SummaryViewProps> = ({ itinerary, onReset, language = 'pt' }) => {
+  if (!itinerary) return null;
   const flightCost = itinerary.flight?.price || 0;
-  const hotelCost = (itinerary.hotel?.pricePerNight || 0) * itinerary.nights;
-  const carCost = (itinerary.car?.pricePerDay || 0) * itinerary.carDays;
+  const hotelCost = (itinerary.hotel?.pricePerNight || 0) * (itinerary.nights || 0);
+  const carCost = (itinerary.car?.pricePerDay || 0) * (itinerary.carDays || 0);
   const totalCost = flightCost + hotelCost + carCost;
   const currentLang = language as Language;
 

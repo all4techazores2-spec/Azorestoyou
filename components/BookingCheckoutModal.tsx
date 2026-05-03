@@ -11,6 +11,7 @@ interface BookingCheckoutModalProps {
 }
 
 const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete }) => {
+  if (!itinerary) return null;
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve'>('transfer');

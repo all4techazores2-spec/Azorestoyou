@@ -339,13 +339,23 @@ const App: React.FC = () => {
   const [returnToProfile, setReturnToProfile] = useState(false);
 
   // 4. ITINERARY STATE
-  const [itinerary, setItinerary] = useState<Itinerary>({
+  const DEFAULT_ITINERARY: Itinerary = {
     flight: null,
     hotel: null,
     nights: 3,
     car: null,
-    carDays: 3
-  });
+    carDays: 3,
+    selectedExtras: []
+  };
+
+  const [itinerary, setItinerary] = useState<Itinerary>(DEFAULT_ITINERARY);
+
+  // Safety net to ensure itinerary is never null
+  useEffect(() => {
+    if (!itinerary) {
+      setItinerary(DEFAULT_ITINERARY);
+    }
+  }, [itinerary]);
   const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
@@ -709,6 +719,8 @@ const App: React.FC = () => {
   };
 
   const handleFinalComplete = () => {
+    if (!itinerary) return;
+
     // Add itinerary items to reservations before clearing
     const newReservations: any[] = [];
     
@@ -719,9 +731,9 @@ const App: React.FC = () => {
         hotel: itinerary.hotel,
         selectedRoom: itinerary.selectedRoom,
         date: itinerary.hotelStartDate || new Date().toISOString().split('T')[0],
-        nights: itinerary.nights,
+        nights: itinerary.nights || 3,
         status: 'accepted',
-        selectedExtras: itinerary.selectedExtras
+        selectedExtras: itinerary.selectedExtras || []
       });
     }
 
@@ -731,7 +743,7 @@ const App: React.FC = () => {
         type: 'car',
         car: itinerary.car,
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
-        days: itinerary.carDays,
+        days: itinerary.carDays || 3,
         status: 'accepted'
       });
     }
@@ -750,7 +762,7 @@ const App: React.FC = () => {
       setMyReservations(prev => [...prev, ...newReservations]);
     }
 
-    setItinerary({ flight: null, hotel: null, nights: 3, car: null, carDays: 3, selectedExtras: [] });
+    setItinerary(DEFAULT_ITINERARY);
     setCurrentStep('flights');
     setExploreCategory(null);
   };
@@ -795,8 +807,8 @@ const App: React.FC = () => {
   const isNearbyFilter = publicIslandFilter.startsWith('nearby:');
   const userCoords = isNearbyFilter ? publicIslandFilter.replace('nearby:', '').split(',').map(Number) : null;
 
-  const destinationIsland = itinerary.flight?.destination || publicIslandFilter;
-  const itineraryItemCount = (itinerary.flight ? 1 : 0) + (itinerary.hotel ? 1 : 0) + (itinerary.car ? 1 : 0);
+  const destinationIsland = itinerary?.flight?.destination || publicIslandFilter;
+  const itineraryItemCount = ((itinerary?.flight ? 1 : 0) + (itinerary?.hotel ? 1 : 0) + (itinerary?.car ? 1 : 0)) || 0;
   const navCategories = getNavigationCategories(language);
   const airports = getAirports(language);
   
