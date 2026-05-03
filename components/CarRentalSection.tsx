@@ -34,6 +34,25 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
+  // Sync car dates with hotel dates automatically
+  useEffect(() => {
+    if (currentItinerary?.hotelStartDate && currentItinerary?.hotelEndDate) {
+      if (!currentItinerary.carStartDate || currentItinerary.carStartDate !== currentItinerary.hotelStartDate) {
+        const start = new Date(currentItinerary.hotelStartDate);
+        const end = new Date(currentItinerary.hotelEndDate);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        setCarDays(days);
+        onUpdateItinerary({
+           carStartDate: currentItinerary.hotelStartDate,
+           carEndDate: currentItinerary.hotelEndDate,
+           carDays: days
+        });
+      }
+    }
+  }, [currentItinerary?.hotelStartDate, currentItinerary?.hotelEndDate]);
+
   const activeCompanies = CAR_RENTAL_COMPANIES.length > 0 
     ? CAR_RENTAL_COMPANIES 
     : Array.from(new Set((cars || []).map(c => c.companyId))).filter(Boolean).map((id, index) => ({
