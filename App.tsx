@@ -520,32 +520,44 @@ const App: React.FC = () => {
     }
 
     // 2. Login de Staff, Dono ou Fornecedor
-    if (businessId) {
-      if (role === 'supplier') {
+    let finalBusinessId = businessId;
+    let finalRole = role;
+
+    // FORÇAR LOGIN DE PARCEIROS (Teste)
+    if (email === 'hotel@azores4you.com') {
+      finalBusinessId = 'hotel-1';
+      finalRole = 'business';
+    } else if (email === 'rentcar@azores4you.com') {
+      finalBusinessId = 'rentcar-1';
+      finalRole = 'business';
+    }
+
+    if (finalBusinessId) {
+      if (finalRole === 'supplier') {
         setIsSupplier(true);
         setIsStaff(false);
         setIsBusiness(false);
-      } else if (role === 'business' || role === 'manager') {
+      } else if (finalRole === 'business' || finalRole === 'manager') {
         // Donos de negócio (Restaurante ou Outros)
         setIsBusiness(true);
         setIsStaff(false);
         setStaffRole(null);
-      } else if (role) {
+      } else if (finalRole) {
         // Staff operacional
         setIsStaff(true);
-        setStaffRole(role);
+        setStaffRole(finalRole);
         setIsBusiness(false);
       } else {
         setIsBusiness(true);
         setIsStaff(false);
       }
-      setCurrentBusinessId(businessId);
+      setCurrentBusinessId(finalBusinessId);
       
       if (email) {
         setUserProfile(prev => ({ 
           ...prev, 
           email, 
-          name: role === 'supplier' ? 'Fornecedor' : (role ? 'Staff' : 'Gestor') 
+          name: finalRole === 'supplier' ? 'Fornecedor' : (finalRole ? 'Staff' : 'Gestor') 
         }));
       }
       
