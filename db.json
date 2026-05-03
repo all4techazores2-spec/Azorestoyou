@@ -87925,5 +87925,24 @@
     }
   ],
   "beauty": [],
-  "posts": []
+  "posts": [],
+  "animals": [
+    { "id": "PET1", "name": "Pet Shop PDL", "island": "PDL", "businessType": "animal", "image": "https://picsum.photos/400/300?random=230", "description": "Tudo para o seu animal." }
+  ],
+  "real_estate": [
+    { "id": "RE1", "name": "ERA Ponta Delgada", "island": "PDL", "businessType": "real_estate", "image": "https://picsum.photos/400/300?random=240", "description": "Líder imobiliário em São Miguel." }
+  ],
+  "gyms": [
+    { "id": "GYM1", "name": "Elite Health Club", "island": "PDL", "businessType": "gym", "image": "https://picsum.photos/400/300?random=280", "description": "O melhor ginásio da cidade." }
+  ],
+  "stands": [
+    { "id": "ST1", "name": "Auto Stand Açores", "island": "PDL", "businessType": "stand", "image": "https://picsum.photos/400/300?random=310", "description": "Carros usados com garantia." }
+  ],
+  "auto_repairs": [
+    { "id": "AR1", "name": "Oficina Central", "island": "PDL", "businessType": "auto_repair", "image": "https://picsum.photos/400/300?random=200", "description": "Mecânica geral multimarca." }
+  ],
+  "auto_electronics": [],
+  "used_market": [],
+  "it_services": [],
+  "perfumes": []
 }

@@ -129,17 +129,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // --- BUSINESSES (UNIFIED) ---
-app.get('/api/restaurants', (req, res) => {
-    const db = readDB();
-    const allBusinesses = [
-        ...(db.restaurants || []),
-        ...(db.beauty || []),
-        ...(db.shops || []),
-        ...(db.services || []),
-        ...(db.offices || [])
-    ];
-    res.json(allBusinesses);
-});
 
 const ALL_BUSINESS_COLLECTIONS = [
     'restaurants', 'beauty', 'shops', 'services', 'offices', 
@@ -172,6 +161,7 @@ const handleBusinessUpdate = (req, res) => {
 };
 
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
+    app.get(`/api/${key}`, (req, res) => res.json(readDB()[key] || []));
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
 });
 

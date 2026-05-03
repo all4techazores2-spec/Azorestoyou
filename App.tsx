@@ -241,15 +241,34 @@ const App: React.FC = () => {
       });
 
       // 1. Restaurantes e categorias base
-      const response = await fetch(`${API_BASE_URL}/api/restaurants`);
-      if (response.ok) {
-        const raw = await response.json();
-        const latest = raw.map(normalizeBusiness);
-        setRestaurants(latest.filter((r: any) => !r.businessType || r.businessType === 'restaurant'));
-        setShops(latest.filter((r: any) => r.businessType === 'shop'));
-        setBeauty(latest.filter((r: any) => r.businessType === 'beauty'));
-        setServices(latest.filter((r: any) => r.businessType === 'service'));
-        setOffices(latest.filter((r: any) => r.businessType === 'office'));
+      const endpoints = [
+        { key: 'restaurants', setter: setRestaurants },
+        { key: 'hotels', setter: setHotels },
+        { key: 'cars', setter: setCars },
+        { key: 'shops', setter: setShops },
+        { key: 'beauty', setter: setBeauty },
+        { key: 'services', setter: setServices },
+        { key: 'offices', setter: setOffices },
+        { key: 'animals', setter: setAnimals },
+        { key: 'real_estate', setter: setRealEstate },
+        { key: 'gyms', setter: setGyms },
+        { key: 'stands', setter: setStands },
+        { key: 'auto_repairs', setter: setAutoRepairs },
+        { key: 'auto_electronics', setter: setAutoElectronics },
+        { key: 'used_market', setter: setUsedMarket },
+        { key: 'it_services', setter: setItServices },
+        { key: 'perfumes', setter: setPerfumes }
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const resp = await fetch(`${API_BASE_URL}/api/${endpoint.key}`);
+          if (resp.ok) {
+            const raw = await resp.json();
+            const latest = raw.map(normalizeBusiness);
+            endpoint.setter(latest);
+          }
+        } catch (e) { console.error(`Erro ao carregar ${endpoint.key}:`, e); }
       }
 
       // 2. Utilizador (Sincronização de Reservas)

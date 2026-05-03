@@ -14,11 +14,12 @@ interface AuthModalProps {
   restaurants?: Restaurant[];
   shops?: Restaurant[];
   beauty?: Restaurant[];
+  hotels?: any[];
 }
 
 type AuthMode = 'login' | 'register';
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [], shops = [], beauty = [] }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [], shops = [], beauty = [], hotels = [] }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const currentLang = language as Language;
@@ -48,7 +49,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     }
 
     // 2. Verificação de Negócios e Staff (Dados do Servidor)
-    const allBusinesses = [...restaurants, ...shops, ...beauty];
+    const allBusinesses = [...restaurants, ...shops, ...beauty, ...hotels];
     
     if (allBusinesses.length === 0) {
       setIsLoading(false);
