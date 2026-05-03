@@ -41,6 +41,10 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   hotels = [],
   cars = []
 }) => {
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://azorestoyou-1.onrender.com';
+
   const [nights, setNights] = useState(currentItinerary?.nights || 3);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -421,7 +425,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
                         {/* Compact Image Section */}
                         <div className="relative h-36 overflow-hidden bg-slate-200">
                           <img 
-                            src={hotel.image} 
+                            src={hotel.image.startsWith('/') ? `${API_BASE_URL}${hotel.image}` : hotel.image} 
                             alt={hotel.name} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                           />

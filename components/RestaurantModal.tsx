@@ -32,6 +32,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   onReserveSuccess,
   userProfile
 }) => {
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://azorestoyou-1.onrender.com';
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [bookingStep, setBookingStep] = useState<BookingStep>('info');
@@ -96,10 +100,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const isOffice = restaurant.businessType === 'office';
 
   const slides = [
-    { image: restaurant.image, title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
-    ...(restaurant.gallery || []).map(img => ({ image: img, title: restaurant.name, desc: getTranslation(currentLang, 'environment') })),
-    ...(restaurant.dishes || []).map(d => ({ image: d.image, title: d.name, desc: d.description })),
-    ...(restaurant.services || []).map(s => ({ image: s.image || restaurant.image, title: s.name, desc: s.description || '' }))
+    { image: restaurant.image.startsWith('/') ? `${API_BASE_URL}${restaurant.image}` : restaurant.image, title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
+    ...(restaurant.gallery || []).map(img => ({ image: img.startsWith('/') ? `${API_BASE_URL}${img}` : img, title: restaurant.name, desc: getTranslation(currentLang, 'environment') })),
+    ...(restaurant.dishes || []).map(d => ({ image: d.image.startsWith('/') ? `${API_BASE_URL}${d.image}` : d.image, title: d.name, desc: d.description })),
+    ...(restaurant.services || []).map(s => ({ image: (s.image || restaurant.image).startsWith('/') ? `${API_BASE_URL}${s.image || restaurant.image}` : (s.image || restaurant.image), title: s.name, desc: s.description || '' }))
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -569,9 +573,13 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {/* Dynamic list based on business type */}
                   {(isBeauty ? (restaurant.services || []) : isShop ? (restaurant.products || []) : (restaurant.dishes || [])).map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-all group">
+                      <div key={idx} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-all group">
                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                         <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                         <img 
+                           src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
+                           alt={item.name} 
+                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                         />
                        </div>
                        <div className="min-w-0">
                          <p className="font-bold text-slate-800 text-xs truncate">{item.name}</p>

@@ -72,6 +72,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   userProfile,
   onClose
 }) => {
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://azorestoyou-1.onrender.com';
+
   const lang = currentLanguage as Language;
   const t = (key: any) => getTranslation(lang, key);
   
@@ -356,7 +360,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
           <div className="h-48 overflow-hidden relative">
-            <img src={r.image} alt={r.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            <img 
+              src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image} 
+              alt={r.name} 
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+            />
             <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
                <MapPin className="w-3 h-3 text-red-500" /> {r.island}
             </div>
@@ -421,7 +429,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 }}
               >
                 <div className="h-56 overflow-hidden relative">
-                   <img src={a.image} alt={a.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                   <img 
+                     src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
+                     alt={a.title} 
+                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                   />
                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                      <h3 className="text-white text-xl font-bold">{a.title}</h3>
                      <p className="text-white/80 text-sm flex items-center gap-1"><MapPin className="w-3 h-3" /> {a.island}</p>
@@ -473,7 +485,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             }} 
           >
             <div className="h-48 overflow-hidden relative">
-              <img src={b.image} alt={b.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              <img 
+                src={b.image.startsWith('/') ? `${API_BASE_URL}${b.image}` : b.image} 
+                alt={b.name} 
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+              />
               <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
                  <MapPin className="w-3 h-3 text-red-500" /> {b.island}
               </div>
@@ -660,7 +676,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
             >
               <div className="h-48 overflow-hidden relative">
-                <img src={s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img 
+                  src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} 
+                  alt={s.name} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
                    <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>
@@ -807,7 +827,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
             >
               <div className="h-48 overflow-hidden relative">
-                <img src={s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
                    <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>
@@ -885,7 +905,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               }}
             >
               <div className="h-56 overflow-hidden relative">
-                <img src={s.image || 'https://picsum.photos/400/300?random=' + s.id} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img 
+                  src={s.image && s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : (s.image || 'https://picsum.photos/400/300?random=' + s.id)} 
+                  alt={s.name} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
                    <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>

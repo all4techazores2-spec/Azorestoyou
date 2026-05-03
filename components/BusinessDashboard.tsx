@@ -24,7 +24,7 @@ interface BusinessDashboardProps {
   staffRole?: string;
 }
 
-type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
+type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
 const BEAUTY_POS_CATEGORIES = ['Cabelo', 'Unhas', 'Estética', 'Massagem', 'Maquilhagem', 'Sobrancelhas', 'Depilação', 'Barba', 'Produtos'];
@@ -143,9 +143,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
     isStaff ? 'kitchen' : 
-    (isShop ? 'pos' : 
-    (isBeauty ? 'reservations' : 
-    (isHotel || isRentCar ? 'reservations' : 'tables')))
+    isShop ? 'pos' : 
+    isBeauty ? 'reservations' : 
+    isHotel ? 'reservas_hotel' :
+    isRentCar ? 'reservations' : 'tables'
   );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
@@ -578,21 +579,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const saveRoomEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingRoom) {
-      const newTables = [...tables];
-      newTables[editingRoom.idx] = editingRoom.room;
+      // Usar o ID para encontrar e atualizar, para ser mais seguro que o index
+      const newTables = tables.map(t => t.id === editingRoom.room.id ? editingRoom.room : t);
       setTables(newTables);
       
-      // Se for hotel, sincronizar também a lista de 'rooms' que o frontend lê
       if (isHotel) {
         const newRooms = newTables.map(t => ({
           id: t.id,
-          name: t.name || `Quarto ${t.number}`,
-          description: t.description || '',
-          pricePerNight: t.price_mid || t.price_low || 0,
-          image: t.image || (t.images && t.images[0]) || '',
-          capacity: t.seats || 2,
-          amenities: t.amenities || [],
-          gallery: t.images || []
+          name: (t as any).name || `Quarto ${(t as any).number}`,
+          description: (t as any).description || '',
+          pricePerNight: (t as any).price_mid || (t as any).price_low || 0,
+          image: (t as any).image || ((t as any).images && (t as any).images[0]) || '',
+          capacity: (t as any).seats || 2,
+          amenities: (t as any).amenities || [],
+          gallery: (t as any).images || []
         }));
         handleUpdate({ tables: newTables, rooms: newRooms });
       } else {
@@ -600,7 +600,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       }
       
       setEditingRoom(null);
-      alert("✅ Quarto atualizado com sucesso!");
+      alert("✅ Dados do quarto guardados!");
     }
   };
 
@@ -1079,7 +1079,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
               { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
               (!isHotel && !isRentCar && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
-              (isHotel && { id: 'reservations', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: pendingCount }),
+              (isHotel && { id: 'reservas_hotel', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: pendingCount }),
               { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
               { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
             ] as any[]).filter(item => item && (!isStaff || !item.hideForStaff)).map((item) => (
@@ -2121,11 +2121,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           key={room.id} 
                           className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 group"
                         >
-                           <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
-                              {((room as any).images && (room as any).images.length > 0) ? (
-                                <img src={(room as any).images[0]} alt="Room" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                            <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                               {((room as any).images && (room as any).images.length > 0) ? (
+                                 <img 
+                                   src={(room as any).images[0].startsWith('/') ? `${API_BASE_URL}${(room as any).images[0]}` : (room as any).images[0]} 
+                                   alt="Room" 
+                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                 />
+                               ) : (
+                                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                    <Hotel size={48} className="mb-2 opacity-20" />
                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Sem Foto</p>
                                 </div>
@@ -2192,11 +2196,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
           {activeTab === 'reservas_hotel' && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-               <div className="flex justify-between items-center">
+               <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                   <div>
-                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Reservas de Pacotes</h3>
+                    <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Reservas de Pacotes</h3>
                     <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Gestão de Pedidos Integrados (Hotel + Carro)</p>
                   </div>
+                  <button 
+                    onClick={() => onSync(business)}
+                    className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
+                  >
+                    <RefreshCw size={16} className={`text-blue-500 group-hover:rotate-180 transition-transform duration-700 ${isUploading ? 'animate-spin' : ''}`} />
+                    Sincronizar Dashboard
+                  </button>
                </div>
 
                <div className="bg-white border border-slate-100 rounded-[3rem] shadow-sm overflow-hidden">
@@ -4251,7 +4262,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                              {(editingRoom.room.images || []).map((img: string, i: number) => (
                                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 border-slate-100">
-                                  <img src={img} className="w-full h-full object-cover" />
+                                  <img 
+                                    src={img.startsWith('/') ? `${API_BASE_URL}${img}` : img} 
+                                    className="w-full h-full object-cover" 
+                                  />
                                   <button 
                                     onClick={() => {
                                       const updated = editingRoom.room.images.filter((_: any, idx: number) => idx !== i);

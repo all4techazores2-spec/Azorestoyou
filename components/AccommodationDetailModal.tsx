@@ -22,6 +22,10 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   onClose,
   onConfirm
 }) => {
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://azorestoyou-1.onrender.com';
+
   const [rentType, setRentType] = useState<'room' | 'house' | null>(null);
   const [showALOptions, setShowALOptions] = useState(accommodation.type === 'al');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -125,7 +129,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
-              src={[accommodation.image, ...(accommodation.gallery || [])][mainImageIndex]} 
+              src={[accommodation.image, ...(accommodation.gallery || [])][mainImageIndex].startsWith('/') ? `${API_BASE_URL}${[accommodation.image, ...(accommodation.gallery || [])][mainImageIndex]}` : [accommodation.image, ...(accommodation.gallery || [])][mainImageIndex]} 
               className="w-full h-full object-cover" 
               alt={accommodation.name} 
             />
@@ -272,7 +276,11 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                             ${selectedRoom?.id === room.id ? 'border-blue-600 bg-blue-50' : 'border-slate-100 hover:border-slate-200'}`}
                         >
                           <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
-                            <img src={room.image} className="w-full h-full object-cover" alt={room.name} />
+                            <img 
+                              src={room.image.startsWith('/') ? `${API_BASE_URL}${room.image}` : room.image} 
+                              className="w-full h-full object-cover" 
+                              alt={room.name} 
+                            />
                             <div 
                               onClick={(e) => { e.stopPropagation(); setPreviewRoom(room); }}
                               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -344,18 +352,16 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
 
                 {/* Image Slider with Fade In/Out */}
                 <div className="h-72 relative overflow-hidden group/slider">
-                   <AnimatePresence mode="wait">
-                     <motion.img 
-                       key={previewRoom.id + currentImageIndex}
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       exit={{ opacity: 0 }}
-                       transition={{ duration: 0.8 }}
-                       src={[previewRoom.image, ...(previewRoom.gallery || [])][currentImageIndex]} 
-                       className="w-full h-full object-cover" 
-                       alt={previewRoom.name} 
-                     />
-                   </AnimatePresence>
+                   <motion.img 
+                     key={previewRoom.id + currentImageIndex}
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     transition={{ duration: 0.8 }}
+                     src={[previewRoom.image, ...(previewRoom.gallery || [])][currentImageIndex].startsWith('/') ? `${API_BASE_URL}${[previewRoom.image, ...(previewRoom.gallery || [])][currentImageIndex]}` : [previewRoom.image, ...(previewRoom.gallery || [])][currentImageIndex]} 
+                     className="w-full h-full object-cover" 
+                     alt={previewRoom.name} 
+                   />
                    <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
                    
                    {/* Slider Navigation Indicators */}
