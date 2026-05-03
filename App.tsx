@@ -133,25 +133,32 @@ const App: React.FC = () => {
 
   // Initialize other static data on language change
   useEffect(() => {
-    const baseHotels = getHotels(language);
-    const testHotel = { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' } as any;
-    if (!baseHotels.find(h => h.id === 'hotel-1')) {
-      setHotels([testHotel, ...baseHotels]);
-    } else {
-      setHotels(baseHotels);
+    // Apenas carregar dados estáticos se os estados estiverem vazios (evita apagar dados do servidor)
+    if (hotels.length <= 1) {
+      const baseHotels = getHotels(language);
+      const testHotel = { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' } as any;
+      if (!baseHotels.find(h => h.id === 'hotel-1')) {
+        setHotels([testHotel, ...baseHotels]);
+      } else {
+        setHotels(baseHotels);
+      }
     }
 
-    const baseCars = getCars(language);
-    const testCar = { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' } as any;
-    if (!baseCars.find(c => c.id === 'rentcar-1')) {
-      setCars([testCar, ...baseCars]);
-    } else {
-      setCars(baseCars);
+    if (cars.length <= 1) {
+      const baseCars = getCars(language);
+      const testCar = { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' } as any;
+      if (!baseCars.find(c => c.id === 'rentcar-1')) {
+        setCars([testCar, ...baseCars]);
+      } else {
+        setCars(baseCars);
+      }
     }
 
     if (activities.length === 0) setActivities(getActivities(language));
     if (flights.length === 0) setFlights(getFlights(language));
     if (busSchedules.length === 0) setBusSchedules(BUS_SCHEDULES);
+    
+    // Categorias secundárias
     setServices(getServices(language));
     setAutoRepairs(getAutoRepairs(language));
     setAutoElectronics(getAutoElectronics(language));
@@ -1118,12 +1125,15 @@ const App: React.FC = () => {
 
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
-    const testBusinesses = [
-      { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' },
-      { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' }
-    ];
-
-    const currentBusiness = [...(beauty || []), ...(shops || []), ...(restaurants || []), ...(hotels || []), ...(cars || []), ...testBusinesses].find(b => b.id === currentBusinessId);
+    // Procurar o negócio nos estados sincronizados com o servidor
+    const currentBusiness = [
+      ...(hotels || []), 
+      ...(cars || []), 
+      ...(restaurants || []), 
+      ...(shops || []), 
+      ...(beauty || []), 
+      ...(services || [])
+    ].find(b => b.id === currentBusinessId);
     
     if (currentBusiness) {
       const bType = (currentBusiness.businessType || (currentBusiness as any).type || 'restaurant').toLowerCase();

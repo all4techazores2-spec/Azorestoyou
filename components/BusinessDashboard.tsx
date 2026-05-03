@@ -238,15 +238,37 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  const [roomFloorFilter, setRoomFloorFilter] = useState<number | 'all'>('all');
+
   // Local state for management
-  const [tables, setTables] = useState<RestaurantTable[]>(business.tables || [
-    { id: 'T1', number: 1, seats: 2, status: 'available' },
-    { id: 'T2', number: 2, seats: 4, status: 'occupied', customerName: 'João Santos', reservationTime: '13:00', currentOrderId: 'K1' },
-    { id: 'T3', number: 3, seats: 4, status: 'available' },
-    { id: 'T4', number: 4, seats: 6, status: 'reserved', customerName: 'Maria Silva', reservationTime: '20:30' },
-    { id: 'T5', number: 5, seats: 2, status: 'available' },
-    { id: 'T6', number: 6, seats: 4, status: 'available' },
-  ]);
+  const [tables, setTables] = useState<RestaurantTable[]>(() => {
+    if (business.tables && business.tables.length > 0) return business.tables;
+    if (isHotel) {
+      // Gerar 20 quartos padrão (10 por piso)
+      const initialRooms: RestaurantTable[] = [];
+      for (let f = 1; f <= 2; f++) {
+        for (let i = 1; i <= 10; i++) {
+          const roomNum = f * 100 + i;
+          initialRooms.push({
+            id: `R${roomNum}`,
+            number: roomNum,
+            seats: 2,
+            status: 'available',
+            floor: f as any // Adicionando propriedade de piso
+          } as any);
+        }
+      }
+      return initialRooms;
+    }
+    return [
+      { id: 'T1', number: 1, seats: 2, status: 'available' },
+      { id: 'T2', number: 2, seats: 4, status: 'occupied', customerName: 'João Santos', reservationTime: '13:00', currentOrderId: 'K1' },
+      { id: 'T3', number: 3, seats: 4, status: 'available' },
+      { id: 'T4', number: 4, seats: 6, status: 'reserved', customerName: 'Maria Silva', reservationTime: '20:30' },
+      { id: 'T5', number: 5, seats: 2, status: 'available' },
+      { id: 'T6', number: 6, seats: 4, status: 'available' },
+    ];
+  });
 
   const [kitchenOrders, setKitchenOrders] = useState<KitchenOrder[]>(business.kitchenOrders || [
     { id: 'K1', tableId: 'T2', status: 'preparing', timestamp: new Date().toISOString(), items: business.dishes && business.dishes.length > 0 ? [{ dish: business.dishes[0], quantity: 2 }] : [] },
@@ -496,6 +518,52 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     };
     setTables([...tables, newTable]);
     handleUpdate({ tables: [...tables, newTable] });
+  };
+
+  const addRoom = () => {
+    const nextNum = tables.length > 0 ? Math.max(...tables.map(t => t.number)) + 1 : 101;
+    const nextFloor = nextNum > 200 ? 2 : 1;
+    const newRoom: any = {
+      id: `R${nextNum}`,
+      number: nextNum,
+      seats: 2,
+      status: 'available',
+      floor: nextFloor,
+      type: 'Standard',
+      amenities: ['Wi-Fi'],
+      price_low: 65,
+      price_mid: 85,
+      price_high: 120,
+      images: []
+    };
+    const newTables = [...tables, newRoom];
+    setTables(newTables);
+    handleUpdate({ tables: newTables });
+    setEditingRoom({ idx: newTables.length - 1, room: { ...newRoom } });
+  };
+
+  const startRoomEdit = (idx: number) => {
+    setEditingRoom({ idx, room: { ...tables[idx] } });
+  };
+
+  const saveRoomEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingRoom) {
+      const newTables = [...tables];
+      newTables[editingRoom.idx] = editingRoom.room;
+      setTables(newTables);
+      handleUpdate({ tables: newTables });
+      setEditingRoom(null);
+      alert("✅ Quarto atualizado com sucesso!");
+    }
+  };
+
+  const removeRoom = (idx: number) => {
+    if (window.confirm("Deseja remover este quarto permanentemente?")) {
+      const newTables = tables.filter((_, i) => i !== idx);
+      setTables(newTables);
+      handleUpdate({ tables: newTables });
+    }
   };
 
   const assignReservationToTable = (tableId: string) => {
@@ -881,350 +949,115 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           <div className="pt-4 border-t border-slate-100 flex justify-center">
             <button onClick={onLogout} className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest flex items-center gap-2 transition-colors">
               <LogOut size={14} /> Sair do Sistema
-            </button>
+      return (
+    <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden">
+      {/* Sidebar - Estilo Hotel Excellence (Fixa) */}
+      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden`}>
+          <div className="p-8 flex items-center gap-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
+             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <AzoresLogo size={28} color="white" />
+             </div>
+             <div>
+                <h1 className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">Hotel Excellence</h1>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">Boutique Hotel</p>
+             </div>
           </div>
-        </motion.div>
+
+          <div className="flex-1 overflow-y-auto py-8 px-4 space-y-1 scrollbar-hide">
+            {([
+              { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, hideForStaff: true },
+              { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : <TableIcon size={18} />, hideForStaff: true },
+              { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={18} />, hideForStaff: true },
+              { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length },
+              { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
+              { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
+              { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
+              { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount },
+              { id: 'reservas_hotel', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: 0 },
+              { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
+              { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
+            ] as any[]).filter(item => (!isStaff || !item.hideForStaff)).map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${
+                  activeTab === item.id 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black' 
+                    : 'hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-lg transition-all ${activeTab === item.id ? 'bg-white/20' : 'group-hover:bg-slate-700'}`}>
+                    {item.icon}
+                  </div>
+                  <span className="text-xs uppercase tracking-widest">{item.label}</span>
+                </div>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md animate-pulse shadow-lg shadow-red-500/20">{item.badge}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* User Profile Card (Estilo Foto 2) */}
+          <div className="p-6 border-t border-white/5 bg-slate-900/50 mt-auto">
+             <div className="bg-slate-800/40 p-4 rounded-2xl flex items-center gap-4 mb-4 border border-white/5 shadow-inner">
+                <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30">
+                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo" alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                   <p className="text-white font-black text-xs truncate">Gustavo Pereira</p>
+                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">Gerente Geral</p>
+                </div>
+                <button onClick={onLogout} className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
+                   <LogOut size={16} />
+                </button>
+             </div>
+             
+             <button 
+               onClick={() => { onSync(business); }}
+               className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
+             >
+               Publicar no Servidor
+             </button>
+          </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-white flex font-sans overflow-hidden">
-      {/* Sidebar Overlay (Mobile) */}
-      <AnimatePresence>
-        {!sidebarOpen && (
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="fixed top-4 left-4 z-40 p-3 bg-slate-900 text-white rounded-full shadow-xl lg:hidden"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <motion.aside 
-        initial="collapsed"
-        animate={
-          typeof window !== 'undefined' && window.innerWidth < 1024 
-            ? (sidebarOpen ? "mobileOpen" : "mobileClosed")
-            : (isExpanded ? "expanded" : "collapsed")
-        }
-        variants={sidebarVariants}
-        onHoverStart={() => setSidebarHovered(true)}
-        onHoverEnd={() => setSidebarHovered(false)}
-        className="h-screen bg-slate-900 text-white flex flex-col fixed lg:sticky top-0 left-0 z-30 shadow-2xl flex-shrink-0 overflow-hidden"
-      >
-        <div className="p-4 h-24 border-b border-white/10 flex items-center gap-4 overflow-hidden">
-           <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
-              {isBeauty ? <Scissors size={26} /> : isShop ? <Store size={26} /> : isService ? <Wrench size={26} /> : <Utensils size={32} />}
-           </div>
-           <AnimatePresence>
-             {isExpanded && (
-               <motion.div 
-                 initial={{ opacity: 0, x: -10 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 exit={{ opacity: 0, x: -10 }}
-                 className="flex-1 overflow-hidden"
-               >
-                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 opacity-60">Management</h2>
-                 <p className="font-black truncate text-sm tracking-tight">{business.name}</p>
-               </motion.div>
-             )}
-           </AnimatePresence>
-        </div>
-
-        <div className="px-4 py-2">
-          <button 
-            onClick={() => onSync(business)}
-            className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center transition-all shadow-lg shadow-emerald-900/20 active:scale-95 group overflow-hidden border border-emerald-400/20"
-          >
-            <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-              <Save size={18} className="group-hover:scale-110 transition-transform" />
+      {/* Main Container */}
+      <div className="flex-1 ml-80 min-h-screen flex flex-col relative overflow-hidden">
+        {/* Top Header - Estilo Foto 2 */}
+        <header className="sticky top-0 bg-white border-b border-slate-100 h-24 flex items-center justify-between px-10 z-40 shadow-sm">
+            <div className="flex items-center gap-6">
+               <button className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all">
+                  <Menu size={22} />
+               </button>
+               <div>
+                  <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                     Bem-vindo, Gustavo! 👋
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu hotel hoje.</p>
+               </div>
             </div>
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.span 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="font-black text-[10px] uppercase tracking-widest"
-                >
-                  Publicar no Servidor
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar whitespace-nowrap">
-          {([
-            { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
-            { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Estado da Frota' : isBeauty ? 'Agenda / Mapa' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas', icon: isHotel ? <Hotel size={20} /> : isRentCar ? <Car size={20} /> : isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
-            { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={20} />, hidden: !isHotel, hideForStaff: true },
-            { id: 'kitchen', label: isHotel ? 'Pedidos Restaurante' : isRentCar ? 'Monitor de Aluguer' : isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isHotel ? <Utensils size={20} /> : isRentCar ? <Clock size={20} /> : isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop || isRentCar) && !isStaff },
-            { id: 'pos', label: isHotel ? 'Faturação / Bar' : isRentCar ? 'Contratos / POS' : isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
-            { id: 'dishes', label: isHotel ? 'Ementa Restaurante' : isRentCar ? 'Gestão de Frota' : isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isHotel ? <Utensils size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
-            { id: 'products', label: isRentCar ? 'Peças / Consumíveis' : isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
-            { id: 'updates', label: isHotel ? 'Promoções Época' : isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
-            { id: 'reservations', label: isHotel ? 'Check-ins / Pacotes' : isRentCar ? 'Reservas de Carros' : isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
-            { id: 'reservas_hotel', label: 'Reservas Restaurante', icon: <Calendar size={20} />, hidden: !isHotel },
-            { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
-            { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
-          ] as any[]).filter(item => (!isStaff || !item.hideForStaff) && !item.hidden).map(item => (
-            <button 
-              key={item.id}
-              onClick={() => setActiveTab(item.id as DashboardTab)}
-              className={`w-full h-12 rounded-2xl flex items-center transition-all duration-300 group relative ${
-                activeTab === item.id 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                 <span className={`${activeTab === item.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'}`}>
-                   {item.icon}
-                 </span>
-                 {item.badge && item.badge > 0 && (
-                   <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-slate-900 animate-pulse">
-                     {item.badge}
-                   </span>
-                 )}
-              </div>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="flex-1 flex items-center justify-between pr-4 overflow-hidden"
-                  >
-                    <span className="text-sm font-bold tracking-tight whitespace-nowrap">{item.label}</span>
-                    {item.badge && (
-                      <span className={`text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center animate-bounce shadow-lg ${item.id === 'kitchen' ? 'bg-orange-500 shadow-orange-500/50' : 'bg-red-500 shadow-red-500/50'}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
-          ))}
+            <div className="flex items-center gap-6">
+               <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                  <Calendar size={18} className="text-blue-500" />
+                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
+                     {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+               </div>
 
-          {/* STAFF RESTAURANTE — Flyout Panel */}
-          {!isStaff && (
-            <div className="relative">
-              <button
-                onClick={() => setStaffOpen(prev => !prev)}
-                className={`w-full h-12 rounded-2xl flex items-center transition-all duration-300 group relative ${
-                  ['staff_list','ponto','ferias'].includes(activeTab)
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                  <Users size={20} className={['staff_list','ponto','ferias'].includes(activeTab) ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'} />
-                </div>
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-                      className="flex-1 flex items-center justify-between pr-4 overflow-hidden">
-                      <span className="text-sm font-bold tracking-tight">Equipa</span>
-                      <ChevronRight size={14} className={`transition-transform duration-300 ${staffOpen ? 'rotate-90' : ''}`} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-
-              <AnimatePresence>
-                {staffOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setStaffOpen(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                      className="fixed top-auto left-[84px] z-50 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-2 min-w-[190px]"
-                      style={{ marginTop: '-3rem' }}
-                    >
-                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-slate-800" />
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-3 pt-2 pb-1">Equipa Azores4you</p>
-                      {([
-                        { id: 'staff_list', label: 'Funcionários',      icon: <Users size={15}/> },
-                        { id: 'ponto',      label: 'Relógio de Ponto',  icon: <Clock size={15}/> },
-                        { id: 'ferias',     label: 'Mapa de Férias',    icon: <Calendar size={15}/> },
-                      ] as any[]).map((sub, i) => (
-                        <motion.button key={sub.id}
-                          initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-                          onClick={() => { setActiveTab(sub.id as DashboardTab); setStaffOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                            activeTab === sub.id ? 'bg-blue-600 text-white' : 'text-slate-300 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <span className={activeTab === sub.id ? 'text-white' : 'text-slate-400'}>{sub.icon}</span>
-                          <span className="whitespace-nowrap">{sub.label}</span>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+               <div className="flex items-center gap-3">
+                  <button onClick={() => window.location.reload()} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
+                     <Clock size={20} className="group-hover:rotate-180 transition-transform duration-500" />
+                  </button>
+                  <button className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
+                     <Bell size={22} />
+                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+                  </button>
+               </div>
             </div>
-          )}
-
-          {/* DEFINIÇÕES — Flyout Panel (slides left → right) */}
-          {!isStaff && (
-            <div className="relative">
-              {/* Parent Button */}
-              <button
-                onClick={() => setSettingsOpen(prev => !prev)}
-                className={`w-full h-12 rounded-2xl flex items-center transition-all duration-300 group relative ${
-                  ['settings', 'business', 'staff', 'gallery', 'reviews', 'openingHours'].includes(activeTab)
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                  <Settings size={20} className={['settings','business','staff','gallery','reviews','openingHours'].includes(activeTab) ? 'text-white' : 'text-slate-500 group-hover:text-blue-400'} />
-                </div>
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="flex-1 flex items-center justify-between pr-4 overflow-hidden"
-                    >
-                      <span className="text-sm font-bold tracking-tight">Definições</span>
-                      <ChevronRight size={14} className={`transition-transform duration-300 ${settingsOpen ? 'rotate-90' : ''}`} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
-
-              {/* FLYOUT — slides left → right, fixed on screen */}
-              <AnimatePresence>
-                {settingsOpen && (
-                  <>
-                    {/* Backdrop to close on outside click */}
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setSettingsOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, x: -16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -16 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                      className="fixed top-auto left-[84px] z-50 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl shadow-black/40 p-2 min-w-[180px] overflow-hidden"
-                      style={{ marginTop: '-3rem' }}
-                    >
-                      {/* Arrow pointer */}
-                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-slate-800" />
-
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-3 pt-2 pb-1">Definições</p>
-
-                      {([
-                        { id: 'business', label: 'Negócio',      icon: <Settings size={15} /> },
-                        { id: 'staff',    label: 'Funcionários', icon: <Users size={15} /> },
-                        { id: 'gallery',  label: 'Galeria',      icon: <ImageIcon size={15} /> },
-                        { id: 'reviews',  label: 'Avaliações',   icon: <Star size={15} />, badge: ratedReservations.length > 0 ? ratedReservations.length : undefined },
-                      ] as any[]).map((sub, i) => (
-                        <motion.button
-                          key={sub.id}
-                          initial={{ opacity: 0, x: -12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => { setActiveTab(sub.id as DashboardTab); setSettingsOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                            activeTab === sub.id
-                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                              : 'text-slate-300 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <span className={activeTab === sub.id ? 'text-white' : 'text-slate-400'}>{sub.icon}</span>
-                          <span className="tracking-tight whitespace-nowrap">{sub.label}</span>
-                          {sub.badge && sub.badge > 0 && (
-                            <span className="ml-auto w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center">{sub.badge}</span>
-                          )}
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
             </div>
-          )}
-        </nav>
-
-        {/* FECHAR CAIXA */}
-        {!isStaff && isDrawerOpen && (
-          <div className="px-4 pb-4">
-            <button 
-              onClick={closeDrawer}
-              className="w-full h-12 rounded-2xl flex items-center transition-all duration-300 group relative text-red-400 hover:text-white hover:bg-red-500 shadow-lg shadow-red-900/10 border border-red-500/20"
-            >
-              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                <Lock size={18} className="text-red-500 group-hover:text-white" />
-              </div>
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex-1 pr-4 overflow-hidden text-left">
-                    <span className="text-[10px] font-black uppercase tracking-widest">Fechar Caixa</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
-          </div>
-        )}
-
-        <div className="p-4 border-t border-white/10 overflow-hidden">
-          <button 
-            onClick={onLogout} 
-            className={`w-full flex items-center h-12 rounded-2xl transition-all ${
-              isExpanded ? 'justify-start gap-4 px-4' : 'justify-center'
-            } text-red-400 hover:text-white hover:bg-red-500/20`}
-          >
-             <LogOut className="w-5 h-5 flex-shrink-0" /> 
-             {isExpanded && <span className="font-black text-sm tracking-widest uppercase truncate">{t('nav_logout')}</span>}
-          </button>
-        </div>
-      </motion.aside>
-
-      {/* Main Content */}
-      <main className="flex-1 min-h-screen overflow-y-auto bg-white flex flex-col relative">
-        <header className="sticky top-0 bg-white/90 backdrop-blur-md z-20 px-8 py-6 border-b border-slate-100 flex justify-between items-center h-24">
-           <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all mr-2"
-              >
-                <LayoutDashboard className="w-5 h-5" />
-              </button>
-              <div className="hidden lg:block overflow-hidden max-w-xs">
-                <h1 className="text-xl font-black text-slate-800 tracking-tighter uppercase truncate w-48">
-                   {business.name}
-                </h1>
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] font-mono opacity-60">
-                   {business.island}
-                </p>
-              </div>
-           </div>
-
-           {/* Central Clock */}
-           <div className="flex flex-col items-center">
-              <p className="text-4xl font-black text-slate-900 tracking-tighter tabular-nums">
-                 {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                 {currentTime.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-           </div>
-<div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live System</span>
-              </div>
-           </div>
         </header>
 
         <div className="p-8 pb-32">
@@ -1885,8 +1718,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               setPosCashReceived('');
                               setPosCart([]);
                               setPosSplitBy(1);
-                              alert(`✅ Venda concluída! ${posPaymentModal === 'cash' ? 'Dinheiro' : 'Cartão'}${posNif.length === 9 ? ` • Fatura NIF ${posNif}` : ''}`);
-                            }}
                             className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
                           >
                             <CheckCircle size={18} /> Confirmar Venda
@@ -1919,160 +1750,167 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             const topSales = Object.values(salesMap).sort((a, b) => b.count - a.count).slice(0, 6);
             const maxSales = Math.max(...topSales.map(s => s.count), 1);
 
-            const totalStaff = staff.length;
-            const onDutyStaff = staff.filter(s => s.onDuty).length;
-            const onVacation = staff.filter(s => s.vacationStart).length;
-            const debtClients = fiadoClients.filter(c => c.balance < 0);
-            const creditClients = fiadoClients.filter(c => c.balance > 0);
-
             return (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                {/* KPI Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                  {[
-                    { label: 'Rating Médio', val: `★ ${averageRating}`, color: 'bg-blue-50 text-blue-700', icon: <Star className="fill-current" size={18}/> },
-                    { label: 'Avaliações', val: (Number(business.reviews) || 0) + ratedReservations.length, color: 'bg-indigo-50 text-indigo-700', icon: <Users size={18}/> },
-                    { label: isBeauty ? 'Serviços Ativos' : isShop ? 'Produtos Ativos' : 'Pratos Ativos', val: (business.dishes || []).length, color: 'bg-emerald-50 text-emerald-700', icon: isBeauty ? <Sparkles size={18}/> : isShop ? <ShoppingBag size={18}/> : <Utensils size={18}/> },
-                    { label: isBeauty ? 'Marcações Pend.' : 'Reservas Pend.', val: pendingCount, color: 'bg-amber-50 text-amber-700', icon: <Clock size={18}/> },
-                    { label: 'Total Equipa', val: totalStaff, color: 'bg-rose-50 text-rose-700', icon: <Users size={18}/> },
-                    { label: 'Em Serviço', val: `${onDutyStaff}/${totalStaff}`, color: 'bg-emerald-50 text-emerald-700', icon: <CheckCircle size={18}/> },
-                  ].map((stat, i) => (
-                    <div key={i} className="bg-white border border-slate-100 p-5 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-500 group">
-                       <div className={`w-10 h-10 ${stat.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>{stat.icon}</div>
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                       <p className="text-2xl font-black text-slate-800 tracking-tight">{stat.val}</p>
-                    </div>
-                  ))}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+                {/* Stats Grid - Estilo Foto 2 (Hotel Excellence) */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                   {[
+                     { label: 'Reservas Hoje', value: reservations.length, icon: <Calendar size={24} />, color: 'blue', change: '↑ 12% vs ontem' },
+                     { label: 'Check-ins', value: pendingCount, icon: <Hotel size={24} />, color: 'orange', change: '↑ 14% vs ontem' },
+                     { label: 'Check-outs', value: '7', icon: <LogOut size={24} />, color: 'emerald', change: '↓ 5% vs ontem' },
+                     { label: 'Hóspedes', value: '42', icon: <Users size={24} />, color: 'indigo', change: '↑ 8% vs ontem' },
+                     { label: 'Receita Hoje', value: '€ 9.750', icon: <DollarSign size={24} />, color: 'purple', change: '↑ 15% vs ontem' }
+                   ].map((stat, i) => (
+                     <div key={i} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                        <div className="flex items-center justify-between mb-4">
+                           <div className={`p-4 rounded-2xl bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>
+                              {stat.icon}
+                           </div>
+                        </div>
+                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                        <h4 className="text-3xl font-black text-slate-900 tracking-tighter mb-2">{stat.value}</h4>
+                        <div className="flex items-center gap-2">
+                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${stat.change.includes('↑') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                              {stat.change}
+                           </span>
+                        </div>
+                     </div>
+                   ))}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* TOP SELLING CHART */}
-                  <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
+                  <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
+                    <div className="flex items-center justify-between mb-10">
                       <div>
-                        <h3 className="font-black text-slate-800 uppercase tracking-tighter">{isBeauty ? 'Serviços Mais Procurados' : 'Mais Vendidos'}</h3>
-                        <p className="text-slate-400 text-xs font-bold mt-0.5">{isBeauty ? 'Tratamentos e serviços com mais agendamentos' : 'Pratos e produtos com mais pedidos'}</p>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Análise de Performance</h3>
+                        <p className="text-slate-400 text-xs font-black uppercase tracking-widest mt-1">Serviços e pratos com maior volume</p>
                       </div>
-                      <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
-                        {isBeauty ? <Sparkles size={16} className="text-blue-600" /> : <Utensils size={16} className="text-blue-600" />}
+                      <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                        <BarChart3 size={24} />
                       </div>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {topSales.map((item, i) => (
-                        <div key={i} className="flex items-center gap-4 group">
-                          <div className="w-6 text-[10px] font-black text-slate-300 text-right flex-shrink-0">#{i+1}</div>
+                        <div key={i} className="flex items-center gap-6 group">
+                          <div className="w-8 text-[11px] font-black text-slate-300 text-right flex-shrink-0">0{i+1}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-xs font-black text-slate-700 truncate">{item.name}</p>
-                              <p className="text-xs font-black text-blue-600 ml-2 flex-shrink-0">{item.count}×</p>
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-sm font-black text-slate-700 truncate">{item.name}</p>
+                              <p className="text-sm font-black text-blue-600 ml-2 flex-shrink-0">{item.count} Unid.</p>
                             </div>
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${(item.count / maxSales) * 100}%` }}
-                                transition={{ delay: i * 0.1, duration: 0.6, ease: 'easeOut' }}
-                                className={`h-full rounded-full ${
-                                  i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-indigo-400' : i === 2 ? 'bg-violet-400' : 'bg-slate-300'
+                                transition={{ delay: i * 0.1, duration: 0.8, ease: 'circOut' }}
+                                className={`h-full rounded-full shadow-lg ${
+                                  i === 0 ? 'bg-blue-600' : i === 1 ? 'bg-blue-500' : i === 2 ? 'bg-blue-400' : 'bg-slate-300'
                                 }`}
                               />
                             </div>
                           </div>
                         </div>
                       ))}
-                      {topSales.length === 0 && (
-                        <div className="py-12 text-center text-slate-300">
-                          {isBeauty ? <Sparkles size={32} className="mx-auto mb-2 opacity-30"/> : <Utensils size={32} className="mx-auto mb-2 opacity-30"/>}
-                          <p className="text-xs font-bold uppercase tracking-widest">{isBeauty ? 'Sem dados de agendamentos' : 'Sem dados de vendas ainda'}</p>
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN */}
-                  <div className="space-y-6">
+                  {/* RIGHT COLUMN: Staff & Island */}
+                  <div className="space-y-8">
                     {/* Staff Quick */}
-                    <div className="bg-slate-900 text-white rounded-[2.5rem] p-6">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Equipa Hoje</p>
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-emerald-500/20 rounded-2xl p-3 text-center">
-                          <p className="text-2xl font-black text-emerald-400">{onDutyStaff}</p>
-                          <p className="text-[9px] font-black text-emerald-300 uppercase tracking-widest">Em serviço</p>
+                    <div className="bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
+                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Equipa em Serviço</p>
+                      <div className="grid grid-cols-2 gap-4 mb-8">
+                        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
+                          <p className="text-3xl font-black text-white mb-1">{onDutyStaff}</p>
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ativos</p>
                         </div>
-                        <div className="bg-amber-500/20 rounded-2xl p-3 text-center">
-                          <p className="text-2xl font-black text-amber-400">{onVacation}</p>
-                          <p className="text-[9px] font-black text-amber-300 uppercase tracking-widest">De férias</p>
+                        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
+                          <p className="text-3xl font-black text-slate-400 mb-1">{onVacation}</p>
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Férias</p>
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         {staff.slice(0,3).map(m => (
-                          <div key={m.id} className="flex items-center gap-3">
-                            <div className="w-7 h-7 bg-slate-700 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0">{(m.name||'?').charAt(0)}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold truncate">{m.name}</p>
+                          <div key={m.id} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
+                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10">
+                               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${m.name}`} alt="Staff" className="w-full h-full object-cover" />
                             </div>
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${ m.vacationStart ? 'bg-amber-400' : m.onDuty ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}/>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black text-white truncate">{m.name}</p>
+                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Colaborador</p>
+                            </div>
+                            <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${ m.vacationStart ? 'bg-amber-400' : m.onDuty ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}/>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Island location */}
-                    <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 flex flex-col justify-center items-center text-center">
-                      <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-3">
-                        <MapPin className="text-slate-300 w-7 h-7" />
+                    {/* Island Location Card */}
+                    <div className="bg-white border border-slate-100 rounded-[3rem] p-10 flex flex-col items-center text-center shadow-sm">
+                      <div className="w-20 h-20 bg-blue-50 rounded-[2rem] flex items-center justify-center mb-6 text-blue-600">
+                        <MapPin size={40} />
                       </div>
-                      <h4 className="font-black text-slate-800 uppercase tracking-tighter">{business.island}</h4>
-                      <p className="text-slate-400 text-xs font-medium">Localização Principal</p>
-                      <div className="flex gap-2 mt-4">
-                        <button onClick={() => setActiveTab('reservations')} className="px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">{isBeauty ? 'Marcações' : 'Reservas'}</button>
-                        <button onClick={() => setActiveTab('dishes')} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">{isBeauty ? 'Serviços' : isShop ? 'Catálogo' : 'Ementa'}</button>
+                      <h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-1">{business.island}</h4>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-8">Localização do Negócio</p>
+                      
+                      <div className="flex flex-col w-full gap-3">
+                        <button onClick={() => setActiveTab('reservations')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Gerir Reservas</button>
+                        <button onClick={() => setActiveTab('dishes')} className="w-full py-4 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Ver Ementa</button>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* FIADO — Client Tabs */}
-                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between mb-8">
                     <div>
-                      <h3 className="font-black text-slate-800 uppercase tracking-tighter">{isBeauty ? 'Fiado / Contas de Clientes' : 'Fiado / Créditos de Restaurante'}</h3>
-                      <p className="text-slate-400 text-xs font-bold mt-0.5">{isBeauty ? 'Clientes com saldo em conta no salão' : 'Clientes com saldo em conta no restaurante'}</p>
+                      <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Contas de Clientes (Fiado)</h3>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Saldos pendentes e créditos de consumo</p>
                     </div>
-                    <div className="flex gap-3 text-[10px] font-black">
-                      <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full">{debtClients.length} em dívida</span>
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full">{creditClients.length} com crédito</span>
+                    <div className="flex gap-4">
+                      <div className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100">{debtClients.length} Em Dívida</div>
+                      <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">{creditClients.length} Com Crédito</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {fiadoClients.map(client => (
-                      <div key={client.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${
-                        client.balance < 0 ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'
+                      <div key={client.id} className={`flex items-center gap-6 p-6 rounded-[2rem] border transition-all hover:shadow-md ${
+                        client.balance < 0 ? 'bg-red-50/30 border-red-100' : 'bg-emerald-50/30 border-emerald-100'
                       }`}>
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0 ${
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 shadow-sm ${
                           client.balance < 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                         }`}>{client.name.charAt(0)}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-slate-800 text-sm truncate">{client.name}</p>
-                          <p className="text-[10px] text-slate-400 font-medium">{client.phone} • Última visita: {client.lastVisit}</p>
+                          <p className="font-black text-slate-900 text-lg truncate leading-tight">{client.name}</p>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{client.phone}</p>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`font-black text-lg ${ client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                        <div className="text-right flex-shrink-0 px-4">
+                          <p className={`font-black text-2xl tracking-tighter ${ client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                             {client.balance < 0 ? '-' : '+'}€{Math.abs(client.balance).toFixed(2)}
                           </p>
-                          <p className={`text-[9px] font-black uppercase tracking-widest ${ client.balance < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                            {client.balance < 0 ? 'deve' : 'crédito'}
-                          </p>
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-2">
                           <button onClick={() => {
                             const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance + 5).toFixed(2))} : c);
                             setFiadoClients(updated);
                             handleUpdate({ fiadoClients: updated });
-                          }} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 text-sm border border-emerald-100">+</button>
+                          }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 shadow-sm border border-emerald-100 transition-all active:scale-90">+</button>
                           <button onClick={() => {
                             const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance - 5).toFixed(2))} : c);
                             setFiadoClients(updated);
                             handleUpdate({ fiadoClients: updated });
+                          }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-500 font-black hover:bg-red-50 shadow-sm border border-red-100 transition-all active:scale-90">−</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
+   handleUpdate({ fiadoClients: updated });
                           }} className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-red-500 font-black hover:bg-red-50 text-sm border border-red-100">−</button>
                         </div>
                       </div>
@@ -2124,80 +1962,109 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           )}
 
           {activeTab === 'room_management' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                   <div>
-                    <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Unidades Hoteleiras</h3>
-                    <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Edição de Tipologias, Comodidades e Preços</p>
+                    <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Gestão de Unidades Hoteleiras</h3>
+                    <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest">Edição de Tipologias, Comodidades e Preços</p>
                   </div>
-                  <button 
-                    onClick={() => {
-                      const newRoom: any = { id: Date.now(), number: (business.tables?.length || 0) + 1, type: 'Standard', amenities: ['Wi-Fi'], prices: { baixa: 65, media: 95, alta: 145 }, gallery: [] };
-                      onUpdateBusiness({ ...business, tables: [...(business.tables || []), newRoom] });
-                    }}
-                    className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-all flex items-center gap-2"
-                  >
-                    <Plus size={18} /> Adicionar Quarto / Unidade
-                  </button>
+                  <div className="flex flex-wrap gap-4">
+                     {/* Floor Filters */}
+                     <div className="bg-white border border-slate-100 p-1.5 rounded-2xl flex gap-1 shadow-sm">
+                        {['all', 1, 2].map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setRoomFloorFilter(f as any)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                              roomFloorFilter === f ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'
+                            }`}
+                          >
+                            {f === 'all' ? 'Todos' : `Piso ${f}`}
+                          </button>
+                        ))}
+                     </div>
+                     <button onClick={addRoom} className="px-8 py-4 bg-blue-600 text-white rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-600/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                        <Plus size={18} /> Adicionar Quarto / Unidade
+                     </button>
+                  </div>
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {(business.tables || []).map((room, idx) => (
-                    <div key={idx} className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full group">
-                       <div className="h-64 relative overflow-hidden bg-slate-100">
-                          <img 
-                            src={room.gallery?.[0] || 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1974&auto=format&fit=crop'} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                          />
-                          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full font-black text-blue-600 text-[10px] uppercase tracking-widest shadow-lg">
-                             {room.type || 'Standard'}
-                          </div>
-                          <button 
-                            onClick={() => setEditingRoom(room)}
-                            className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 backdrop-blur-[2px]"
-                          >
-                             <Plus size={32} />
-                             <span className="text-xs font-black uppercase tracking-widest">Editar Detalhes</span>
-                          </button>
-                       </div>
-                       
-                       <div className="p-8 flex-1 flex flex-col">
-                          <div className="flex justify-between items-start mb-6">
-                             <div>
-                                <h4 className="text-2xl font-black text-slate-800 tracking-tighter">Quarto #{room.number}</h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                   <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status: Livre / Limpo</span>
+               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {tables
+                    .filter(t => roomFloorFilter === 'all' || (t as any).floor === roomFloorFilter)
+                    .map((room, idx) => {
+                      const actualIdx = tables.indexOf(room);
+                      return (
+                        <motion.div 
+                          layout
+                          key={room.id} 
+                          className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 group"
+                        >
+                           <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                              {((room as any).images && (room as any).images.length > 0) ? (
+                                <img src={(room as any).images[0]} alt="Room" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                   <Hotel size={48} className="mb-2 opacity-20" />
+                                   <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Sem Foto</p>
                                 </div>
-                             </div>
-                             <div className="text-right">
-                                <p className="text-2xl font-black text-blue-600 tracking-tighter">€{room.prices?.baixa || 65}</p>
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Base Época Baixa</p>
-                             </div>
-                          </div>
+                              )}
+                              <div className="absolute top-6 left-6 flex flex-col gap-2">
+                                 <span className="px-4 py-1.5 bg-white/90 backdrop-blur-md text-blue-600 text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg">
+                                    {(room as any).type || 'Standard'}
+                                 </span>
+                                 <span className="px-4 py-1.5 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg">
+                                    Piso {(room as any).floor || 1}
+                                 </span>
+                              </div>
+                           </div>
+                           
+                           <div className="p-8">
+                              <div className="flex justify-between items-start mb-6">
+                                 <div>
+                                    <h4 className="text-2xl font-black text-slate-800 tracking-tighter uppercase mb-1">Quarto #{(room as any).number}</h4>
+                                    <div className="flex items-center gap-2">
+                                       <div className={`w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status: {room.status === 'available' ? 'Livre / Limpo' : 'Ocupado'}</p>
+                                    </div>
+                                 </div>
+                                 <div className="text-right">
+                                    <p className="text-2xl font-black text-blue-600 tracking-tighter">€{(room as any).price_low || 65}</p>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Base Época Baixa</p>
+                                 </div>
+                              </div>
 
-                          <div className="flex flex-wrap gap-2 mb-8">
-                             {(room.amenities || ['Wi-Fi', 'TV']).slice(0, 4).map((am, i) => (
-                               <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-100">{am}</span>
-                             ))}
-                             {room.amenities?.length > 4 && <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest">+{room.amenities.length - 4}</span>}
-                          </div>
+                              <div className="flex flex-wrap gap-2 mb-8">
+                                 {((room as any).amenities || ['Wi-Fi', 'Smart TV']).slice(0, 3).map((am: string, i: number) => (
+                                   <span key={i} className="px-3 py-1 bg-slate-50 text-slate-500 text-[9px] font-black rounded-lg uppercase tracking-widest border border-slate-100">
+                                      {am}
+                                   </span>
+                                 ))}
+                                 {((room as any).amenities || []).length > 3 && (
+                                   <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded-lg uppercase tracking-widest">
+                                      + {((room as any).amenities || []).length - 3}
+                                   </span>
+                                 )}
+                              </div>
 
-                          <div className="mt-auto pt-6 border-t border-slate-50 flex gap-2">
-                             <button onClick={() => setEditingRoom(room)} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">Configurar</button>
-                             <button 
-                               onClick={() => {
-                                 const updated = (business.tables || []).filter(t => t.id !== room.id);
-                                 onUpdateBusiness({ ...business, tables: updated });
-                               }}
-                               className="p-4 text-red-400 hover:bg-red-50 rounded-2xl transition-colors"
-                             >
-                               <Trash2 size={20}/>
-                             </button>
-                          </div>
-                       </div>
-                    </div>
-                  ))}
+                              <div className="flex gap-3">
+                                 <button 
+                                   onClick={() => startRoomEdit(actualIdx)}
+                                   className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10"
+                                 >
+                                   Configurar
+                                 </button>
+                                 <button 
+                                   onClick={() => removeRoom(actualIdx)}
+                                   className="w-14 h-14 bg-white border border-slate-100 text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-50 transition-all"
+                                 >
+                                   <Trash2 size={18} />
+                                 </button>
+                              </div>
+                           </div>
+                        </motion.div>
+                      );
+                    })}
                </div>
             </motion.div>
           )}
@@ -2550,31 +2417,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
                        )}
                     </div>
-                  </button>
-               </div>
-
-               {/* Reservation Numbers Top */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-600/20 flex items-center justify-between group">
-                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Total Hoje</p>
-                        <p className="text-4xl font-black tracking-tighter">{reservations.length}</p>
-                     </div>
-                     <Calendar className="w-12 h-12 opacity-20 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm flex items-center justify-between group">
-                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Por Validar</p>
-                        <p className="text-4xl font-black text-amber-500 tracking-tighter">{pendingCount}</p>
-                     </div>
-                     <AlertCircle className="w-12 h-12 text-amber-100 group-hover:rotate-12 transition-transform" />
-                  </div>
-                  <div className="bg-emerald-500 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-500/20 flex items-center justify-between group">
-                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Confirmadas</p>
-                        <p className="text-4xl font-black tracking-tighter">{reservations.filter(r => r.status === 'accepted').length}</p>
-                     </div>
-                     <Check className="w-12 h-12 opacity-20 group-hover:scale-110 transition-transform" />
                   </div>
                </div>
 
@@ -4145,46 +3987,115 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                  {/* Left Column: Basics & Photos */}
                  <div className="space-y-8">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tipologia do Quarto</label>
-                      <select 
-                        value={editingRoom.type || 'Standard'} 
-                        onChange={(e) => setEditingRoom({...editingRoom, type: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                      >
-                         <option value="Standard">Standard Room</option>
-                         <option value="Deluxe">Deluxe Room</option>
-                         <option value="Suite">Premium Suite</option>
-                         <option value="Family">Family Room</option>
-                         <option value="Studio">Studio / T0</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tipologia do Quarto</label>
+                         <select 
+                           value={editingRoom.room.type || 'Standard'} 
+                           onChange={(e) => setEditingRoom({...editingRoom, room: {...editingRoom.room, type: e.target.value}})}
+                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                         >
+                            <option value="Standard">Standard Room</option>
+                            <option value="Deluxe">Deluxe Room</option>
+                            <option value="Suite">Premium Suite</option>
+                            <option value="Family">Family Room</option>
+                            <option value="Studio">Studio / T0</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Piso (Localização)</label>
+                         <select 
+                           value={editingRoom.room.floor || 1} 
+                           onChange={(e) => setEditingRoom({...editingRoom, room: {...editingRoom.room, floor: parseInt(e.target.value)}})}
+                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                         >
+                            <option value={1}>Piso 1</option>
+                            <option value={2}>Piso 2</option>
+                         </select>
+                       </div>
                     </div>
 
                     <div>
-                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Galeria de Fotos (URLs)</label>
-                       <textarea 
-                         placeholder="Insira os links das fotos separados por vírgula..."
-                         value={editingRoom.gallery?.join(', ') || ''}
-                         onChange={(e) => setEditingRoom({...editingRoom, gallery: e.target.value.split(',').map(s => s.trim())})}
-                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-medium text-slate-600 focus:ring-2 focus:ring-blue-500 transition-all outline-none min-h-[120px] text-sm"
-                       />
-                       <p className="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-widest italic">* A primeira foto será a principal de destaque.</p>
+                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Galeria de Fotos</label>
+                       <div className="space-y-3">
+                          <div className="flex gap-2">
+                             <input 
+                               placeholder="Link da foto..."
+                               value={editingRoom.room.images?.[0] || ''}
+                               onChange={(e) => {
+                                 const updated = [...(editingRoom.room.images || [])];
+                                 updated[0] = e.target.value;
+                                 setEditingRoom({...editingRoom, room: {...editingRoom.room, images: updated}});
+                               }}
+                               className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 font-medium text-slate-600 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                             />
+                             <label className={`p-4 bg-blue-600 text-white rounded-2xl cursor-pointer hover:bg-blue-700 transition-all flex items-center justify-center shadow-lg shadow-blue-600/20 ${isUploading ? 'opacity-50 animate-pulse' : ''}`}>
+                                <ImageIcon size={20} />
+                                <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // Usamos o handleImageUpload existente
+                                      // Nota: A função handleImageUpload original guarda em business.gallery ou business.dishes
+                                      // Vamos simular aqui ou usar um FileReader para visualização imediata se o backend for apenas para 'dish'/'gallery'
+                                      const formData = new FormData();
+                                      formData.append('restaurantId', business.id);
+                                      formData.append('type', 'gallery');
+                                      formData.append('image', file);
+                                      
+                                      setIsUploading(true);
+                                      try {
+                                        const response = await fetch(`${API_BASE_URL}/api/upload`, { method: 'POST', body: formData });
+                                        if (response.ok) {
+                                          const data = await response.json();
+                                          const updated = [...(editingRoom.room.images || []), data.url];
+                                          setEditingRoom({...editingRoom, room: {...editingRoom.room, images: updated}});
+                                        }
+                                      } catch (err) { alert("Erro no upload"); }
+                                      finally { setIsUploading(false); }
+                                    }
+                                  }}
+                                />
+                             </label>
+                          </div>
+                          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                             {(editingRoom.room.images || []).map((img: string, i: number) => (
+                               <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 border-slate-100">
+                                  <img src={img} className="w-full h-full object-cover" />
+                                  <button 
+                                    onClick={() => {
+                                      const updated = editingRoom.room.images.filter((_: any, idx: number) => idx !== i);
+                                      setEditingRoom({...editingRoom, room: {...editingRoom.room, images: updated}});
+                                    }}
+                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                                  >
+                                    <X size={10} />
+                                  </button>
+                               </div>
+                             ))}
+                          </div>
+                       </div>
                     </div>
 
                     <div className="bg-blue-50/50 p-8 rounded-[2rem] border border-blue-100">
-                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6">Tarifário Sazonal (€)</h4>
+                       <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                          <Receipt size={14} /> Tarifário Sazonal (€)
+                       </h4>
                        <div className="grid grid-cols-3 gap-4">
                           <div>
                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Baixa</label>
-                             <input type="number" value={editingRoom.prices?.baixa || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), baixa: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                             <input type="number" value={editingRoom.room.price_low || 0} onChange={(e) => setEditingRoom({...editingRoom, room: {...editingRoom.room, price_low: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
                           </div>
                           <div>
                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Média</label>
-                             <input type="number" value={editingRoom.prices?.media || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), media: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                             <input type="number" value={editingRoom.room.price_mid || 0} onChange={(e) => setEditingRoom({...editingRoom, room: {...editingRoom.room, price_mid: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
                           </div>
                           <div>
                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Alta</label>
-                             <input type="number" value={editingRoom.prices?.alta || 0} onChange={(e) => setEditingRoom({...editingRoom, prices: {...(editingRoom.prices||{}), alta: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
+                             <input type="number" value={editingRoom.room.price_high || 0} onChange={(e) => setEditingRoom({...editingRoom, room: {...editingRoom.room, price_high: parseFloat(e.target.value)}})} className="w-full bg-white border border-blue-100 rounded-xl py-3 px-4 font-black text-slate-800" />
                           </div>
                        </div>
                     </div>
@@ -4198,12 +4109,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                          'Wi-Fi Grátis', 'Smart TV', 'Ar Condicionado', 'Minibar', 'Máquina de Café', 'Cofre Forte', 
                          'Varanda Privada', 'Vista Mar', 'Jacuzzi', 'Secador Cabelo', 'Pequeno Almoço Quarto', 'Secretária'
                        ].map((amenity) => {
-                         const isSelected = editingRoom.amenities?.includes(amenity);
+                         const current = editingRoom.room.amenities || [];
+                         const isSelected = current.includes(amenity);
                          return (
                            <button 
                              key={amenity}
                              onClick={() => {
-                               const current = editingRoom.amenities || [];
                                const updated = isSelected ? current.filter((a: string) => a !== amenity) : [...current, amenity];
                                setEditingRoom({...editingRoom, amenities: updated});
                              }}
@@ -4224,12 +4135,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
               <div className="mt-12 pt-8 border-t border-slate-50 flex gap-4">
                  <button 
-                   onClick={() => {
-                     const updated = (business.tables || []).map((r: any) => r.id === editingRoom.id ? editingRoom : r);
-                     onUpdateBusiness({...business, tables: updated});
-                     setEditingRoom(null);
-                     alert("✅ Quarto atualizado com sucesso!");
-                   }}
+                   onClick={saveRoomEdit}
                    className="flex-1 py-5 bg-blue-600 text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all"
                  >
                    Guardar Alterações
