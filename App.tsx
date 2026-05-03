@@ -1120,21 +1120,37 @@ const App: React.FC = () => {
               setCurrentBusinessId(null); 
             }}
             onSync={(updated) => {
-               // Update local state
-               if (bType === 'shop') setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
-               else if (bType === 'beauty') setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
-               else setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+               // Update local state dynamically
+               const typeMap: Record<string, any> = {
+                 'shop': setShops,
+                 'beauty': setBeauty,
+                 'service': setServices,
+                 'hotel': setHotels,
+                 'car': setCars,
+                 'restaurant': setRestaurants
+               };
+               const setter = typeMap[bType] || setRestaurants;
+               setter(prev => prev.map(item => item.id === updated.id ? updated : item));
 
                fetch(`${API_BASE_URL}/api/${bEndpoint}/${updated.id}`, {
                  method: 'PUT',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify(updated),
-               }).then(() => alert("✅ Sincronizado!"));
+               }).then(r => {
+                 if (r.ok) console.log(`✅ ${updated.id} sincronizado com sucesso.`);
+               });
             }}
             onUpdateBusiness={async (updated) => {
-              if (bType === 'shop') setShops(prev => prev.map(s => s.id === updated.id ? updated : s));
-              else if (bType === 'beauty') setBeauty(prev => prev.map(b => b.id === updated.id ? updated : b));
-              else setRestaurants(prev => prev.map(r => r.id === updated.id ? updated : r));
+              const typeMap: Record<string, any> = {
+                'shop': setShops,
+                'beauty': setBeauty,
+                'service': setServices,
+                'hotel': setHotels,
+                'car': setCars,
+                'restaurant': setRestaurants
+              };
+              const setter = typeMap[bType] || setRestaurants;
+              setter(prev => prev.map(item => item.id === updated.id ? updated : item));
               
               // Desnormalizar caminhos antes de enviar para o servidor (manter relativo no db.json)
               const denormalized = {

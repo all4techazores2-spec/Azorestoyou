@@ -205,6 +205,41 @@ app.post('/api/reservations', (req, res) => {
     }
 });
 
+app.delete('/api/reservations/:id', (req, res) => {
+    const { id } = req.params;
+    const db = readDB();
+    let found = false;
+
+    // 1. Remover dos Negócios (Restaurantes, Beleza, Lojas, etc.)
+    ['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    const initialLen = biz.reservations.length;
+                    biz.reservations = biz.reservations.filter(r => r.id !== id);
+                    if (biz.reservations.length < initialLen) found = true;
+                }
+            });
+        }
+    });
+
+    // 2. Remover do Perfil do Utilizador
+    if (db.users) {
+        db.users.forEach(user => {
+            if (user.reservations) {
+                user.reservations = user.reservations.filter(r => r.id !== id);
+            }
+        });
+    }
+
+    if (found) {
+        writeDB(db);
+        res.json({ success: true, message: "Reservation deleted permanently" });
+    } else {
+        res.status(404).json({ error: "Reservation not found" });
+    }
+});
+
 // --- COMMUNITY ---
 app.get('/api/community/posts', (req, res) => res.json(readDB().posts || []));
 app.post('/api/community/posts', (req, res) => {

@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import AzoresLogo from './AzoresLogo';
@@ -284,6 +284,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.products) setProducts(business.products);
     if (business.tables) setTables(business.tables);
   }, [business]);
+
+  // Auto-Refresh (10 segundos) para manter o dashboard atualizado em tempo real
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      console.log("⏱️ Auto-refreshing dashboard data...");
+      onSync(business);
+    }, 10000);
+    return () => clearInterval(refreshInterval);
+  }, [business, onSync]);
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
@@ -793,6 +802,28 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       setSelectedResForTable(null);
     } else {
       handleUpdate({ reservations: newReservations });
+    }
+  };
+
+  const deleteReservation = async (id: string) => {
+    if (!window.confirm("⚠️ ELIMINAR PERMANENTEMENTE?\nEsta ação não pode ser desfeita e a reserva desaparecerá de todos os registos (Dashboard e Cliente).")) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const updatedReservations = reservations.filter(r => r.id !== id);
+        setReservations(updatedReservations);
+        onSync({ ...business, reservations: updatedReservations });
+        alert("🗑️ Reserva eliminada permanentemente!");
+      } else {
+        alert("Erro ao eliminar a reserva no servidor.");
+      }
+    } catch (error) {
+      console.error("Erro ao eliminar:", error);
+      alert("Erro de ligação ao servidor.");
     }
   };
 
@@ -2393,31 +2424,41 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {activeTab === 'reservations' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                {/* Sub-Tabs Selector */}
-               <div className="flex gap-4 p-2 bg-slate-50 rounded-[2rem] w-fit border border-slate-100 shadow-inner">
-                  <button 
-                    onClick={() => setReservationsTab('list')}
-                    className={`px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${
-                      reservationsTab === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                       <Calendar size={16} /> Reservas App
-                       {pendingCount > 0 && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />}
-                    </div>
-                  </button>
-                  <button 
-                    onClick={() => setReservationsTab('orders')}
-                    className={`px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${
-                      reservationsTab === 'orders' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                       <ShoppingBag size={16} /> Pedidos App
-                       {kitchenOrders.filter(o => o.status === 'pending_admin').length > 0 && (
-                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
-                       )}
-                    </div>
-                  </button>
+               <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                 <div className="flex gap-4 p-2 bg-slate-50 rounded-[2rem] w-fit border border-slate-100 shadow-inner">
+                    <button 
+                      onClick={() => setReservationsTab('list')}
+                      className={`px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${
+                        reservationsTab === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                         <Calendar size={16} /> Reservas App
+                         {pendingCount > 0 && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />}
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => setReservationsTab('orders')}
+                      className={`px-8 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${
+                        reservationsTab === 'orders' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                         <ShoppingBag size={16} /> Pedidos App
+                         {kitchenOrders.filter(o => o.status === 'pending_admin').length > 0 && (
+                           <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+                         )}
+                      </div>
+                    </button>
+                 </div>
+
+                 <button 
+                   onClick={() => onSync(business)}
+                   className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
+                 >
+                   <RefreshCw size={16} className={`text-blue-500 group-hover:rotate-180 transition-transform duration-700 ${isUploading ? 'animate-spin' : ''}`} />
+                   Sincronizar Dashboard
+                 </button>
                </div>
 
                <div className="grid grid-cols-1">
@@ -2465,8 +2506,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                       {(isBeauty || isShop) ? 'Aprovar Marcação' : 'Vincular Mesa'}
                                     </button>
                                     <button 
-                                      onClick={() => handleReservationAction(res.id, 'cancelled')}
-                                      className="p-5 text-red-400 bg-red-50 hover:bg-red-100 rounded-2xl transition-all group"
+                                      onClick={() => deleteReservation(res.id)}
+                                      className="p-5 text-red-400 bg-red-50 hover:bg-red-500 hover:text-white rounded-2xl transition-all group shadow-sm"
+                                       title="Eliminar Permanentemente"
                                     >
                                       <Trash2 className="w-6 h-6 group-hover:scale-110 transition-transform" />
                                     </button>
