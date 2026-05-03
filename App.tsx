@@ -133,10 +133,24 @@ const App: React.FC = () => {
 
   // Initialize other static data on language change
   useEffect(() => {
+    const baseHotels = getHotels(language);
+    const testHotel = { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' } as any;
+    if (!baseHotels.find(h => h.id === 'hotel-1')) {
+      setHotels([testHotel, ...baseHotels]);
+    } else {
+      setHotels(baseHotels);
+    }
+
+    const baseCars = getCars(language);
+    const testCar = { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' } as any;
+    if (!baseCars.find(c => c.id === 'rentcar-1')) {
+      setCars([testCar, ...baseCars]);
+    } else {
+      setCars(baseCars);
+    }
+
     if (activities.length === 0) setActivities(getActivities(language));
     if (flights.length === 0) setFlights(getFlights(language));
-    if (hotels.length === 0) setHotels(getHotels(language));
-    if (cars.length === 0) setCars(getCars(language));
     if (busSchedules.length === 0) setBusSchedules(BUS_SCHEDULES);
     setServices(getServices(language));
     setAutoRepairs(getAutoRepairs(language));
