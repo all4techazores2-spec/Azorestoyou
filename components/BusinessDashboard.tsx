@@ -1755,6 +1755,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             
             const onDutyStaff = staff.filter(m => m.onDuty && !m.vacationStart).length;
             const onVacation = staff.filter(m => m.vacationStart).length;
+            const debtClients = fiadoClients.filter(c => c.balance < 0);
+            const creditClients = fiadoClients.filter(c => c.balance > 0);
 
             return (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
