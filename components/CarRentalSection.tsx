@@ -127,6 +127,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
     } else {
       onUpdateItinerary({ car, carDays });
       setSelectedCarForDetail(null);
+      onNext();
     }
   };
 
