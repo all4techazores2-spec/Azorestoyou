@@ -381,4 +381,5 @@ export interface Itinerary {
   carEndDate?: string;
   carDays: number;
   selectedExtras?: ExtraOption[];
+  taxi?: { destination: string, price: number } | null;
 }

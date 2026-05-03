@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Itinerary, Language, Hotel, Car } from '../types';
 import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown, Hotel as HotelIcon, Home, SlidersHorizontal, X } from 'lucide-react';
@@ -8,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import AccommodationDetailModal from './AccommodationDetailModal';
 import RoomExtrasModal from './RoomExtrasModal';
 import BookingCheckoutModal from './BookingCheckoutModal';
+import TransportationUpsellModal from './TransportationUpsellModal';
 
 interface BookingWizardProps {
   step: 'accommodation' | 'car';
@@ -51,6 +51,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   const [selectedAccommodationForDetail, setSelectedAccommodationForDetail] = useState<Hotel | null>(null);
   const [showExtras, setShowExtras] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
 
   const currentLang = language as Language;
@@ -200,6 +201,25 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
       selectedExtras: extras
     });
     setShowExtras(false);
+    setShowUpsell(true); // Show transport upsell instead of going straight to checkout
+  };
+
+  const handleUpsellCar = () => {
+    setShowUpsell(false);
+    onNext(); // This goes to the car rental section in App.tsx
+  };
+
+  const handleUpsellTaxi = () => {
+    setShowUpsell(false);
+    onUpdateItinerary({
+      ...currentItinerary,
+      taxi: { destination: currentItinerary.hotel?.name || 'Hotel', price: 25 }
+    });
+    setShowCheckout(true);
+  };
+
+  const handleUpsellSkip = () => {
+    setShowUpsell(false);
     setShowCheckout(true);
   };
 
@@ -524,6 +544,15 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
             />
           )}
         </AnimatePresence>
+
+        <TransportationUpsellModal 
+          isOpen={showUpsell}
+          onClose={() => setShowUpsell(false)}
+          onSelectCar={handleUpsellCar}
+          onSelectTaxi={handleUpsellTaxi}
+          onSkip={handleUpsellSkip}
+          language={currentLang}
+        />
       </div>
     );
   }

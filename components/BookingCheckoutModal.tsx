@@ -48,7 +48,9 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
     ? (itinerary.selectedRoom.pricePerNight - (itinerary.hotel?.pricePerNight || 0)) * (itinerary.nights || 1)
     : 0;
   const extrasTotal = (itinerary.selectedExtras || []).reduce((sum, extra) => sum + extra.price, 0);
-  const total = baseStayPrice + roomUpgradePrice + extrasTotal;
+  const carTotal = itinerary.car ? (itinerary.car.pricePerDay * itinerary.carDays) : 0;
+  const taxiTotal = itinerary.taxi ? itinerary.taxi.price : 0;
+  const total = baseStayPrice + roomUpgradePrice + extrasTotal + carTotal + taxiTotal;
 
   const paymentMethods = [
     { id: 'mbway', icon: Wallet, title: 'MBWay / Revolut', desc: 'Pagamento rápido via telemóvel' },
@@ -101,12 +103,31 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                       <span className="text-slate-900 font-bold">€{extra.price}</span>
                     </div>
                   ))}
-                  <div className="w-full h-px bg-slate-200 my-3" />
-                  <div className="flex justify-between items-end">
-                    <span className="text-[9px] font-black text-slate-400 uppercase">Total</span>
-                    <span className="text-2xl font-black text-slate-900">€{total}</span>
-                  </div>
-               </div>
+                  {itinerary.car && (
+                     <div className="flex justify-between text-xs">
+                       <span className="text-slate-400 font-medium">Aluguer Carro ({itinerary.carDays} dias)</span>
+                       <span className="text-slate-900 font-bold">€{carTotal}</span>
+                     </div>
+                   )}
+
+                   {itinerary.taxi && (
+                     <div className="flex justify-between text-xs">
+                       <span className="text-slate-400 font-medium">Taxi / Transfer</span>
+                       <span className="text-slate-900 font-bold">€{taxiTotal}</span>
+                     </div>
+                   )}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                   <div className="flex justify-between items-center">
+                      <span className="text-xs font-black text-slate-900 uppercase">Total</span>
+                      <span className="text-xl font-black text-blue-600 tracking-tighter">€{total}</span>
+                   </div>
+                   <div className="mt-2 flex items-center gap-1.5 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                      <ShieldCheck size={10} className="text-green-500" />
+                      Garantia Azores4you
+                   </div>
+                </div>
 
                <div className="mt-6 pt-6 border-t border-slate-200 hidden md:block">
                   <div className="flex items-center gap-3 text-green-600">
@@ -138,43 +159,63 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                    </div>
                    <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Dados do Hóspede</h2>
                    
-                   <div className="space-y-3">
-                      <div className="relative">
-                        <User className="absolute left-4 top-4 text-slate-400" size={16} />
-                        <input 
-                          type="text" name="name" required placeholder="Nome Completo"
-                          className="w-full bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                          value={formData.name} onChange={handleInputChange}
-                        />
+                   <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Nome do Titular</label>
+                        <div className="relative group">
+                           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                           <input 
+                             required
+                             name="name"
+                             value={formData.name}
+                             onChange={handleInputChange}
+                             placeholder="Ex: João Silva"
+                             className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                           />
+                        </div>
                       </div>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-4 text-slate-400" size={16} />
-                        <input 
-                          type="email" name="email" required placeholder="Email de Contacto"
-                          className="w-full bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                          value={formData.email} onChange={handleInputChange}
-                        />
-                      </div>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-4 text-slate-400" size={16} />
-                        <input 
-                          type="tel" name="phone" required placeholder="Telemóvel"
-                          className="w-full bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                          value={formData.phone} onChange={handleInputChange}
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Email</label>
+                           <div className="relative group">
+                              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                              <input 
+                                required
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="joao@email.com"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                              />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Telemóvel</label>
+                           <div className="relative group">
+                              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                              <input 
+                                required
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                placeholder="912 345 678"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                              />
+                           </div>
+                        </div>
                       </div>
                    </div>
 
                    <button 
                      type="submit"
-                     className="w-full py-4 md:py-5 bg-slate-900 text-white rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-900/10"
+                     className="w-full bg-slate-900 hover:bg-black text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-3 active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
                    >
-                     Prosseguir <ArrowRight size={16} />
+                     Seguinte
+                     <ArrowRight size={16} />
                    </button>
-                 </motion.form>
-               )}
-
-               {step === 'payment' && (
+                </motion.form>
+               ) : step === 'payment' ? (
                  <motion.form 
                    key="payment-form"
                    initial={{ opacity: 0, x: 20 }}
@@ -192,29 +233,31 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                    </div>
                    <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Pagamento</h2>
                    
-                   <div className="space-y-2">
-                      {paymentMethods.map((method) => {
-                        const isSelected = paymentType === method.id;
-                        return (
-                          <button
-                            key={method.id}
-                            type="button"
-                            onClick={() => setPaymentType(method.id as any)}
-                            className={`w-full p-3 rounded-2xl border-2 transition-all flex items-center gap-3 text-left
-                              ${isSelected ? 'border-blue-600 bg-blue-50/20' : 'border-slate-50 bg-slate-50/50 hover:border-slate-100'}`}
-                          >
-                            <div className={`p-2.5 rounded-xl transition-all ${isSelected ? 'bg-blue-600 text-white' : 'bg-white text-slate-400'}`}>
-                              <method.icon size={16} />
-                            </div>
-                            <div className="flex-1">
-                               <p className="font-black text-slate-900 text-[10px] uppercase tracking-tight">{method.title}</p>
-                               <p className="text-[9px] text-slate-400 font-medium">{method.desc}</p>
-                            </div>
-                            {isSelected && <CheckCircle size={14} className="text-blue-600" />}
-                          </button>
-                        );
-                      })}
-                   </div>
+                   <div className="grid grid-cols-2 gap-3">
+                    {paymentMethods.map((method) => {
+                      const Icon = method.icon;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => setPaymentType(method.id as any)}
+                          className={`flex flex-col items-center justify-center p-4 rounded-3xl border-2 transition-all gap-2 group active:scale-95
+                            ${paymentType === method.id 
+                              ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-200' 
+                              : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50'}`}
+                        >
+                          <div className={`p-2.5 rounded-2xl transition-colors
+                            ${paymentType === method.id ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-blue-50'}`}>
+                            <Icon size={22} className={paymentType === method.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-600'} />
+                          </div>
+                          <div className="text-center">
+                            <p className={`text-[10px] font-black uppercase tracking-tighter
+                              ${paymentType === method.id ? 'text-white' : 'text-slate-900'}`}>{method.title}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
                    <AnimatePresence mode="wait">
                       {paymentType === 'mbway' && (
