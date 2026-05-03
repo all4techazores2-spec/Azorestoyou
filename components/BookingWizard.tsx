@@ -226,58 +226,56 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
            
            {/* Compact Header */}
            <div className="bg-white px-6 py-4 border-b flex flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 <div className="bg-slate-900 p-2 rounded-xl shadow-md">
-                  <BedDouble className="text-white w-5 h-5" />
+                  <BedDouble className="text-white w-4 h-4 md:w-5 h-5" />
                 </div>
-                <div className="hidden sm:block">
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                <div className="flex flex-col">
+                  <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none">
                     {getTranslation(currentLang, 'select_hotel')}
                   </h2>
-                  <p className="text-slate-500 flex items-center gap-1 text-xs font-medium">
-                    <MapPin className="w-3 h-3 text-slate-400" /> 
-                    {getTranslation(currentLang, 'hotel_avail')} <span className="text-slate-900 font-black">{destinationCode === 'all' ? 'Açores' : destinationCode}</span>
+                  <p className="text-slate-500 flex items-center gap-1 text-[10px] md:text-xs font-medium mt-0.5">
+                    <MapPin className="w-2.5 h-2.5 text-slate-400" /> 
+                    <span className="truncate max-w-[80px] md:max-w-none">{destinationCode === 'all' ? 'Açores' : destinationCode}</span>
                   </p>
                 </div>
               </div>
+               <div className="flex items-center gap-1.5 md:gap-3">
+                  <div 
+                   onClick={() => setIsDatePickerOpen(true)}
+                   className="flex items-center gap-1.5 md:gap-4 bg-blue-50 hover:bg-blue-100 p-1.5 md:p-3 rounded-xl md:rounded-2xl cursor-pointer transition-all border border-blue-100 group"
+                 >
+                    <div className="flex items-center gap-1.5">
+                       <Calendar className="w-3.5 h-3.5 md:w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform" />
+                       <div className="flex flex-col">
+                         <span className="text-[8px] md:text-[10px] font-black text-blue-400 uppercase leading-none mb-0.5">{getTranslation(currentLang, 'check_in')}</span>
+                         <span className="text-[9px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
+                       </div>
+                    </div>
+                    <div className="w-px h-5 bg-blue-200" />
+                    <div className="flex items-center gap-1.5">
+                       <div className="flex flex-col">
+                         <span className="text-[8px] md:text-[10px] font-black text-blue-400 uppercase leading-none mb-0.5">{getTranslation(currentLang, 'check_out')}</span>
+                         <span className="text-[9px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
+                       </div>
+                    </div>
+                    <div className="w-px h-5 bg-blue-200" />
+                    <div className="flex items-center gap-1.5">
+                       <div className="flex flex-col">
+                         <span className="text-[8px] md:text-[10px] font-black text-blue-400 uppercase leading-none mb-0.5">{nights}</span>
+                         <span className="text-[8px] md:text-[9px] font-black text-blue-600 uppercase leading-none">{getTranslation(currentLang, 'nights')}</span>
+                       </div>
+                    </div>
+                 </div>
 
-              <div className="flex items-center gap-3">
-                 <div 
-                  onClick={() => setIsDatePickerOpen(true)}
-                  className="flex items-center gap-2 md:gap-4 bg-slate-50 hover:bg-slate-100 p-2 md:p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
-                >
-                   <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                      <div className="flex flex-col">
-                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'check_in')}</span>
-                        <span className="text-[10px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
-                      </div>
-                   </div>
-                   <div className="w-px h-6 bg-slate-200" />
-                   <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'check_out')}</span>
-                        <span className="text-[10px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
-                      </div>
-                   </div>
-                   <div className="w-px h-6 bg-slate-200" />
-                   <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'nights')}</span>
-                        <span className="text-[10px] md:text-xs font-black text-slate-900">{nights}</span>
-                      </div>
-                      <ChevronDown className="w-3 h-3 md:w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
-                   </div>
-                </div>
-
-                <button 
-                  onClick={onClose || onSkip}
-                  className="p-3 bg-slate-100 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-900 shadow-sm"
-                >
-                   <X className="w-6 h-6" />
-                </button>
-              </div>
-           </div>
+                 <button 
+                   onClick={onClose || onSkip}
+                   className="p-3 bg-slate-100 hover:bg-slate-200 rounded-full transition-all text-slate-400 hover:text-slate-900 shadow-sm"
+                 >
+                    <X className="w-6 h-6" />
+                 </button>
+               </div>
+            </div>
 
            {/* New Filter Bar */}
            <div className="px-6 py-4 bg-white border-b flex flex-wrap items-center justify-between gap-6">
