@@ -1378,46 +1378,46 @@ const App: React.FC = () => {
 
                 switch (exploreCategory) {
                   case 'restaurants':
-                    featuredItems = sortFeatured(allRestaurants.filter(r => r.rating >= topRating).slice(0, 10).map(r => ({ id: r.id, title: r.name, image: r.image, rating: r.rating, location: r.island, category: 'Restaurante' })));
+                    featuredItems = sortFeatured((allRestaurants || []).filter(r => r.rating >= topRating).slice(0, 10).map(r => ({ id: r.id, title: r.name, image: r.image, rating: r.rating, location: r.island, category: 'Restaurante' })));
                     break;
                   case 'beauty':
-                    featuredItems = sortFeatured(allBeauty.slice(0, 10).map(b => ({ id: b.id, title: b.name, image: b.image, rating: 4.9, location: b.island, category: 'Beleza', phone: b.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allBeauty || []).slice(0, 10).map(b => ({ id: b.id, title: b.name, image: b.image, rating: 4.9, location: b.island, category: 'Beleza', phone: b.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'shops':
-                    featuredItems = sortFeatured(allShops.slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: 4.8, location: s.island, category: 'Loja', phone: s.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allShops || []).slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: 4.8, location: s.island, category: 'Loja', phone: s.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'services':
-                    featuredItems = sortFeatured(allServices.slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: 4.7, location: s.island, category: 'Serviço', phone: s.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allServices || []).slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: 4.7, location: s.island, category: 'Serviço', phone: s.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'auto_repair':
-                    featuredItems = sortFeatured(allAutoRepairs.slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Auto', phone: a.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allAutoRepairs || []).slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Auto', phone: a.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'auto_electronics':
-                    featuredItems = sortFeatured(allAutoElectronics.slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Eletrónica', phone: a.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allAutoElectronics || []).slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Eletrónica', phone: a.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'used_market':
-                    featuredItems = sortFeatured(allUsedMarket.slice(0, 10).map(u => ({ id: u.id, title: u.name, image: u.image, rating: u.rating, location: u.island, category: 'Usados', phone: u.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allUsedMarket || []).slice(0, 10).map(u => ({ id: u.id, title: u.name, image: u.image, rating: u.rating, location: u.island, category: 'Usados', phone: u.phone || '+351 296 000 000', buttonLabel: 'Ligue Já' })));
                     break;
                   case 'animals':
-                    featuredItems = sortFeatured(allAnimals.slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Animais', phone: a.phone, buttonLabel: 'Ligue Já' })));
+                    featuredItems = sortFeatured((allAnimals || []).slice(0, 10).map(a => ({ id: a.id, title: a.name, image: a.image, rating: a.rating, location: a.island, category: 'Animais', phone: a.phone, buttonLabel: 'Ligue Já' })));
                     break;
                   case 'real_estate':
-                    featuredItems = sortFeatured(allRealEstate.slice(0, 10).map(r => ({ id: r.id, title: r.name, image: r.image, rating: r.rating, location: r.island, category: 'Imobiliária', phone: r.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allRealEstate || []).slice(0, 10).map(r => ({ id: r.id, title: r.name, image: r.image, rating: r.rating, location: r.island, category: 'Imobiliária', phone: r.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'gyms':
-                    featuredItems = sortFeatured(allGyms.slice(0, 10).map(g => ({ id: g.id, title: g.name, image: g.image, rating: g.rating, location: g.island, category: 'Ginásio', phone: g.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allGyms || []).slice(0, 10).map(g => ({ id: g.id, title: g.name, image: g.image, rating: g.rating, location: g.island, category: 'Ginásio', phone: g.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'stands':
-                    featuredItems = sortFeatured(allStands.slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: s.rating, location: s.island, category: 'Stand', phone: s.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allStands || []).slice(0, 10).map(s => ({ id: s.id, title: s.name, image: s.image, rating: s.rating, location: s.island, category: 'Stand', phone: s.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'offices':
-                    featuredItems = sortFeatured(allOffices.slice(0, 10).map(o => ({ id: o.id, title: o.name, image: o.image, rating: o.rating, location: o.island, category: 'Escritório', phone: o.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allOffices || []).slice(0, 10).map(o => ({ id: o.id, title: o.name, image: o.image, rating: o.rating, location: o.island, category: 'Escritório', phone: o.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'it_services':
-                    featuredItems = sortFeatured(allITServices.slice(0, 10).map(i => ({ id: i.id, title: i.name, image: i.image, rating: i.rating, location: i.island, category: 'Informática', phone: i.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allITServices || []).slice(0, 10).map(i => ({ id: i.id, title: i.name, image: i.image, rating: i.rating, location: i.island, category: 'Informática', phone: i.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'perfumes':
-                    featuredItems = sortFeatured(allPerfumes.slice(0, 10).map(p => ({ id: p.id, title: p.name, image: p.image, rating: p.rating, location: p.island, category: 'Perfume', phone: p.phone, buttonLabel: 'Ligar' })));
+                    featuredItems = sortFeatured((allPerfumes || []).slice(0, 10).map(p => ({ id: p.id, title: p.name, image: p.image, rating: p.rating, location: p.island, category: 'Perfume', phone: p.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'trails':
                   case 'landscapes':
@@ -1428,7 +1428,7 @@ const App: React.FC = () => {
                                  exploreCategory === 'landscapes' ? 'landscape' : 
                                  exploreCategory === 'culture' ? 'culture' :
                                  exploreCategory === 'poi' ? 'poi' : 'activity';
-                    featuredItems = sortFeatured(allActivities.filter(a => a.type === aType).slice(0, 10).map(a => ({ id: a.id, title: a.title, image: a.image, rating: 5.0, location: a.island, category: 'Experiência' })));
+                    featuredItems = sortFeatured((allActivities || []).filter(a => a.type === aType).slice(0, 10).map(a => ({ id: a.id, title: a.title, image: a.image, rating: 5.0, location: a.island, category: 'Experiência' })));
                     break;
                   default:
                     featuredItems = [];

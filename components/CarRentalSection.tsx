@@ -36,7 +36,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 
   const activeCompanies = CAR_RENTAL_COMPANIES.length > 0 
     ? CAR_RENTAL_COMPANIES 
-    : Array.from(new Set(cars.map(c => c.companyId))).filter(Boolean).map((id, index) => ({
+    : Array.from(new Set((cars || []).map(c => c.companyId))).filter(Boolean).map((id, index) => ({
         id,
         name: `Auto Açores Rent (${id})`,
         image: `https://picsum.photos/400/300?random=${200 + index}`,
@@ -193,7 +193,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cars.filter(c => c.companyId === selectedCompany.id).map(car => {
+                {(cars || []).filter(c => c.companyId === selectedCompany.id).map(car => {
                   const isSelected = currentItinerary.car?.id === car.id;
                   const totalCarPrice = car.pricePerDay * carDays;
                   
@@ -383,7 +383,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {selectedCarForDetail.features.slice(0, 4).map((feature, idx) => (
+                {(selectedCarForDetail.features || []).slice(0, 4).map((feature, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-slate-700 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center shrink-0">
                       <Check className="w-3 h-3 text-green-500" />
