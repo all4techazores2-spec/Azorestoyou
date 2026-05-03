@@ -57,17 +57,6 @@ app.use(bodyParser.json());
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Redirecionar todas as outras rotas para o index.html (SPA)
-app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
-        if (err) {
-            console.error("❌ Erro ao enviar index.html:", err);
-            res.status(500).send("Erro ao carregar a aplicação.");
-        }
-    });
-});
-
 // DB Handlers
 const readDB = () => {
     try {
@@ -342,4 +331,14 @@ app.listen(PORT, () => {
     
     setInterval(selfPing, 600000); // 10 minutos
     setTimeout(selfPing, 5000); // Primeiro ping após 5 segundos
+});
+
+// SPA Catch-all (Deve ser a ÚLTIMA rota)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+        if (err) {
+            console.error("❌ Erro ao enviar index.html:", err);
+            res.status(500).send("Erro ao carregar a aplicação.");
+        }
+    });
 });
