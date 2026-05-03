@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, CreditCard, User, Mail, Phone, ArrowRight, ShieldCheck, Wallet, Star, CheckCircle } from 'lucide-react';
+import { X, Check, CreditCard, User, Mail, Phone, ArrowRight, ShieldCheck, Wallet, Star, CheckCircle, Clock } from 'lucide-react';
 import { Itinerary } from '../types';
 
 interface BookingCheckoutModalProps {
