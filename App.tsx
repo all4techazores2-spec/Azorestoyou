@@ -1111,7 +1111,12 @@ const App: React.FC = () => {
 
   // --- BUSINESS / STAFF VIEW ---
   if ((isBusiness || isStaff) && currentBusinessId) {
-    const currentBusiness = [...(beauty || []), ...(shops || []), ...(restaurants || []), ...(hotels || []), ...(cars || [])].find(b => b.id === currentBusinessId);
+    const testBusinesses = [
+      { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' },
+      { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' }
+    ];
+
+    const currentBusiness = [...(beauty || []), ...(shops || []), ...(restaurants || []), ...(hotels || []), ...(cars || []), ...testBusinesses].find(b => b.id === currentBusinessId);
     
     if (currentBusiness) {
       const bType = (currentBusiness.businessType || (currentBusiness as any).type || 'restaurant').toLowerCase();
