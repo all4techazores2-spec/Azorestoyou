@@ -960,12 +960,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {([
             { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, hideForStaff: true },
             { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Estado da Frota' : isBeauty ? 'Agenda / Mapa' : isShop ? 'Mapa da Loja' : 'Mapa de Mesas', icon: isHotel ? <Hotel size={20} /> : isRentCar ? <Car size={20} /> : isBeauty ? <Calendar size={20} /> : <TableIcon size={20} />, hideForStaff: true, hidden: isShop },
-            { id: 'kitchen', label: isHotel ? 'Serviço de Quartos' : isRentCar ? 'Monitor de Aluguer' : isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isHotel ? <Coffee size={20} /> : isRentCar ? <Clock size={20} /> : isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop || isHotel || isRentCar) && !isStaff },
-            { id: 'pos', label: isHotel ? 'Faturação Front' : isRentCar ? 'Contratos / POS' : isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
-            { id: 'dishes', label: isHotel ? 'Gestão de Quartos' : isRentCar ? 'Gestão de Frota' : isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
+            { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={20} />, hidden: !isHotel, hideForStaff: true },
+            { id: 'kitchen', label: isHotel ? 'Pedidos Restaurante' : isRentCar ? 'Monitor de Aluguer' : isBeauty ? 'Monitor de Serviços' : isShop ? 'Monitor de Vendas' : 'Monitor de Cozinha', icon: isHotel ? <Utensils size={20} /> : isRentCar ? <Clock size={20} /> : isShop ? <ShoppingBag size={20} /> : isBeauty ? <Sparkles size={20} /> : <Utensils size={20} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length || undefined, hidden: (isBeauty || isShop || isRentCar) && !isStaff },
+            { id: 'pos', label: isHotel ? 'Faturação / Bar' : isRentCar ? 'Contratos / POS' : isBeauty ? 'Terminal de Venda' : isShop ? 'Caixa / POS' : 'Terminal POS', icon: <ShoppingBag size={20} /> },
+            { id: 'dishes', label: isHotel ? 'Ementa Restaurante' : isRentCar ? 'Gestão de Frota' : isBeauty ? 'Gestão de Serviços' : isShop ? 'Gestão de Artigos' : 'Gestão de Ementa', icon: isHotel ? <Utensils size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Sparkles size={18} /> : isShop ? <ShoppingBag size={18} /> : <Utensils size={18} />, hideForStaff: true },
             { id: 'products', label: isRentCar ? 'Peças / Consumíveis' : isShop ? 'Stock / Inventário' : 'Stock de Produtos', icon: <ShoppingBag size={20} />, hideForStaff: true },
             { id: 'updates', label: isHotel ? 'Promoções Época' : isShop ? 'Campanhas / Promo' : 'Novidades / Eventos', icon: <Megaphone size={20} />, hideForStaff: true },
             { id: 'reservations', label: isHotel ? 'Check-ins / Out' : isRentCar ? 'Reservas de Carros' : isBeauty ? 'Marcações' : 'Reservas', icon: <Calendar size={20} />, badge: pendingCount + kitchenOrders.filter(o => o.status === 'pending_admin').length },
+            { id: 'reservas_hotel', label: 'Reservas', icon: <Calendar size={20} />, hidden: !isHotel },
             { id: 'qrcode', label: 'Presenças QR', icon: <QrCode size={20} />, hideForStaff: true },
             { id: 'suppliers', label: 'Fornecedores', icon: <ShoppingBag size={20} />, hideForStaff: true },
           ] as any[]).filter(item => (!isStaff || !item.hideForStaff) && !item.hidden).map(item => (
@@ -2083,7 +2085,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {activeTab === 'dishes' && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Lista de Pratos</h3>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{isHotel ? 'Ementa do Restaurante Hotel' : 'Lista de Pratos'}</h3>
                   <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2 text-blue-600 font-bold hover:underline">
                     <LayoutDashboard className="w-4 h-4" /> Voltar à Dashboard
                   </button>
@@ -2116,6 +2118,191 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     </div>
                     <span className="font-black uppercase tracking-widest text-xs">Adicionar Prato</span>
                  </button>
+               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'room_management' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+               <div className="flex justify-between items-end">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Quartos e Preços</h3>
+                    <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Configuração de Comodidades e Tarifas Sazonais</p>
+                  </div>
+                  <div className="flex gap-4">
+                     <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <button className="px-4 py-2 bg-white text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">Época Baixa</button>
+                        <button className="px-4 py-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Média</button>
+                        <button className="px-4 py-2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Alta</button>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Preços por Época */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-blue-500">
+                     <div className="mb-6">
+                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-2">Baixa Temporada</span>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nov, Jan, Fev, Mar</p>
+                     </div>
+                     <div className="flex items-center gap-3 mb-6">
+                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€65.00</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
+                     </div>
+                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Alterar Preço</button>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-amber-500">
+                     <div className="mb-6">
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] block mb-2">Média Temporada</span>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Abr-Jun, Set-Out</p>
+                     </div>
+                     <div className="flex items-center gap-3 mb-6">
+                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€95.00</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
+                     </div>
+                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all">Alterar Preço</button>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm relative overflow-hidden border-t-8 border-t-emerald-500">
+                     <div className="mb-6">
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] block mb-2">Alta Temporada</span>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Julho e Agosto</p>
+                     </div>
+                     <div className="flex items-center gap-3 mb-6">
+                        <span className="text-3xl font-black text-slate-800 tracking-tighter">€145.00</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">/ Noite</span>
+                     </div>
+                     <button className="w-full py-3 bg-slate-50 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Alterar Preço</button>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {(business.tables || []).map((room, idx) => (
+                    <div key={idx} className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm group hover:shadow-2xl transition-all duration-500">
+                       <div className="flex gap-8">
+                          <div className="w-48 h-48 bg-slate-50 rounded-[2rem] overflow-hidden relative group-hover:shadow-lg transition-all">
+                             <img src={`https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1974&auto=format&fit=crop`} className="w-full h-full object-cover" />
+                             <button className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
+                                <Plus size={24} />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Alterar Foto</span>
+                             </button>
+                          </div>
+                          <div className="flex-1">
+                             <div className="flex justify-between items-start mb-4">
+                                <div>
+                                   <h4 className="text-2xl font-black text-slate-800 tracking-tighter">Quarto #{room.number}</h4>
+                                   <p className="text-blue-500 text-[10px] font-black uppercase tracking-widest">Suite Superior</p>
+                                </div>
+                                <button className="p-3 text-red-400 hover:bg-red-50 rounded-2xl transition-colors"><Trash2 size={18}/></button>
+                             </div>
+                             
+                             <div className="space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                   <span className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Phone size={12}/> Wi-Fi Grátis</span>
+                                   <span className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><ShoppingBag size={12}/> Minibar</span>
+                                   <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Star size={12}/> Vista Mar</span>
+                                </div>
+                                <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
+                                   <div className="flex items-center gap-1.5">
+                                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado: Livre</span>
+                                   </div>
+                                   <button className="text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Configurar Comodidades</button>
+                                </div>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+                  ))}
+                  <button className="border-4 border-dashed border-slate-100 rounded-[3rem] p-12 flex flex-col items-center justify-center text-slate-300 hover:border-blue-200 hover:text-blue-500 hover:bg-blue-50/10 transition-all group">
+                     <Plus className="w-10 h-10 mb-4 group-hover:scale-110 transition-transform" />
+                     <span className="font-black uppercase tracking-widest text-xs">Adicionar Novo Quarto</span>
+                  </button>
+               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'reservas_hotel' && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+               <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Reservas de Pacotes</h3>
+                    <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Gestão de Pedidos Integrados (Hotel + Carro)</p>
+                  </div>
+               </div>
+
+               <div className="bg-white border border-slate-100 rounded-[3rem] shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                     <table className="w-full">
+                        <thead>
+                           <tr className="bg-slate-50 border-b border-slate-100">
+                              <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Hóspede</th>
+                              <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Pacote / Ticket</th>
+                              <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Datas</th>
+                              <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Estado</th>
+                              <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                           {(business.reservations || []).map((res: any, i: number) => (
+                             <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                                <td className="px-8 py-6">
+                                   <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-black">{res.customerName?.charAt(0) || 'U'}</div>
+                                      <div>
+                                         <p className="font-black text-slate-800 text-sm">{res.customerName}</p>
+                                         <p className="text-[10px] text-slate-400 font-medium">{res.customerPhone}</p>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <div className="flex items-center gap-2">
+                                      <span className="px-2 py-1 bg-slate-900 text-white text-[9px] font-black rounded-lg uppercase tracking-widest">
+                                         #{res.packageId?.slice(-6) || 'N/A'}
+                                      </span>
+                                      {res.type === 'car' && <Car size={14} className="text-blue-500" />}
+                                      {res.type === 'hotel' && <Hotel size={14} className="text-emerald-500" />}
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <p className="text-sm font-bold text-slate-700">{res.date}</p>
+                                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{res.days || 1} Noites</p>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                     res.status === 'accepted' ? 'bg-emerald-500 text-white' : 
+                                     res.status === 'pending' ? 'bg-amber-500 text-white animate-pulse' : 
+                                     'bg-red-500 text-white'
+                                   }`}>
+                                      {res.status === 'pending' ? 'Pendente' : res.status === 'accepted' ? 'Confirmada' : 'Cancelada'}
+                                   </span>
+                                </td>
+                                <td className="px-8 py-6 text-right">
+                                   {res.status === 'pending' && (
+                                     <button 
+                                       onClick={() => {
+                                         const updated = (business.reservations || []).map((r: any, idx: number) => idx === i ? {...r, status: 'accepted'} : r);
+                                         onUpdateBusiness({ ...business, reservations: updated });
+                                         alert("✅ Reserva de quarto confirmada!");
+                                       }}
+                                       className="px-4 py-2 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-emerald-500/20"
+                                     >
+                                       Confirmar
+                                     </button>
+                                   )}
+                                </td>
+                             </tr>
+                           ))}
+                           {(business.reservations || []).length === 0 && (
+                             <tr>
+                                <td colSpan={5} className="py-20 text-center">
+                                   <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-200" />
+                                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Nenhuma reserva recebida ainda.</p>
+                                </td>
+                             </tr>
+                           )}
+                        </tbody>
+                     </table>
+                  </div>
                </div>
             </motion.div>
           )}
