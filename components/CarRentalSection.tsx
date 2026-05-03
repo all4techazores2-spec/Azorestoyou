@@ -125,7 +125,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   const destinationCode = currentItinerary?.flight?.destination || 'all';
 
   return (
-    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4">
+    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4">
       <div className="bg-white w-full max-w-6xl md:rounded-2xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
         
         {/* Header */}
