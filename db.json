@@ -384,7 +384,21 @@
       "type": "hotel",
       "adminEmail": "hotel@azores4you.com",
       "adminPassword": "admin",
-      "reservations": [],
+      "reservations": [
+        {
+          "id": "RES_TEST_9999",
+          "packageId": "AZ-TEST-2026",
+          "type": "hotel",
+          "hotel": { "id": "hotel-1", "name": "Azores Royal Garden" },
+          "date": "2026-05-10",
+          "nights": 3,
+          "status": "pending",
+          "customerName": "Testador Antigravity",
+          "customerEmail": "teste@antigravity.ai",
+          "customerPhone": "912345678",
+          "selectedRoom": { "id": "T2", "number": 2, "type": "Deluxe" }
+        }
+      ],
       "tables": [
         { "id": "T1", "number": 1, "type": "Standard", "status": "available", "amenities": ["Wi-Fi", "Smart TV"] },
         { "id": "T2", "number": 2, "type": "Deluxe", "status": "available", "amenities": ["Wi-Fi", "Jacuzzi"] }
