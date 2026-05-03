@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Car, Taxi, ArrowRight, X, Sparkles, ShieldCheck } from 'lucide-react';
+import { Car, Navigation, ArrowRight, X, Sparkles, ShieldCheck } from 'lucide-react';
 import { Language } from '../types';
 import { getTranslation } from '../translations';
 
@@ -83,7 +83,7 @@ const TransportationUpsellModal: React.FC<TransportationUpsellModalProps> = ({
                  className="group relative bg-slate-50 hover:bg-amber-500 border border-slate-100 hover:border-amber-400 p-4 rounded-2xl transition-all flex items-center gap-4 text-left active:scale-[0.98]"
                >
                   <div className="p-3 bg-white group-hover:bg-amber-400 rounded-xl shadow-sm transition-colors">
-                     <Taxi className="w-6 h-6 text-amber-600 group-hover:text-white" />
+                     <Navigation className="w-6 h-6 text-amber-600 group-hover:text-white" />
                   </div>
                   <div className="flex-1">
                      <p className="font-black text-slate-900 group-hover:text-white text-sm uppercase">{language === 'pt' ? 'Taxi / Transfer' : 'Taxi / Transfer'}</p>

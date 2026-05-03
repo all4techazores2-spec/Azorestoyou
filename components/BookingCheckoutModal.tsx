@@ -215,7 +215,8 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                      <ArrowRight size={16} />
                    </button>
                 </motion.form>
-               ) : step === 'payment' ? (
+               )}
+               {step === 'payment' && (
                  <motion.form 
                    key="payment-form"
                    initial={{ opacity: 0, x: 20 }}
