@@ -79,8 +79,33 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   useEffect(() => {
     if (step === 'accommodation') {
       onUpdateItinerary({ nights });
+      
+      // Initialize default dates if missing
+      if (!currentItinerary.hotelStartDate || !currentItinerary.hotelEndDate) {
+        const start = new Date();
+        start.setDate(start.getDate() + 1); // Tomorrow
+        const end = new Date();
+        end.setDate(end.getDate() + 1 + nights);
+        
+        onUpdateItinerary({
+          hotelStartDate: start.toISOString(),
+          hotelEndDate: end.toISOString()
+        });
+      }
     } else if (step === 'car') {
       onUpdateItinerary({ carDays });
+      
+      // Initialize default dates if missing
+      if (!currentItinerary.carStartDate || !currentItinerary.carEndDate) {
+        const start = new Date();
+        const end = new Date();
+        end.setDate(end.getDate() + carDays);
+        
+        onUpdateItinerary({
+          carStartDate: start.toISOString(),
+          carEndDate: end.toISOString()
+        });
+      }
     }
   }, [nights, carDays, step]);
 
@@ -219,29 +244,29 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
               <div className="flex items-center gap-3">
                  <div 
                   onClick={() => setIsDatePickerOpen(true)}
-                  className="hidden md:flex items-center gap-4 bg-slate-50 hover:bg-slate-100 p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
+                  className="flex items-center gap-2 md:gap-4 bg-slate-50 hover:bg-slate-100 p-2 md:p-3 rounded-2xl cursor-pointer transition-all border border-slate-200 group"
                 >
                    <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_in')}</span>
-                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
+                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'check_in')}</span>
+                        <span className="text-[10px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelStartDate)}</span>
                       </div>
                    </div>
                    <div className="w-px h-6 bg-slate-200" />
                    <div className="flex items-center gap-2">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'check_out')}</span>
-                        <span className="text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
+                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'check_out')}</span>
+                        <span className="text-[10px] md:text-xs font-bold text-slate-700">{formatDate(currentItinerary.hotelEndDate)}</span>
                       </div>
                    </div>
                    <div className="w-px h-6 bg-slate-200" />
                    <div className="flex items-center gap-2">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{getTranslation(currentLang, 'nights')}</span>
-                        <span className="text-xs font-black text-slate-900">{nights}</span>
+                        <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase leading-none mb-0.5 md:mb-1">{getTranslation(currentLang, 'nights')}</span>
+                        <span className="text-[10px] md:text-xs font-black text-slate-900">{nights}</span>
                       </div>
-                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                      <ChevronDown className="w-3 h-3 md:w-4 h-4 text-slate-400 group-hover:text-slate-900 transition-colors" />
                    </div>
                 </div>
 

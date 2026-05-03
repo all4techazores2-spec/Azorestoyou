@@ -15,6 +15,7 @@ interface CarRentalSectionProps {
   onSkip: () => void;
   isAuthenticated?: boolean;
   onShowAuth?: () => void;
+  onClose?: () => void;
 }
 
 const CarRentalSection: React.FC<CarRentalSectionProps> = ({
@@ -25,12 +26,25 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
   onNext,
   onSkip,
   isAuthenticated,
-  onShowAuth
+  onShowAuth,
+  onClose
 }) => {
   const [selectedCompany, setSelectedCompany] = useState<CarRentalCompany | null>(null);
   const [selectedCarForDetail, setSelectedCarForDetail] = useState<Car | null>(null);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  const activeCompanies = CAR_RENTAL_COMPANIES.length > 0 
+    ? CAR_RENTAL_COMPANIES 
+    : Array.from(new Set(cars.map(c => c.companyId))).filter(Boolean).map((id, index) => ({
+        id,
+        name: `Auto Açores Rent (${id})`,
+        image: `https://picsum.photos/400/300?random=${200 + index}`,
+        address: 'Aeroporto / Ponto de Recolha',
+        contact: '+351 910 000 000',
+        email: 'reservas@autoacores.pt'
+      }));
+
   if (!currentItinerary) return null;
 
   // Simulate unavailable dates
@@ -158,6 +172,13 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                 <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-green-600 transition-colors" />
              </div>
           </div>
+
+          <button 
+            onClick={onClose || onSkip}
+            className="p-3 bg-slate-50 hover:bg-slate-100 rounded-full transition-all text-slate-400 hover:text-slate-900 border border-slate-200"
+          >
+             <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Content */}
@@ -252,7 +273,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {CAR_RENTAL_COMPANIES.map(company => (
+              {activeCompanies.map(company => (
                 <div 
                   key={company.id}
                   onClick={() => handleCompanyClick(company)}

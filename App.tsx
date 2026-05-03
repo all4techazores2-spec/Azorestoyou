@@ -1452,6 +1452,7 @@ const App: React.FC = () => {
                      onUpdateItinerary={updateItinerary}
                      onNext={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
                      onSkip={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
+                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); }}
                      language={language}
                      isAuthenticated={isAuthenticated}
                      onShowAuth={() => setShowAuthModal(true)}
@@ -1469,6 +1470,7 @@ const App: React.FC = () => {
                      language={language}
                      onNext={() => { setCurrentStep('summary'); setExploreCategory('flights'); }} 
                      onSkip={() => { setCurrentStep('summary'); setExploreCategory('flights'); }}
+                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); }}
                      isAuthenticated={isAuthenticated}
                      onShowAuth={() => setShowAuthModal(true)}
                    />
