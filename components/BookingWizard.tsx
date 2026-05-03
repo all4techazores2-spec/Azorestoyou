@@ -20,6 +20,7 @@ interface BookingWizardProps {
   onShowAuth?: () => void;
   onComplete?: () => void;
   onClose?: () => void;
+  onConfirm?: (ticketId: string) => Promise<void>;
   // Dynamic Data Props
   hotels?: Hotel[];
   cars?: Car[];
@@ -36,6 +37,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   onShowAuth,
   onComplete,
   onClose,
+  onConfirm,
   hotels = [],
   cars = []
 }) => {
@@ -543,6 +545,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
               itinerary={currentItinerary}
               onClose={() => setShowCheckout(false)}
               onComplete={handleBookingComplete}
+              onConfirm={onConfirm}
             />
           )}
         </AnimatePresence>
@@ -765,6 +768,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
         itinerary={currentItinerary}
         onClose={onClose || (() => setShowCheckout(false))}
         onComplete={handleBookingComplete}
+        onConfirm={onConfirm}
       />
     );
   }

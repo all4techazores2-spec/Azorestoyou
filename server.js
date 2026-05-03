@@ -141,7 +141,8 @@ app.get('/api/restaurants', (req, res) => {
     res.json(allBusinesses);
 });
 
-app.put('/api/restaurants/:id', (req, res) => {
+// Generic Business Update Handler
+const handleBusinessUpdate = (req, res) => {
     const { id } = req.params;
     const db = readDB();
     let targetArray = null;
@@ -161,6 +162,10 @@ app.put('/api/restaurants/:id', (req, res) => {
     } else {
         res.status(404).send("Business not found");
     }
+};
+
+['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
+    app.put(`/api/${key}/:id`, handleBusinessUpdate);
 });
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
@@ -184,7 +189,16 @@ app.post('/api/reservations', (req, res) => {
     const { businessId, businessType, customerEmail } = req.body;
     const reservation = { ...req.body, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
     
-    const typeMap = { 'restaurant': 'restaurants', 'beauty': 'beauty', 'shop': 'shops', 'office': 'offices', 'service': 'services' };
+    const typeMap = { 
+        'restaurant': 'restaurants', 
+        'beauty': 'beauty', 
+        'shop': 'shops', 
+        'office': 'offices', 
+        'service': 'services',
+        'hotel': 'hotels',
+        'al': 'hotels',
+        'car': 'cars'
+    };
     const key = typeMap[businessType] || 'restaurants';
     const business = db[key]?.find(b => b.id === businessId);
 

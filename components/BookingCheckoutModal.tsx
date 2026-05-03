@@ -8,9 +8,10 @@ interface BookingCheckoutModalProps {
   itinerary: Itinerary;
   onClose: () => void;
   onComplete: () => void;
+  onConfirm?: (ticketId: string) => Promise<void>;
 }
 
-const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete }) => {
+const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete, onConfirm }) => {
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve'>('transfer');
@@ -37,16 +38,27 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 'data') {
       setStep('payment');
     } else {
       setIsProcessing(true);
-      setTimeout(() => {
+      
+      try {
+        if (onConfirm) {
+          await onConfirm(ticketId);
+        }
+        // Artificial delay for premium feel
+        setTimeout(() => {
+          setIsProcessing(false);
+          setStep('success');
+        }, 1500);
+      } catch (error) {
+        console.error("Erro ao processar reserva:", error);
         setIsProcessing(false);
-        setStep('success');
-      }, 2500);
+        alert("Ocorreu um erro ao processar a sua reserva. Por favor tente novamente.");
+      }
     }
   };
 

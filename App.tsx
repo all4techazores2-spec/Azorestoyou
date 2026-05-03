@@ -716,14 +716,14 @@ const App: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
-  const handleFinalComplete = () => {
+  const persistItinerary = async (ticketId?: string) => {
     if (!itinerary) return;
 
-    // Add itinerary items to reservations before clearing
+    // Use provided ticketId or generate a new one if missing
+    const packageId = ticketId || `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     const newReservations: any[] = [];
-    const packageId = `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     
-    console.log("Criando novo pacote:", packageId, itinerary);
+    console.log("💾 Persistindo pacote:", packageId, itinerary);
 
     if (itinerary.hotel) {
       newReservations.push({
@@ -745,7 +745,7 @@ const App: React.FC = () => {
         packageId: packageId,
         type: 'car',
         car: itinerary.car,
-        companyName: itinerary.car.companyName || 'Auto Açores Rent', // Guardar a companhia
+        companyName: itinerary.car.companyName || 'Auto Açores Rent', 
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
         days: itinerary.carDays || 3,
         status: 'pending'
@@ -767,20 +767,23 @@ const App: React.FC = () => {
       const updatedList = [...myReservations, ...newReservations];
       setMyReservations(updatedList);
 
-      // PERSIST TO USER ACCOUNT
       if (isAuthenticated && userProfile?.email) {
-        fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reservations: updatedList })
-        })
-        .then(() => console.log("✅ Pacote sincronizado com o perfil do utilizador"))
-        .catch(err => console.error("Erro ao sincronizar pacote:", err));
+        // 1. Sync User Profile
+        try {
+          await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reservations: updatedList })
+          });
+          console.log("✅ Pacote sincronizado com o perfil do utilizador");
+        } catch (err) {
+          console.warn("Aviso: Falha ao sincronizar com perfil, mas continuaremos com o negócio.");
+        }
 
-        // PERSIST TO BUSINESSES (Hotel & Rent-a-car)
-        newReservations.forEach(async res => {
+        // 2. Sync Businesses
+        const syncPromises = newReservations.map(async res => {
           let targetBizId = '';
-          let endpoint = 'restaurants';
+          let endpoint = '';
 
           if (res.type === 'car') {
             targetBizId = res.car?.id || 'rentcar-1';
@@ -788,15 +791,17 @@ const App: React.FC = () => {
           } else if (res.type === 'hotel' || res.type === 'al') {
             targetBizId = res.hotel?.id || 'hotel-1';
             endpoint = 'hotels';
+          } else if (res.type === 'restaurant') {
+            targetBizId = res.restaurantId;
+            endpoint = 'restaurants';
           }
 
-          if (targetBizId) {
+          if (targetBizId && endpoint) {
             try {
               const bResp = await fetch(`${API_BASE_URL}/api/${endpoint}/${targetBizId}`);
               if (bResp.ok) {
                 const bizData = await bResp.json();
                 const bizRes = bizData.reservations || [];
-                // Add new reservation to business list
                 const updatedBizRes = [...bizRes, {
                   ...res,
                   customerEmail: userProfile.email,
@@ -809,16 +814,24 @@ const App: React.FC = () => {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ ...bizData, reservations: updatedBizRes })
                 });
-                console.log(`✅ Reserva enviada para o parceiro ${endpoint}: ${targetBizId}`);
+                console.log(`✅ Reserva enviada para ${endpoint}: ${targetBizId}`);
               }
             } catch (e) {
-              console.error(`Erro ao enviar reserva para o parceiro ${endpoint} (${targetBizId}):`, e);
+              console.error(`Erro ao enviar para ${endpoint}:`, e);
             }
           }
         });
+        
+        await Promise.all(syncPromises);
+        // After syncing, we should refresh the data to see it in the dashboard
+        await fetchData();
       }
     }
+  };
 
+  const handleFinalComplete = () => {
+    // If not already persisted by onConfirm (unlikely but possible), 
+    // it would have happened in the modal. Here we just clear UI.
     setItinerary(DEFAULT_ITINERARY);
     setCurrentStep('flights');
     setExploreCategory(null);
@@ -1536,11 +1549,12 @@ const App: React.FC = () => {
                      onUpdateItinerary={updateItinerary}
                      onNext={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
                      onSkip={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
-                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); setCurrentStep('flights'); }}
+                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); }}
                      language={language}
                      isAuthenticated={isAuthenticated}
                      onShowAuth={() => setShowAuthModal(true)}
                      onComplete={handleFinalComplete}
+                     onConfirm={persistItinerary}
                      // Dynamic Data
                      hotels={hotels}
                    />
