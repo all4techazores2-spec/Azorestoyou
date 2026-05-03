@@ -183,8 +183,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
     setIsBooked(true);
     if (onComplete) {
       onComplete();
-    } else {
-      setStep('summary');
     }
   };
 
