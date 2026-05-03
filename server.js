@@ -334,7 +334,7 @@ app.listen(PORT, () => {
 });
 
 // SPA Catch-all (Deve ser a ÚLTIMA rota)
-app.get('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
         if (err) {
             console.error("❌ Erro ao enviar index.html:", err);
