@@ -147,7 +147,7 @@ app.put('/api/restaurants/:id', (req, res) => {
     let targetArray = null;
     let index = -1;
     
-    ['restaurants', 'beauty', 'shops', 'services', 'offices'].forEach(key => {
+    ['restaurants', 'beauty', 'shops', 'services', 'offices', 'hotels', 'cars'].forEach(key => {
         if (db[key]) {
             const idx = db[key].findIndex(item => item.id === id);
             if (idx !== -1) { index = idx; targetArray = db[key]; }
@@ -161,6 +161,21 @@ app.put('/api/restaurants/:id', (req, res) => {
     } else {
         res.status(404).send("Business not found");
     }
+});
+
+// Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
+app.get('/api/hotels/:id', (req, res) => {
+    const db = readDB();
+    const hotel = db.hotels.find(h => h.id === req.params.id);
+    if (hotel) res.json(hotel);
+    else res.status(404).send("Hotel not found");
+});
+
+app.get('/api/cars/:id', (req, res) => {
+    const db = readDB();
+    const car = db.cars.find(c => c.id === req.params.id);
+    if (car) res.json(car);
+    else res.status(404).send("Car not found");
 });
 
 // --- RESERVATIONS ---
