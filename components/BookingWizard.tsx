@@ -10,7 +10,7 @@ import BookingCheckoutModal from './BookingCheckoutModal';
 import TransportationUpsellModal from './TransportationUpsellModal';
 
 interface BookingWizardProps {
-  step: 'accommodation' | 'car';
+  step: 'accommodation' | 'car' | 'checkout';
   currentItinerary: Itinerary;
   onUpdateItinerary: (update: Partial<Itinerary>) => void;
   onNext: () => void;
@@ -107,6 +107,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
           carEndDate: end.toISOString()
         });
       }
+    } else if (step === 'checkout') {
+      setShowCheckout(true);
     }
   }, [nights, carDays, step]);
 
@@ -754,6 +756,14 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
           unavailableDates={carUnavailableDates}
         />
       </div>
+    );
+  if (step === 'checkout' && showCheckout) {
+    return (
+      <BookingCheckoutModal 
+        itinerary={currentItinerary}
+        onClose={onClose || (() => setShowCheckout(false))}
+        onComplete={handleBookingComplete}
+      />
     );
   }
 

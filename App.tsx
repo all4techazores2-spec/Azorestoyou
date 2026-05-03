@@ -1445,14 +1445,14 @@ const App: React.FC = () => {
                   <FlightBoard airports={airports} flights={flights} onSelectFlight={handleFlightSelect} language={language} />
                 )}
 
-                {exploreCategory === 'accommodation' && (
+                {(exploreCategory === 'accommodation' || currentStep === 'checkout') && (
                   <BookingWizard 
-                     step="accommodation"
+                     step={currentStep === 'checkout' ? 'checkout' : 'accommodation'}
                      currentItinerary={itinerary}
                      onUpdateItinerary={updateItinerary}
                      onNext={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
                      onSkip={() => { setCurrentStep('car'); setExploreCategory('rentcar'); }}
-                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); }}
+                     onClose={() => { setExploreCategory(null); setCurrentStep('flights'); setCurrentStep('flights'); }}
                      language={language}
                      isAuthenticated={isAuthenticated}
                      onShowAuth={() => setShowAuthModal(true)}
@@ -1468,8 +1468,8 @@ const App: React.FC = () => {
                      currentItinerary={itinerary}
                      onUpdateItinerary={updateItinerary}
                      language={language}
-                     onNext={() => { setCurrentStep('summary'); setExploreCategory('flights'); }} 
-                     onSkip={() => { setCurrentStep('summary'); setExploreCategory('flights'); }}
+                     onNext={() => { setCurrentStep('checkout'); setExploreCategory('accommodation'); }} 
+                     onSkip={() => { setCurrentStep('checkout'); setExploreCategory('accommodation'); }}
                      onClose={() => { setExploreCategory(null); setCurrentStep('flights'); }}
                      isAuthenticated={isAuthenticated}
                      onShowAuth={() => setShowAuthModal(true)}
