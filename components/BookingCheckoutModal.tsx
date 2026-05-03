@@ -11,7 +11,6 @@ interface BookingCheckoutModalProps {
 }
 
 const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete }) => {
-  if (!itinerary) return null;
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve'>('transfer');
@@ -24,6 +23,8 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
     expiry: '',
     cvv: ''
   });
+
+  if (!itinerary) return null;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
