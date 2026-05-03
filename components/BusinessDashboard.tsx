@@ -551,7 +551,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     };
     const newTables = [...tables, newRoom];
     setTables(newTables);
-    handleUpdate({ tables: newTables });
+    
+    if (isHotel) {
+      const newRooms = newTables.map(t => ({
+        id: t.id,
+        name: t.name || `Quarto ${t.number}`,
+        description: t.description || '',
+        pricePerNight: t.price_mid || t.price_low || 0,
+        image: t.image || (t.images && t.images[0]) || '',
+        capacity: t.seats || 2,
+        amenities: t.amenities || [],
+        gallery: t.images || []
+      }));
+      handleUpdate({ tables: newTables, rooms: newRooms });
+    } else {
+      handleUpdate({ tables: newTables });
+    }
+    
     setEditingRoom({ idx: newTables.length - 1, room: { ...newRoom } });
   };
 
@@ -565,7 +581,24 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       const newTables = [...tables];
       newTables[editingRoom.idx] = editingRoom.room;
       setTables(newTables);
-      handleUpdate({ tables: newTables });
+      
+      // Se for hotel, sincronizar também a lista de 'rooms' que o frontend lê
+      if (isHotel) {
+        const newRooms = newTables.map(t => ({
+          id: t.id,
+          name: t.name || `Quarto ${t.number}`,
+          description: t.description || '',
+          pricePerNight: t.price_mid || t.price_low || 0,
+          image: t.image || (t.images && t.images[0]) || '',
+          capacity: t.seats || 2,
+          amenities: t.amenities || [],
+          gallery: t.images || []
+        }));
+        handleUpdate({ tables: newTables, rooms: newRooms });
+      } else {
+        handleUpdate({ tables: newTables });
+      }
+      
       setEditingRoom(null);
       alert("✅ Quarto atualizado com sucesso!");
     }
@@ -575,7 +608,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (window.confirm("Deseja remover este quarto permanentemente?")) {
       const newTables = tables.filter((_, i) => i !== idx);
       setTables(newTables);
-      handleUpdate({ tables: newTables });
+      
+      if (isHotel) {
+        const newRooms = newTables.map(t => ({
+          id: t.id,
+          name: t.name || `Quarto ${t.number}`,
+          description: t.description || '',
+          pricePerNight: t.price_mid || t.price_low || 0,
+          image: t.image || (t.images && t.images[0]) || '',
+          capacity: t.seats || 2,
+          amenities: t.amenities || [],
+          gallery: t.images || []
+        }));
+        handleUpdate({ tables: newTables, rooms: newRooms });
+      } else {
+        handleUpdate({ tables: newTables });
+      }
     }
   };
 
