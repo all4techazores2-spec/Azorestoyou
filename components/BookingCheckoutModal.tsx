@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, CreditCard, User, Mail, Phone, ArrowRight, ShieldCheck, Wallet, Star, CheckCircle, Clock } from 'lucide-react';
 import { Itinerary } from '../types';
@@ -14,6 +14,13 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve'>('transfer');
+
+  // Generate a STABLE unique ticket ID
+  const ticketId = useMemo(() => {
+    const random = Math.floor(Math.random() * 9000) + 1000;
+    return `#AZ-${random}-${new Date().getFullYear()}`;
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -325,7 +332,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                     
                     <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl border-2 border-blue-700 mb-6 shadow-lg transform -rotate-2">
                        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Ticket Único de Reserva</p>
-                       <span className="text-xl font-black tracking-widest">#AZ-{(Math.random() * 100000).toFixed(0)}-{new Date().getFullYear()}</span>
+                       <span className="text-xl font-black tracking-widest">{ticketId}</span>
                     </div>
 
                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 max-w-sm text-center">
