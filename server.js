@@ -65,12 +65,21 @@ const readDB = () => {
             restaurants: [], flights: [], hotels: [], cars: [], 
             activities: [], busSchedules: [], itineraries: [], 
             shops: [], beauty: [], services: [], offices: [], 
-            users: [], posts: [] 
+            animals: [], real_estate: [], gyms: [], stands: [],
+            auto_repairs: [], auto_electronics: [], used_market: [],
+            it_services: [], perfumes: [], users: [], posts: [] 
         };
         return { ...defaults, ...db };
     } catch (err) {
         console.error("Error reading db.json", err);
-        return { restaurants: [], flights: [], hotels: [], cars: [], activities: [], busSchedules: [], itineraries: [], shops: [], beauty: [], services: [], offices: [], users: [], posts: [] };
+        return { 
+            restaurants: [], flights: [], hotels: [], cars: [], 
+            activities: [], busSchedules: [], itineraries: [], 
+            shops: [], beauty: [], services: [], offices: [], 
+            animals: [], real_estate: [], gyms: [], stands: [],
+            auto_repairs: [], auto_electronics: [], used_market: [],
+            it_services: [], perfumes: [], users: [], posts: [] 
+        };
     }
 };
 
