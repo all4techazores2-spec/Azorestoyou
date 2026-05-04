@@ -110,13 +110,19 @@ const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
 
-  // URLs de Produção (Tudo no Render para estabilidade total)
-  const RENDER_URL = 'https://azorestoyou-1.onrender.com';
-  const FRONTEND_URL = RENDER_URL;
+  // Configuração de Domínios
+  const OFFICIAL_DOMAIN = 'azorestoyou.pt';
+  const RENDER_BACKEND = 'https://azorestoyou-1.onrender.com';
+  
+  const FRONTEND_URL = `https://${OFFICIAL_DOMAIN}`;
 
-  // Detetar automaticamente se estamos em localhost ou em produção
+  // Detetar automaticamente a melhor URL para a API
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const API_BASE_URL = isLocal ? 'http://localhost:3001' : RENDER_URL;
+  const isOfficial = window.location.hostname === OFFICIAL_DOMAIN;
+  
+  // Se estivermos no domínio oficial ou localhost, usamos caminhos relativos ou locais. 
+  // Caso contrário (ex: link do render), apontamos explicitamente para o render.
+  const API_BASE_URL = isLocal ? 'http://localhost:3001' : (isOfficial ? '' : RENDER_BACKEND);
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
