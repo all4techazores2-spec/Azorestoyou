@@ -974,7 +974,17 @@
       "island": "PDL",
       "businessType": "real_estate",
       "image": "https://picsum.photos/400/300?random=240",
-      "description": "Líder imobiliário em São Miguel."
+      "description": "Líder imobiliário em São Miguel.",
+      "products": [
+        {
+          "id": "RE_PROD_1",
+          "name": "Apartamento Studio 360°",
+          "description": "Veja cada detalhe desta casa moderna através do nosso tour virtual 360°.",
+          "price": 145000,
+          "image": "/tours/studio.jpg",
+          "panoramaUrl": "/tours/studio.jpg"
+        }
+      ]
     }
   ],
   "gyms": [
