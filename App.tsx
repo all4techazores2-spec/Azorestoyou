@@ -1042,11 +1042,26 @@ const App: React.FC = () => {
             if (res.ok) alert('✅ Serviços de Beleza gravados com sucesso!');
           } catch (error) {}
         }}
-        onUpdateActivities={setActivities}
-        onUpdateFlights={setFlights}
-        onUpdateHotels={setHotels}
-        onUpdateCars={setCars}
-        onUpdateBusSchedules={setBusSchedules}
+        onUpdateActivities={async (list) => {
+          setActivities(list);
+          await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateFlights={async (list) => {
+          setFlights(list);
+          await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateHotels={async (list) => {
+          setHotels(list);
+          await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateCars={async (list) => {
+          setCars(list);
+          await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateBusSchedules={async (list) => {
+          setBusSchedules(list);
+          await fetch(`${API_BASE_URL}/api/busSchedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
         // Logic
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
         onFullSync={async () => {

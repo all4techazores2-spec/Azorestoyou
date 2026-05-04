@@ -173,6 +173,33 @@ const handleBusinessUpdate = (req, res) => {
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
     app.get(`/api/${key}`, (req, res) => res.json(readDB()[key] || []));
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
+    
+    // Bulk update for Admin Dashboard
+    app.post(`/api/${key}/bulk`, (req, res) => {
+        const db = readDB();
+        db[key] = req.body;
+        writeDB(db);
+        res.json({ success: true, count: req.body.length });
+    });
+});
+
+// Full Sync for Admin Dashboard
+app.post('/api/full-sync', (req, res) => {
+    const db = readDB();
+    const updatedData = req.body;
+    const finalDB = { ...db, ...updatedData };
+    writeDB(finalDB);
+    res.json({ success: true });
+});
+
+// Adicionar rotas de bulk para outras coleções que não são "business" puras
+['flights', 'busSchedules', 'activities', 'users', 'posts'].forEach(key => {
+    app.post(`/api/${key}/bulk`, (req, res) => {
+        const db = readDB();
+        db[key] = req.body;
+        writeDB(db);
+        res.json({ success: true, count: req.body.length });
+    });
 });
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
