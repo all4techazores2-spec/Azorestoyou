@@ -105,7 +105,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-md">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -340,7 +340,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl flex flex-col relative"
+                className="bg-white w-full max-w-2xl rounded-[2rem] md:rounded-[3rem] overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col relative max-h-[95vh] md:max-h-none"
               >
                 {/* Close Button - Refined */}
                 <button 
@@ -376,17 +376,17 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                    </div>
                 </div>
 
-                <div className="p-10 -mt-20 relative bg-white rounded-t-[3rem]">
+                <div className="p-6 md:p-10 -mt-12 md:-mt-20 relative bg-white rounded-t-[2.5rem] md:rounded-t-[3rem] flex-1">
                    <div className="flex justify-between items-end mb-6">
                       <div>
-                        <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">{previewRoom.name}</h3>
+                        <h3 className="text-xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter">{previewRoom.name}</h3>
                         <div className="flex items-center gap-2 text-blue-600 mt-1">
                            <BedDouble size={16} />
                            <span className="text-xs font-black uppercase tracking-widest">Cama {previewRoom.bedType}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-4xl font-black text-slate-900">€{previewRoom.pricePerNight}</span>
+                        <span className="text-2xl md:text-4xl font-black text-slate-900">€{previewRoom.pricePerNight}</span>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">por noite</p>
                       </div>
                    </div>
@@ -404,18 +404,18 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                       ))}
                    </div>
 
-                   <div className="flex gap-4">
+                   <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pb-6 md:pb-0">
                       <button 
                         onClick={() => { setSelectedRoom(previewRoom); setPreviewRoom(null); }}
-                        className="flex-1 py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-4 md:py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                       >
-                        Selecionar Este Quarto <Check size={18} />
+                        Selecionar Quarto <Check size={16} />
                       </button>
                       <button 
                         onClick={() => setPreviewRoom(null)}
-                        className="flex-1 py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all"
+                        className="flex-1 py-4 md:py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs hover:bg-black transition-all"
                       >
-                        Voltar à Lista
+                        Voltar
                       </button>
                    </div>
                 </div>
