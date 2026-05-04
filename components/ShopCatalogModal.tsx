@@ -60,7 +60,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
         <div className="flex-1 overflow-y-auto">
           {/* Header Area with Fade Slider */}
-          <div className="relative h-[45vh] bg-slate-900 overflow-hidden">
+          <div className="relative h-[30vh] md:h-[45vh] bg-slate-900 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentBgSlide}
@@ -75,13 +75,13 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
             </AnimatePresence>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
             
-            <div className="absolute bottom-10 left-10 right-10 z-10 text-white">
+            <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 z-10 text-white">
               <div className="flex items-center gap-2 mb-2">
                  <span className="px-3 py-1 bg-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
                    <Sparkles size={10} /> Novidades em Destaque
                  </span>
               </div>
-              <h2 className="text-4xl font-black uppercase tracking-tighter mb-2 drop-shadow-lg">{shop.name}</h2>
+              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-2 drop-shadow-lg">{shop.name}</h2>
               <p className="text-sm font-bold text-white/70 tracking-widest uppercase flex items-center gap-2">
                 <Map size={14} className="text-red-400" /> {shop.island} • {
                   shop.businessType === 'gyms' ? 'GINÁSIO' : 
@@ -92,7 +92,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
             </div>
           </div>
 
-          <div className="p-10 space-y-10">
+          <div className="p-5 md:p-10 space-y-6 md:space-y-10">
             {/* Quick Stats & Actions */}
             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border-b border-slate-100 pb-10">
               <div className="max-w-md">
@@ -230,7 +230,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                            shop.businessType === 'real_estate' ? 'Oportunidade Imobiliária' :
                            'Artigo Regional'}
                         </span>
-                        <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{products[selectedProductIdx].name}</h3>
+                        <h3 className="text-2xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{products[selectedProductIdx].name}</h3>
                         <p className="text-lg md:text-xl text-white/60 font-bold leading-relaxed max-w-md mx-auto md:mx-0">{products[selectedProductIdx].description}</p>
                       </div>
                       

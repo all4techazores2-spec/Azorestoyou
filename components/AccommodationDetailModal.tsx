@@ -110,7 +110,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative"
+        className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative"
       >
         {/* Main Close Button - Refined */}
         <button 
@@ -147,7 +147,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                 ))}
               </div>
             </div>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tight">{accommodation.name}</h2>
+            <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">{accommodation.name}</h2>
             <div className="flex items-center gap-2 text-white/80 text-sm mt-1">
               <MapPin size={14} className="text-blue-400" />
               <span className="font-bold">{accommodation.island}</span>
@@ -164,7 +164,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col md:flex-row gap-8 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-5 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 scrollbar-hide pb-20 md:pb-8">
           {/* Left Column: Info & Contacts */}
           <div className="md:w-1/3 space-y-6">
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">

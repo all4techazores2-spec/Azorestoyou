@@ -385,7 +385,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         </button>
 
         {/* Left/Top: Slider */}
-        <div className="w-full md:w-[45%] h-[35vh] md:h-auto relative bg-slate-900 overflow-hidden">
+        <div className="w-full md:w-[45%] h-[30vh] md:h-auto relative bg-slate-900 overflow-hidden">
           <AnimatePresence mode="popLayout">
             <motion.div
               key={currentSlide}
@@ -408,7 +408,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
           
-          <div className="absolute bottom-0 inset-x-0 p-8 text-white z-10">
+          <div className="absolute bottom-0 inset-x-0 p-4 md:p-8 text-white z-10">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentSlide}
@@ -417,8 +417,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                <h3 className="text-2xl font-black tracking-tight mb-1 drop-shadow-lg">{slides[currentSlide].title}</h3>
-                <p className="text-[10px] font-bold opacity-70 uppercase tracking-[0.3em] drop-shadow-md">{slides[currentSlide].desc}</p>
+                <h3 className="text-xl md:text-2xl font-black tracking-tight mb-1 drop-shadow-lg">{slides[currentSlide].title}</h3>
+                <p className="text-[9px] md:text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-md">{slides[currentSlide].desc}</p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -458,7 +458,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         </div>
 
         {/* Right/Bottom: Info */}
-        <div className="w-full md:w-[55%] p-6 md:p-10 overflow-y-auto relative flex flex-col bg-white">
+        <div className="w-full md:w-[55%] p-5 md:p-10 overflow-y-auto relative flex flex-col bg-white pb-24 md:pb-10">
           <AnimatePresence mode="wait">
             {bookingStep === 'info' && (
               <motion.div 
@@ -470,7 +470,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
               >
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
+                    <h2 className="text-xl md:text-3xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
                     {restaurant.bookingPolicy === 'required' && (
                       <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase tracking-widest">
                         <AlertTriangle size={12} /> Reserva Obrigatória (Vagas Limitadas)
@@ -495,7 +495,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </div>
 
                 {/* Description Section */}
-                <div className="mb-8">
+                <div className="mb-6 md:mb-8">
                    <div className="flex items-center justify-between mb-4">
                      <h4 className="font-black text-slate-300 text-[10px] uppercase tracking-[0.2em]">{getTranslation(currentLang, 'about_restaurant')}</h4>
                      <button 
@@ -550,7 +550,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                    </div>
                 </div>
 
-                <div className="mb-10">
+                <div className="mb-6 md:mb-10">
                   <button 
                     className="w-full py-4 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 group"
                      style={{ 
