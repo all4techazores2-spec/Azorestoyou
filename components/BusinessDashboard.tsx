@@ -150,7 +150,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
   const [isUploading, setIsUploading] = useState(false);
   const [walkInTableId, setWalkInTableId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -1057,8 +1057,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     );
   }
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden">
-      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden`}>
+    <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
+      {/* Sidebar Toggle Button (Mobile) */}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all"
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* ... existing sidebar content ... */}
           <div className="p-8 flex items-center gap-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
                 <AzoresLogo size={28} color="white" />
@@ -1130,9 +1139,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       </div>
 
       {/* Main Container */}
-      <main className="flex-1 ml-80 min-h-screen flex flex-col relative overflow-hidden">
+      <main className="flex-1 lg:ml-80 min-h-screen flex flex-col relative overflow-hidden">
         {/* Top Header - Estilo Foto 2 */}
-        <header className="sticky top-0 bg-white border-b border-slate-100 h-24 flex items-center justify-between px-10 z-40 shadow-sm">
+        <header className="sticky top-0 bg-white border-b border-slate-100 h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
             <div className="flex items-center gap-6">
                <button className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all">
                   <Menu size={22} />
@@ -1353,8 +1362,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       </div>
                    </div>
 
-                   <div className="bg-slate-50 border border-slate-100 rounded-[3rem] p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 w-full max-w-4xl">
+                   <div className="bg-slate-50 border border-slate-100 rounded-3xl md:rounded-[3rem] p-4 md:p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 w-full max-w-4xl">
                          {tables.map(table => (
                            <motion.div 
                              key={table.id}

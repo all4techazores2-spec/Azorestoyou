@@ -91,27 +91,19 @@ const DATA: Record<Language, {
     ],
     hotels: [
       { id: 'hotel-1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', description: 'Hotel de luxo com jardim japonês e spa.', type: 'hotel', adminEmail: 'hotel@azores4you.com', adminPassword: 'admin', reservations: [], tables: [] },
-      { id: 'H1', name: 'Azores Royal Garden', island: 'PDL', stars: 4, pricePerNight: 120, image: 'https://picsum.photos/400/300?random=1', description: 'Hotel de luxo com jardim japonês e spa.', type: 'hotel' },
       { id: 'H2', name: 'Terra Nostra Garden', island: 'PDL', stars: 5, pricePerNight: 200, image: 'https://picsum.photos/400/300?random=2', description: 'Localizado nas Furnas com piscinas termais.', type: 'hotel' },
     ],
     restaurants: [
       { id: 'R1', name: 'A Tasca', island: 'PDL', cuisine: 'Regional', rating: 4.8, reviews: 2450, image: 'https://picsum.photos/400/300?random=20', description: 'Cozinha tradicional açoriana.', adminEmail: 'atasca@azores4you.com', adminPassword: 'admin', phone: '+351 296 282 800', address: 'Rua do Aljube 16', latitude: '37.7412', longitude: '-25.6671', dishes: [], businessType: 'restaurant' },
-      { id: 'R_CAN_1', name: 'Azores Toronto Grill', island: 'CAN', cuisine: 'Fusão', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=150', description: 'Autêntico sabor dos Açores no coração de Toronto.', latitude: '43.6532', longitude: '-79.3832', dishes: [], businessType: 'restaurant' },
-      { id: 'R_CAN_2', name: 'Casa do Alentejo - Toronto', island: 'CAN', cuisine: 'Regional', rating: 4.6, reviews: 125, image: 'https://picsum.photos/400/300?random=155', description: 'Um pedaço de Portugal em Ontário.', latitude: '43.6629', longitude: '-79.3957', dishes: [], businessType: 'restaurant' }
+      { id: 'R_CAN_1', name: 'Azores Toronto Grill', island: 'CAN', cuisine: 'Fusão', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=150', description: 'Autêntico sabor dos Açores no coração de Toronto.', latitude: '43.6532', longitude: '-79.3832', dishes: [], businessType: 'restaurant' }
     ],
     activities: [
       { id: 'A_CAN_1', title: 'Visita à CN Tower', type: 'activity', island: 'CAN', image: 'https://picsum.photos/400/300?random=156', description: 'Visite o ícone de Toronto.', latitude: '43.6426', longitude: '-79.3871' },
-      { id: 'A_CAN_2', title: 'High Park Trail', type: 'trail', island: 'CAN', image: 'https://picsum.photos/400/300?random=157', description: 'Trilho natural no maior parque de Toronto.', latitude: '43.6465', longitude: '-79.4637' },
-      { id: 'A_CAN_3', title: 'Scarborough Bluffs', type: 'landscape', island: 'CAN', image: 'https://picsum.photos/400/300?random=158', description: 'Paisagens deslumbrantes sobre o Lago Ontário.', latitude: '43.7112', longitude: '-79.2312' },
-      { id: 'A_CAN_4', title: 'Casa Loma', type: 'culture', island: 'CAN', image: 'https://picsum.photos/400/300?random=159', description: 'Castelo histórico e museu em Toronto.', latitude: '43.6780', longitude: '-79.4094' },
-      { id: 'A_CAN_5', title: 'Nathan Phillips Square', type: 'poi', island: 'CAN', image: 'https://picsum.photos/400/300?random=160', description: 'O centro cívico e o icónico sinal de Toronto.', latitude: '43.6535', longitude: '-79.3841' }
+      { id: 'A_CAN_2', title: 'High Park Trail', type: 'trail', island: 'CAN', image: 'https://picsum.photos/400/300?random=157', description: 'Trilho natural no maior parque de Toronto.', latitude: '43.6465', longitude: '-79.4637' }
     ],
     beauty: [
       { id: 'B_CAN_1', name: 'Toronto Azores Spa', island: 'CAN', subcategory: 'beauty_salon', rating: 4.9, reviews: 85, image: 'https://picsum.photos/400/300?random=170', description: 'Tratamentos de luxo em Toronto.', latitude: '43.6550', longitude: '-79.3860' },
-      { id: 'B_CAN_2', name: 'Luso Hairdresser', island: 'CAN', subcategory: 'hairdresser', rating: 4.7, reviews: 120, image: 'https://picsum.photos/400/300?random=171', description: 'Cortes modernos com toque português.', latitude: '43.6600', longitude: '-79.3900' },
-      { id: 'B_CAN_3', name: 'Old School Barber TO', island: 'CAN', subcategory: 'barber', rating: 4.8, reviews: 200, image: 'https://picsum.photos/400/300?random=172', description: 'Barbearia clássica em Toronto.', latitude: '43.6500', longitude: '-79.4000' },
-      { id: 'B_CAN_4', name: 'Nails by Rosa', island: 'CAN', subcategory: 'manicure', rating: 4.6, reviews: 50, image: 'https://picsum.photos/400/300?random=173', description: 'Manicure profissional na Little Portugal.', latitude: '43.6480', longitude: '-79.4200' },
-      { id: 'B_CAN_5', name: 'Zen Massage Toronto', island: 'CAN', subcategory: 'massage', rating: 5.0, reviews: 30, image: 'https://picsum.photos/400/300?random=174', description: 'Massagens relaxantes no centro.', latitude: '43.6580', longitude: '-79.3820' }
+      { id: 'B_CAN_2', name: 'Luso Hairdresser', island: 'CAN', subcategory: 'hairdresser', rating: 4.7, reviews: 120, image: 'https://picsum.photos/400/300?random=171', description: 'Cortes modernos com toque português.', latitude: '43.6600', longitude: '-79.3900' }
     ],
     shops: [
       { 
@@ -128,8 +120,7 @@ const DATA: Record<Language, {
         businessType: 'shop',
         products: [
           { id: 'P1', name: 'Boneca de Milho', description: 'Artesanato tradicional feito à mão com palha de milho.', price: 15, image: 'https://picsum.photos/300/300?random=500', category: 'Artesanato' },
-          { id: 'P2', name: 'Bordado dos Açores', description: 'Bordado certificado feito por artesãos locais.', price: 45, image: 'https://picsum.photos/300/300?random=501', category: 'Têxtil' },
-          { id: 'P3', name: 'Presépio de Lapinha', description: 'Miniatura religiosa detalhada dentro de uma redoma.', price: 85, image: 'https://picsum.photos/300/300?random=502', category: 'Artesanato' }
+          { id: 'P2', name: 'Bordado dos Açores', description: 'Bordado certificado feito por artesãos locais.', price: 45, image: 'https://picsum.photos/300/300?random=501', category: 'Têxtil' }
         ]
       },
       { 
@@ -146,80 +137,17 @@ const DATA: Record<Language, {
         businessType: 'shop',
         products: [
           { id: 'P4', name: 'Queijo de São Jorge', description: 'Queijo curado de 7 meses, sabor intenso.', price: 18, image: 'https://picsum.photos/300/300?random=503', category: 'Alimentação' },
-          { id: 'P5', name: 'Pimenta da Terra', description: 'O tempero essencial da cozinha açoriana.', price: 5, image: 'https://picsum.photos/300/300?random=504', category: 'Alimentação' },
-          { id: 'P6', name: 'Chá Gorreana Black', description: 'Chá cultivado na única plantação da Europa.', price: 8, image: 'https://picsum.photos/300/300?random=505', category: 'Alimentação' }
-        ]
-      },
-      { 
-        id: 'S_PIX_1', 
-        name: 'Queijaria do Pico', 
-        island: 'PIX', 
-        subcategory: 'food', 
-        rating: 4.9, 
-        reviews: 210, 
-        image: 'https://picsum.photos/400/300?random=182', 
-        description: 'Os melhores queijos da ilha montanha.', 
-        latitude: '38.4833', 
-        longitude: '-28.4333',
-        businessType: 'shop',
-        products: [
-          { id: 'P7', name: 'Queijo do Pico Macio', description: 'Textura cremosa e aroma pronunciado.', price: 14.00, image: 'https://picsum.photos/300/300?random=506', category: 'Gastronomia' },
-          { id: 'P8', name: 'Mel de Incenso', description: 'Mel monofloral das matas do Pico.', price: 7.50, image: 'https://picsum.photos/300/300?random=507', category: 'Gastronomia' }
-        ]
-      },
-      { 
-        id: 'S_PDL_1', 
-        name: 'Bordados de São Miguel', 
-        island: 'PDL', 
-        subcategory: 'crafts', 
-        rating: 4.7, 
-        reviews: 180, 
-        image: 'https://picsum.photos/400/300?random=183', 
-        description: 'Tradição e elegância em cada ponto.', 
-        latitude: '37.7412', 
-        longitude: '-25.6671',
-        businessType: 'shop',
-        products: [
-          { id: 'P9', name: 'Toalha de Banquete', description: 'Bordado a cheio em linho natural.', price: 120.00, image: 'https://picsum.photos/300/300?random=508', category: 'Têxtil' },
-          { id: 'P10', name: 'Almofada Regional', description: 'Padrão tradicional de espiga azul.', price: 25.00, image: 'https://picsum.photos/300/300?random=509', category: 'Têxtil' }
-        ]
-      },
-      { 
-        id: 'S_SMA_1', 
-        name: 'Olaria de Santa Maria', 
-        island: 'SMA', 
-        subcategory: 'crafts', 
-        rating: 4.8, 
-        reviews: 90, 
-        image: 'https://picsum.photos/400/300?random=184', 
-        description: 'O barro vermelho ganha vida pelas mãos de mestres.', 
-        latitude: '36.9500', 
-        longitude: '-25.1333',
-        businessType: 'shop',
-        products: [
-          { id: 'P11', name: 'Bilha de Barro', description: 'Pote tradicional para água com design clássico.', price: 35.00, image: 'https://picsum.photos/300/300?random=510', category: 'Cerâmica' },
-          { id: 'P12', name: 'Prato de Parede', description: 'Pintado à mão com motivos da ilha.', price: 15.00, image: 'https://picsum.photos/300/300?random=511', category: 'Cerâmica' }
+          { id: 'P5', name: 'Pimenta da Terra', description: 'O tempero essencial da cozinha açoriana.', price: 5, image: 'https://picsum.photos/300/300?random=504', category: 'Alimentação' }
         ]
       }
     ],
     services: [
       { id: 'SR_CAN_1', name: 'Ontario Electrician - Manuel', island: 'CAN', subcategory: 'electrician', rating: 4.9, reviews: 45, image: 'https://picsum.photos/400/300?random=190', description: 'Serviços elétricos em toda a GTA.', latitude: '43.7000', longitude: '-79.4000', phone: '+1 416-000-000', publicEmail: 'manuel@ontarioelec.ca' },
-      { id: 'SR_CAN_2', name: 'Luso Construction', island: 'CAN', subcategory: 'bricklayer', rating: 4.7, reviews: 30, image: 'https://picsum.photos/400/300?random=191', description: 'Especialistas em alvenaria e renovações.', latitude: '43.7200', longitude: '-79.3500', phone: '+1 416-000-001', publicEmail: 'contact@lusoconstruction.ca' },
-      { id: 'SR_CAN_3', name: 'Toronto Wood Design', island: 'CAN', subcategory: 'carpenter', rating: 4.8, reviews: 25, image: 'https://picsum.photos/400/300?random=192', description: 'Carpintaria personalizada para a sua casa.', latitude: '43.6800', longitude: '-79.4500', phone: '+1 416-000-002', publicEmail: 'info@wooddesignto.ca' },
-      { id: 'SR_CAN_4', name: 'GTA Plumbers - Carlos', island: 'CAN', subcategory: 'plumber', rating: 4.6, reviews: 60, image: 'https://picsum.photos/400/300?random=193', description: 'Pichelaria urgente 24/7 em Toronto.', latitude: '43.6400', longitude: '-79.3800', phone: '+1 416-000-003', publicEmail: 'carlos@gtaplumbing.ca' },
-      { id: 'SR_CAN_5', name: 'Azores Painters Toronto', island: 'CAN', subcategory: 'painter', rating: 4.9, reviews: 15, image: 'https://picsum.photos/400/300?random=194', description: 'Pintura interior e exterior de alta qualidade.', latitude: '43.6600', longitude: '-79.4100', phone: '+1 416-000-004', publicEmail: 'paint@azorespaintersto.ca' },
-      { id: 'SR_CAN_6', name: 'Green Garden TO', island: 'CAN', subcategory: 'gardening', rating: 4.7, reviews: 20, image: 'https://picsum.photos/400/300?random=195', description: 'Manutenção de jardins e paisagismo.', latitude: '43.7500', longitude: '-79.3000', phone: '+1 416-000-005', publicEmail: 'garden@greento.ca' },
-      { id: 'SR_CAN_7', name: 'Modern Space Architects', island: 'CAN', subcategory: 'architect', rating: 5.0, reviews: 10, image: 'https://picsum.photos/400/300?random=196', description: 'Arquitetura inovadora em Ontário.', latitude: '43.6700', longitude: '-79.3900', phone: '+1 416-000-006', publicEmail: 'design@modernspace.ca' },
-      { id: 'SR_CAN_8', name: 'GTA Structural Engineers', island: 'CAN', subcategory: 'engineer', rating: 4.8, reviews: 8, image: 'https://picsum.photos/400/300?random=197', description: 'Projetos de engenharia e consultoria.', latitude: '43.6900', longitude: '-79.3700', phone: '+1 416-000-007', publicEmail: 'eng@gtastructural.ca' },
-      { id: 'SR_CAN_9', name: 'Toronto Air Systems', island: 'CAN', subcategory: 'hvac', rating: 4.9, reviews: 35, image: 'https://picsum.photos/400/300?random=198', description: 'Instalação e reparação de AC e aquecimento.', latitude: '43.7100', longitude: '-79.4200', phone: '+1 416-000-008', publicEmail: 'hvac@toair.ca' }
+      { id: 'SR_CAN_2', name: 'Luso Construction', island: 'CAN', subcategory: 'bricklayer', rating: 4.7, reviews: 30, image: 'https://picsum.photos/400/300?random=191', description: 'Especialistas em alvenaria e renovações.', latitude: '43.7200', longitude: '-79.3500', phone: '+1 416-000-001', publicEmail: 'contact@lusoconstruction.ca' }
     ],
     auto_repair: [
       { id: 'AR_CAN_1', name: 'Peças Luso-Canadiana', island: 'CAN', subcategory: 'parts', rating: 4.8, reviews: 150, image: 'https://picsum.photos/400/300?random=200', description: 'Tudo o que precisa para o seu carro, peças originais e compatíveis.', latitude: '43.6500', longitude: '-79.4100' },
-      { id: 'AR_CAN_2', name: 'Oficina do Manuel Toronto', island: 'CAN', subcategory: 'workshop', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=201', description: 'Mecânica geral, revisões e diagnóstico eletrónico.', latitude: '43.6600', longitude: '-79.4000' },
-      { id: 'AR_CAN_3', name: 'Elite Paint & Body', island: 'CAN', subcategory: 'bodywork', rating: 4.7, reviews: 85, image: 'https://picsum.photos/400/300?random=202', description: 'Especialistas em bate-chapa e pintura automóvel.', latitude: '43.6400', longitude: '-79.4200' },
-      { id: 'AR_CAN_4', name: 'Auto Parts Express', island: 'CAN', subcategory: 'parts', rating: 4.6, reviews: 90, image: 'https://picsum.photos/400/300?random=203', description: 'Loja de peças com entrega rápida em Toronto.', latitude: '43.6700', longitude: '-79.3800' },
-      { id: 'AR_CAN_5', name: 'Garagem Atlântico', island: 'CAN', subcategory: 'workshop', rating: 5.0, reviews: 45, image: 'https://picsum.photos/400/300?random=204', description: 'Serviço personalizado para o seu veículo.', latitude: '43.6800', longitude: '-79.3700' },
-      { id: 'AR_CAN_6', name: 'Pintura & Bate-Chapa Luso', island: 'CAN', subcategory: 'bodywork', rating: 4.8, reviews: 60, image: 'https://picsum.photos/400/300?random=205', description: 'Qualidade superior em reparações de chapa.', latitude: '43.6900', longitude: '-79.3600' }
+      { id: 'AR_CAN_2', name: 'Oficina do Manuel Toronto', island: 'CAN', subcategory: 'workshop', rating: 4.9, reviews: 320, image: 'https://picsum.photos/400/300?random=201', description: 'Mecânica geral, revisões e diagnóstico eletrónico.', latitude: '43.6600', longitude: '-79.4000' }
     ],
     auto_electronics: [
       { id: 'AE_CAN_1', name: 'Smart Auto Tech', island: 'CAN', subcategory: 'electronics', rating: 4.9, reviews: 42, image: 'https://picsum.photos/400/300?random=210', description: 'Especialistas em diagnóstico eletrónico e reprogramação.', latitude: '43.6500', longitude: '-79.4100', phone: '+1 416-555-0101', publicEmail: 'tech@smartauto.ca' },
@@ -227,9 +155,7 @@ const DATA: Record<Language, {
     ],
     used_market: [
       { id: 'UM_CAN_1', name: 'VW Golf 2018 - Manuel', island: 'CAN', subcategory: 'cars_motos', rating: 5.0, reviews: 1, image: 'https://picsum.photos/400/300?random=220', description: 'Excelente estado, apenas 60.000km. Todas as revisões na marca.', latitude: '43.6500', longitude: '-79.4100', phone: '+1 416-555-9001', publicEmail: 'manuel.vendas@gmail.com' },
-      { id: 'UM_CAN_2', name: 'Honda CB500X - Carlos', island: 'CAN', subcategory: 'cars_motos', rating: 4.8, reviews: 3, image: 'https://picsum.photos/400/300?random=221', description: 'Mota impecável, guardada sempre em garagem.', latitude: '43.6600', longitude: '-79.4000', phone: '+1 416-555-9002', publicEmail: 'carlos.motos@outlook.com' },
-      { id: 'UM_CAN_3', name: 'Motor Completo BMW 320d', island: 'CAN', subcategory: 'used_parts', rating: 4.9, reviews: 5, image: 'https://picsum.photos/400/300?random=222', description: 'Motor com 120.000km, testado e com garantia.', latitude: '43.6400', longitude: '-79.4200', phone: '+1 416-555-9003', publicEmail: 'pecas.luso@pecas.ca' },
-      { id: 'UM_CAN_4', name: 'Jantes 17" Audi', island: 'CAN', subcategory: 'used_parts', rating: 4.7, reviews: 2, image: 'https://picsum.photos/400/300?random=223', description: 'Jogo de 4 jantes originais, sem empenos.', latitude: '43.6700', longitude: '-79.3800', phone: '+1 416-555-9004', publicEmail: 'vendas.audi@gmail.com' }
+      { id: 'UM_CAN_2', name: 'Honda CB500X - Carlos', island: 'CAN', subcategory: 'cars_motos', rating: 4.8, reviews: 3, image: 'https://picsum.photos/400/300?random=221', description: 'Mota impecável, guardada sempre em garagem.', latitude: '43.6600', longitude: '-79.4000', phone: '+1 416-555-9002', publicEmail: 'carlos.motos@outlook.com' }
     ],
     animals: [
       { id: 'PET_PDL_1', name: 'Pet Shop Açores', island: 'PDL', subcategory: 'pet_shop', rating: 4.9, reviews: 120, image: 'https://picsum.photos/400/300?random=230', description: 'Tudo para o seu animal de estimação em Ponta Delgada.', phone: '+351 296 000 000', publicEmail: 'geral@petshopacores.pt', latitude: '37.7412', longitude: '-25.6671' },
@@ -287,8 +213,7 @@ const DATA: Record<Language, {
         longitude: '-25.6650',
         products: [
           { id: 'G1', name: 'Passadeiras Matrix T75', description: 'Tecnologia de ponta com ecrã tátil e simulação de trilhos.', price: 0, image: 'https://images.unsplash.com/photo-1578608712688-469511b5003a?q=80&w=800', category: 'Cardio' },
-          { id: 'G2', name: 'Zona de Pesos Livres', description: 'Halteres até 50kg e múltiplas bancadas de treino.', price: 0, image: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=800', category: 'Musculação' },
-          { id: 'G3', name: 'Piscina Interior Aquecida', description: 'Piscina de 25 metros para natação livre e aulas.', price: 0, image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?q=80&w=800', category: 'Aquáticos' }
+          { id: 'G2', name: 'Zona de Pesos Livres', description: 'Halteres até 50kg e múltiplas bancadas de treino.', price: 0, image: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=800', category: 'Musculação' }
         ]
       },
       { 
@@ -328,8 +253,7 @@ const DATA: Record<Language, {
         ],
         vehicles: [
           { id: 'C3', model: 'VW Golf VIII R', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=800', description: 'Versatilidade e desportivismo.', features: ['320cv', 'Digital Cockpit'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 },
-          { id: 'C4', model: 'Audi RS3 Sportback', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1606148632399-6868af6932f3?q=80&w=800', description: 'O som icónico do motor de 5 cilindros.', features: ['400cv', 'Quattro'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 },
-          { id: 'C5', model: 'Tesla Model 3 Performance', fuelType: 'Elétrico', seats: 5, image: 'https://images.unsplash.com/photo-1536700503339-1e4b06520771?q=80&w=800', description: 'Aceleração instantânea e tecnologia de ponta.', features: ['Dual Motor', 'Autopilot'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 }
+          { id: 'C4', model: 'Audi RS3 Sportback', fuelType: 'Gasolina', seats: 5, image: 'https://images.unsplash.com/photo-1606148632399-6868af6932f3?q=80&w=800', description: 'O som icónico do motor de 5 cilindros.', features: ['400cv', 'Quattro'], isAvailable: true, companyId: 'ST_1', type: 'SUV', pricePerDay: 0 }
         ]
       },
       { 

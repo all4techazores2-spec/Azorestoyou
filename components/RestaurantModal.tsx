@@ -674,7 +674,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           initial={{ opacity: 0, scale: 0.9, y: 20 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                          className="w-full max-w-sm bg-white rounded-[32px] p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6"
+                          className="w-full max-w-sm bg-white rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-y-auto flex flex-col gap-6 max-h-[95%]"
                         >
                           <button 
                             onClick={closePopup}

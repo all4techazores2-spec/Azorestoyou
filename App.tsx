@@ -110,10 +110,13 @@ const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
 
-  // Detetar automaticamente se estamos em localhost ou no Render
-  const API_BASE_URL = window.location.origin.includes('localhost') 
-    ? `http://${window.location.hostname}:3001`
-    : window.location.origin;
+  // URLs de Produção (Tudo no Render para estabilidade total)
+  const RENDER_URL = 'https://azorestoyou-1.onrender.com';
+  const FRONTEND_URL = RENDER_URL;
+
+  // Detetar automaticamente se estamos em localhost ou em produção
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const API_BASE_URL = isLocal ? 'http://localhost:3001' : RENDER_URL;
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
@@ -1413,7 +1416,7 @@ const App: React.FC = () => {
       </nav>
       )}
 
-      <main className={`pb-8 pt-4 md:pt-8 ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
+      <main className={`pb-32 pt-4 md:pt-8 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
         
         {exploreCategory === null ? (
           <div className="max-w-4xl mx-auto px-4">
