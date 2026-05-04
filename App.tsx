@@ -116,13 +116,11 @@ const App: React.FC = () => {
   
   const FRONTEND_URL = `https://${OFFICIAL_DOMAIN}`;
 
-  // Detetar automaticamente a melhor URL para a API
+  // Detetar se estamos em localhost
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isOfficial = window.location.hostname === OFFICIAL_DOMAIN;
   
-  // Se estivermos no domínio oficial ou localhost, usamos caminhos relativos ou locais. 
-  // Caso contrário (ex: link do render), apontamos explicitamente para o render.
-  const API_BASE_URL = isLocal ? 'http://localhost:3001' : (isOfficial ? '' : RENDER_BACKEND);
+  // Em produção, apontamos sempre para o Render para garantir que o Cloudflare consiga ler os dados
+  const API_BASE_URL = isLocal ? 'http://localhost:3001' : RENDER_BACKEND;
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
   const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
