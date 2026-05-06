@@ -104,7 +104,10 @@ const HomeSection: React.FC<HomeSectionProps> = ({
             className="w-full h-12 bg-white border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
         </div>
-        <button className="w-12 h-12 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-700/20 active:scale-95 transition-all">
+        <button 
+          onClick={onOpenIslandSelection}
+          className="w-12 h-12 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-700/20 active:scale-95 transition-all"
+        >
           <Map size={20} />
         </button>
       </div>
@@ -179,19 +182,24 @@ const HomeSection: React.FC<HomeSectionProps> = ({
               }}
               className="grid grid-cols-3 gap-y-6 gap-x-2 max-w-[280px] w-full cursor-grab active:cursor-grabbing py-2"
             >
-              {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item) => (
-                <button 
+              {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item, idx) => (
+                <motion.button 
                   key={item.id} 
                   onClick={() => onNavigate(item.id as any)}
-                  className="flex flex-col items-center gap-2 group active:scale-90 transition-all"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05, duration: 0.4 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="flex flex-col items-center gap-2 group transition-all"
                 >
-                  <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110`}>
+                  <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform`}>
                      {React.cloneElement(item.icon as React.ReactElement, { size: 24, className: "w-6 h-6" })}
                   </div>
                   <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5">
                     {item.label}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </motion.div>
           </AnimatePresence>

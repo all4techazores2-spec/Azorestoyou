@@ -30,7 +30,7 @@ import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, Shiel
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
-// import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -339,6 +339,16 @@ const App: React.FC = () => {
   const [tableMenuRes, setTableMenuRes] = useState<any | null>(null);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
+  const [showIslandSelection, setShowIslandSelection] = useState(false);
+
+  // Helper to filter data by island
+  const filterByIsland = <T extends { island?: string }>(items: T[]) => {
+    if (publicIslandFilter === 'all' || !publicIslandFilter) return items;
+    return items.filter(item => 
+      item.island?.toLowerCase() === publicIslandFilter.toLowerCase() || 
+      item.island === publicIslandFilter
+    );
+  };
 
   // 4. ITINERARY STATE
   const DEFAULT_ITINERARY: Itinerary = {
@@ -1437,20 +1447,34 @@ const App: React.FC = () => {
       )}
 
       <main className={`pb-32 pt-4 md:pt-8 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
-        
+        <AnimatePresence mode="wait">
         {exploreCategory === null ? (
-          <div className="max-w-4xl mx-auto">
+          <motion.div 
+            key="home"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="max-w-4xl mx-auto"
+          >
             <HomeSection 
               language={language}
-              restaurants={restaurants}
+              restaurants={filterByIsland(restaurants)}
               onNavigate={handleNavClick}
               onOpenMenu={() => setMobileMenuOpen(true)}
               onShowNotifications={() => setShowNotificationsModal(true)}
-              featuredIsland={selectedIslandName || "São Miguel"}
+              featuredIsland={selectedIslandName || "Todas as Ilhas"}
+              onOpenIslandSelection={() => setShowIslandSelection(true)}
             />
-          </div>
+          </motion.div>
         ) : (
-          <div className="animate-in fade-in duration-500">
+          <motion.div 
+            key="explore"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+          >
             {/* Always keep category bar at the top when content is active for easy switching */}
             <div className="px-4">
               <CategoryBar activeCategory={exploreCategory} onSelect={handleNavClick} language={language} />
@@ -1462,22 +1486,22 @@ const App: React.FC = () => {
                 let featuredItems: any[] = [];
                 const topRating = 4.5;
 
-                const allRestaurants = [...restaurants, ...getRestaurants(language).filter(r => !restaurants.find(br => br.id === r.id))];
-                const allActivities = [...activities, ...getActivities(language).filter(a => !activities.find(ba => ba.id === a.id))];
-                const allShops = [...shops, ...getShops(language).filter(s => !shops.find(bs => bs.id === s.id))];
-                const allBeauty = [...beauty, ...getBeauty(language).filter(b => !beauty.find(bb => bb.id === b.id))];
-                const allServices = [...services, ...getServices(language).filter(s => !services.find(bs => bs.id === s.id))];
-                const allAutoRepairs = [...autoRepairs, ...getAutoRepairs(language).filter(a => !autoRepairs.find(ba => ba.id === a.id))];
+                const allRestaurants = filterByIsland([...restaurants, ...getRestaurants(language).filter(r => !restaurants.find(br => br.id === r.id))]);
+                const allActivities = filterByIsland([...activities, ...getActivities(language).filter(a => !activities.find(ba => ba.id === a.id))]);
+                const allShops = filterByIsland([...shops, ...getShops(language).filter(s => !shops.find(bs => bs.id === s.id))]);
+                const allBeauty = filterByIsland([...beauty, ...getBeauty(language).filter(b => !beauty.find(bb => bb.id === b.id))]);
+                const allServices = filterByIsland([...services, ...getServices(language).filter(s => !services.find(bs => bs.id === s.id))]);
+                const allAutoRepairs = filterByIsland([...autoRepairs, ...getAutoRepairs(language).filter(a => !autoRepairs.find(ba => ba.id === a.id))]);
 
-                const allAutoElectronics = [...autoElectronics, ...getAutoElectronics(language).filter(a => !autoElectronics.find(ba => ba.id === a.id))];
-                const allUsedMarket = [...usedMarket, ...getUsedMarket(language).filter(u => !usedMarket.find(bu => bu.id === u.id))];
-                const allAnimals = [...animals, ...getAnimals(language).filter(a => !animals.find(ba => ba.id === a.id))];
-                const allRealEstate = [...realEstate, ...getRealEstate(language).filter(r => !realEstate.find(br => br.id === r.id))];
-                const allGyms = [...gyms, ...getGyms(language).filter(g => !gyms.find(bg => bg.id === g.id))];
-                const allStands = [...stands, ...getStands(language).filter(s => !stands.find(bs => bs.id === s.id))];
-                const allOffices = [...offices, ...getOffices(language).filter(o => !offices.find(bo => bo.id === o.id))];
-                const allITServices = [...itServices, ...getITServices(language).filter(i => !itServices.find(bi => bi.id === i.id))];
-                const allPerfumes = [...perfumes, ...getPerfumes(language).filter(p => !perfumes.find(bp => bp.id === p.id))];
+                const allAutoElectronics = filterByIsland([...autoElectronics, ...getAutoElectronics(language).filter(a => !autoElectronics.find(ba => ba.id === a.id))]);
+                const allUsedMarket = filterByIsland([...usedMarket, ...getUsedMarket(language).filter(u => !usedMarket.find(bu => bu.id === u.id))]);
+                const allAnimals = filterByIsland([...animals, ...getAnimals(language).filter(a => !animals.find(ba => ba.id === a.id))]);
+                const allRealEstate = filterByIsland([...realEstate, ...getRealEstate(language).filter(r => !realEstate.find(br => br.id === r.id))]);
+                const allGyms = filterByIsland([...gyms, ...getGyms(language).filter(g => !gyms.find(bg => bg.id === g.id))]);
+                const allStands = filterByIsland([...stands, ...getStands(language).filter(s => !stands.find(bs => bs.id === s.id))]);
+                const allOffices = filterByIsland([...offices, ...getOffices(language).filter(o => !offices.find(bo => bo.id === o.id))]);
+                const allITServices = filterByIsland([...itServices, ...getITServices(language).filter(i => !itServices.find(bi => bi.id === i.id))]);
+                const allPerfumes = filterByIsland([...perfumes, ...getPerfumes(language).filter(p => !perfumes.find(bp => bp.id === p.id))]);
 
                 const sortFeatured = (items: any[]) => {
                   if (!isNearbyFilter || !userCoords) return items;
@@ -1620,23 +1644,23 @@ const App: React.FC = () => {
                     currentLanguage={language}
                     isAuthenticated={isAuthenticated}
                     onShowAuth={() => setShowAuthModal(true)}
-                    // PASSING DYNAMIC DATA
-                    restaurants={restaurants}
-                    activities={activities}
+                    // PASSING DYNAMIC DATA (Filtered)
+                    restaurants={filterByIsland(restaurants)}
+                    activities={filterByIsland(activities)}
                     busSchedules={busSchedules}
-                    shops={shops}
-                    beauty={beauty}
-                    services={services}
-                    autoRepairs={autoRepairs}
-                    autoElectronics={autoElectronics}
-                    usedMarket={usedMarket}
-                    animals={animals}
-                    realEstate={realEstate}
-                    gyms={gyms}
-                    stands={stands}
-                    offices={offices}
-                    itServices={itServices}
-                    perfumes={perfumes}
+                    shops={filterByIsland(shops)}
+                    beauty={filterByIsland(beauty)}
+                    services={filterByIsland(services)}
+                    autoRepairs={filterByIsland(autoRepairs)}
+                    autoElectronics={filterByIsland(autoElectronics)}
+                    usedMarket={filterByIsland(usedMarket)}
+                    animals={filterByIsland(animals)}
+                    realEstate={filterByIsland(realEstate)}
+                    gyms={filterByIsland(gyms)}
+                    stands={filterByIsland(stands)}
+                    offices={filterByIsland(offices)}
+                    itServices={filterByIsland(itServices)}
+                    perfumes={filterByIsland(perfumes)}
                     userCredits={userCredits}
                     setUserCredits={setUserCredits}
                     favoriteRestaurantIds={favoriteRestaurantIds}
@@ -1714,8 +1738,9 @@ const App: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </main>
 
       {/* Persistent Trip Button (Mobile) */}
@@ -1737,7 +1762,17 @@ const App: React.FC = () => {
       {/* Modals */}
       <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={handleAuthSuccess} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
-      <IslandSelectionModal isOpen={showBusIslandModal} onClose={() => setShowBusIslandModal(false)} onSelect={handleBusIslandSelect} language={language} />
+      <IslandSelectionModal 
+        isOpen={showBusIslandModal || showIslandSelection} 
+        onClose={() => { setShowBusIslandModal(false); setShowIslandSelection(false); }} 
+        onSelect={(code) => {
+          setPublicIslandFilter(code);
+          setShowBusIslandModal(false);
+          setShowIslandSelection(false);
+          if (showBusIslandModal) setExploreCategory('buses');
+        }} 
+        language={language} 
+      />
       <ProfileModal 
         isOpen={showProfileModal} 
         onClose={() => setShowProfileModal(false)} 
