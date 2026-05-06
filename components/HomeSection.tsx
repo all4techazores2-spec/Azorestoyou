@@ -94,20 +94,8 @@ const HomeSection: React.FC<HomeSectionProps> = ({
 
   return (
     <div className="flex flex-col pb-20 animate-in fade-in duration-700 bg-slate-50/30">
-      {/* Header Fixo com Logo */}
-      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[60] px-4 py-3 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden">
-            <AzoresLogo size={24} />
-          </div>
-          <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
-            Azores<span className="text-blue-600 font-black">ToYou</span>
-          </h1>
-        </div>
-      </div>
-
-      {/* Search Bar - Com espaçamento do cabeçalho */}
-      <div className="mt-4 px-4 flex gap-3 z-50">
+      {/* Search Bar - Agora com margem para o cabeçalho global que já existe na App */}
+      <div className="mt-2 px-4 flex gap-3 z-50">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
