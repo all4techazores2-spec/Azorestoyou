@@ -12,6 +12,7 @@ interface HomeSectionProps {
   onShowNotifications: () => void;
   restaurants: Restaurant[];
   featuredIsland?: string;
+  onOpenIslandSelection: () => void;
 }
 
 const HomeSection: React.FC<HomeSectionProps> = ({ 
@@ -20,7 +21,8 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   onOpenMenu, 
   onShowNotifications,
   restaurants,
-  featuredIsland = "São Miguel"
+  featuredIsland = "São Miguel",
+  onOpenIslandSelection
 }) => {
   const [catPage, setCatPage] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
