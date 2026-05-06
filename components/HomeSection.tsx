@@ -97,8 +97,8 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   return (
     <div className="flex flex-col pb-28 animate-in fade-in duration-700 bg-slate-50/30">
       
-      {/* Hero Slider - IMERSIVO (Altura Reduzida para mais Leveza) */}
-      <div className="relative h-[320px] w-full overflow-hidden shadow-xl rounded-b-[2.5rem]">
+      {/* Hero Slider - IMERSIVO & FULL SCREEN FEEL */}
+      <div className="relative h-[85vh] w-full overflow-hidden shadow-2xl">
         <AnimatePresence mode="popLayout">
           <motion.img 
             key={heroIndex}
@@ -112,33 +112,41 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           />
         </AnimatePresence>
         
-        {/* Efeito Vinheta e Gradiente Profissional */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.4)_100%)]"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+        {/* Efeito Vinheta e Gradiente Imersivo */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
         
-        <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full">
-          <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Em Destaque</span>
-        </div>
-        
-        <div className="absolute bottom-10 left-8 right-8 z-10">
+        <div className="absolute inset-0 flex flex-col justify-end p-10 pb-24">
           <motion.div
             key={`text-${heroIndex}`}
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
+            transition={{ delay: 0.3, duration: 1 }}
           >
-            <h2 className="text-3xl font-black text-white mb-1.5 leading-none tracking-tighter">Descubra<br/>{featuredIsland}</h2>
-            <p className="text-sm text-white/70 font-bold mb-5 tracking-tight">A natureza em estado puro</p>
-            <button className="bg-white text-slate-900 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all w-fit">
-               Explorar agora <ArrowRight size={14} />
-            </button>
+            <div className="bg-white/20 backdrop-blur-md border border-white/30 px-4 py-1.5 rounded-full w-fit mb-6">
+              <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Experiência Açores</span>
+            </div>
+            
+            <h2 className="text-5xl font-black text-white mb-4 leading-none tracking-tighter drop-shadow-2xl">
+              Descubra<br/>{featuredIsland}
+            </h2>
+            <p className="text-lg text-white/90 font-bold mb-8 tracking-tight max-w-[280px] drop-shadow-md">A natureza em estado puro para as suas férias perfeitas.</p>
+            
+            <div className="flex gap-3">
+              <button className="bg-white text-slate-900 px-8 py-4 rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">
+                 Explorar agora
+              </button>
+              <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-6 py-4 rounded-[2rem] active:scale-95 transition-all">
+                 <ArrowRight size={20} />
+              </button>
+            </div>
           </motion.div>
         </div>
 
         {/* Dots Paginação Minimalistas */}
-        <div className="absolute bottom-10 right-8 flex gap-1.5 z-10">
+        <div className="absolute bottom-12 right-10 flex flex-col gap-2">
            {heroImages.map((_, i) => (
-             <div key={i} className={`h-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'w-5 bg-white' : 'w-1 bg-white/30'}`}></div>
+             <div key={i} className={`w-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'h-8 bg-white' : 'h-2 bg-white/40'}`}></div>
            ))}
         </div>
       </div>

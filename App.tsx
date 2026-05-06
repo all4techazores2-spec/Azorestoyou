@@ -1429,79 +1429,75 @@ const App: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8 scrollbar-hide">
+                <div className="flex-1 overflow-y-auto px-6 py-8 space-y-12 scrollbar-hide">
                   
-                  {/* Profile Card (Se logado) */}
-                  {isAuthenticated ? (
-                    <div className="p-5 bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 text-white relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-                      <div className="flex items-center gap-4 mb-5 relative z-10">
-                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/20 shadow-inner">
-                          <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                          <p className="font-black text-base tracking-tighter leading-none mb-1">{userProfile.name.split(' ')[0]}</p>
-                          <div className="flex items-center gap-1.5 opacity-80">
-                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                             <span className="text-[10px] font-black uppercase tracking-widest">{userCredits} Créditos</span>
-                          </div>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
-                        className="w-full py-3.5 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all active:scale-95"
-                      >
-                        Gerir Minha Conta
-                      </button>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
-                      className="w-full p-6 bg-blue-600 text-white rounded-[2.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex flex-col items-center gap-3 text-center"
-                    >
-                      <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                        <User size={24} />
-                      </div>
-                      <span>Fazer Login</span>
-                    </button>
-                  )}
-
-                  {/* Navigation Section */}
-                  <div className="space-y-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-3">Explorar Açores</p>
-                    <div className="grid grid-cols-1 gap-2.5">
-                      <button 
-                        onClick={goHome} 
-                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-white rounded-[1.5rem] border border-transparent hover:border-slate-100 transition-all group active:scale-98 shadow-sm hover:shadow-md"
-                      >
-                        <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform"><Compass size={20} /></div>
-                        <span className="font-black text-slate-700 tracking-tighter uppercase text-xs">Página Inicial</span>
-                      </button>
+                  {/* Actions Section */}
+                  <div className="space-y-6">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-4">Menu de Opções</p>
+                    <div className="grid grid-cols-1 gap-3">
                       
-                      {navCategories.map(cat => (
-                        <button 
-                          key={cat.id} 
-                          onClick={() => handleNavClick(cat.id)} 
-                          className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-white rounded-[1.5rem] border border-transparent hover:border-slate-100 transition-all group active:scale-98 shadow-sm hover:shadow-md"
-                        >
-                          <div className="p-2.5 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
-                          <span className="font-black text-slate-700 tracking-tighter uppercase text-xs">{cat.label}</span>
-                        </button>
-                      ))}
+                      {/* Login / Profile */}
+                      <button 
+                        onClick={() => { 
+                          if (isAuthenticated) setShowProfileModal(true); 
+                          else setShowAuthModal(true);
+                          setMobileMenuOpen(false); 
+                        }}
+                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
+                      >
+                        <div className="flex items-center gap-4">
+                           <div className="p-3.5 bg-blue-600 rounded-2xl text-white shadow-lg"><User size={22} /></div>
+                           <div className="text-left">
+                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">{isAuthenticated ? (userProfile?.name?.split(' ')[0] || 'Perfil') : 'Fazer Login'}</span>
+                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{isAuthenticated ? `${userCredits} Créditos` : 'Acesse sua conta'}</span>
+                           </div>
+                        </div>
+                        <ArrowRight size={18} className="text-slate-200 group-hover:text-blue-600 transition-colors" />
+                      </button>
+
+                      {/* Contacts */}
+                      <button 
+                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
+                      >
+                        <div className="flex items-center gap-4">
+                           <div className="p-3.5 bg-green-600 rounded-2xl text-white shadow-lg"><Phone size={22} /></div>
+                           <div className="text-left">
+                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">Contactos</span>
+                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Fale connosco</span>
+                           </div>
+                        </div>
+                        <ArrowRight size={18} className="text-slate-200 group-hover:text-green-600 transition-colors" />
+                      </button>
+
+                      {/* Support */}
+                      <button 
+                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
+                      >
+                        <div className="flex items-center gap-4">
+                           <div className="p-3.5 bg-slate-900 rounded-2xl text-white shadow-lg"><ShieldAlert size={22} /></div>
+                           <div className="text-left">
+                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">Suporte Técnico</span>
+                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Ajuda e Segurança</span>
+                           </div>
+                        </div>
+                        <ArrowRight size={18} className="text-slate-200 group-hover:text-slate-600 transition-colors" />
+                      </button>
+
                     </div>
                   </div>
 
-                  {/* Footer Action */}
+                  {/* Footer Action - Logout */}
                   {isAuthenticated && (
-                    <div className="pt-4">
+                    <div className="pt-8 border-t border-slate-100">
                       <button 
-                        onClick={goBackToLanding} 
-                        className="flex items-center justify-center gap-3 w-full py-5 text-red-500 font-black text-[10px] uppercase tracking-widest border-2 border-red-50 rounded-[1.5rem] hover:bg-red-50 transition-all active:scale-95"
+                        onClick={() => { goBackToLanding(); setMobileMenuOpen(false); }} 
+                        className="flex items-center justify-center gap-3 w-full py-6 text-red-500 font-black text-[11px] uppercase tracking-[0.2em] bg-red-50/50 hover:bg-red-50 rounded-[2rem] transition-all active:scale-95 border border-red-100"
                       >
-                        <LogOut size={18} /> Terminar Sessão
+                        <LogOut size={20} /> Terminar Sessão
                       </button>
                     </div>
                   )}
+                </div>
                 </div>
               </motion.div>
             </>

@@ -417,46 +417,43 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </div>
 
         {data.length === 0 ? renderEmptyState() : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {data.map(a => (
               <div 
                 key={a.id} 
-                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
+                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
                 onClick={() => {
                   if (a.type === 'trail' || a.type === 'landscape' || a.type === 'culture' || a.type === 'poi' || a.type === 'activity') {
                     setSelectedTrail(a);
                   }
                 }}
               >
-                <div className="h-56 overflow-hidden relative">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
                    <img 
                      src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
                      alt={a.title} 
                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                    />
-                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                     <h3 className="text-white text-xl font-bold">{a.title}</h3>
-                     <p className="text-white/80 text-sm flex items-center gap-1"><MapPin className="w-3 h-3" /> {a.island}</p>
-                   </div>
-                   {/* Price Tag */}
-                   <div className="absolute top-4 right-4">
-                     {a.isPaid ? (
-                       <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                         {a.price}€
-                       </span>
-                     ) : (
-                       <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                         Grátis
-                       </span>
-                     )}
+                   <div className="absolute top-1 right-1">
+                      {a.isPaid ? (
+                        <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                          {a.price}€
+                        </span>
+                      ) : (
+                        <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                          Grátis
+                        </span>
+                      )}
                    </div>
                 </div>
-                <div className="p-5">
-                  <p className="text-slate-600 line-clamp-2">{a.description}</p>
-                  <button className="mt-4 w-full py-2 rounded border-2 border-slate-200 font-semibold text-slate-600 group-hover:border-blue-500 group-hover:text-blue-500 transition-colors">
-                    {getTranslation(lang, 'more_info')}
-                  </button>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{a.title}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-2">
+                    <MapPin className="w-3 h-3 text-blue-500" /> {a.island}
+                  </p>
+                  <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">{a.description}</p>
                 </div>
+                <ArrowRight size={20} className="text-slate-200 group-hover:text-blue-600 transition-colors mr-2" />
               </div>
             ))}
           </div>
@@ -471,11 +468,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     if (filtered.length === 0) return renderEmptyState();
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-4">
         {filtered.map(b => (
           <div 
             key={b.id} 
-            className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
+            className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
             onClick={() => {
               if (b.businessType === 'shop' || category === 'shops') {
                 setSelectedShop(b);
@@ -484,25 +481,24 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               }
             }} 
           >
-            <div className="h-48 overflow-hidden relative">
+            <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
               <img 
                 src={b.image.startsWith('/') ? `${API_BASE_URL}${b.image}` : b.image} 
                 alt={b.name} 
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
               />
-              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                 <MapPin className="w-3 h-3 text-red-500" /> {b.island}
+              <div className="absolute top-2 right-2">
+                 <div className="w-6 h-6 rounded-lg bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
+                   <MapPin className="w-3 h-3 text-red-500" />
+                 </div>
               </div>
             </div>
-            <div className="p-5">
-              <h3 className="text-xl font-bold text-slate-800 mb-1">{b.name}</h3>
-              <p className="text-sm text-slate-500 mb-3 line-clamp-2">{b.description}</p>
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                  {getTranslation(lang, 'more_info')} <ArrowRight className="w-4 h-4" />
-                </span>
-              </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{b.name}</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{b.cuisine || b.island}</p>
+              <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">{b.description}</p>
             </div>
+            <ArrowRight size={20} className="text-slate-200 group-hover:text-blue-600 transition-colors mr-2" />
           </div>
         ))}
       </div>
@@ -863,34 +859,34 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     const featured = data.slice(0, 3); // Take top 3 for slider
     return (
       <div className="mb-16 -mx-6 md:-mx-10 mt-4">
-        <div className="flex overflow-x-auto pb-8 px-6 md:px-10 gap-5 scrollbar-hide snap-x">
+        <div className="flex overflow-x-auto pb-8 px-0 md:px-0 gap-0 scrollbar-hide snap-x">
           {featured.map((item, idx) => (
             <div 
               key={`slider-${idx}`}
-              className="min-w-[92vw] md:min-w-[500px] h-[320px] rounded-[3rem] overflow-hidden relative shadow-2xl snap-center group"
+              className="min-w-full h-[380px] relative shadow-2xl snap-center group"
             >
               <img 
                 src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
                 alt={item.name || item.title}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent"></div>
               
               {/* Top Badges */}
-              <div className="absolute top-6 left-6 flex items-center gap-2">
-                 <span className="px-3 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-[0.15em] rounded-full shadow-lg">Destaque</span>
+              <div className="absolute top-8 left-8 flex items-center gap-2">
+                 <span className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl">Destaque Premium</span>
                  {item.isPaid !== undefined && (
-                   <span className={`px-3 py-1 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[9px] font-black uppercase tracking-[0.15em] rounded-full shadow-lg`}>
-                     {item.isPaid ? 'Premium' : 'Grátis'}
+                   <span className={`px-4 py-1.5 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl`}>
+                     {item.isPaid ? 'Verificado' : 'Acesso Grátis'}
                    </span>
                  )}
               </div>
 
-              <div className="absolute bottom-8 left-8 right-8">
-                <h4 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-3 drop-shadow-md">{item.name || item.title}</h4>
-                <div className="flex items-center gap-2.5 text-white/80 text-xs font-black uppercase tracking-widest">
-                  <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <MapPin size={12} className="text-blue-400" />
+              <div className="absolute bottom-10 left-8 right-8">
+                <h4 className="text-4xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl">{item.name || item.title}</h4>
+                <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
+                  <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                    <MapPin size={14} className="text-blue-400" />
                   </div>
                   {item.island}
                 </div>
@@ -1332,13 +1328,25 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       </div>
 
       {/* Category Featured Slider */}
-      {category !== 'buses' && category !== 'beauty' && category !== 'services' && (
+      {category !== 'buses' && (
         renderCategorySlider(
           category === 'restaurants' ? filteredRestaurants :
           category === 'shops' ? allShops :
           category === 'trails' ? getActivitiesByType('trail') :
           category === 'landscapes' ? getActivitiesByType('landscape') :
-          category === 'poi' ? getActivitiesByType('poi') : allActivities
+          category === 'poi' ? getActivitiesByType('poi') :
+          category === 'beauty' ? allBeauty :
+          category === 'services' ? allServices :
+          category === 'auto_repair' ? allAutoRepairs :
+          category === 'auto_electronics' ? allAutoElectronics :
+          category === 'used_market' ? allUsedMarket :
+          category === 'animals' ? allAnimals :
+          category === 'real_estate' ? allRealEstate :
+          category === 'gyms' ? allGyms :
+          category === 'stands' ? allStands :
+          category === 'offices' ? allOffices :
+          category === 'it_services' ? allITServices :
+          category === 'perfumes' ? allPerfumes : allActivities
         )
       )}
 
