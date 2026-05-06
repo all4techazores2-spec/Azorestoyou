@@ -162,37 +162,55 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </div>
       </div>
 
-      {/* Grelha de Categorias - ULTRA CENTRALIZADA E COMPACTA */}
-      <div className="mb-6">
-        <div className="overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-          <div className="flex" style={{ width: `${Math.ceil(quickIcons.length / 6) * 100}%` }}>
-            {Array.from({ length: Math.ceil(quickIcons.length / 6) }).map((_, pageIndex) => (
-              <div key={pageIndex} className="w-full flex-shrink-0 snap-center flex justify-center">
-                <div className="grid grid-cols-3 gap-y-4 gap-x-1 max-w-[280px] w-full py-1">
-                  {quickIcons.slice(pageIndex * 6, (pageIndex + 1) * 6).map((item) => (
-                    <button 
-                      key={item.id} 
-                      onClick={() => onNavigate(item.id as any)}
-                      className="flex flex-col items-center gap-1.5 group active:scale-90 transition-all"
-                    >
-                      <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform`}>
-                         {React.cloneElement(item.icon as React.ReactElement, { size: 24, className: "w-6 h-6" })}
-                      </div>
-                      <span className="text-[9px] font-black text-slate-500 text-center uppercase tracking-tighter leading-none w-full px-0.5 truncate">
-                        {item.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Grelha de Categorias - DESIGN PREMIUM COM FADE E SWIPE */}
+      <div className="mb-6 overflow-hidden px-4">
+        <div className="relative h-[180px] flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={catPage}
+              initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 1.05, filter: "blur(4px)" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.1}
+              onDragEnd={(e, { offset, velocity }) => {
+                if (offset.x < -30) {
+                  const next = catPage + 1;
+                  if (next < Math.ceil(quickIcons.length / 6)) setCatPage(next);
+                } else if (offset.x > 30) {
+                  const prev = catPage - 1;
+                  if (prev >= 0) setCatPage(prev);
+                }
+              }}
+              className="grid grid-cols-3 gap-y-2 gap-x-1 max-w-[250px] w-full cursor-grab active:cursor-grabbing"
+            >
+              {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item) => (
+                <button 
+                  key={item.id} 
+                  onClick={() => onNavigate(item.id as any)}
+                  className="flex flex-col items-center gap-1 group active:scale-90 transition-all py-1"
+                >
+                  <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform hover:scale-105`}>
+                     {React.cloneElement(item.icon as React.ReactElement, { size: 24, className: "w-6 h-6" })}
+                  </div>
+                  <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5 truncate">
+                    {item.label}
+                  </span>
+                </button>
+              ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
         
-        {/* Paginação */}
-        <div className="flex justify-center gap-1.5 -mt-2">
+        {/* Paginação Estilizada */}
+        <div className="flex justify-center gap-2 -mt-4">
           {Array.from({ length: Math.ceil(quickIcons.length / 6) }).map((_, i) => (
-            <div key={i} className={`h-1 w-1 rounded-full ${i === 0 ? 'bg-blue-600' : 'bg-slate-200'}`} />
+            <div 
+              key={i} 
+              className={`h-1 rounded-full transition-all duration-300 ${catPage === i ? 'w-5 bg-slate-900' : 'w-1.5 bg-slate-200'}`} 
+            />
           ))}
         </div>
       </div>
