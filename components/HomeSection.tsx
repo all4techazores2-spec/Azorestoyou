@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, MountainSnow, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette } from 'lucide-react';
 import { Language, Restaurant } from '../types';
@@ -24,7 +23,26 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   featuredIsland = "São Miguel"
 }) => {
   const [catPage, setCatPage] = useState(0);
+  const [heroIndex, setHeroIndex] = useState(0);
   const t = (key: any) => getTranslation(language, key);
+
+  const heroImages = [
+    '/hero/11.jpg',
+    '/hero/12.jpg',
+    '/hero/13.jpg',
+    '/hero/14.jpg',
+    '/hero/15.jpg',
+    '/hero/16.jpg',
+    '/hero/17.webp',
+    '/hero/18.jpg'
+  ];
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const categories = [
     { id: 'trails', label: 'Trilhos', icon: <MountainSnow className="w-4 h-4 text-green-600" /> },
@@ -87,19 +105,12 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <button 
-            onClick={onShowNotifications}
-            className="p-2.5 bg-white rounded-full shadow-sm border border-slate-100 relative text-slate-600 active:scale-95 transition-all"
-          >
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
-          <button 
-            onClick={onOpenMenu}
-            className="p-2.5 bg-white rounded-full shadow-sm border border-slate-100 text-slate-600 active:scale-95 transition-all"
-          >
-            <Menu size={20} />
-          </button>
+          <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden">
+            <AzoresLogo size={24} />
+          </div>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
+            Azores<span className="text-blue-600 font-black">ToYou</span>
+          </h1>
         </div>
       </div>
 
@@ -118,48 +129,50 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </button>
       </div>
 
-      {/* Horizontal Category Pills */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide">
-        {categories.map((cat) => (
-          <button 
-            key={cat.id} 
-            onClick={() => onNavigate(cat.id)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm whitespace-nowrap active:scale-95 transition-all"
-          >
-            {cat.icon}
-            <span className="text-xs font-bold text-slate-700">{cat.label}</span>
-          </button>
-        ))}
-        <button className="flex items-center justify-center w-10 py-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm text-yellow-500">
-           ★
-        </button>
-      </div>
 
-      {/* Hero Slider Card */}
+      {/* Hero Slider Card - DESIGN PROFISSIONAL COM FADE */}
       <div className="px-4">
-        <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden shadow-2xl group cursor-pointer">
-          <img 
-            src="https://images.unsplash.com/photo-1589723930437-53696001099b?q=80&w=2070&auto=format&fit=crop" 
-            alt="Hero" 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-          <div className="absolute top-4 left-4 bg-green-500/80 backdrop-blur px-3 py-1 rounded-full">
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">Em Destaque</span>
+        <div className="relative aspect-[16/9] rounded-[2.5rem] overflow-hidden shadow-2xl group border-4 border-white/10">
+          <AnimatePresence mode="popLayout">
+            <motion.img 
+              key={heroIndex}
+              src={heroImages[heroIndex]} 
+              alt="Hero" 
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+          
+          {/* Overlay Profissional */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+          
+          <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full">
+            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Em Destaque</span>
           </div>
-          <div className="absolute bottom-6 left-6 right-6">
-            <h2 className="text-2xl font-black text-white mb-1 leading-tight tracking-tight">Descubra<br/>{featuredIsland}</h2>
-            <p className="text-sm text-white/80 font-medium mb-4">A natureza em estado puro</p>
-            <button className="bg-white text-slate-900 px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-xl active:scale-95 transition-all">
-               Explorar agora <ArrowRight size={14} />
-            </button>
+          
+          <div className="absolute bottom-8 left-8 right-8 z-10">
+            <motion.div
+              key={`text-${heroIndex}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
+              <h2 className="text-3xl font-black text-white mb-2 leading-none tracking-tighter">Descubra<br/>{featuredIsland}</h2>
+              <p className="text-sm text-white/70 font-bold mb-5 tracking-tight">A natureza em estado puro</p>
+              <button className="bg-white text-slate-900 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all w-fit">
+                 Explorar agora <ArrowRight size={14} />
+              </button>
+            </motion.div>
           </div>
-          {/* Pagination dots */}
-          <div className="absolute bottom-6 right-6 flex gap-1">
-             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
-             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
-             <div className="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+
+          {/* Dots Paginação */}
+          <div className="absolute bottom-8 right-8 flex gap-1.5 z-10">
+             {heroImages.map((_, i) => (
+               <div key={i} className={`h-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'w-4 bg-white' : 'w-1 bg-white/30'}`}></div>
+             ))}
           </div>
         </div>
       </div>
@@ -186,18 +199,18 @@ const HomeSection: React.FC<HomeSectionProps> = ({
                   if (prev >= 0) setCatPage(prev);
                 }
               }}
-              className="grid grid-cols-3 gap-y-2 gap-x-1 max-w-[250px] w-full cursor-grab active:cursor-grabbing"
+              className="grid grid-cols-3 gap-y-6 gap-x-2 max-w-[280px] w-full cursor-grab active:cursor-grabbing py-2"
             >
               {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item) => (
                 <button 
                   key={item.id} 
                   onClick={() => onNavigate(item.id as any)}
-                  className="flex flex-col items-center gap-1 group active:scale-90 transition-all py-1"
+                  className="flex flex-col items-center gap-2 group active:scale-90 transition-all"
                 >
-                  <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform hover:scale-105`}>
+                  <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110`}>
                      {React.cloneElement(item.icon as React.ReactElement, { size: 24, className: "w-6 h-6" })}
                   </div>
-                  <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5 truncate">
+                  <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5">
                     {item.label}
                   </span>
                 </button>
