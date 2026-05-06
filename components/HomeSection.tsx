@@ -23,6 +23,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   restaurants,
   featuredIsland = "São Miguel"
 }) => {
+  const [catPage, setCatPage] = useState(0);
   const t = (key: any) => getTranslation(language, key);
 
   const categories = [
