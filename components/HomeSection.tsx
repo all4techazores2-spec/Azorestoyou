@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, MountainSnow, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface HomeSectionProps {
   language: Language;
