@@ -98,24 +98,24 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col relative"
       >
-        <button onClick={onClose} className="absolute top-6 right-6 z-10 p-2 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-colors">
-          <X size={20} />
+        <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-slate-100 text-slate-400 rounded-xl hover:bg-slate-200 transition-colors">
+          <X size={18} />
         </button>
 
-        <div className="p-8 pb-0">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-sm">
-              <Briefcase size={24} />
+        <div className="p-4 md:p-8 pb-0">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+              <Briefcase size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">Agendar Visita</h2>
-              <p className="text-xs font-bold text-slate-400">{office.name}</p>
+              <h2 className="text-lg font-black text-slate-800 tracking-tight uppercase">Agendar Visita</h2>
+              <p className="text-[10px] font-bold text-slate-400">{office.name}</p>
             </div>
           </div>
 
-          <div className="flex gap-2 mb-8 p-1 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="flex gap-1.5 mb-4 p-1 bg-slate-50 rounded-xl border border-slate-100">
              {['Data e Hora', 'Seus Dados', 'Concluído'].map((s, i) => (
-               <div key={i} className={`flex-1 py-2 text-[10px] font-black uppercase text-center rounded-xl transition-all ${
+               <div key={i} className={`flex-1 py-1.5 text-[8px] font-black uppercase text-center rounded-lg transition-all ${
                  (i === 0 && step === 'datetime') || (i === 1 && step === 'details') || (i === 2 && step === 'success')
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-300'
@@ -126,18 +126,18 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
           </div>
         </div>
 
-        <div className="p-8 pt-0 overflow-y-auto max-h-[70vh]">
+        <div className="p-4 md:p-8 pt-0 overflow-y-auto max-h-[65vh]">
           <AnimatePresence mode="wait">
             {step === 'datetime' && (
-              <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="p-2 hover:bg-white rounded-xl transition-colors"><ChevronLeft size={16} /></button>
-                    <span className="text-xs font-black uppercase tracking-widest">{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
-                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-2 hover:bg-white rounded-xl transition-colors"><ChevronRight size={16} /></button>
+              <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronLeft size={14} /></button>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
+                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronRight size={14} /></button>
                   </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {['D','S','T','Q','Q','S','S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[9px] font-black text-slate-300 py-1">{d}</div>)}
+                  <div className="grid grid-cols-7 gap-0.5">
+                    {['D','S','T','Q','Q','S','S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[8px] font-black text-slate-300 py-0.5">{d}</div>)}
                     {Array.from({ length: firstDay(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={i} />)}
                     {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
                       const day = i + 1;
@@ -145,8 +145,8 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                       const isSelected = selectedDate.toDateString() === date.toDateString();
                       const isPast = date < new Date(new Date().setHours(0,0,0,0));
                       return (
-                        <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-9 w-9 rounded-xl text-xs font-bold transition-all ${
-                          isSelected ? 'bg-blue-600 text-white shadow-lg' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
+                        <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-8 w-8 rounded-lg text-[10px] font-bold transition-all ${
+                          isSelected ? 'bg-blue-600 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
                         }`}>{day}</button>
                       );
                     })}
@@ -154,12 +154,12 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                 </div>
 
                 <div>
-                  <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Clock size={14} /> Horário Disponível
+                  <h4 className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <Clock size={12} /> Horário Disponível
                   </h4>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {timeSlots.map(t => (
-                      <button key={t} onClick={() => setSelectedTime(t)} className={`py-2.5 rounded-xl text-xs font-black transition-all border ${
+                      <button key={t} onClick={() => setSelectedTime(t)} className={`py-2 rounded-lg text-[10px] font-black transition-all border ${
                         selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
                       }`}>{t}</button>
                     ))}

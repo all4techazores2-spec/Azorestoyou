@@ -28,6 +28,7 @@ import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
 import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert } from 'lucide-react';
 import SOSModal from './components/SOSModal';
+import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
 // import { motion, AnimatePresence } from 'motion/react';
 
@@ -1438,55 +1439,15 @@ const App: React.FC = () => {
       <main className={`pb-32 pt-4 md:pt-8 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
         
         {exploreCategory === null ? (
-          <div className="max-w-4xl mx-auto px-4">
-            {/* Welcome Section TOP */}
-            <div className="text-center py-10 md:py-16 animate-in fade-in slide-in-from-bottom-4">
-               <div className="mb-6 inline-flex p-6 bg-white shadow-xl rounded-full">
-                 <Compass className="w-16 h-16 text-blue-500 animate-pulse" />
-               </div>
-               
-               {publicIslandFilter === 'all' ? (
-                 <>
-                   <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4 tracking-tight">{getTranslation(language, 'welcome_title')}</h2>
-                   <p className="text-slate-500 leading-relaxed text-lg max-w-xl mx-auto mb-10">
-                     {getTranslation(language, 'welcome_subtitle')}
-                   </p>
-                   {/* Island Search Bar */}
-                   <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100">
-                     <IslandSearch 
-                       selectedIsland={publicIslandFilter} 
-                       onSelectIsland={setPublicIslandFilter} 
-                       language={language} 
-                     />
-                   </div>
-                 </>
-               ) : (
-                 <div className="animate-in fade-in zoom-in duration-500 mb-8 max-w-2xl mx-auto">
-                    <div className="bg-white/80 backdrop-blur-md border border-white/50 shadow-xl rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                       <div className="flex items-center gap-4 text-left">
-                          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl text-white shadow-lg">
-                             <MapPin className="w-8 h-8" />
-                          </div>
-                          <div>
-                             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">{getTranslation(language, 'welcome_island')}</p>
-                             <h2 className="text-3xl font-extrabold text-slate-800 leading-none">{selectedIslandName}</h2>
-                          </div>
-                       </div>
-                       <button 
-                         onClick={() => setPublicIslandFilter('all')} 
-                         className="px-6 py-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 font-bold text-sm transition-colors flex items-center gap-2 whitespace-nowrap"
-                       >
-                         {getTranslation(language, 'change_island')} <X className="w-4 h-4" />
-                       </button>
-                    </div>
-                 </div>
-               )}
-
-               {/* Categories Grid DOWN */}
-               <div className="animate-in fade-in duration-500 delay-200 mt-4">
-                 <CategoryBar activeCategory={exploreCategory} onSelect={handleNavClick} language={language} />
-               </div>
-            </div>
+          <div className="max-w-4xl mx-auto">
+            <HomeSection 
+              language={language}
+              restaurants={restaurants}
+              onNavigate={handleNavClick}
+              onOpenMenu={() => setMobileMenuOpen(true)}
+              onShowNotifications={() => setShowNotificationsModal(true)}
+              featuredIsland={selectedIslandName || "São Miguel"}
+            />
           </div>
         ) : (
           <div className="animate-in fade-in duration-500">

@@ -376,7 +376,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white rounded-none sm:rounded-[32px] w-full max-w-4xl h-full sm:h-auto sm:max-h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/20">
+      <div className="bg-white rounded-none sm:rounded-[32px] w-full max-w-4xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/20">
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
@@ -458,7 +458,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         </div>
 
         {/* Right/Bottom: Info */}
-        <div className="w-full md:w-[55%] p-5 md:p-10 overflow-y-auto relative flex flex-col bg-white pb-24 md:pb-10">
+        <div className="w-full md:w-[55%] p-4 md:p-10 overflow-y-auto relative flex flex-col bg-white pb-safe md:pb-10">
           <AnimatePresence mode="wait">
             {bookingStep === 'info' && (
               <motion.div 
@@ -470,7 +470,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
               >
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <h2 className="text-xl md:text-3xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
                     {restaurant.bookingPolicy === 'required' && (
                       <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase tracking-widest">
                         <AlertTriangle size={12} /> Reserva Obrigatória (Vagas Limitadas)
@@ -504,51 +504,51 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                          ${isSpeaking 
                            ? 'bg-red-50 text-red-600 border-red-100' 
                            : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'}`}
-                     >
-                       {isSpeaking ? <StopCircle className="w-3.5 h-3.5" /> : <Ear className="w-3.5 h-3.5" />}
-                       {isSpeaking ? getTranslation(currentLang, 'audio_stop') : getTranslation(currentLang, 'listen')}
-                     </button>
-                   </div>
-                   <div className="relative">
-                     <p className="text-slate-600 leading-relaxed text-sm font-medium">
-                       {restaurant.description}
-                     </p>
-                   </div>
-                   
-                   <div className="mt-6 flex flex-col gap-3">
-                      {restaurant.phone && (
-                         <div className="flex items-center gap-3 text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg shadow-sm"><Phone className="w-4 h-4 text-slate-400"/></div>
-                            <span className="text-sm font-bold">{restaurant.phone}</span>
-                         </div>
-                      )}
-                      {restaurant.publicEmail && (
-                         <div className="flex items-center gap-3 text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg shadow-sm"><Mail className="w-4 h-4 text-slate-400"/></div>
-                            <span className="text-sm font-bold">{restaurant.publicEmail}</span>
-                         </div>
-                      )}
-                      {restaurant.address && (
-                         <div className="flex items-center gap-3 text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                            <div className="p-2 bg-white rounded-lg shadow-sm"><MapPin className="w-4 h-4 text-slate-400"/></div>
-                            <span className="text-sm font-bold">{restaurant.address}</span>
-                         </div>
-                      )}
-                      {(restaurant.mapsUrl || (restaurant.latitude && restaurant.longitude)) && (
-                        <button 
-                          onClick={() => {
-                            const url = (restaurant.latitude && restaurant.longitude) 
-                              ? `https://maps.google.com/?q=${restaurant.latitude},${restaurant.longitude}` 
-                              : restaurant.mapsUrl;
-                            if (url) window.open(url, '_blank');
-                          }} 
-                          className="mt-2 w-full px-6 py-4 bg-slate-800 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-700 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/20"
-                        >
-                          <Map className="w-4 h-4" /> Ver Direções no Mapa
-                        </button>
-                      )}
-                   </div>
-                </div>
+                      >
+                        {isSpeaking ? <StopCircle className="w-3.5 h-3.5" /> : <Ear className="w-3.5 h-3.5" />}
+                        {isSpeaking ? getTranslation(currentLang, 'audio_stop') : getTranslation(currentLang, 'listen')}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <p className="text-slate-600 leading-relaxed text-xs md:text-sm font-medium">
+                        {restaurant.description}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4 flex flex-col gap-2">
+                       {restaurant.phone && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400"/></div>
+                             <span className="text-xs font-bold">{restaurant.phone}</span>
+                          </div>
+                       )}
+                       {restaurant.publicEmail && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400"/></div>
+                             <span className="text-xs font-bold">{restaurant.publicEmail}</span>
+                          </div>
+                       )}
+                       {restaurant.address && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400"/></div>
+                             <span className="text-xs font-bold truncate">{restaurant.address}</span>
+                          </div>
+                       )}
+                       {(restaurant.mapsUrl || (restaurant.latitude && restaurant.longitude)) && (
+                         <button 
+                           onClick={() => {
+                             const url = (restaurant.latitude && restaurant.longitude) 
+                               ? `https://maps.google.com/?q=${restaurant.latitude},${restaurant.longitude}` 
+                               : restaurant.mapsUrl;
+                             if (url) window.open(url, '_blank');
+                           }} 
+                           className="mt-1 w-full px-4 py-3 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all"
+                         >
+                           <Map className="w-3.5 h-3.5" /> Ver Mapa
+                         </button>
+                       )}
+                    </div>
+                 </div>
 
                 <div className="mb-6 md:mb-10">
                   <button 
@@ -599,29 +599,29 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 className="flex-1 flex flex-col"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <button onClick={() => setBookingStep('info')} className="p-2.5 hover:bg-slate-50 rounded-2xl transition-colors border border-slate-100">
+                <div className="flex items-center gap-4 mb-4">
+                  <button onClick={() => setBookingStep('info')} className="p-2 hover:bg-slate-50 rounded-xl transition-colors border border-slate-100">
                     <ArrowLeft className="w-4 h-4 text-slate-400" />
                   </button>
                   <div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">{getTranslation(currentLang, 'booking_date_time')}</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Aberto: 12:00 - 15:00 • 19:00 - 23:00</p>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight">{getTranslation(currentLang, 'booking_date_time')}</h3>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">12:00 - 15:00 • 19:00 - 23:00</p>
                   </div>
                 </div>
 
-                <div className="space-y-8 flex-1">
+                <div className="space-y-6 flex-1">
                   {!isBeauty && !isShop && (
                     <div>
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5" /> Quantas pessoas?
+                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5" /> Pessoas
                       </p>
-                      <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100 overflow-x-auto custom-scrollbar">
+                      <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-x-auto custom-scrollbar">
                         {[1,2,3,4,5,6,7,8].map(n => (
                           <button
                             key={n}
                             onClick={() => setGuests(n)}
-                            className={`w-10 h-10 rounded-xl font-black text-sm transition-all flex-shrink-0 ${
-                              guests === n ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-white/50'
+                            className={`w-9 h-9 rounded-lg font-black text-xs transition-all flex-shrink-0 ${
+                              guests === n ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-400 hover:bg-white/50'
                             }`}
                           >
                             {n}
@@ -631,17 +631,17 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     </div>
                   )}
                   <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'select_date')}
                     </p>
                     {renderCalendar()}
                   </div>
 
                   <div>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
                       <Clock className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'available_times')}
                     </p>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
                       {timeSlots.map(time => (
                         <button
                           key={time}
@@ -649,12 +649,11 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           style={{ 
                             backgroundColor: selectedTime === time ? COLORS.primary : undefined,
                             borderColor: selectedTime === time ? COLORS.primary : undefined,
-                            boxShadow: selectedTime === time ? `0 10px 15px -3px ${COLORS.primary}33` : undefined
                           }}
-                          className={`py-3 rounded-2xl text-[10px] font-black transition-all border
+                          className={`py-2 rounded-xl text-[9px] font-black transition-all border
                             ${selectedTime === time 
                               ? 'text-white scale-105 z-10' 
-                              : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300 hover:bg-slate-50'}`}
+                              : 'bg-white text-slate-600 border-slate-100 hover:bg-slate-50'}`}
                         >
                           {time}
                         </button>

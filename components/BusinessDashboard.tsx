@@ -1141,40 +1141,43 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       {/* Main Container */}
       <main className="flex-1 lg:ml-80 min-h-screen flex flex-col relative overflow-hidden">
         {/* Top Header - Estilo Foto 2 */}
-        <header className="sticky top-0 bg-white border-b border-slate-100 h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
-            <div className="flex items-center gap-6">
-               <button className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all">
-                  <Menu size={22} />
+        <header className="sticky top-0 bg-white border-b border-slate-100 h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
+            <div className="flex items-center gap-2 md:gap-6">
+               <button 
+                 onClick={() => setSidebarOpen(!sidebarOpen)}
+                 className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
+               >
+                  <Menu size={20} />
                </button>
                <div>
-                  <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
-                     Bem-vindo, Gustavo! 👋
+                  <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
+                     Olá, Gustavo! 👋
                   </h2>
-                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu hotel hoje.</p>
+                  <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
                </div>
             </div>
 
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2 md:gap-6">
+               <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
                   <Calendar size={18} className="text-blue-500" />
                   <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
-                     {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })}
+                     {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
                   </span>
                </div>
 
-               <div className="flex items-center gap-3">
-                  <button onClick={() => window.location.reload()} className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
-                     <Clock size={20} className="group-hover:rotate-180 transition-transform duration-500" />
+               <div className="flex items-center gap-2 md:gap-3">
+                  <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
+                     <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                   </button>
-                  <button className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
-                     <Bell size={22} />
-                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+                  <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
+                     <Bell size={18} />
+                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
                   </button>
                </div>
             </div>
         </header>
 
-        <div className="p-8 pb-32">
+        <div className="p-4 md:p-8 pb-32">
           {activeTab === 'tables' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                {isBeauty ? (

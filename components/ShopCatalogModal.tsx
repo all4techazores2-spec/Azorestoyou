@@ -53,14 +53,14 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
         {/* Close Button */}
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 z-50 p-2.5 bg-white/90 backdrop-blur-md text-slate-400 rounded-2xl hover:bg-white hover:text-slate-900 transition-all shadow-xl border border-slate-100"
+          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur-md text-slate-400 rounded-xl hover:bg-white hover:text-slate-900 transition-all shadow-xl border border-slate-100"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         <div className="flex-1 overflow-y-auto">
           {/* Header Area with Fade Slider */}
-          <div className="relative h-[30vh] md:h-[45vh] bg-slate-900 overflow-hidden">
+          <div className="relative h-[25vh] md:h-[45vh] bg-slate-900 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentBgSlide}
@@ -75,15 +75,15 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
             </AnimatePresence>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
             
-            <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 z-10 text-white">
-              <div className="flex items-center gap-2 mb-2">
-                 <span className="px-3 py-1 bg-blue-600 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                   <Sparkles size={10} /> Novidades em Destaque
+            <div className="absolute bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 z-10 text-white">
+              <div className="flex items-center gap-2 mb-1.5">
+                 <span className="px-2 py-0.5 bg-blue-600 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
+                   <Sparkles size={8} /> Destaque
                  </span>
               </div>
-              <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter mb-2 drop-shadow-lg">{shop.name}</h2>
-              <p className="text-sm font-bold text-white/70 tracking-widest uppercase flex items-center gap-2">
-                <Map size={14} className="text-red-400" /> {shop.island} • {
+              <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter mb-1 drop-shadow-lg">{shop.name}</h2>
+              <p className="text-[10px] md:text-sm font-bold text-white/70 tracking-widest uppercase flex items-center gap-2">
+                <Map size={12} className="text-red-400" /> {shop.island} • {
                   shop.businessType === 'gyms' ? 'GINÁSIO' : 
                   shop.businessType === 'real_estate' ? 'IMOBILIÁRIA' : 
                   'LOJA REGIONAL'
@@ -94,25 +94,25 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
           <div className="p-5 md:p-10 space-y-6 md:space-y-10">
             {/* Quick Stats & Actions */}
-            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between border-b border-slate-100 pb-10">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-slate-100 pb-6">
               <div className="max-w-md">
-                 <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2">Sobre</h3>
-                 <p className="text-slate-500 font-bold leading-relaxed">{shop.description}</p>
+                 <h3 className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5">Sobre</h3>
+                 <p className="text-slate-500 font-bold leading-relaxed text-xs md:text-base">{shop.description}</p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 w-full md:w-auto">
                  {shop.phone && (
                    <button 
                      onClick={() => window.location.href=`tel:${shop.phone}`}
-                     className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 flex items-center gap-3"
+                     className="flex-1 md:flex-initial px-4 py-3 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
                    >
-                     <PhoneCall size={18} /> Ligue Agora
+                     <PhoneCall size={14} /> Ligar
                    </button>
                  )}
                  <button 
                    onClick={() => window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank')}
-                   className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all flex items-center gap-2"
+                   className="flex-1 md:flex-initial px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                  >
-                   <Map size={18} /> Direções
+                   <Map size={14} /> Ver Mapa
                  </button>
               </div>
             </div>
