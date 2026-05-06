@@ -26,7 +26,7 @@ import SupplierDashboard from './components/SupplierDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
-import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert } from 'lucide-react';
+import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard } from 'lucide-react';
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';

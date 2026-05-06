@@ -862,31 +862,37 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     if (data.length === 0) return null;
     const featured = data.slice(0, 3); // Take top 3 for slider
     return (
-      <div className="mb-12 -mx-6 md:-mx-10">
-        <div className="flex overflow-x-auto pb-6 px-6 md:px-10 gap-4 scrollbar-hide snap-x">
+      <div className="mb-16 -mx-6 md:-mx-10 mt-4">
+        <div className="flex overflow-x-auto pb-8 px-6 md:px-10 gap-5 scrollbar-hide snap-x">
           {featured.map((item, idx) => (
             <div 
               key={`slider-${idx}`}
-              className="min-w-[85vw] md:min-w-[400px] h-[220px] rounded-[2.5rem] overflow-hidden relative shadow-xl snap-center group"
+              className="min-w-[92vw] md:min-w-[500px] h-[320px] rounded-[3rem] overflow-hidden relative shadow-2xl snap-center group"
             >
               <img 
                 src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
                 alt={item.name || item.title}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <div className="flex items-center gap-2 mb-2">
-                   <span className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase tracking-widest rounded-full">Destaque</span>
-                   {item.isPaid !== undefined && (
-                     <span className={`px-2 py-0.5 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[8px] font-black uppercase tracking-widest rounded-full`}>
-                       {item.isPaid ? 'Pago' : 'Grátis'}
-                     </span>
-                   )}
-                </div>
-                <h4 className="text-xl font-black text-white uppercase tracking-tighter leading-tight mb-1">{item.name || item.title}</h4>
-                <div className="flex items-center gap-1.5 text-white/70 text-[10px] font-bold">
-                  <MapPin size={10} className="text-blue-400" /> {item.island}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+              
+              {/* Top Badges */}
+              <div className="absolute top-6 left-6 flex items-center gap-2">
+                 <span className="px-3 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-[0.15em] rounded-full shadow-lg">Destaque</span>
+                 {item.isPaid !== undefined && (
+                   <span className={`px-3 py-1 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[9px] font-black uppercase tracking-[0.15em] rounded-full shadow-lg`}>
+                     {item.isPaid ? 'Premium' : 'Grátis'}
+                   </span>
+                 )}
+              </div>
+
+              <div className="absolute bottom-8 left-8 right-8">
+                <h4 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-3 drop-shadow-md">{item.name || item.title}</h4>
+                <div className="flex items-center gap-2.5 text-white/80 text-xs font-black uppercase tracking-widest">
+                  <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                    <MapPin size={12} className="text-blue-400" />
+                  </div>
+                  {item.island}
                 </div>
               </div>
             </div>
@@ -1296,7 +1302,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   return (
-    <div className="px-6 md:px-10 pb-32 pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="px-6 md:px-10 pb-32 pt-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Category Header */}
       <div className="flex items-center justify-between mb-10">
@@ -1337,7 +1343,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       )}
 
       {/* Main Content Area */}
-      <div className="relative">
+      <div className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 bg-slate-50/50 border-t border-slate-100">
+        <div className="flex items-center justify-between mb-10">
+           <div className="flex items-center gap-3">
+              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+              <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Catálogo Completo</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Explorar todos os itens disponíveis</p>
+              </div>
+           </div>
+           <div className="px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organizado por Relevância</span>
+           </div>
+        </div>
         {getContent()}
       </div>
 

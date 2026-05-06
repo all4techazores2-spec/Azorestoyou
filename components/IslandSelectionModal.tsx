@@ -81,14 +81,14 @@ const IslandSelectionModal: React.FC<IslandSelectionModalProps> = ({ isOpen, onC
       <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] border border-white/20">
         
         {/* Header - Modern Green/Blue Map Style */}
-        <div className="bg-green-700 p-6 flex justify-between items-start relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+        <div className="bg-green-800 p-7 flex justify-between items-start relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
            <div className="relative z-10">
-             <div className="p-2.5 bg-white/20 rounded-2xl w-fit mb-3 backdrop-blur-md border border-white/30">
-                <Map className="w-6 h-6 text-white" />
+             <div className="p-3 bg-white/20 rounded-2xl w-fit mb-4 backdrop-blur-md border border-white/20">
+                <Map className="w-7 h-7 text-white" />
              </div>
-             <h2 className="text-2xl font-black text-white tracking-tight leading-none">Explorar Ilhas</h2>
-             <p className="text-green-100 text-[11px] font-bold mt-1.5 uppercase tracking-widest opacity-80">Selecione o seu próximo destino</p>
+             <h2 className="text-3xl font-black text-white tracking-tighter leading-none drop-shadow-sm">Explorar Ilhas</h2>
+             <p className="text-white text-[10px] font-black mt-2 uppercase tracking-[0.2em]">Selecione o seu próximo destino</p>
            </div>
            <button 
              onClick={onClose} 
