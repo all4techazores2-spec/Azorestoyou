@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { X, MapPin, ChevronRight, Bus } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, MapPin, ChevronRight, Map, Navigation, LocateFixed, Loader2 } from 'lucide-react';
 import { Language } from '../types';
 import { getAirports } from '../constants';
 import { getTranslation } from '../translations';
@@ -13,59 +12,150 @@ interface IslandSelectionModalProps {
 }
 
 const IslandSelectionModal: React.FC<IslandSelectionModalProps> = ({ isOpen, onClose, onSelect, language }) => {
+  const [isLocating, setIsLocating] = useState(false);
+
   if (!isOpen) return null;
 
   // Get only Azores islands
   const islands = getAirports(language).filter(a => a.isAzores);
 
+  const handleGPSLocate = () => {
+    setIsLocating(true);
+    if (!navigator.geolocation) {
+      alert("Geolocalização não é suportada pelo seu navegador.");
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { latitude, longitude } = position.coords;
+      
+      // Azores Island Proximity Logic
+      const azoresIslands = [
+        { code: 'PDL', name: 'São Miguel', lat: 37.78, lon: -25.50 },
+        { code: 'SMA', name: 'Santa Maria', lat: 36.97, lon: -25.13 },
+        { code: 'TER', name: 'Terceira', lat: 38.72, lon: -27.22 },
+        { code: 'GRW', name: 'Graciosa', lat: 39.05, lon: -28.01 },
+        { code: 'SJZ', name: 'São Jorge', lat: 38.65, lon: -28.02 },
+        { code: 'PIX', name: 'Pico', lat: 38.46, lon: -28.38 },
+        { code: 'HOR', name: 'Faial', lat: 38.58, lon: -28.69 },
+        { code: 'FLW', name: 'Flores', lat: 39.43, lon: -31.21 },
+        { code: 'CVU', name: 'Corvo', lat: 39.70, lon: -31.11 }
+      ];
+
+      // Find closest island
+      let closest = azoresIslands[0];
+      let minDistance = Math.hypot(latitude - closest.lat, longitude - closest.lon);
+
+      azoresIslands.forEach(island => {
+        const dist = Math.hypot(latitude - island.lat, longitude - island.lon);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closest = island;
+        }
+      });
+
+      // If user is too far from Azores (roughly > 5 degrees), it's probably outside the region
+      if (minDistance > 5) {
+        alert("Encontra-se fora da região dos Açores. Por favor, selecione uma ilha manualmente.");
+      } else {
+        onSelect(closest.code);
+      }
+      setIsLocating(false);
+    }, (error) => {
+      console.error(error);
+      alert("Não foi possível obter a sua localização.");
+      setIsLocating(false);
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300" 
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" 
         onClick={onClose}
       ></div>
 
       {/* Modal Content */}
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh]">
+      <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[85vh] border border-white/20">
         
-        {/* Header */}
-        <div className="bg-pink-600 p-4 md:p-6 flex justify-between items-start relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        {/* Header - Modern Green/Blue Map Style */}
+        <div className="bg-green-700 p-6 flex justify-between items-start relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
            <div className="relative z-10">
-             <div className="p-2 bg-white/20 rounded-lg w-fit mb-2">
-                <Bus className="w-6 h-6 text-white" />
+             <div className="p-2.5 bg-white/20 rounded-2xl w-fit mb-3 backdrop-blur-md border border-white/30">
+                <Map className="w-6 h-6 text-white" />
              </div>
-             <h2 className="text-xl font-bold text-white">{getTranslation(language, 'select_island_bus_title')}</h2>
-             <p className="text-pink-100 text-[10px] mt-0.5">{getTranslation(language, 'select_island_bus_desc')}</p>
+             <h2 className="text-2xl font-black text-white tracking-tight leading-none">Explorar Ilhas</h2>
+             <p className="text-green-100 text-[11px] font-bold mt-1.5 uppercase tracking-widest opacity-80">Selecione o seu próximo destino</p>
            </div>
            <button 
              onClick={onClose} 
-             className="p-2 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group relative z-10"
+             className="p-2.5 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-full transition-all border border-white/20 group relative z-10"
            >
-             <X size={18} className="group-active:scale-90 transition-transform" />
+             <X size={20} className="group-active:scale-90 transition-transform" />
            </button>
         </div>
 
-        {/* List */}
-        <div className="p-1 overflow-y-auto bg-slate-50 flex-1">
-          <div className="space-y-1.5 p-1.5">
+        {/* List Content */}
+        <div className="p-2 overflow-y-auto bg-slate-50 flex-1 scrollbar-hide">
+          <div className="space-y-2 p-2">
+            
+            {/* GPS Locate Button */}
+            <button 
+              onClick={handleGPSLocate}
+              disabled={isLocating}
+              className="w-full p-4 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-600/20 flex items-center justify-between group active:scale-[0.98] transition-all mb-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  {isLocating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5 fill-current" />}
+                </div>
+                <div className="text-left">
+                  <span className="font-black text-white block text-sm uppercase tracking-tight">Localizar-me (GPS)</span>
+                  <span className="text-[10px] text-blue-100 font-bold opacity-80">Encontrar a ilha mais próxima</span>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-blue-200" />
+            </button>
+
+            {/* All Islands Option */}
+            <button 
+              onClick={() => onSelect('all')}
+              className="w-full p-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between group hover:border-green-500 transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
+                  <LocateFixed className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <span className="font-black text-slate-800 block text-sm uppercase tracking-tight">Todas as Ilhas</span>
+                  <span className="text-[10px] text-slate-400 font-bold">Ver tudo o que os Açores oferecem</span>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-300" />
+            </button>
+
+            <div className="h-4"></div>
+
+            {/* Island List */}
             {islands.map((island) => (
               <button 
                 key={island.code}
                 onClick={() => onSelect(island.code)}
-                className="w-full p-3 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-pink-300 hover:shadow-md transition-all active:scale-[0.98]"
+                className="w-full p-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-green-500 hover:shadow-md transition-all active:scale-[0.98]"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-pink-100 group-hover:text-pink-600 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <span className="font-bold text-slate-800 block text-base">{island.location}</span>
-                    <span className="text-[9px] text-slate-400 font-black bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">{island.code}</span>
+                    <span className="font-black text-slate-800 block text-sm uppercase tracking-tight">{island.location}</span>
+                    <span className="text-[9px] text-slate-400 font-black bg-slate-100 px-2 py-0.5 rounded uppercase tracking-tighter group-hover:bg-green-100 group-hover:text-green-700">{island.code}</span>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-pink-500 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-green-500 transition-colors" />
               </button>
             ))}
           </div>

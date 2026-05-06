@@ -222,6 +222,25 @@ const App: React.FC = () => {
     setOffices(getOffices(language));
     setItServices(getITServices(language));
     setPerfumes(getPerfumes(language));
+
+    // DEMO DATA FOR ISLAND FILTERING
+    const demoRestaurants: Partial<Restaurant>[] = [
+      { id: 'demo-pico-1', name: 'Cella Bar', island: 'Pico', rating: 4.8, reviews: 120, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Modern', description: 'O bar mais icónico do Pico.', priceRange: '€€€', location: 'Madalena' },
+      { id: 'demo-ter-1', name: 'O Pescador', island: 'Terceira', rating: 4.7, reviews: 95, image: 'https://images.unsplash.com/photo-1551731359-2b34fc973d2a?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Peixe Fresco', description: 'O melhor peixe da Terceira.', priceRange: '€€', location: 'Praia da Vitória' }
+    ];
+    setRestaurants(prev => [...prev.filter(r => !r.id.startsWith('demo-')), ...(demoRestaurants as Restaurant[])]);
+
+    const demoActivities: Partial<Activity>[] = [
+      { id: 'act-ter-1', title: 'Algar do Carvão', island: 'Terceira', rating: 4.9, reviews: 300, image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?q=80&w=2070&auto=format&fit=crop', description: 'Visita ao interior de um vulcão.', price: 10 },
+      { id: 'act-fai-1', title: 'Vulcão dos Capelinhos', island: 'Faial', rating: 4.8, reviews: 250, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Paisagem lunar única.', price: 0 }
+    ];
+    setActivities(prev => [...prev.filter(a => !a.id.startsWith('act-')), ...(demoActivities as Activity[])]);
+
+    const demoShops: Partial<ShopBusiness>[] = [
+      { id: 'shop-ter-1', name: 'Artesanato da Terceira', island: 'Terceira', rating: 4.6, reviews: 45, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Handmade' },
+      { id: 'shop-pic-1', name: 'Vinhos do Pico Store', island: 'Pico', rating: 4.9, reviews: 80, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Wines' }
+    ];
+    setShops(prev => [...prev.filter(s => !s.id.startsWith('shop-')), ...(demoShops as ShopBusiness[])]);
   }, [language]);
 
 
@@ -343,12 +362,16 @@ const App: React.FC = () => {
 
   // Helper to filter data by island
   const filterByIsland = <T extends { island?: string }>(items: T[]) => {
-    if (publicIslandFilter === 'all' || !publicIslandFilter) return items;
+    if (!publicIslandFilter || publicIslandFilter === 'all') return items;
     return items.filter(item => 
       item.island?.toLowerCase() === publicIslandFilter.toLowerCase() || 
-      item.island === publicIslandFilter
+      item.island === publicIslandFilter ||
+      (item as any).location?.toLowerCase().includes(publicIslandFilter.toLowerCase())
     );
   };
+
+  const selectedIslandName = publicIslandFilter === 'all' ? "Açores" : 
+    getAirports(language).find(a => a.code === publicIslandFilter)?.location || "Açores";
 
   // 4. ITINERARY STATE
   const DEFAULT_ITINERARY: Itinerary = {
