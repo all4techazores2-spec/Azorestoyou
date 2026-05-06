@@ -370,9 +370,6 @@ const App: React.FC = () => {
     );
   };
 
-  const selectedIslandName = publicIslandFilter === 'all' ? "Açores" : 
-    getAirports(language).find(a => a.code === publicIslandFilter)?.location || "Açores";
-
   // 4. ITINERARY STATE
   const DEFAULT_ITINERARY: Itinerary = {
     flight: null,
