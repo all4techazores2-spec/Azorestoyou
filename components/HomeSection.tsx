@@ -162,22 +162,22 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </div>
       </div>
 
-      {/* Icon Grid with Horizontal Scroll - Agora de 6 em 6 bem compactos */}
-      <div className="space-y-2">
+      {/* Icon Grid with Horizontal Scroll - ULTRA COMPACTO 6 em 6 */}
+      <div className="-mt-4 mb-2"> 
         <div className="overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
           <div className="flex px-4" style={{ width: `${Math.ceil(quickIcons.length / 6) * 100}%` }}>
             {Array.from({ length: Math.ceil(quickIcons.length / 6) }).map((_, pageIndex) => (
-              <div key={pageIndex} className="grid grid-cols-3 gap-y-5 gap-x-2 w-full flex-shrink-0 snap-center py-2">
+              <div key={pageIndex} className="grid grid-cols-3 gap-y-2 gap-x-2 w-full flex-shrink-0 snap-center">
                 {quickIcons.slice(pageIndex * 6, (pageIndex + 1) * 6).map((item) => (
                   <button 
                     key={item.id} 
                     onClick={() => onNavigate(item.id as any)}
-                    className="flex flex-col items-center gap-1.5 group active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center p-1 group active:scale-95 transition-all"
                   >
-                    <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all`}>
-                      {React.cloneElement(item.icon as React.ReactElement, { size: 24 })}
+                    <div className={`w-11 h-11 md:w-14 md:h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-md group-hover:shadow-lg transition-all mb-1`}>
+                      {React.cloneElement(item.icon as React.ReactElement, { size: 20 })}
                     </div>
-                    <span className="text-[9px] font-black text-slate-500 text-center uppercase tracking-tighter leading-none px-1">
+                    <span className="text-[8px] md:text-[10px] font-black text-slate-500 text-center uppercase tracking-tighter leading-tight w-full truncate px-0.5">
                       {item.label}
                     </span>
                   </button>
@@ -187,10 +187,10 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           </div>
         </div>
         
-        {/* Indicador de Paginação para as categorias */}
-        <div className="flex justify-center gap-1.5 pb-2">
+        {/* Indicador de Paginação */}
+        <div className="flex justify-center gap-1">
           {Array.from({ length: Math.ceil(quickIcons.length / 6) }).map((_, i) => (
-            <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === 0 ? 'w-4 bg-blue-600' : 'w-1 bg-slate-200'}`} />
+            <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === 0 ? 'w-3 bg-blue-600' : 'w-1 bg-slate-200'}`} />
           ))}
         </div>
       </div>
