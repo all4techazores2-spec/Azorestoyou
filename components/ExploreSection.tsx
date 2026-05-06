@@ -858,6 +858,44 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
+  const renderCategorySlider = (data: any[]) => {
+    if (data.length === 0) return null;
+    const featured = data.slice(0, 3); // Take top 3 for slider
+    return (
+      <div className="mb-12 -mx-6 md:-mx-10">
+        <div className="flex overflow-x-auto pb-6 px-6 md:px-10 gap-4 scrollbar-hide snap-x">
+          {featured.map((item, idx) => (
+            <div 
+              key={`slider-${idx}`}
+              className="min-w-[85vw] md:min-w-[400px] h-[220px] rounded-[2.5rem] overflow-hidden relative shadow-xl snap-center group"
+            >
+              <img 
+                src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                alt={item.name || item.title}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-center gap-2 mb-2">
+                   <span className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase tracking-widest rounded-full">Destaque</span>
+                   {item.isPaid !== undefined && (
+                     <span className={`px-2 py-0.5 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[8px] font-black uppercase tracking-widest rounded-full`}>
+                       {item.isPaid ? 'Pago' : 'Grátis'}
+                     </span>
+                   )}
+                </div>
+                <h4 className="text-xl font-black text-white uppercase tracking-tighter leading-tight mb-1">{item.name || item.title}</h4>
+                <div className="flex items-center gap-1.5 text-white/70 text-[10px] font-bold">
+                  <MapPin size={10} className="text-blue-400" /> {item.island}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const getContent = () => {
     switch (category) {
       case 'restaurants': return renderRestaurants();
@@ -865,7 +903,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'landscapes': return renderActivities('landscape');
       case 'culture': return renderActivities('culture');
       case 'poi': return renderActivities('poi');
-      case 'buses': return renderBusPlanner(); // Custom Bus Planner View
+      case 'buses': return renderBusPlanner();
       case 'activities': return renderActivities('activity');
       case 'shops': return renderShops();
       case 'beauty': return renderBeauty();
@@ -873,7 +911,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'auto_repair': return renderAutoRepair();
       case 'auto_electronics': return renderAutoElectronics();
       case 'used_market': return renderUsedMarket();
-      case 'animals': return renderAnimals();
+      case 'animals': return renderBusiness(allAnimals);
       case 'real_estate': return renderStandardBusiness(allRealEstate, t('nav_real_estate'), <Building2 />, '#3F51B5');
       case 'gyms': return renderStandardBusiness(allGyms, t('nav_gyms'), <Dumbbell />, '#000000');
       case 'stands': return renderStandardBusiness(allStands, t('nav_stands'), <CarFront />, '#212121');
@@ -1123,6 +1161,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
+  // fixed
   const renderUsedMarket = () => {
     const subcats = [
       { id: 'cars_motos', label: getTranslation(lang, 'cars_motos'), icon: <Car size={24} />, color: '#1A75BB' },
@@ -1257,375 +1296,199 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div 
-            className="p-4 rounded-2xl text-white shadow-xl" 
-            style={{ 
-              backgroundColor: category === 'beauty' ? '#FF2D78' : category === 'restaurants' ? COLORS.secondary : COLORS.primary,
-              boxShadow: `0 8px 16px -4px ${category === 'beauty' ? '#FF2D7844' : category === 'restaurants' ? COLORS.secondary + '44' : COLORS.primary + '44'}`
-            }}
-          >
-            {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-          </div>
-          <div className="text-left">
-            <h2 className="text-4xl font-black text-slate-800 tracking-tighter">
-              {category === 'buses' ? getTranslation(lang, 'plan_trip') : getCategoryTitle(category)}
-            </h2>
-            <p className="text-slate-400 font-bold text-sm tracking-tight">
-              {category === 'buses' 
-                ? getTranslation(lang, 'plan_trip_subtitle')
-                : `${getTranslation(lang, 'discover_best')} ${destinationIsland !== 'all' ? destinationIsland : 'os Açores'}`
-              }
-            </p>
-          </div>
+    <div className="px-6 md:px-10 pb-32 pt-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Category Header */}
+      <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center gap-5">
+           <div 
+             className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105"
+             style={{ backgroundColor: COLORS[category] || '#1A75BB' }}
+           >
+             {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+           </div>
+           <div>
+             <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
+             <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                 {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+               </p>
+             </div>
+           </div>
         </div>
-        
-        {/* New Close Button */}
         <button 
           onClick={onClose}
-          className="w-14 h-14 bg-white hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-center transition-all active:scale-90 group"
+          className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all active:scale-90"
         >
-          <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+          <X size={24} />
         </button>
       </div>
 
-      {getContent()}
-
-      {/* Bus Options Multi-Step Modal */}
-      {showBusOptionsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-              
-              {/* HEADER */}
-              <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-pink-600 text-white rounded-xl shadow-lg shadow-pink-200">
-                       <Bus className="w-6 h-6" />
-                    </div>
-                    <div>
-                       <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
-                          {busModalStep === 'options' && 'O que deseja fazer?'}
-                          {busModalStep === 'schedules' && 'Horários Disponíveis'}
-                          {busModalStep === 'payment' && 'Confirmar Pagamento'}
-                       </h3>
-                       <p className="text-xs text-slate-500 font-bold uppercase">{busOrigin} → {busDestination}</p>
-                    </div>
-                 </div>
-                 <button 
-                   onClick={() => setShowBusOptionsModal(false)}
-                   className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
-                 >
-                    <X className="w-6 h-6" />
-                 </button>
-              </div>
-
-              {/* CONTENT AREA */}
-              <div className="flex-1 overflow-y-auto p-6">
-                 
-                 {/* STEP 1: OPTIONS MENU */}
-                 {busModalStep === 'options' && (
-                    <div className="space-y-4 py-4 animate-in slide-in-from-bottom-4 duration-300">
-                       <button 
-                         onClick={() => setBusModalStep('schedules')}
-                         className="w-full p-6 bg-slate-50 hover:bg-pink-50 border border-slate-100 hover:border-pink-200 rounded-2xl flex items-center gap-6 transition-all group text-left shadow-sm"
-                       >
-                          <div className="p-4 bg-white shadow-md rounded-2xl text-pink-600 group-hover:scale-110 transition-transform">
-                             <Clock className="w-8 h-8" />
-                          </div>
-                          <div>
-                             <span className="block font-black text-slate-700 uppercase text-lg tracking-tighter">Consultar Horários</span>
-                             <span className="block text-xs text-slate-400 font-bold uppercase">Ver todos os tempos de partida</span>
-                          </div>
-                          <ArrowRight className="w-6 h-6 ml-auto text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
-                       </button>
-
-                       <button 
-                         onClick={() => { setSelectedTicketType('single'); setBusModalStep('payment'); }}
-                         className="w-full p-6 bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded-2xl flex items-center gap-6 transition-all group text-left shadow-sm"
-                       >
-                          <div className="p-4 bg-white shadow-md rounded-2xl text-blue-600 group-hover:scale-110 transition-transform">
-                             <Ticket className="w-8 h-8" />
-                          </div>
-                          <div>
-                             <span className="block font-black text-slate-700 uppercase text-lg tracking-tighter">Comprar Bilhete</span>
-                             <span className="block text-xs text-slate-400 font-bold uppercase">Ticket individual para esta rota</span>
-                          </div>
-                          <ArrowRight className="w-6 h-6 ml-auto text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                       </button>
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <button 
-                            onClick={() => { setSelectedTicketType('monthly'); setBusModalStep('payment'); }}
-                            className="p-6 bg-slate-50 hover:bg-purple-50 border border-slate-100 hover:border-purple-200 rounded-2xl flex flex-col gap-4 transition-all group text-left shadow-sm"
-                          >
-                             <div className="p-4 bg-white shadow-md rounded-2xl text-purple-600 w-fit group-hover:scale-110 transition-transform">
-                                <Calendar className="w-8 h-8" />
-                             </div>
-                             <div>
-                                <span className="block font-black text-slate-700 uppercase text-sm tracking-tight">Passe Mensal</span>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Uso ilimitado</span>
-                             </div>
-                          </button>
-
-                          <button 
-                            onClick={() => { setSelectedTicketType('pack'); setBusModalStep('payment'); }}
-                            className="p-6 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 rounded-2xl flex flex-col gap-4 transition-all group text-left shadow-sm"
-                          >
-                             <div className="p-4 bg-white shadow-md rounded-2xl text-emerald-600 w-fit group-hover:scale-110 transition-transform">
-                                <Scissors className="w-8 h-8" />
-                             </div>
-                             <div>
-                                <span className="block font-black text-slate-700 uppercase text-sm tracking-tight">Passe Picotado</span>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Pack 10 viagens</span>
-                             </div>
-                          </button>
-                       </div>
-
-                       <button 
-                         onClick={() => setShowBusOptionsModal(false)}
-                         className="w-full py-6 text-slate-400 font-black uppercase text-xs tracking-widest hover:text-slate-600 transition-colors flex items-center justify-center gap-2"
-                       >
-                          <X className="w-4 h-4" /> Sair sem selecionar
-                       </button>
-                    </div>
-                 )}
-
-                 {/* STEP 2: SCHEDULES LIST */}
-                 {busModalStep === 'schedules' && (
-                    <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                       <div className="flex justify-between items-center px-1 sticky top-0 bg-white py-2 z-10">
-                          <button 
-                            onClick={() => setBusModalStep('options')}
-                            className="flex items-center gap-2 text-pink-600 font-bold text-xs uppercase hover:underline"
-                          >
-                             <ArrowRight className="w-4 h-4 rotate-180" /> Voltar
-                          </button>
-                          <span className="text-[10px] font-black bg-pink-100 text-pink-600 px-2 py-1 rounded-full">
-                             {busSchedules.filter(s => {
-                                const currentIsland = targetIsland || 'PDL';
-                                if (s.island !== currentIsland) return false;
-                                if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
-                                const sOrigin = s.origin.toLowerCase();
-                                const sDest = s.destination.toLowerCase();
-                                const bOrigin = busOrigin.toLowerCase();
-                                const bDest = busDestination.toLowerCase();
-                                return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && (sDest.includes(bDest) || bDest.includes(sDest));
-                             }).length} Resultados
-                          </span>
-                       </div>
-
-                       <div className="space-y-4">
-                          {busSchedules.filter(s => {
-                             const currentIsland = targetIsland || 'PDL';
-                             if (s.island !== currentIsland) return false;
-                             if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
-                             const sOrigin = s.origin.toLowerCase();
-                             const sDest = s.destination.toLowerCase();
-                             const bOrigin = busOrigin.toLowerCase();
-                             const bDest = busDestination.toLowerCase();
-                             return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && (sDest.includes(bDest) || bDest.includes(sDest));
-                          }).map((schedule, idx) => (
-                            <div 
-                              key={idx}
-                              className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4 hover:border-pink-200 transition-all group"
-                            >
-                               <div className="flex justify-between items-start">
-                                  <div className="flex flex-col gap-1">
-                                     <span className="text-[9px] font-black text-pink-600 uppercase tracking-widest">Operadora</span>
-                                     <span className="text-sm font-black text-slate-800">{schedule.company}</span>
-                                  </div>
-                                  <div className="text-right">
-                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Duração Aprox.</span>
-                                     <div className="flex items-center gap-1 text-slate-600 justify-end">
-                                        <Clock className="w-4 h-4" />
-                                        <span className="text-xs font-bold">{schedule.duration}</span>
-                                     </div>
-                                  </div>
-                               </div>
-
-                               <div className="flex items-center justify-between py-2 relative bg-white rounded-xl px-4 border border-slate-100 shadow-sm">
-                                  <div className="flex-1">
-                                     <p className="text-[11px] font-black text-slate-800 leading-tight">{schedule.origin}</p>
-                                     <p className="text-[9px] text-slate-400 font-bold uppercase">Partida</p>
-                                  </div>
-                                  <div className="px-6 flex flex-col items-center">
-                                     <ArrowRight className="w-5 h-5 text-pink-500" />
-                                  </div>
-                                  <div className="flex-1 text-right">
-                                     <p className="text-[11px] font-black text-slate-800 leading-tight">{schedule.destination}</p>
-                                     <p className="text-[9px] text-slate-400 font-bold uppercase">Chegada</p>
-                                  </div>
-                               </div>
-
-                               <div className="flex flex-wrap gap-2 pt-2">
-                                  {schedule.times.map((time, tIdx) => (
-                                    <span key={tIdx} className="bg-white px-3 py-2 rounded-xl text-[11px] font-black text-slate-700 border border-slate-100 shadow-sm group-hover:border-pink-200 group-hover:text-pink-600 transition-colors">
-                                       {time}
-                                    </span>
-                                  ))}
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                    </div>
-                 )}
-
-                 {/* STEP 3: MODERN PAYMENT UI */}
-                 {busModalStep === 'payment' && (
-                    <div className="space-y-8 py-4 animate-in slide-in-from-right-4 duration-300">
-                       <button 
-                         onClick={() => setBusModalStep('options')}
-                         className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase hover:text-slate-600"
-                       >
-                          <ArrowRight className="w-4 h-4 rotate-180" /> Alterar Seleção
-                       </button>
-
-                       <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-                          <div className="absolute top-0 right-0 p-12 bg-pink-500/20 blur-3xl rounded-full -mr-12 -mt-12"></div>
-                          
-                          <div className="relative z-10 space-y-6">
-                             <div className="flex justify-between items-start">
-                                <div>
-                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título Selecionado</p>
-                                   <h4 className="text-2xl font-black uppercase tracking-tighter mt-1">
-                                      {selectedTicketType === 'single' && 'Bilhete Individual'}
-                                      {selectedTicketType === 'monthly' && 'Passe Mensal'}
-                                      {selectedTicketType === 'pack' && 'Passe Picotado'}
-                                   </h4>
-                                </div>
-                                <div className="p-3 bg-white/10 backdrop-blur rounded-2xl">
-                                   {selectedTicketType === 'single' && <Ticket className="w-8 h-8" />}
-                                   {selectedTicketType === 'monthly' && <Calendar className="w-8 h-8" />}
-                                   {selectedTicketType === 'pack' && <Scissors className="w-8 h-8" />}
-                                </div>
-                             </div>
-
-                             <div className="pt-6 border-t border-white/10 flex justify-between items-end">
-                                <div>
-                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total a Pagar</p>
-                                   <p className="text-4xl font-black tracking-tighter mt-1">
-                                      {selectedTicketType === 'single' && '€2.50'}
-                                      {selectedTicketType === 'monthly' && '€35.00'}
-                                      {selectedTicketType === 'pack' && '€18.00'}
-                                   </p>
-                                </div>
-                                <div className="text-right">
-                                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Válido para</p>
-                                   <p className="text-xs font-bold text-slate-300 mt-1 uppercase tracking-tight">Todas as Companhias</p>
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="space-y-4">
-                          <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Método de Pagamento</h4>
-                          <div className="grid grid-cols-3 gap-3">
-                             <button className="p-4 rounded-2xl border-2 border-slate-100 hover:border-pink-500 transition-all flex flex-col items-center gap-2 group">
-                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-pink-500">
-                                   <CreditCard className="w-6 h-6" />
-                                </div>
-                                <span className="text-[9px] font-black uppercase">Multibanco</span>
-                             </button>
-                             <button className="p-4 rounded-2xl border-2 border-slate-100 hover:border-pink-500 transition-all flex flex-col items-center gap-2 group">
-                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-pink-500">
-                                   <LayoutDashboard className="w-6 h-6" />
-                                </div>
-                                <span className="text-[9px] font-black uppercase">MB Way</span>
-                             </button>
-                             <button className="p-4 rounded-2xl border-2 border-pink-100 bg-pink-50/30 hover:border-pink-500 transition-all flex flex-col items-center gap-2 group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 bg-pink-500/10 blur-xl rounded-full"></div>
-                                <div className="w-10 h-10 bg-white shadow-sm rounded-xl flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform relative z-10">
-                                   <Zap className="w-6 h-6" />
-                                </div>
-                                <div className="text-center relative z-10">
-                                   <span className="block text-[9px] font-black uppercase leading-tight">Créditos</span>
-                                   <span className="block text-[8px] font-bold text-pink-600">Saldo: €{userCredits?.toFixed(2) || '0.00'}</span>
-                                </div>
-                             </button>
-                          </div>
-                       </div>
-
-                       <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-start gap-3">
-                          <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                          <p className="text-xs text-emerald-700 font-medium leading-relaxed">
-                             Após o pagamento bem-sucedido, o seu título ficará disponível imediatamente no seu perfil e na área de bilhetes.
-                          </p>
-                       </div>
-                    </div>
-                 )}
-              </div>
-
-              {/* FOOTER ACTION */}
-              {busModalStep === 'payment' && (
-                 <div className="p-6 bg-slate-50 border-t border-slate-100">
-                    <button 
-                      onClick={() => { /* Finalize Payment */ setShowBusOptionsModal(false); }}
-                      className="w-full py-5 bg-pink-600 hover:bg-pink-700 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-pink-200 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95"
-                    >
-                       Confirmar e Pagar Agora <ArrowRight className="w-5 h-5" />
-                    </button>
-                 </div>
-              )}
-           </div>
-        </div>
+      {/* Category Featured Slider */}
+      {category !== 'buses' && category !== 'beauty' && category !== 'services' && (
+        renderCategorySlider(
+          category === 'restaurants' ? filteredRestaurants :
+          category === 'shops' ? allShops :
+          category === 'trails' ? getActivitiesByType('trail') :
+          category === 'landscapes' ? getActivitiesByType('landscape') :
+          category === 'poi' ? getActivitiesByType('poi') : allActivities
+        )
       )}
 
+      {/* Main Content Area */}
+      <div className="relative">
+        {getContent()}
+      </div>
+
+      {/* Modals */}
       {selectedRestaurant && (
         <RestaurantModal 
-          restaurant={selectedRestaurant} 
-          onClose={() => setSelectedRestaurant(null)} 
+          isOpen={!!selectedRestaurant}
+          onClose={() => setSelectedRestaurant(null)}
+          restaurant={selectedRestaurant as Restaurant}
           language={lang}
           isAuthenticated={isAuthenticated}
           onShowAuth={onShowAuth}
           userCredits={userCredits}
           setUserCredits={setUserCredits}
-          onReserveSuccess={onReserveSuccess}
           userProfile={userProfile}
+          onReserveSuccess={onReserveSuccess}
         />
       )}
 
       {selectedTrail && (
-        <TrailModal 
-          trail={selectedTrail} 
-          onClose={() => setSelectedTrail(null)} 
+        <TrailModal
+          isOpen={!!selectedTrail}
+          onClose={() => setSelectedTrail(null)}
+          trail={selectedTrail}
           language={lang}
-          isAuthenticated={isAuthenticated}
-          onShowAuth={onShowAuth}
-          userProfile={userProfile}
-          userCredits={userCredits}
-          setUserCredits={setUserCredits}
-          onReserveSuccess={onReserveSuccess}
         />
       )}
 
       {selectedOffice && (
         <OfficeBookingModal
-          office={selectedOffice}
+          isOpen={!!selectedOffice}
           onClose={() => setSelectedOffice(null)}
+          office={selectedOffice}
           language={lang}
-          onSuccess={onReserveSuccess}
-          userProfile={userProfile ? { email: userProfile.email || '', name: userProfile.name || '', phone: userProfile.phone || '' } : undefined}
+          isAuthenticated={isAuthenticated}
+          onShowAuth={onShowAuth}
         />
       )}
 
       {selectedStand && (
-        <CarStandModal 
-          stand={selectedStand}
+        <CarStandModal
+          isOpen={!!selectedStand}
           onClose={() => setSelectedStand(null)}
+          stand={selectedStand}
           language={lang}
-          onSuccess={onReserveSuccess}
-          userProfile={userProfile ? { email: userProfile.email || '', name: userProfile.name || '', phone: userProfile.phone || '' } : undefined}
         />
       )}
 
       {selectedShop && (
         <ShopCatalogModal
-          shop={selectedShop}
+          isOpen={!!selectedShop}
           onClose={() => setSelectedShop(null)}
+          shop={selectedShop}
           language={lang}
         />
+      )}
+
+      {showBusOptionsModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowBusOptionsModal(false)}></div>
+           <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+              <div className="bg-blue-600 p-8 text-white flex justify-between items-start">
+                 <div>
+                    <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight">Escolha o Bilhete</h3>
+                    <p className="text-blue-100 text-sm font-medium mt-1">Viagem de {busOrigin} para {busDestination}</p>
+                 </div>
+                 <button onClick={() => setShowBusOptionsModal(false)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all">
+                    <X size={24} />
+                 </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto space-y-6">
+                 {busModalStep === 'options' && (
+                    <div className="grid grid-cols-1 gap-4">
+                       {[
+                         { id: 'single', title: 'Bilhete Simples', desc: 'Apenas uma viagem', price: '2.50€', icon: <Ticket /> },
+                         { id: 'return', title: 'Bilhete Ida e Volta', desc: 'Válido por 24h', price: '4.50€', icon: <ArrowRight className="rotate-90" /> },
+                         { id: 'tourist', title: 'Passe Turístico', desc: 'Viagens ilimitadas (3 dias)', price: '15.00€', icon: <Camera /> }
+                       ].map(opt => (
+                         <button 
+                           key={opt.id}
+                           onClick={() => { setSelectedTicketType(opt.id); setBusModalStep('schedules'); }}
+                           className="flex items-center gap-6 p-6 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-white hover:shadow-xl hover:border-blue-500 transition-all group"
+                         >
+                           <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                              {opt.icon}
+                           </div>
+                           <div className="flex-1 text-left">
+                              <h4 className="font-black text-slate-800 uppercase tracking-tight">{opt.title}</h4>
+                              <p className="text-xs text-slate-500 font-medium">{opt.desc}</p>
+                           </div>
+                           <span className="text-lg font-black text-blue-600">{opt.price}</span>
+                         </button>
+                       ))}
+                    </div>
+                 )}
+
+                 {busModalStep === 'schedules' && (
+                    <div className="space-y-4">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Horários Disponíveis (Próximas 2 horas)</p>
+                       {[
+                         { time: '14:20', company: 'Varela', platform: 'A2' },
+                         { time: '14:45', company: 'CRP', platform: 'B1' },
+                         { time: '15:10', company: 'Varela', platform: 'A2' }
+                       ].map((s, idx) => (
+                         <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-4">
+                               <div className="p-3 bg-white rounded-xl shadow-sm"><Clock className="text-blue-600 w-5 h-5" /></div>
+                               <div>
+                                  <span className="text-xl font-black text-slate-800 leading-none">{s.time}</span>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.company} • Cais {s.platform}</p>
+                               </div>
+                            </div>
+                            <button 
+                              onClick={() => setBusModalStep('payment')}
+                              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95"
+                            >
+                               Selecionar
+                            </button>
+                         </div>
+                       ))}
+                    </div>
+                 )}
+
+                 {busModalStep === 'payment' && (
+                    <div className="text-center space-y-8 py-6">
+                       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                          <CreditCard size={40} />
+                       </div>
+                       <div>
+                          <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-tight">Confirmar Pagamento</h4>
+                          <p className="text-slate-500 font-medium mt-2">O valor será debitado dos seus créditos AzoresToyou.</p>
+                       </div>
+                       <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                          <span className="text-slate-400 font-bold uppercase text-xs tracking-widest">Total a pagar</span>
+                          <span className="text-2xl font-black text-slate-900">2.50€</span>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           alert('Bilhete emitido com sucesso! Podes encontrá-lo na tua área de reservas.');
+                           setShowBusOptionsModal(false);
+                         }}
+                         className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all"
+                       >
+                          Confirmar Agora
+                       </button>
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
       )}
     </div>
   );

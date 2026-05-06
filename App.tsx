@@ -225,20 +225,23 @@ const App: React.FC = () => {
 
     // DEMO DATA FOR ISLAND FILTERING
     const demoRestaurants: Partial<Restaurant>[] = [
+      { id: 'demo-smi-1', name: 'A Tasca', island: 'São Miguel', rating: 4.9, reviews: 1200, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Tradicional', description: 'O melhor petisco de Ponta Delgada.', priceRange: '€€', location: 'Ponta Delgada' },
       { id: 'demo-pico-1', name: 'Cella Bar', island: 'Pico', rating: 4.8, reviews: 120, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Modern', description: 'O bar mais icónico do Pico.', priceRange: '€€€', location: 'Madalena' },
       { id: 'demo-ter-1', name: 'O Pescador', island: 'Terceira', rating: 4.7, reviews: 95, image: 'https://images.unsplash.com/photo-1551731359-2b34fc973d2a?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Peixe Fresco', description: 'O melhor peixe da Terceira.', priceRange: '€€', location: 'Praia da Vitória' }
     ];
     setRestaurants(prev => [...prev.filter(r => !r.id.startsWith('demo-')), ...(demoRestaurants as Restaurant[])]);
 
     const demoActivities: Partial<Activity>[] = [
-      { id: 'act-ter-1', title: 'Algar do Carvão', island: 'Terceira', rating: 4.9, reviews: 300, image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?q=80&w=2070&auto=format&fit=crop', description: 'Visita ao interior de um vulcão.', price: 10 },
-      { id: 'act-fai-1', title: 'Vulcão dos Capelinhos', island: 'Faial', rating: 4.8, reviews: 250, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Paisagem lunar única.', price: 0 }
+      { id: 'act-smi-1', title: 'Lagoa do Fogo', island: 'São Miguel', rating: 5.0, reviews: 5000, image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?q=80&w=2070&auto=format&fit=crop', description: 'Uma das 7 maravilhas de Portugal.', isPaid: false, type: 'landscape' },
+      { id: 'act-smi-2', title: 'Sete Cidades Kayak', island: 'São Miguel', rating: 4.8, reviews: 450, image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2070&auto=format&fit=crop', description: 'Aventura nas lagoas gémeas.', isPaid: true, price: 25, type: 'activity' },
+      { id: 'act-ter-1', title: 'Algar do Carvão', island: 'Terceira', rating: 4.9, reviews: 300, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Visita ao interior de um vulcão.', isPaid: true, price: 10, type: 'activity' },
+      { id: 'act-fai-1', title: 'Vulcão dos Capelinhos', island: 'Faial', rating: 4.8, reviews: 250, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Paisagem lunar única.', isPaid: false, type: 'landscape' }
     ];
     setActivities(prev => [...prev.filter(a => !a.id.startsWith('act-')), ...(demoActivities as Activity[])]);
 
     const demoShops: Partial<ShopBusiness>[] = [
-      { id: 'shop-ter-1', name: 'Artesanato da Terceira', island: 'Terceira', rating: 4.6, reviews: 45, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Handmade' },
-      { id: 'shop-pic-1', name: 'Vinhos do Pico Store', island: 'Pico', rating: 4.9, reviews: 80, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Wines' }
+      { id: 'shop-smi-1', name: 'Mercado da Graça', island: 'São Miguel', rating: 4.7, reviews: 800, image: 'https://images.unsplash.com/photo-1488459711635-0c0028970811?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Local Products' },
+      { id: 'shop-ter-1', name: 'Artesanato da Terceira', island: 'Terceira', rating: 4.6, reviews: 45, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Handmade' }
     ];
     setShops(prev => [...prev.filter(s => !s.id.startsWith('shop-')), ...(demoShops as ShopBusiness[])]);
   }, [language]);
@@ -1389,7 +1392,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Menu - SLIDER DA DIREITA PARA A ESQUERDA COM BACKDROP */}
+        {/* Mobile Menu - PREMIUM SIDE DRAWER */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <>
@@ -1399,7 +1402,7 @@ const App: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setMobileMenuOpen(false)}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] md:hidden"
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] md:hidden"
               />
               
               {/* Sidebar Drawer */}
@@ -1407,63 +1410,98 @@ const App: React.FC = () => {
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 h-full w-[80%] max-w-[320px] bg-white/95 backdrop-blur-md shadow-2xl z-[105] flex flex-col md:hidden pt-20"
+                transition={{ type: "spring", damping: 28, stiffness: 220 }}
+                className="fixed top-0 right-0 h-full w-[80%] max-w-[320px] bg-white/95 backdrop-blur-xl shadow-[-20px_0_60px_rgba(0,0,0,0.15)] z-[160] flex flex-col md:hidden border-l border-white/20"
               >
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                  <button onClick={goHome} className="flex items-center gap-4 w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 active:scale-95 transition-all">
-                      <div className="p-2 rounded-xl bg-white shadow-sm text-slate-600"><Compass className="w-6 h-6" /></div>
-                      <span className="font-black text-slate-800 uppercase tracking-tighter">{getTranslation(language, 'nav_home')}</span>
-                  </button>
-                  
-                  <div className="grid grid-cols-1 gap-3 pt-2">
-                    {navCategories.map(cat => (
-                      <button 
-                        key={cat.id} 
-                        onClick={() => handleNavClick(cat.id)} 
-                        className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl shadow-sm border border-slate-50 active:scale-95 transition-all"
-                      >
-                        <div className="p-2 rounded-xl text-white shadow-md" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
-                        <span className="font-bold text-slate-700 tracking-tight">{cat.label}</span>
-                      </button>
-                    ))}
+                {/* Drawer Header */}
+                <div className="p-8 flex items-center justify-between border-b border-slate-100/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                      <LayoutDashboard size={20} />
+                    </div>
+                    <span className="font-black text-slate-800 uppercase tracking-tighter text-lg">Menu</span>
                   </div>
+                  <button 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all active:scale-90"
+                  >
+                    <X size={22} />
+                  </button>
                 </div>
 
-                <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8 scrollbar-hide">
+                  
+                  {/* Profile Card (Se logado) */}
                   {isAuthenticated ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-100 shadow-sm">
+                    <div className="p-5 bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-900/20 text-white relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                      <div className="flex items-center gap-4 mb-5 relative z-10">
+                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/20 shadow-inner">
                           <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
                         <div>
-                          <p className="font-black text-slate-800 text-sm tracking-tighter">Olá, {userProfile.name.split(' ')[0]}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <div className="w-3.5 h-3.5 bg-blue-600 rounded-full flex items-center justify-center text-[7px] font-black text-white">C</div>
-                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{userCredits} Créditos</span>
+                          <p className="font-black text-base tracking-tighter leading-none mb-1">{userProfile.name.split(' ')[0]}</p>
+                          <div className="flex items-center gap-1.5 opacity-80">
+                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                             <span className="text-[10px] font-black uppercase tracking-widest">{userCredits} Créditos</span>
                           </div>
                         </div>
                       </div>
                       <button 
                         onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                        className="w-full py-3.5 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all active:scale-95"
                       >
-                        Ver Perfil
+                        Gerir Minha Conta
                       </button>
                     </div>
                   ) : (
                     <button 
-                      onClick={() => setShowAuthModal(true)}
-                      className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all"
+                      onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
+                      className="w-full p-6 bg-blue-600 text-white rounded-[2.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex flex-col items-center gap-3 text-center"
                     >
-                      Fazer Login
+                      <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                        <User size={24} />
+                      </div>
+                      <span>Fazer Login</span>
                     </button>
                   )}
-                  
-                  <button onClick={goBackToLanding} className="flex items-center justify-center gap-3 w-full mt-6 py-2 text-slate-400 font-bold text-xs hover:text-red-500 transition-colors uppercase tracking-widest">
-                    <LogOut size={16} /> Terminar Sessão
-                  </button>
+
+                  {/* Navigation Section */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-3">Explorar Açores</p>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      <button 
+                        onClick={goHome} 
+                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-white rounded-[1.5rem] border border-transparent hover:border-slate-100 transition-all group active:scale-98 shadow-sm hover:shadow-md"
+                      >
+                        <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform"><Compass size={20} /></div>
+                        <span className="font-black text-slate-700 tracking-tighter uppercase text-xs">Página Inicial</span>
+                      </button>
+                      
+                      {navCategories.map(cat => (
+                        <button 
+                          key={cat.id} 
+                          onClick={() => handleNavClick(cat.id)} 
+                          className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-white rounded-[1.5rem] border border-transparent hover:border-slate-100 transition-all group active:scale-98 shadow-sm hover:shadow-md"
+                        >
+                          <div className="p-2.5 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
+                          <span className="font-black text-slate-700 tracking-tighter uppercase text-xs">{cat.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Footer Action */}
+                  {isAuthenticated && (
+                    <div className="pt-4">
+                      <button 
+                        onClick={goBackToLanding} 
+                        className="flex items-center justify-center gap-3 w-full py-5 text-red-500 font-black text-[10px] uppercase tracking-widest border-2 border-red-50 rounded-[1.5rem] hover:bg-red-50 transition-all active:scale-95"
+                      >
+                        <LogOut size={18} /> Terminar Sessão
+                      </button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </>

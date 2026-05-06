@@ -95,27 +95,10 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   ];
 
   return (
-    <div className="flex flex-col pb-20 animate-in fade-in duration-700 bg-slate-50/30">
-      {/* Search Bar - Agora com margem para o cabeçalho global que já existe na App */}
-      <div className="mt-2 px-4 flex gap-3 z-50">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="O que deseja explorar hoje?" 
-            className="w-full h-12 bg-white border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-          />
-        </div>
-        <button 
-          onClick={onOpenIslandSelection}
-          className="w-12 h-12 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-700/20 active:scale-95 transition-all"
-        >
-          <Map size={20} />
-        </button>
-      </div>
-
-      {/* Hero Slider - IMERSIVO FULL WIDTH (Altura Reduzida Premium) */}
-      <div className="relative h-[380px] w-full overflow-hidden mt-4 shadow-xl">
+    <div className="flex flex-col pb-28 animate-in fade-in duration-700 bg-slate-50/30">
+      
+      {/* Hero Slider - IMERSIVO (Altura Reduzida para mais Leveza) */}
+      <div className="relative h-[320px] w-full overflow-hidden shadow-xl rounded-b-[2.5rem]">
         <AnimatePresence mode="popLayout">
           <motion.img 
             key={heroIndex}
@@ -160,8 +143,29 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </div>
       </div>
 
+      {/* Search Bar - AGORA ABAIXO DO SLIDER */}
+      <div className="mt-8 px-6 flex gap-3 z-50">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="O que deseja explorar hoje?" 
+            className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-xl shadow-slate-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+          />
+        </div>
+        <button 
+          onClick={onOpenIslandSelection}
+          className="w-14 h-14 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-green-700/20 active:scale-95 transition-all"
+        >
+          <Map size={24} />
+        </button>
+      </div>
+
       {/* Grelha de Categorias */}
-      <div className="mt-8 mb-8 overflow-hidden px-4">
+      <div className="mt-10 mb-8 overflow-hidden px-4">
+        <div className="flex flex-col items-center gap-2 mb-2">
+           <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest animate-pulse">Deslize para ver mais categorias</span>
+        </div>
         <div className="relative h-[200px] flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.div
