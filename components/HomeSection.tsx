@@ -93,15 +93,27 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   ];
 
   return (
-    <div className="flex flex-col pb-20 animate-in fade-in duration-700 bg-white">
-      {/* Search Bar - Agora no topo sobreposto ou logo abaixo do header fixo */}
-      <div className="absolute top-4 left-0 right-0 z-50 px-4 flex gap-3">
+    <div className="flex flex-col pb-20 animate-in fade-in duration-700 bg-slate-50/30">
+      {/* Header Fixo com Logo */}
+      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-[60] px-4 py-3 flex items-center justify-between border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden">
+            <AzoresLogo size={24} />
+          </div>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
+            Azores<span className="text-blue-600 font-black">ToYou</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* Search Bar - Com espaçamento do cabeçalho */}
+      <div className="mt-4 px-4 flex gap-3 z-50">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
             placeholder="O que deseja explorar hoje?" 
-            className="w-full h-12 bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            className="w-full h-12 bg-white border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
         </div>
         <button className="w-12 h-12 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-700/20 active:scale-95 transition-all">
@@ -109,8 +121,8 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </button>
       </div>
 
-      {/* Hero Slider - IMERSIVO FULL WIDTH COM VINHETA */}
-      <div className="relative h-[450px] md:h-[600px] w-full overflow-hidden shadow-2xl">
+      {/* Hero Slider - IMERSIVO FULL WIDTH (Altura Reduzida Premium) */}
+      <div className="relative h-[380px] w-full overflow-hidden mt-4 shadow-xl">
         <AnimatePresence mode="popLayout">
           <motion.img 
             key={heroIndex}
@@ -125,38 +137,38 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </AnimatePresence>
         
         {/* Efeito Vinheta e Gradiente Profissional */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_30%,rgba(0,0,0,0.5)_100%)]"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(0,0,0,0.4)_100%)]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
         
-        <div className="absolute top-20 left-6 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full">
-          <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Em Destaque</span>
+        <div className="absolute top-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full">
+          <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Em Destaque</span>
         </div>
         
-        <div className="absolute bottom-12 left-8 right-8 z-10">
+        <div className="absolute bottom-10 left-8 right-8 z-10">
           <motion.div
             key={`text-${heroIndex}`}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
           >
-            <h2 className="text-4xl font-black text-white mb-2 leading-none tracking-tighter">Descubra<br/>{featuredIsland}</h2>
-            <p className="text-sm text-white/70 font-bold mb-6 tracking-tight">A natureza em estado puro</p>
-            <button className="bg-white text-slate-900 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all w-fit">
+            <h2 className="text-3xl font-black text-white mb-1.5 leading-none tracking-tighter">Descubra<br/>{featuredIsland}</h2>
+            <p className="text-sm text-white/70 font-bold mb-5 tracking-tight">A natureza em estado puro</p>
+            <button className="bg-white text-slate-900 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all w-fit">
                Explorar agora <ArrowRight size={14} />
             </button>
           </motion.div>
         </div>
 
         {/* Dots Paginação Minimalistas */}
-        <div className="absolute bottom-12 right-8 flex gap-1.5 z-10">
+        <div className="absolute bottom-10 right-8 flex gap-1.5 z-10">
            {heroImages.map((_, i) => (
-             <div key={i} className={`h-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'w-6 bg-white' : 'w-1 bg-white/30'}`}></div>
+             <div key={i} className={`h-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'w-5 bg-white' : 'w-1 bg-white/30'}`}></div>
            ))}
         </div>
       </div>
 
-      {/* Grelha de Categorias - EMPURRADA PARA BAIXO PARA VER BEM O SLIDER */}
-      <div className="mt-10 mb-8 overflow-hidden px-4">
+      {/* Grelha de Categorias */}
+      <div className="mt-8 mb-8 overflow-hidden px-4">
         <div className="relative h-[200px] flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.div
@@ -177,18 +189,18 @@ const HomeSection: React.FC<HomeSectionProps> = ({
                   if (prev >= 0) setCatPage(prev);
                 }
               }}
-              className="grid grid-cols-3 gap-y-8 gap-x-3 max-w-[300px] w-full cursor-grab active:cursor-grabbing py-2"
+              className="grid grid-cols-3 gap-y-6 gap-x-2 max-w-[280px] w-full cursor-grab active:cursor-grabbing py-2"
             >
               {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item) => (
                 <button 
                   key={item.id} 
                   onClick={() => onNavigate(item.id as any)}
-                  className="flex flex-col items-center gap-2.5 group active:scale-90 transition-all"
+                  className="flex flex-col items-center gap-2 group active:scale-90 transition-all"
                 >
                   <div className={`w-14 h-14 rounded-full ${item.color} text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110`}>
                      {React.cloneElement(item.icon as React.ReactElement, { size: 24, className: "w-6 h-6" })}
                   </div>
-                  <span className="text-[10px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5">
+                  <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-tighter leading-tight w-full px-0.5">
                     {item.label}
                   </span>
                 </button>
@@ -202,7 +214,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           {Array.from({ length: Math.ceil(quickIcons.length / 6) }).map((_, i) => (
             <div 
               key={i} 
-              className={`h-1.5 rounded-full transition-all duration-300 ${catPage === i ? 'w-6 bg-slate-900' : 'w-2 bg-slate-200'}`} 
+              className={`h-1 rounded-full transition-all duration-300 ${catPage === i ? 'w-5 bg-slate-900' : 'w-1.5 bg-slate-200'}`} 
             />
           ))}
         </div>
