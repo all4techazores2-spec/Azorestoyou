@@ -1310,28 +1310,28 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
-      {/* Navigation */}
+      {/* Navigation - CABEÇALHO FIXO PREMIUM */}
       {exploreCategory !== 'community' && (
-        <nav className={`bg-white shadow-md sticky top-0 z-30 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
+        <nav className={`bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center cursor-pointer" onClick={goHome}>
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-md mr-2 border-2 border-blue-600 overflow-hidden">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm mr-2 border border-slate-100 overflow-hidden">
                 <AzoresLogo size={32} />
               </div>
-              <span className="font-bold text-2xl tracking-tight" style={{ color: COLORS.primary }}>
-                Azores<span style={{ color: COLORS.secondary }}>Toyou</span>
+              <span className="font-extrabold text-xl tracking-tight text-slate-800">
+                Azores<span className="text-blue-600 font-black">Toyou</span>
               </span>
             </div>
             
             <div className="hidden md:flex items-center space-x-6">
-               <button onClick={goHome} className={`text-sm font-medium ${exploreCategory === null ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>{getTranslation(language, 'nav_home')}</button>
+               <button onClick={goHome} className={`text-sm font-bold ${exploreCategory === null ? 'text-blue-600' : 'text-slate-500'}`}>{getTranslation(language, 'nav_home')}</button>
                {navCategories.slice(0, 4).map(cat => (
                  <button 
                   key={cat.id}
                   onClick={() => handleNavClick(cat.id)} 
-                  className={`font-medium text-sm transition-colors ${
-                    exploreCategory === cat.id ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+                  className={`font-bold text-sm transition-colors ${
+                    exploreCategory === cat.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
                   }`}
                  >
                    {cat.label}
@@ -1345,14 +1345,7 @@ const App: React.FC = () => {
                   <>
                     <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
                       <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-black text-white">C</div>
-                      <span className="text-xs font-black text-blue-700 tracking-tight">{userCredits} {getTranslation(language, 'credits_balance')}</span>
-                    </div>
-
-                    {/* Ícone de Notificações (Simples) */}
-                    <div className="relative cursor-pointer group">
-                      <div className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-all">
-                        <Bell className="w-5 h-5 text-slate-600" />
-                      </div>
+                      <span className="text-xs font-black text-blue-700 tracking-tight">{userCredits}</span>
                     </div>
 
                     <div 
@@ -1364,89 +1357,102 @@ const App: React.FC = () => {
                       </div>
                       <span className="text-sm font-bold text-slate-700">{getTranslation(language, 'traveler')}</span>
                     </div>
-
-                    {/* Profile Dropdown */}
-                    {showProfileMenu && (
-                      <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                        <div className="px-4 py-3 border-b border-slate-50 mb-1">
-                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{getTranslation(language, 'credits_balance')}</p>
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center text-[8px] font-black text-white">C</div>
-                            <span className="text-sm font-black text-blue-700">{userCredits}</span>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => { setShowProfileModal(true); setShowProfileMenu(false); }}
-                          className="w-full px-4 py-2 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-                        >
-                          <User className="w-4 h-4 text-blue-600" /> {getTranslation(language, 'edit_profile')}
-                        </button>
-                        <button 
-                          onClick={() => { setIsAuthenticated(false); setShowProfileMenu(false); setHasEnteredApp(false); }}
-                          className="w-full px-4 py-2 text-left text-sm font-bold text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors"
-                        >
-                          <LogOut className="w-4 h-4" /> {getTranslation(language, 'nav_logout')}
-                        </button>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <button onClick={() => setShowAuthModal(true)} className="text-sm font-bold text-blue-600">{getTranslation(language, 'login')}</button>
                 )}
               </div>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600 md:hidden">
-                {mobileMenuOpen ? <X /> : <Menu />}
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600 md:hidden relative z-[110]">
+                {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
             </div>
           </div>
         </div>
 
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-50 border-t p-4 pb-8 space-y-2 shadow-2xl absolute w-full z-40 max-h-[80vh] overflow-y-auto animate-in slide-in-from-top-5">
-             <div className="grid grid-cols-1 gap-2">
-               <button onClick={goHome} className="flex items-center gap-4 w-full p-3 bg-white rounded-xl shadow-sm border border-slate-100">
-                  <div className="p-2 rounded-lg bg-slate-200 text-slate-600"><X className="w-6 h-6" /></div>
-                  <span className="font-bold text-slate-700">{getTranslation(language, 'nav_back_home')}</span>
-               </button>
-               {navCategories.map(cat => (
-                 <button key={cat.id} onClick={() => handleNavClick(cat.id)} className="flex items-center gap-4 w-full p-3 bg-white rounded-xl shadow-sm border border-slate-100">
-                   <div className="p-2 rounded-lg text-white" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
-                   <span className="font-bold text-slate-700">{cat.label}</span>
-                 </button>
-               ))}
-             </div>
-             <div className="border-t pt-4 mt-4 space-y-3">
-               {isAuthenticated && (
-                 <>
-                   <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                         <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                       </div>
-                       <div>
-                         <p className="font-bold text-slate-800 text-sm">{getTranslation(language, 'traveler')}</p>
-                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{userCredits} {getTranslation(language, 'credits_balance')}</p>
-                       </div>
-                     </div>
-                     <button 
-                       onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
-                       className="p-2 bg-white rounded-lg shadow-sm text-blue-600"
-                     >
-                       <User className="w-5 h-5" />
-                     </button>
-                   </div>
-                 </>
-               )}
-               <button onClick={goBackToLanding} className="flex items-center gap-4 w-full p-3 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-colors">
-                 <LogOut className="w-6 h-6" /> {getTranslation(language, 'nav_logout')}
-               </button>
-             </div>
-          </div>
-        )}
+        {/* Mobile Menu - SLIDER DA DIREITA PARA A ESQUERDA COM BACKDROP */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop Overlay */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] md:hidden"
+              />
+              
+              {/* Sidebar Drawer */}
+              <motion.div 
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-[80%] max-w-[320px] bg-white/95 backdrop-blur-md shadow-2xl z-[105] flex flex-col md:hidden pt-20"
+              >
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                  <button onClick={goHome} className="flex items-center gap-4 w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 active:scale-95 transition-all">
+                      <div className="p-2 rounded-xl bg-white shadow-sm text-slate-600"><Compass className="w-6 h-6" /></div>
+                      <span className="font-black text-slate-800 uppercase tracking-tighter">{getTranslation(language, 'nav_home')}</span>
+                  </button>
+                  
+                  <div className="grid grid-cols-1 gap-3 pt-2">
+                    {navCategories.map(cat => (
+                      <button 
+                        key={cat.id} 
+                        onClick={() => handleNavClick(cat.id)} 
+                        className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl shadow-sm border border-slate-50 active:scale-95 transition-all"
+                      >
+                        <div className="p-2 rounded-xl text-white shadow-md" style={{ backgroundColor: cat.color }}>{cat.icon}</div>
+                        <span className="font-bold text-slate-700 tracking-tight">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+                  {isAuthenticated ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-100 shadow-sm">
+                          <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-800 text-sm tracking-tighter">Olá, {userProfile.name.split(' ')[0]}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="w-3.5 h-3.5 bg-blue-600 rounded-full flex items-center justify-center text-[7px] font-black text-white">C</div>
+                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{userCredits} Créditos</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
+                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                      >
+                        Ver Perfil
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all"
+                    >
+                      Fazer Login
+                    </button>
+                  )}
+                  
+                  <button onClick={goBackToLanding} className="flex items-center justify-center gap-3 w-full mt-6 py-2 text-slate-400 font-bold text-xs hover:text-red-500 transition-colors uppercase tracking-widest">
+                    <LogOut size={16} /> Terminar Sessão
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </nav>
       )}
 
-      <main className={`pb-32 pt-4 md:pt-8 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
+      <main className={`pb-32 pt-20 md:pt-24 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
         <AnimatePresence mode="wait">
         {exploreCategory === null ? (
           <motion.div 

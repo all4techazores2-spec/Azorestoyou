@@ -184,13 +184,13 @@ const HomeSection: React.FC<HomeSectionProps> = ({
               }}
               className="grid grid-cols-3 gap-y-6 gap-x-2 max-w-[280px] w-full cursor-grab active:cursor-grabbing py-2"
             >
-              {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item, idx) => (
+              {quickIcons.slice(catPage * 6, (catPage + 1) * 6).map((item) => (
                 <motion.button 
                   key={item.id} 
                   onClick={() => onNavigate(item.id as any)}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05, duration: 0.4 }}
+                  transition={{ duration: 0.3 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.9 }}
                   className="flex flex-col items-center gap-2 group transition-all"
