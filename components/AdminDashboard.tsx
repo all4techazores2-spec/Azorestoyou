@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Plane, BedDouble, Car as CarIcon, Bus, 
   Image as ImageIcon, Lock, Users, Cloud as CloudSync,
   ShoppingBag, Mail, MapPin, Phone, Sparkles,
-  Scissors, User, Flower2, Brush, ArrowRight
+  Scissors, User, Flower2, Brush, ArrowRight, RefreshCw
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -59,6 +59,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [addingSupplierToId, setAddingSupplierToId] = useState<string | null>(null);
   const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
   const [supplierFormData, setSupplierFormData] = useState({ name: '', email: '', phone: '', nif: '', address: '' });
+  const [isUploading, setIsUploading] = useState(false);
+
+  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://azorestoyou-1.onrender.com';
+
 
   const togglePassword = (id: string) => {
     setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
@@ -270,6 +276,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, dishes: editingItem.dishes.filter((_:any, i:number) => i !== index) });
   };
 
+  const handleImageUpload = async (file: File, type: 'main' | 'gallery' | 'dish', extraIndex?: number) => {
+    if (!editingItem) return;
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('restaurantId', editingItem.id);
+    formData.append('type', type);
+    formData.append('image', file);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      
+      if (type === 'main') {
+        setEditingItem({ ...editingItem, image: data.url });
+      } else if (type === 'gallery') {
+        const gallery = editingItem.gallery || [];
+        setEditingItem({ ...editingItem, gallery: [...gallery, data.url] });
+      } else if (type === 'dish' && extraIndex !== undefined) {
+        const dishes = [...(editingItem.dishes || [])];
+        dishes[extraIndex] = { ...dishes[extraIndex], image: data.url };
+        setEditingItem({ ...editingItem, dishes });
+      }
+    } catch (error) {
+      console.error('Error uploading:', error);
+      alert('Erro ao carregar imagem.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // -- FORM RENDERING --
   const renderFormFields = () => {
     if (!editingItem) return null;
@@ -332,13 +373,71 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
             {commonInput(t('item_rating'), 'rating', 'number')}
             {commonInput(t('item_reviews'), 'reviews', 'number')}
-            {commonInput(t('item_image'), 'image', 'text', true)}
+            
+            {/* Image Upload Field */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_image')} (URL ou Upload)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 border p-2 rounded-lg"
+                  value={editingItem.image}
+                  onChange={e => setEditingItem({...editingItem, image: e.target.value})}
+                  placeholder="URL da imagem..."
+                />
+                <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                   {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                   <input 
+                     type="file" 
+                     className="hidden" 
+                     accept="image/*"
+                     disabled={isUploading}
+                     onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'main')}
+                   />
+                </label>
+              </div>
+            </div>
+
             {commonInput('Admin Email', 'adminEmail')}
             {commonInput('Admin Password', 'adminPassword')}
+            
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
             </div>
+
+            {/* Gallery / Slider Section */}
+            {(activeTab === 'restaurants' || activeTab === 'hotels') && (
+              <div className="md:col-span-2 border-t pt-4 mt-2">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria de Imagens (Slider)</h4>
+                  <label className={`cursor-pointer px-4 py-1 rounded-lg text-xs font-black uppercase transition-all ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700'}`}>
+                    {isUploading ? 'A carregar...' : '+ Adicionar Foto'}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      disabled={isUploading}
+                      onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'gallery')}
+                    />
+                  </label>
+                </div>
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                   {editingItem.gallery?.map((img: string, idx: number) => (
+                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border group">
+                        <img src={img} className="w-full h-full object-cover" alt="" />
+                        <button 
+                          type="button" 
+                          onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})}
+                          className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                     </div>
+                   ))}
+                </div>
+              </div>
+            )}
             
             {/* Dishes/Services Section */}
             <div className="md:col-span-2 border-t pt-4 mt-2">
@@ -346,13 +445,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  <h4 className="font-bold">{activeTab === 'beauty' ? 'Serviços' : activeTab === 'shops' ? 'Produtos em Destaque' : t('dishes_management')}</h4>
                  <button type="button" onClick={addDish} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">+ {activeTab === 'beauty' ? 'Serviço' : activeTab === 'shops' ? 'Produto' : t('add_dish')}</button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {editingItem.dishes?.map((dish: Dish, idx: number) => (
-                  <div key={idx} className="flex gap-2 bg-slate-50 p-2 rounded border">
-                    <input className="border p-1 rounded w-1/4" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
-                    <input className="border p-1 rounded w-1/4" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
-                    <input className="border p-1 rounded w-1/2" placeholder="Desc" value={dish.description} onChange={e => updateDish(idx, 'description', e.target.value)} />
-                    <button type="button" onClick={() => removeDish(idx)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                    <div className="flex gap-2">
+                      <input className="border p-2 rounded-lg w-1/3 font-bold" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
+                      <input className="border p-2 rounded-lg w-1/4" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
+                      <div className="flex-1 flex gap-2">
+                        <input className="flex-1 border p-2 rounded-lg text-xs" placeholder="URL da Imagem" value={dish.image} onChange={e => updateDish(idx, 'image', e.target.value)} />
+                        <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                           <ImageIcon className="w-4 h-4" />
+                           <input 
+                             type="file" 
+                             className="hidden" 
+                             accept="image/*"
+                             disabled={isUploading}
+                             onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'dish', idx)}
+                           />
+                        </label>
+                      </div>
+                      <button type="button" onClick={() => removeDish(idx)} className="text-red-500 p-2"><Trash2 className="w-5 h-5" /></button>
+                    </div>
+                    <textarea className="w-full border p-2 rounded-lg text-sm h-16" placeholder="Descrição do prato..." value={dish.description} onChange={e => updateDish(idx, 'description', e.target.value)} />
                   </div>
                 ))}
               </div>
