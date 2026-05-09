@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Restaurant, Activity, Language, Dish, Flight, Hotel, Car, BusSchedule, Business } from '../types';
 import { getTranslation } from '../translations';
@@ -75,6 +75,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [beautyFilter, setBeautyFilter] = useState<string>('all');
   const [shopsFilter, setShopsFilter] = useState<string>('all');
   const [hotelFilter, setHotelFilter] = useState<string>('all');
+  const [servicesFilter, setServicesFilter] = useState<string>('all');
   
   // Account management states
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
@@ -91,6 +92,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [bulkIsland, setBulkIsland] = useState<string>('PDL');
   const [bulkSubcategory, setBulkSubcategory] = useState<string>('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeTab, islandFilter, beautyFilter, shopsFilter, hotelFilter, servicesFilter]);
 
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -99,6 +105,56 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const togglePassword = (id: string) => {
     setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    const currentItems = getListItems();
+    const currentIds = currentItems.map(i => i.id);
+    if (currentIds.length === 0) return;
+    
+    const allSelected = currentIds.every(id => selectedIds.includes(id));
+    
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !currentIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...currentIds])));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Deseja apagar os ${selectedIds.length} itens selecionados?`)) return;
+
+    const filterList = (list: any[]) => list.filter(item => !selectedIds.includes(item.id));
+
+    switch (activeTab) {
+      case 'restaurants': onUpdateRestaurants(filterList(restaurants)); break;
+      case 'shops': onUpdateShops(filterList(shops)); break;
+      case 'beauty': onUpdateBeauty(filterList(beauty)); break;
+      case 'services': onUpdateServices(filterList(services)); break;
+      case 'auto_repairs': onUpdateAutoRepairs(filterList(autoRepairs)); break;
+      case 'auto_electronics': onUpdateAutoElectronics(filterList(autoElectronics)); break;
+      case 'used_market': onUpdateUsedMarket(filterList(usedMarket)); break;
+      case 'animals': onUpdateAnimals(filterList(animals)); break;
+      case 'real_estate': onUpdateRealEstate(filterList(realEstate)); break;
+      case 'gyms': onUpdateGyms(filterList(gyms)); break;
+      case 'stands': onUpdateStands(filterList(stands)); break;
+      case 'offices': onUpdateOffices(filterList(offices)); break;
+      case 'it_services': onUpdateITServices(filterList(itServices)); break;
+      case 'perfumes': onUpdatePerfumes(filterList(perfumes)); break;
+      case 'activities': onUpdateActivities(filterList(activities)); break;
+      case 'flights': onUpdateFlights(filterList(flights)); break;
+      case 'hotels': onUpdateHotels(filterList(hotels)); break;
+      case 'cars': onUpdateCars(filterList(cars)); break;
+      case 'buses': onUpdateBusSchedules(filterList(busSchedules)); break;
+    }
+
+    setSelectedIds([]);
+    alert(`${selectedIds.length} itens removidos com sucesso!`);
   };
 
   const lang = language as Language;
@@ -604,13 +660,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
                 <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="electrician">Eletricista</option>
+                  <option value="mason">Pedreiro</option>
+                  <option value="carpenter">Carpinteiro</option>
+                  <option value="plumber">Canalizador</option>
+                  <option value="painter">Pintor</option>
                   <option value="gardening">Jardinagem</option>
-                  <option value="cleaning">Limpezas</option>
-                  <option value="plumbing">Canalização</option>
-                  <option value="electricity">Eletricidade</option>
-                  <option value="painting">Pintura</option>
-                  <option value="architect">Arquitetura</option>
-                  <option value="it">Informática</option>
+                  <option value="architect">Arquiteto</option>
+                  <option value="engineer">Engenheiro</option>
+                  <option value="hvac">Climatização</option>
                 </select>
               </div>
             )}
@@ -959,7 +1017,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'restaurants': list = restaurants; break;
       case 'shops': list = shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter); break;
       case 'beauty': list = beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter); break;
-      case 'services': list = services; break;
+      case 'services': list = servicesFilter === 'all' ? services : services.filter(s => s.subcategory === servicesFilter); break;
       case 'auto_repairs': list = autoRepairs; break;
       case 'auto_electronics': list = autoElectronics; break;
       case 'used_market': list = usedMarket; break;
@@ -1404,11 +1462,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-6">
                 
                 <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">
-                  <div>
-                    <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">{activeTab.replace('_', ' ')} ({getListItems().length})</h1>
-                    <p className="text-slate-400 font-medium italic">Gestão de conteúdos e registos da plataforma</p>
-                  </div>
-                  <div className="flex gap-3">
+                   <div className="flex items-center gap-6">
+                     <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 rounded-lg text-blue-600 focus:ring-blue-500"
+                          checked={getListItems().length > 0 && getListItems().every(i => selectedIds.includes(i.id))}
+                          onChange={toggleSelectAll}
+                        />
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Selecionar Tudo</span>
+                     </div>
+                     <div>
+                       <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">{activeTab.replace('_', ' ')} ({getListItems().length})</h1>
+                       <p className="text-slate-400 font-medium italic">Gestão de conteúdos e registos da plataforma</p>
+                     </div>
+                   </div>
+                   <div className="flex gap-3">
+                     {selectedIds.length > 0 && (
+                       <motion.button 
+                         initial={{ opacity: 0, x: 20 }}
+                         animate={{ opacity: 1, x: 0 }}
+                         onClick={handleBulkDelete}
+                         className="px-8 py-4 bg-red-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all flex items-center gap-2"
+                       >
+                         <Trash2 size={16} /> Apagar Selecionados ({selectedIds.length})
+                       </motion.button>
+                     )}
                     <button 
                       onClick={() => setShowBulkAdd(!showBulkAdd)} 
                       className={`px-8 py-4 ${showBulkAdd ? 'bg-amber-500' : 'bg-slate-800'} text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2`}
@@ -1522,6 +1601,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               )}
 
+              {activeTab === 'services' && (
+                <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+                  {[
+                    { id: 'all', label: 'Todos', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
+                    { id: 'electrician', label: 'Eletricista', icon: <Zap size={18} />, color: '#F59E0B' },
+                    { id: 'mason', label: 'Pedreiro', icon: <HardHat size={18} />, color: '#D97706' },
+                    { id: 'carpenter', label: 'Carpinteiro', icon: <Hammer size={18} />, color: '#8B4513' },
+                    { id: 'plumber', label: 'Canalizador', icon: <Droplets size={18} />, color: '#3B82F6' },
+                    { id: 'painter', label: 'Pintor', icon: <Paintbrush size={18} />, color: '#EC4899' },
+                    { id: 'gardening', label: 'Jardinagem', icon: <Flower2 size={18} />, color: '#10B981' },
+                    { id: 'architect', label: 'Arquiteto', icon: <DraftingCompass size={18} />, color: '#8B5CF6' },
+                    { id: 'engineer', label: 'Engenheiro', icon: <Settings size={18} />, color: '#4B5563' },
+                    { id: 'hvac', label: 'Climatização', icon: <ThermometerSnowflake size={18} />, color: '#06B6D4' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setServicesFilter(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
+                        ${servicesFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                      style={{ borderBottom: servicesFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
+                    >
+                      <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {activeTab === 'hotels' && (
                 <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
                   {[
@@ -1544,8 +1650,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {getListItems().slice(0, visibleCount).map((item: any) => (
-               <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group relative">
-                 
+                <div key={item.id} className={`group relative bg-white rounded-[2rem] border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${selectedIds.includes(item.id) ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-100'}`}>
+                   
+                   {/* Selection Checkbox */}
+                   <div className="absolute top-4 left-4 z-10">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelection(item.id)}
+                        className="w-5 h-5 rounded-lg border-white shadow-md text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
+                      />
+                   </div>
+
                  {/* Image or Icon Placeholder */}
                  <div className="h-32 relative bg-slate-100 flex items-center justify-center">
                    {item.image ? (
