@@ -60,7 +60,7 @@ interface AdminDashboardProps {
   language?: Language;
 }
 
-type Tab = 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
@@ -68,7 +68,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout, onFullSync,
   language = 'pt'
 }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('restaurants');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [showOtherTabs, setShowOtherTabs] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
@@ -1050,6 +1051,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'it_services': list = itServices; break;
       case 'perfumes': list = perfumes; break;
       case 'activities': list = activities; break;
+      case 'trails': list = activities.filter(a => a.type === 'trail'); break;
       case 'flights': list = flights; break;
       case 'hotels': list = hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter); break;
       case 'cars': list = cars; break;
@@ -1096,57 +1098,104 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'restaurants' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <Utensils className="w-5 h-5" /> {t('manage_restaurants')}
           </button>
-          <button onClick={() => { setActiveTab('shops'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'shops' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <ShoppingBag className="w-5 h-5" /> Lojas Regionais
+          {/* MAIN TABS (REORDERED) */}
+          <button onClick={() => { setActiveTab('dashboard'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'dashboard' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <LayoutDashboard className="w-5 h-5" /> Dashboard
           </button>
-          <button onClick={() => { setActiveTab('beauty'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'beauty' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Sparkles className="w-5 h-5" /> Beleza Homem/Mulher
+          
+          <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'restaurants' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <Utensils className="w-5 h-5" /> Gerir Restaurantes
           </button>
-          <button onClick={() => { setActiveTab('services'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'services' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Briefcase className="w-5 h-5" /> Serviços Técnicos
-          </button>
-          <button onClick={() => { setActiveTab('auto_repairs'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'auto_repairs' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Wrench className="w-5 h-5" /> Reparação Auto
-          </button>
-          <button onClick={() => { setActiveTab('auto_electronics'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'auto_electronics' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Zap className="w-5 h-5" /> Eletrónica Auto
-          </button>
-          <button onClick={() => { setActiveTab('used_market'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'used_market' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <ShoppingCart className="w-5 h-5" /> Mercado de Usados
-          </button>
-          <button onClick={() => { setActiveTab('animals'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'animals' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Dog className="w-5 h-5" /> Animais de Estimação
-          </button>
-          <button onClick={() => { setActiveTab('real_estate'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'real_estate' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Building2 className="w-5 h-5" /> Imobiliárias
-          </button>
-          <button onClick={() => { setActiveTab('gyms'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'gyms' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Dumbbell className="w-5 h-5" /> Ginásios
-          </button>
-          <button onClick={() => { setActiveTab('stands'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'stands' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <CarFront className="w-5 h-5" /> Stands de Automóveis
-          </button>
-          <button onClick={() => { setActiveTab('offices'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'offices' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Building2 className="w-5 h-5" /> Escritórios
-          </button>
-          <button onClick={() => { setActiveTab('it_services'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'it_services' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Laptop className="w-5 h-5" /> Informática
-          </button>
-          <button onClick={() => { setActiveTab('perfumes'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'perfumes' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Pipette className="w-5 h-5" /> Perfumaria
-          </button>
-          <button onClick={() => { setActiveTab('activities'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'activities' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Mountain className="w-5 h-5" /> {t('manage_activities')}
-          </button>
-          <div className="pt-4 mt-4 border-t border-slate-800">
-             <button onClick={() => setActiveTab('accounts')} className={`flex items-center gap-3 w-full px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all ${activeTab === 'accounts' ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20' : 'text-slate-400 hover:bg-slate-100'}`}>
-                <Users size={20} /> Contas Restaurante
-             </button>
 
-             <button onClick={() => setActiveTab('suppliers')} className={`flex items-center gap-3 w-full px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all ${activeTab === 'suppliers' ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20' : 'text-slate-400 hover:bg-slate-100'}`}>
-                <ShoppingBag size={20} /> Fornecedores
-             </button>
-          </div>
+          <button onClick={() => { setActiveTab('buses'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'buses' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <Bus className="w-5 h-5" /> Gerir Autocarros
+          </button>
+
+          <button onClick={() => { setActiveTab('cars'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'cars' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <CarIcon className="w-5 h-5" /> Gerir Rentcar
+          </button>
+
+          <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'hotels' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <BedDouble className="w-5 h-5" /> Alojamentos
+          </button>
+
+          <button onClick={() => { setActiveTab('activities'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'activities' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <Mountain className="w-5 h-5" /> Gerir Atividades
+          </button>
+
+          <button onClick={() => { setActiveTab('trails'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'trails' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+            <MapPin className="w-5 h-5" /> Trilhos
+          </button>
+
+          {/* OUTROS BUTTON */}
+          <button 
+            onClick={() => setShowOtherTabs(!showOtherTabs)} 
+            className={`w-full text-left p-4 mt-4 rounded-2xl flex items-center justify-between transition-all border-2 ${showOtherTabs ? 'bg-blue-600 border-blue-400' : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'}`}
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5" /> 
+              <span className="font-black uppercase tracking-widest text-[10px]">Outros Serviços</span>
+            </div>
+            <ArrowRight size={16} className={`transition-transform duration-500 ${showOtherTabs ? 'rotate-90' : ''}`} />
+          </button>
+
+          {/* OTHER TABS SLIDER (ACCORDION STYLE) */}
+          <AnimatePresence>
+            {showOtherTabs && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden space-y-1 mt-2 pl-4"
+              >
+                <button onClick={() => { setActiveTab('shops'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'shops' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <ShoppingBag size={14} /> Lojas Regionais
+                </button>
+                <button onClick={() => { setActiveTab('beauty'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'beauty' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Sparkles size={14} /> Beleza
+                </button>
+                <button onClick={() => { setActiveTab('services'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'services' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Briefcase size={14} /> Serviços Técnicos
+                </button>
+                <button onClick={() => { setActiveTab('auto_repairs'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'auto_repairs' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Wrench size={14} /> Reparação Auto
+                </button>
+                <button onClick={() => { setActiveTab('auto_electronics'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'auto_electronics' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Zap size={14} /> Eletrónica Auto
+                </button>
+                <button onClick={() => { setActiveTab('used_market'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'used_market' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <ShoppingCart size={14} /> Mercado Usados
+                </button>
+                <button onClick={() => { setActiveTab('animals'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'animals' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Dog size={14} /> Animais
+                </button>
+                <button onClick={() => { setActiveTab('real_estate'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'real_estate' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Building2 size={14} /> Imobiliárias
+                </button>
+                <button onClick={() => { setActiveTab('gyms'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'gyms' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Dumbbell size={14} /> Ginásios
+                </button>
+                <button onClick={() => { setActiveTab('stands'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'stands' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <CarFront size={14} /> Stands
+                </button>
+                <button onClick={() => { setActiveTab('offices'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'offices' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Building2 size={14} /> Escritórios
+                </button>
+                <button onClick={() => { setActiveTab('it_services'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'it_services' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Laptop size={14} /> Informática
+                </button>
+                <button onClick={() => { setActiveTab('perfumes'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'perfumes' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Pipette size={14} /> Perfumaria
+                </button>
+                <button onClick={() => { setActiveTab('flights'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'flights' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Plane size={14} /> Voos
+                </button>
+                <button onClick={() => { setActiveTab('suppliers'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'suppliers' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Users size={14} /> Fornecedores
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </nav>
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
@@ -1166,16 +1215,83 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Main Content */}
       <main className="flex-1 ml-64 p-8">
          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-800 uppercase tracking-wide">
-              {t(`manage_${activeTab}`)} ({getListItems().length})
+            <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">
+              {activeTab === 'dashboard' ? 'Panorama Geral' : `${t(`manage_${activeTab}`)} (${getListItems().length})`}
             </h1>
-            <button 
-              onClick={startAdd}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-green-700 shadow-md transition-colors"
-            >
-              <Plus className="w-5 h-5" /> {t('add_new')}
-            </button>
+            {activeTab !== 'dashboard' && (
+              <button 
+                onClick={startAdd}
+                className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 hover:bg-blue-600 shadow-xl transition-all active:scale-95"
+              >
+                <Plus className="w-5 h-5" /> Adicionar Novo
+              </button>
+            )}
          </div>
+
+          {/* DASHBOARD VIEW */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+               {/* Stats Grid */}
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total de Negócios</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">
+                        {restaurants.length + shops.length + beauty.length + hotels.length + cars.length + realEstate.length + gyms.length + stands.length}
+                     </p>
+                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                        <div className="h-full bg-blue-600 rounded-full" style={{ width: '75%' }}></div>
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Registos de Clientes</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">1.240</p>
+                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                        <div className="h-full bg-green-600 rounded-full" style={{ width: '60%' }}></div>
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Visitas no Site</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">45.892</p>
+                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                        <div className="h-full bg-amber-600 rounded-full" style={{ width: '85%' }}></div>
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Taxa de Conversão</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">12.4%</p>
+                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                        <div className="h-full bg-purple-600 rounded-full" style={{ width: '45%' }}></div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Categories Breakdown */}
+               <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-xl shadow-slate-200/20">
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-8">Inventário por Categoria</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+                     {[
+                       { label: 'Restaurantes', count: restaurants.length, icon: Utensils, color: 'bg-blue-50 text-blue-600' },
+                       { label: 'Alojamentos', count: hotels.length, icon: BedDouble, color: 'bg-indigo-50 text-indigo-600' },
+                       { label: 'Rentcar', count: cars.length, icon: CarIcon, color: 'bg-emerald-50 text-emerald-600' },
+                       { label: 'Atividades', count: activities.length, icon: Mountain, color: 'bg-amber-50 text-amber-600' },
+                       { label: 'Trilhos', count: activities.filter(a => a.type === 'trail').length, icon: MapPin, color: 'bg-green-50 text-green-600' },
+                       { label: 'Lojas', count: shops.length, icon: ShoppingBag, color: 'bg-rose-50 text-rose-600' },
+                       { label: 'Beleza', count: beauty.length, icon: Sparkles, color: 'bg-pink-50 text-pink-600' },
+                       { label: 'Imobiliária', count: realEstate.length, icon: Building2, color: 'bg-slate-50 text-slate-600' },
+                       { label: 'Stands', count: stands.length, icon: CarFront, color: 'bg-orange-50 text-orange-600' },
+                     ].map((cat, i) => (
+                       <div key={i} className="flex flex-col items-center text-center group cursor-pointer">
+                          <div className={`w-16 h-16 ${cat.color} rounded-3xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 group-hover:shadow-xl transition-all`}>
+                             <cat.icon size={28} />
+                          </div>
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">{cat.label}</p>
+                          <p className="text-xl font-black text-slate-800">{cat.count}</p>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+          )}
 
           {/* ACCOUNTS VIEW */}
           {activeTab === 'accounts' && !editingItem && (
@@ -1479,7 +1595,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
            )}
 
           {/* LIST VIEW */}
-          {activeTab !== 'accounts' && activeTab !== 'suppliers' && !editingItem && (
+          {activeTab !== 'dashboard' && activeTab !== 'suppliers' && !editingItem && (
             <div className="space-y-6">
                 
                 <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">

@@ -55,11 +55,13 @@ const HomeSection: React.FC<HomeSectionProps> = ({
 
   const quickIcons = [
     { id: 'restaurants', label: 'Restaurantes', icon: <Utensils className="w-6 h-6" />, color: 'bg-orange-500' },
-    { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
-    { id: 'landscapes', label: 'Paisagens', icon: <Camera className="w-6 h-6" />, color: 'bg-blue-500' },
-    { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-purple-600' },
     { id: 'buses', label: 'Autocarros', icon: <Bus className="w-6 h-6" />, color: 'bg-orange-400' },
     { id: 'rentcar', label: 'Rent-a-car', icon: <Car className="w-6 h-6" />, color: 'bg-emerald-500' },
+    { id: 'accommodation', label: 'Alojamentos', icon: <Tent className="w-6 h-6" />, color: 'bg-purple-600' },
+    { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-blue-600' },
+    { id: 'trails', label: 'Trilhos', icon: <MountainSnow className="w-6 h-6" />, color: 'bg-green-600' },
+    { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
+    { id: 'landscapes', label: 'Paisagens', icon: <Camera className="w-6 h-6" />, color: 'bg-blue-500' },
     { id: 'flights', label: 'Viagens', icon: <Plane className="w-6 h-6" />, color: 'bg-blue-600' },
     { id: 'shops', label: 'Lojas', icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-pink-500' },
     { id: 'beauty', label: 'Beleza', icon: <Sparkles className="w-6 h-6" />, color: 'bg-rose-400' },
