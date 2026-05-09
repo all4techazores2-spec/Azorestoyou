@@ -543,17 +543,6 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                   </motion.div>
                 )}
 
-                {/* Footer Action */}
-                {bookingStep !== 'success' && (
-                  <div className="mt-8 pt-8 border-t border-slate-100">
-                    <button 
-                      className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all active:scale-[0.98]"
-                      onClick={onClose}
-                    >
-                      {t('nav_back_home')}
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
