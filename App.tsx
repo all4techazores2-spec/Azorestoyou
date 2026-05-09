@@ -488,7 +488,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAuthSuccess = (isAdminUser: boolean = false, businessId?: string, email?: string, role?: string) => {
+  const handleAuthSuccess = (isAdminUser: boolean = false, businessId?: string, email?: string, role?: string, name?: string) => {
     setIsAuthenticated(true);
     setShowAuthModal(false);
     setMobileMenuOpen(false);
@@ -564,16 +564,31 @@ const App: React.FC = () => {
 
       fetch(`${API_BASE_URL}/api/users/${email}`)
         .then(res => res.json())
-        .then(userData => {
+        .then(async userData => {
           if (userData) {
+            const finalName = name || userData.name || 'Cliente Viajante';
             setUserProfile({
               email: userData.email,
-              name: userData.name || 'Cliente Viajante',
+              name: finalName,
               phone: userData.profile?.phone || '',
               avatar: userData.profile?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
             });
             setUserCredits(userData.credits || 0);
             setMyReservations(userData.reservations || []);
+
+            // Se for novo registo (passámos o nome) ou o nome no servidor estiver vazio, atualizar
+            if (name && (!userData.name || userData.name === 'Cliente Viajante')) {
+               try {
+                 await fetch(`${API_BASE_URL}/api/users/${email}`, {
+                   method: 'PUT',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ name: name })
+                 });
+                 console.log("✅ Nome do utilizador atualizado no servidor");
+               } catch (e) {
+                 console.error("Erro ao atualizar nome no servidor:", e);
+               }
+            }
           }
         })
         .catch(err => console.error("Erro ao carregar dados do utilizador:", err));
@@ -1860,7 +1875,7 @@ const App: React.FC = () => {
       />
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={handleAuthSuccess} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name) => handleAuthSuccess(isAdmin, bizId, email, role, name)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 

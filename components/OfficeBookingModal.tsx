@@ -11,6 +11,7 @@ interface OfficeBookingModalProps {
   language?: Language;
   onSuccess?: (resData: any, officeName: string, officeId: string) => void;
   userProfile?: { email: string; name: string; phone: string };
+  onShowMap?: (url: string) => void;
 }
 
 const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
@@ -18,7 +19,8 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
   onClose,
   language = 'pt',
   onSuccess,
-  userProfile
+  userProfile,
+  onShowMap
 }) => {
   const [step, setStep] = useState<'datetime' | 'details' | 'success'>('datetime');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());

@@ -109,7 +109,19 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                    </button>
                  )}
                  <button 
-                   onClick={() => window.open(`https://maps.google.com/?q=${shop.latitude},${shop.longitude}`, '_blank')}
+                   onClick={() => {
+                     const url = (shop.latitude && shop.longitude) 
+                       ? `https://maps.google.com/?q=${shop.latitude},${shop.longitude}` 
+                       : '#';
+                     if (url !== '#') {
+                       if (onShowMap) {
+                         onShowMap(url);
+                         onClose();
+                       } else {
+                         window.open(url, '_blank');
+                       }
+                     }
+                   }}
                    className="flex-1 md:flex-initial px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                  >
                    <Map size={14} /> Ver Mapa

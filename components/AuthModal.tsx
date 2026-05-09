@@ -107,11 +107,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
       }
 
       // Fallback para utilizador normal (viajante) - permitimos entrar se não for negócio
-      onSuccess(false, undefined, normalizedEmail);
+      onSuccess(false, undefined, normalizedEmail, 'cliente');
     } else {
       // Registo de novo utilizador
       setIsLoading(false);
-      onSuccess(false, undefined, normalizedEmail);
+      onSuccess(false, undefined, normalizedEmail, 'cliente', name);
     }
   };
 

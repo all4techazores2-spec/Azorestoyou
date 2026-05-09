@@ -111,7 +111,19 @@ const CarStandModal: React.FC<CarStandModalProps> = ({
               <div className="flex gap-2">
                  <button onClick={() => window.location.href=`tel:${stand.phone}`} className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-blue-600 transition-all"><PhoneCall size={20} /></button>
                  <button 
-                   onClick={() => window.open(`https://maps.google.com/?q=${stand.latitude},${stand.longitude}`, '_blank')}
+                   onClick={() => {
+                     const url = (stand.latitude && stand.longitude) 
+                       ? `https://maps.google.com/?q=${stand.latitude},${stand.longitude}` 
+                       : '#';
+                     if (url !== '#') {
+                       if (onShowMap) {
+                         onShowMap(url);
+                         onClose();
+                       } else {
+                         window.open(url, '_blank');
+                       }
+                     }
+                   }}
                    className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all"
                  >
                    <Map size={20} />

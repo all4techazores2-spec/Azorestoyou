@@ -214,6 +214,7 @@ app.get('/api/users/:email', (req, res) => {
     user = {
       email,
       credits: 0,
+      role: 'cliente',
       profile: {
         phone: '',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'

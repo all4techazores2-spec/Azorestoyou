@@ -37,7 +37,7 @@ interface ExploreSectionProps {
   setUserCredits?: (credits: number) => void;
   favoriteRestaurantIds?: string[];
   onToggleFavorite?: (id: string) => void;
-  onReserveSuccess?: (resData: any, restName: string, restId: string) => void;
+  onReserveSuccess?: (resData: any, itemName: string, itemId: string) => void;
   userProfile?: { email: string; name: string; phone: string };
   onClose?: () => void;
   onShowMap?: (url: string) => void;
@@ -775,157 +775,192 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     <span className="text-sm font-bold text-slate-700">{s.publicEmail}</span>
                   </div>
 
-                  <button 
-                    onClick={() => window.location.href = `mailto:${s.publicEmail}?subject=Pedido de Orçamento - AzoresToyou`}
-                    className="mt-2 w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
-                  >
-                    {getTranslation(lang, 'request_quote')}
-                    <ArrowRight size={18} />
-                  </button>
+                    <div className="flex gap-2 mt-2">
+                      <button 
+                        onClick={() => window.location.href = `mailto:${s.publicEmail}?subject=Pedido de Orçamento - AzoresToyou`}
+                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        {getTranslation(lang, 'request_quote')}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const url = (s.latitude && s.longitude) 
+                            ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                            : '#';
+                          if (url !== '#') {
+                            if (onShowMap) {
+                              onShowMap(url);
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }
+                        }}
+                        className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+                      >
+                        <Map size={18} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderAutoRepair = () => {
-    const subcats = [
-      { id: 'parts', label: getTranslation(lang, 'parts'), icon: <Settings size={24} />, color: '#E53935' },
-      { id: 'workshop', label: getTranslation(lang, 'workshop'), icon: <Wrench size={24} />, color: '#1E88E5' },
-      { id: 'bodywork', label: getTranslation(lang, 'bodywork'), icon: <Paintbrush size={24} />, color: '#FB8C00' },
-      { id: 'auto_electronics', label: getTranslation(lang, 'nav_auto_electronics'), icon: <Zap size={24} />, color: '#FFD600' },
-      { id: 'used_market', label: getTranslation(lang, 'nav_used_market'), icon: <ShoppingCart size={24} />, color: '#43A047' },
-    ];
-
-    if (autoRepairFilter === 'auto_electronics') {
-       return (
-         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white"><Zap size={24}/></div>
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_auto_electronics')}</h3>
-               </div>
-               <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
-            </div>
-            {renderAutoElectronics()}
-         </div>
-       );
-    }
-
-    if (autoRepairFilter === 'used_market') {
-       return (
-         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white"><ShoppingCart size={24}/></div>
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_used_market')}</h3>
-               </div>
-               <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
-            </div>
-            {renderUsedMarket()}
-         </div>
-       );
-    }
-
-    const filtered = allAutoRepairs.filter(s => {
-      const matchIsland = isAllIslands || s.island === targetIsland;
-      const matchSubcat = autoRepairFilter === null || s.subcategory === autoRepairFilter;
-      return matchIsland && matchSubcat;
-    });
-
-    if (!autoRepairFilter) {
-      return (
-        <div className="py-8 animate-in fade-in zoom-in duration-500">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {subcats.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setAutoRepairFilter(cat.id)}
-                className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-              >
-                <div 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
-                  style={{ backgroundColor: cat.color }}
-                >
-                  {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
-                </div>
-                <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tight text-slate-700 group-hover:text-slate-900 text-center leading-tight">
-                  {cat.label}
-                </span>
-              </button>
             ))}
+            </div>
           </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-        <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-           <div className="flex items-center gap-4">
-              <div 
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
-                style={{ backgroundColor: subcats.find(c => c.id === autoRepairFilter)?.color }}
-              >
-                {subcats.find(c => c.id === autoRepairFilter)?.icon}
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                  {subcats.find(c => c.id === autoRepairFilter)?.label}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} estabelecimentos encontrados
-                </p>
-              </div>
-           </div>
-           <button 
-             onClick={() => setAutoRepairFilter(null)}
-             className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
-           >
-             <ArrowRight size={14} className="rotate-180" /> Voltar
-           </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(s => (
-            <div 
-              key={s.id} 
-              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
-            >
-              <div className="h-48 overflow-hidden relative">
-                <img src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+        );
+      };
+    
+      const renderAutoRepair = () => {
+        const subcats = [
+          { id: 'parts', label: getTranslation(lang, 'parts'), icon: <Settings size={24} />, color: '#E53935' },
+          { id: 'workshop', label: getTranslation(lang, 'workshop'), icon: <Wrench size={24} />, color: '#1E88E5' },
+          { id: 'bodywork', label: getTranslation(lang, 'bodywork'), icon: <Paintbrush size={24} />, color: '#FB8C00' },
+          { id: 'auto_electronics', label: getTranslation(lang, 'nav_auto_electronics'), icon: <Zap size={24} />, color: '#FFD600' },
+          { id: 'used_market', label: getTranslation(lang, 'nav_used_market'), icon: <ShoppingCart size={24} />, color: '#43A047' },
+        ];
+    
+        if (autoRepairFilter === 'auto_electronics') {
+           return (
+             <div className="space-y-6">
+                <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white"><Zap size={24}/></div>
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_auto_electronics')}</h3>
+                   </div>
+                   <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
                 </div>
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
+                {renderAutoElectronics()}
+             </div>
+           );
+        }
+    
+        if (autoRepairFilter === 'used_market') {
+           return (
+             <div className="space-y-6">
+                <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white"><ShoppingCart size={24}/></div>
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_used_market')}</h3>
+                   </div>
+                   <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
                 </div>
-              </div>
-              <div className="p-6">
-                <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
-                
-                <button 
-                  onClick={() => {
-                    // Update businessType to ensure RestaurantModal handles it as auto_repair
-                    const biz = { ...s, businessType: 'auto_repair' as const };
-                    setSelectedRestaurant(biz);
-                  }}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-900/10 active:scale-95"
-                >
-                  <Ticket size={18} />
-                  Agendar / Reservar
-                  <ArrowRight size={18} />
-                </button>
+                {renderUsedMarket()}
+             </div>
+           );
+        }
+    
+        const filtered = allAutoRepairs.filter(s => {
+          const matchIsland = isAllIslands || s.island === targetIsland;
+          const matchSubcat = autoRepairFilter === null || s.subcategory === autoRepairFilter;
+          return matchIsland && matchSubcat;
+        });
+    
+        if (!autoRepairFilter) {
+          return (
+            <div className="py-8 animate-in fade-in zoom-in duration-500">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                {subcats.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setAutoRepairFilter(cat.id)}
+                    className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                  >
+                    <div 
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: cat.color }}
+                    >
+                      {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
+                    </div>
+                    <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tight text-slate-700 group-hover:text-slate-900 text-center leading-tight">
+                      {cat.label}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+          );
+        }
+    
+        return (
+          <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+            <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+               <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
+                    style={{ backgroundColor: subcats.find(c => c.id === autoRepairFilter)?.color }}
+                  >
+                    {subcats.find(c => c.id === autoRepairFilter)?.icon}
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                      {subcats.find(c => c.id === autoRepairFilter)?.label}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {filtered.length} estabelecimentos encontrados
+                    </p>
+                  </div>
+               </div>
+               <button 
+                 onClick={() => setAutoRepairFilter(null)}
+                 className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
+               >
+                 <ArrowRight size={14} className="rotate-180" /> Voltar
+               </button>
+            </div>
+    
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map(s => (
+                <div 
+                  key={s.id} 
+                  className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
+                >
+                  <div className="h-48 overflow-hidden relative">
+                    <img src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
+                       <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                    </div>
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                       <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const biz = { ...s, businessType: 'auto_repair' as const };
+                          setSelectedRestaurant(biz);
+                        }}
+                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
+                      >
+                        <Ticket size={18} />
+                        Reservar
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const url = (s.latitude && s.longitude) 
+                            ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                            : '#';
+                          if (url !== '#') {
+                            if (onShowMap) {
+                              onShowMap(url);
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }
+                        }}
+                        className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+                      >
+                        <Map size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
 
   const renderCategorySlider = (data: any[]) => {
     if (data.length === 0) return null;
@@ -1233,13 +1268,31 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
-                <button 
-                  onClick={() => setSelectedRestaurant({ ...s, businessType: 'auto_repair' as any })}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10"
-                >
-                  <Ticket size={18} />
-                  Agendar / Reservar
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setSelectedRestaurant({ ...s, businessType: 'auto_repair' as any })}
+                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10"
+                  >
+                    Agendar / Reservar
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const url = (s.latitude && s.longitude) 
+                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                        : '#';
+                      if (url !== '#') {
+                        if (onShowMap) {
+                          onShowMap(url);
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }
+                    }}
+                    className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+                  >
+                    <Map size={18} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -1481,6 +1534,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           onClose={() => setSelectedTrail(null)}
           trail={selectedTrail}
           language={lang}
+          onShowMap={onShowMap}
         />
       )}
 
@@ -1492,6 +1546,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           language={lang}
           isAuthenticated={isAuthenticated}
           onShowAuth={onShowAuth}
+          onShowMap={onShowMap}
         />
       )}
 
@@ -1501,6 +1556,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           onClose={() => setSelectedStand(null)}
           stand={selectedStand}
           language={lang}
+          onShowMap={onShowMap}
         />
       )}
 
@@ -1510,6 +1566,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           onClose={() => setSelectedShop(null)}
           shop={selectedShop}
           language={lang}
+          onShowMap={onShowMap}
         />
       )}
 
