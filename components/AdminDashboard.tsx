@@ -1096,15 +1096,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {/* MAIN TABS */}
           <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'restaurants' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-            <Utensils className="w-5 h-5" /> Gerir Restaurantes
+            <Utensils className="w-5 h-5" /> Restaurantes
           </button>
 
           <button onClick={() => { setActiveTab('buses'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'buses' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-            <Bus className="w-5 h-5" /> Gerir Autocarros
+            <Bus className="w-5 h-5" /> Autocarros
           </button>
 
           <button onClick={() => { setActiveTab('cars'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'cars' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-            <CarIcon className="w-5 h-5" /> Gerir Rentcar
+            <CarIcon className="w-5 h-5" /> Rentcar
           </button>
 
           <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'hotels' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
@@ -1112,7 +1112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button onClick={() => { setActiveTab('activities'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'activities' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-            <Mountain className="w-5 h-5" /> Gerir Atividades
+            <Mountain className="w-5 h-5" /> Atividades
           </button>
 
           <button onClick={() => { setActiveTab('trails'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'trails' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
