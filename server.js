@@ -70,26 +70,10 @@ const readDB = () => {
             auto_repairs: [], auto_electronics: [], used_market: [],
             it_services: [], perfumes: [], users: [], posts: [] 
         };
-        const finalDB = { ...defaults, ...db };
-        
-        // Auto-seed restaurants if empty
-        if (finalDB.restaurants.length === 0) {
-            console.log("🌱 Database is empty. Seeding from new_restaurants.json...");
-            const seedPath = path.join(__dirname, 'new_restaurants.json');
-            if (fs.existsSync(seedPath)) {
-                const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-                finalDB.restaurants = seedData;
-                // Save seeded data immediately
-                fs.writeFileSync(dbPath, JSON.stringify(finalDB, null, 2));
-                console.log(`✅ Seeded ${seedData.length} restaurants.`);
-            }
-        }
-        
-        return finalDB;
+        return { ...defaults, ...db };
     } catch (err) {
         console.error("Error reading db.json", err);
-        // If file doesn't exist, try to create it with seed data
-        const initialDB = { 
+        return { 
             restaurants: [], flights: [], hotels: [], cars: [], 
             activities: [], busSchedules: [], itineraries: [], 
             shops: [], beauty: [], services: [], offices: [], 
@@ -97,19 +81,6 @@ const readDB = () => {
             auto_repairs: [], auto_electronics: [], used_market: [],
             it_services: [], perfumes: [], users: [], posts: [] 
         };
-        
-        const seedPath = path.join(__dirname, 'new_restaurants.json');
-        if (fs.existsSync(seedPath)) {
-            try {
-                const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-                initialDB.restaurants = seedData;
-                fs.writeFileSync(dbPath, JSON.stringify(initialDB, null, 2));
-                console.log(`✅ Created db.json and seeded ${seedData.length} restaurants.`);
-            } catch (seedErr) {
-                console.error("Error seeding initial db.json", seedErr);
-            }
-        }
-        return initialDB;
     }
 };
 
@@ -121,13 +92,41 @@ const writeDB = (data) => {
     }
 };
 
+// Initial Seed Function
+const seedIfNeeded = () => {
+    const db = readDB();
+    if (db.restaurants.length === 0) {
+        console.log("🌱 Startup: Database is empty. Seeding from new_restaurants.json...");
+        const seedPath = path.join(__dirname, 'new_restaurants.json');
+        if (fs.existsSync(seedPath)) {
+            try {
+                const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+                db.restaurants = seedData;
+                writeDB(db);
+                console.log(`✅ Startup: Seeded ${seedData.length} restaurants.`);
+            } catch (seedErr) {
+                console.error("Error during initial seeding", seedErr);
+            }
+        }
+    }
+};
+
 // --- AUTH & USERS ---
 app.get('/api/users/:email', (req, res) => {
     const email = normalizeEmail(req.params.email);
     const db = readDB();
     let user = db.users.find(u => normalizeEmail(u.email) === email);
     if (!user) {
-        user = { email, credits: 100, reservations: [], profile: { avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + email } };
+        user = { 
+            email, 
+            role: 'client',
+            credits: 100, 
+            reservations: [], 
+            profile: { 
+                name: email.split('@')[0],
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + email 
+            } 
+        };
         db.users.push(user);
         writeDB(db);
     }
@@ -376,6 +375,9 @@ app.get('/api/cars', (req, res) => res.json(readDB().cars || []));
 
 app.listen(PORT, () => {
     console.log(`🚀 Master Backend running on port ${PORT}`);
+    
+    // Seed database if empty on startup
+    seedIfNeeded();
     
     // Truque para manter o Render sempre ativo (Self-Ping cada 10 min)
     const selfPing = () => {
