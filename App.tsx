@@ -1830,20 +1830,37 @@ const App: React.FC = () => {
                 <iframe 
                   src={(() => {
                     if (!showMapUrl) return '';
-                    // Se já for um URL de embed (contém /embed/ ou output=embed), usar como está
-                    if (showMapUrl.includes('/embed/') || showMapUrl.includes('output=embed')) return showMapUrl;
                     
-                    // Se for um link de partilha do Google Maps (curto ou longo), tentar converter para embed
+                    // Se já for um URL de embed ou tiver output=embed, manter mas garantir output=embed
+                    if (showMapUrl.includes('/embed/') || showMapUrl.includes('output=embed')) {
+                      return showMapUrl.includes('output=embed') ? showMapUrl : `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed`;
+                    }
+                    
+                    // Se for um link do Google Maps
                     if (showMapUrl.includes('google.com/maps') || showMapUrl.includes('maps.app.goo.gl')) {
-                      // Se for o formato de pesquisa, converter para o formato legado de embed que funciona melhor em iframes
-                      if (showMapUrl.includes('/search/')) {
-                         const urlObj = new URL(showMapUrl);
-                         const query = urlObj.searchParams.get('query');
-                         if (query) return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+                      // 1. Tentar extrair coordenadas (formato @37.77,-25.31)
+                      const coordMatch = showMapUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                      if (coordMatch) {
+                        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&hl=pt&z=16&output=embed`;
                       }
-                      // Fallback: adicionar output=embed
+                      
+                      // 2. Tentar extrair nome do local (/place/NOME_DO_LOCAL)
+                      const placeMatch = showMapUrl.match(/\/place\/([^\/]+)/);
+                      if (placeMatch) {
+                        return `https://maps.google.com/maps?q=${placeMatch[1]}&hl=pt&z=16&output=embed`;
+                      }
+
+                      // 3. Se for link de busca direto
+                      if (showMapUrl.includes('?q=')) {
+                        const urlObj = new URL(showMapUrl);
+                        const q = urlObj.searchParams.get('q');
+                        if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&hl=pt&z=16&output=embed`;
+                      }
+
+                      // Fallback: Forçar output=embed no link original
                       return `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed`;
                     }
+                    
                     return showMapUrl;
                   })()}
                   className="w-full h-full border-none"
