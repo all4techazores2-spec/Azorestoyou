@@ -197,13 +197,33 @@ const App: React.FC = () => {
     }
 
     if (cars.length <= 1) {
-      const baseCars = getCars(language);
-      const testCar = { id: 'rentcar-1', name: 'Auto Açores Rent', businessType: 'rentcar', adminEmail: 'rentcar@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', rating: 4.7, island: 'São Miguel' } as any;
-      if (!baseCars.find(c => c.id === 'rentcar-1')) {
-        setCars([testCar, ...baseCars]);
-      } else {
-        setCars(baseCars);
-      }
+      const testCompany = { 
+        id: 'rentcar-1', 
+        name: 'Auto Açores Rent', 
+        island: 'PDL', 
+        address: 'Aeroporto João Paulo II', 
+        email: 'reservas@autoacores.pt', 
+        contact: '+351 296 000 000', 
+        image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', 
+        cars: [
+          { 
+            id: 'c1', 
+            model: 'Renault Clio', 
+            type: 'Económico' as const, 
+            fuelType: 'Gasolina' as const, 
+            pricePerDay: 45, 
+            image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=800', 
+            seats: 5, 
+            isAvailable: true, 
+            description: 'Económico e prático.', 
+            features: ['A/C', 'Manual'], 
+            companyId: 'rentcar-1' 
+          }
+        ],
+        adminEmail: 'rentcar@azores4you.com', 
+        adminPassword: 'admin' 
+      };
+      setCars([testCompany as any]);
     }
 
     if (activities.length === 0) setActivities(getActivities(language));
@@ -1699,7 +1719,7 @@ const App: React.FC = () => {
 
                 {exploreCategory === 'rentcar' && (
                   <CarRentalSection 
-                     cars={cars}
+                     companies={cars as any}
                      currentItinerary={itinerary}
                      onUpdateItinerary={updateItinerary}
                      language={language}

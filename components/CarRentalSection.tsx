@@ -7,7 +7,7 @@ import { getTranslation } from '../translations';
 import DatePicker from './DatePicker';
 
 interface CarRentalSectionProps {
-  cars: Car[];
+  companies: CarRentalCompany[];
   currentItinerary: Itinerary;
   onUpdateItinerary: (update: Partial<Itinerary>) => void;
   language: Language;
@@ -19,7 +19,7 @@ interface CarRentalSectionProps {
 }
 
 const CarRentalSection: React.FC<CarRentalSectionProps> = ({
-  cars,
+  companies,
   currentItinerary,
   onUpdateItinerary,
   language,
@@ -53,16 +53,8 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
     }
   }, [currentItinerary?.hotelStartDate, currentItinerary?.hotelEndDate]);
 
-  const activeCompanies = CAR_RENTAL_COMPANIES.length > 0 
-    ? CAR_RENTAL_COMPANIES 
-    : Array.from(new Set((cars || []).map(c => c.companyId))).filter(Boolean).map((id, index) => ({
-        id,
-        name: `Auto Açores Rent (${id})`,
-        image: `https://picsum.photos/400/300?random=${200 + index}`,
-        address: 'Aeroporto / Ponto de Recolha',
-        contact: '+351 910 000 000',
-        email: 'reservas@autoacores.pt'
-      }));
+  const destinationCode = currentItinerary?.flight?.destination || 'all';
+  const activeCompanies = companies.filter(c => destinationCode === 'all' || c.island === destinationCode);
 
   if (!currentItinerary) return null;
 
@@ -142,7 +134,6 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
     return <Fuel className="w-4 h-4" />;
   };
   
-  const destinationCode = currentItinerary?.flight?.destination || 'all';
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-4">
@@ -213,7 +204,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(cars || []).filter(c => c.companyId === selectedCompany.id).map(car => {
+                {(selectedCompany.cars || []).map(car => {
                   const isSelected = currentItinerary.car?.id === car.id;
                   const totalCarPrice = car.pricePerDay * carDays;
                   

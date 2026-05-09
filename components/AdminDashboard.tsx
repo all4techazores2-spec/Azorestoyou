@@ -87,6 +87,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [bulkText, setBulkText] = useState('');
+  const [islandFilter, setIslandFilter] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState<number>(6);
+  const [bulkIsland, setBulkIsland] = useState<string>('PDL');
+  const [bulkSubcategory, setBulkSubcategory] = useState<string>('');
 
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -199,24 +203,79 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const smartParseLine = (line: string) => {
+    let name = line;
+    let email = '';
+    let contact = '';
+    let address = '';
+
+    // Extract Email
+    const emailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    if (emailMatch) {
+      email = emailMatch[0];
+      name = name.replace(email, '').trim();
+    }
+
+    // Extract Phone (PT formats and international)
+    const phoneMatch = line.match(/(\+\d{1,3}[-.\s]?)?(\d{9}|\d{3}[-.\s]?\d{3}[-.\s]?\d{3})/);
+    if (phoneMatch) {
+      contact = phoneMatch[0];
+      name = name.replace(contact, '').trim();
+    }
+
+    // Extract Address using delimiters or keywords
+    const parts = name.split(/[|;]/).map(p => p.trim());
+    if (parts.length > 1) {
+      name = parts[0];
+      address = parts[1];
+    } else {
+      const addressKeywords = ['Rua', 'Avenida', 'Av.', 'Largo', 'Estrada', 'Caminho', 'Urbanização', 'R.', 'Travessa', 'Acesso'];
+      const lowerName = name.toLowerCase();
+      let foundIndex = -1;
+      for (const kw of addressKeywords) {
+        const idx = lowerName.indexOf(kw.toLowerCase());
+        if (idx !== -1 && (foundIndex === -1 || idx < foundIndex)) {
+          foundIndex = idx;
+        }
+      }
+      if (foundIndex !== -1) {
+        address = name.substring(foundIndex).trim();
+        name = name.substring(0, foundIndex).replace(/[,-]$/, '').trim();
+      }
+    }
+
+    // Final cleanup of Name
+    name = name.replace(/^[-|;,\s]+|[-|;,\s]+$/g, '').trim();
+
+    return { name, email, contact, address };
+  };
+
   const handleBulkAdd = () => {
     if (!bulkText.trim()) return;
     const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const timestamp = Date.now();
     
     const newItems = lines.map((line, idx) => {
+      const { name, email, contact, address } = smartParseLine(line);
       const id = `${activeTab.substring(0,3).toUpperCase()}${timestamp}${idx}`;
+      
       switch (activeTab) {
         case 'activities':
-          return { id, title: line, type: 'trail', island: 'PDL', image: '', description: '', isPaid: false, price: 0, mapUrl: '' };
+          return { id, title: name, type: bulkSubcategory || 'trail', island: bulkIsland, image: '', description: address || '', isPaid: false, price: 0, mapUrl: '' };
         case 'flights':
-          return { id, airline: line, flightNumber: '---', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
+          return { id, airline: name, flightNumber: '---', origin: 'LIS', destination: bulkIsland, departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
         case 'hotels':
-          return { id, name: line, island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: 'hotel', mapUrl: '' };
+          return { id, name, island: bulkIsland, stars: 4, pricePerNight: 0, image: '', description: '', type: bulkSubcategory || 'hotel', mapUrl: '', email, phone: contact, address };
+        case 'cars':
+          return { 
+            id, name, island: bulkIsland, address, email, contact, image: '', 
+            description: '', adminEmail: '', adminPassword: '', cars: [] 
+          };
         default:
           return { 
-            id, name: line, island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
-            adminEmail: '', adminPassword: '', subcategory: '', dishes: [], services: [], mapUrl: '' 
+            id, name, island: bulkIsland, rating: 4.5, reviews: 0, image: '', description: '', 
+            adminEmail: '', adminPassword: '', subcategory: bulkSubcategory, dishes: [], services: [], mapUrl: '',
+            address, phone: contact, publicEmail: email
           };
       }
     });
@@ -245,7 +304,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     setBulkText('');
     setShowBulkAdd(false);
-    alert(`${newItems.length} itens adicionados com sucesso!`);
+    alert(`${newItems.length} itens adicionados e processados com sucesso!`);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -342,7 +401,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         newItem = { id: `HOT${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel', mapUrl: '' };
         break;
       case 'cars':
-        newItem = { id: `CAR${timestamp}`, model: '', companyId: '', type: 'Económico', fuelType: 'Gasolina', pricePerDay: 0, image: '', seats: 5, isAvailable: true, description: '', features: [] };
+        newItem = { 
+          id: `RC${timestamp}`, 
+          name: '', 
+          island: 'PDL', 
+          address: '', 
+          email: '', 
+          contact: '', 
+          image: '', 
+          description: '', 
+          adminEmail: '', 
+          adminPassword: '', 
+          cars: [] 
+        };
         break;
       case 'buses':
         newItem = { id: `BUS${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };
@@ -370,6 +441,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const removeDish = (index: number) => {
     setEditingItem({ ...editingItem, dishes: editingItem.dishes.filter((_:any, i:number) => i !== index) });
+  };
+
+  const addCar = () => {
+    const newCar: Car = { 
+      id: `C${Date.now()}`, 
+      model: 'Novo Modelo', 
+      companyId: editingItem.id, 
+      type: 'Económico', 
+      fuelType: 'Gasolina', 
+      pricePerDay: 40, 
+      image: '', 
+      seats: 5, 
+      isAvailable: true, 
+      description: 'Descrição do veículo...', 
+      features: ['A/C', 'Manual'] 
+    };
+    setEditingItem({ ...editingItem, cars: [...(editingItem.cars || []), newCar] });
+  };
+
+  const updateCar = (index: number, field: keyof Car, value: any) => {
+    const newCars = [...(editingItem.cars || [])];
+    newCars[index] = { ...newCars[index], [field]: value };
+    setEditingItem({ ...editingItem, cars: newCars });
+  };
+
+  const removeCar = (index: number) => {
+    setEditingItem({ ...editingItem, cars: (editingItem.cars || []).filter((_:any, i:number) => i !== index) });
   };
 
   const handleImageUpload = async (file: File, type: 'main' | 'gallery' | 'dish', extraIndex?: number) => {
@@ -487,6 +585,119 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <option value="parts">Peças</option>
                   <option value="workshop">Oficina</option>
                   <option value="bodywork">Bate-chapas</option>
+                  <option value="electric">Elétrica</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'auto_electronics' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="audio">Áudio & Som</option>
+                  <option value="alarms">Alarmes</option>
+                  <option value="navigation">Navegação/GPS</option>
+                  <option value="diagnostics">Diagnóstico</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'services' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="gardening">Jardinagem</option>
+                  <option value="cleaning">Limpezas</option>
+                  <option value="plumbing">Canalização</option>
+                  <option value="electricity">Eletricidade</option>
+                  <option value="painting">Pintura</option>
+                  <option value="architect">Arquitetura</option>
+                  <option value="it">Informática</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'used_market' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="clothing">Vestuário</option>
+                  <option value="electronics">Eletrónica</option>
+                  <option value="furniture">Móveis</option>
+                  <option value="books">Livros</option>
+                  <option value="sports">Desporto</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'animals' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="vet">Veterinário</option>
+                  <option value="grooming">Grooming/Banho</option>
+                  <option value="petshop">Pet Shop</option>
+                  <option value="training">Treino</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'real_estate' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="rent">Arrendar</option>
+                  <option value="buy">Comprar</option>
+                  <option value="commercial">Comercial</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'gyms' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="fitness">Fitness/Musculação</option>
+                  <option value="crossfit">Crossfit</option>
+                  <option value="yoga">Yoga/Pilates</option>
+                  <option value="martial_arts">Artes Marciais</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'stands' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="used_cars">Carros Usados</option>
+                  <option value="new_cars">Carros Novos</option>
+                  <option value="motorcycles">Motos</option>
+                  <option value="boats">Barcos</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'offices' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="law">Advocacia</option>
+                  <option value="accounting">Contabilidade</option>
+                  <option value="consulting">Consultoria</option>
+                  <option value="design">Design/Marketing</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'it_services' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="software">Software Dev</option>
+                  <option value="hardware">Reparação Hardware</option>
+                  <option value="network">Redes</option>
+                  <option value="web">Web Design</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'perfumes' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="male">Masculino</option>
+                  <option value="female">Feminino</option>
+                  <option value="unisex">Unisexo</option>
                 </select>
               </div>
             )}
@@ -657,20 +868,75 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars':
         return (
           <>
-            {commonInput(t('field_model'), 'model')}
-            {commonInput('Empresa', 'company')}
-            <div>
-               <label className="block text-sm font-bold text-slate-700 mb-1">{t('field_type')}</label>
-               <select className="w-full border p-2 rounded-lg bg-white" value={editingItem.type} onChange={e => setEditingItem({...editingItem, type: e.target.value})}>
-                 <option value="Económico">Económico</option>
-                 <option value="SUV">SUV</option>
-                 <option value="Descapotável">Descapotável</option>
-                 <option value="Carrinha">Carrinha</option>
-               </select>
+            {commonInput('Nome da Companhia', 'name')}
+            {islandSelect()}
+            {commonInput('Morada / Ponto de Recolha', 'address', 'text', true)}
+            {commonInput('Email Público', 'email')}
+            {commonInput('Contacto Telefónico', 'contact')}
+            {commonInput('Email Admin', 'adminEmail')}
+            {commonInput('Password Admin', 'adminPassword')}
+            {commonInput('Logo / Imagem', 'image', 'text', true)}
+            <div className="md:col-span-2">
+               <label className="block text-sm font-bold text-slate-700 mb-1">Descrição</label>
+               <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
             </div>
-            {commonInput(t('field_seats'), 'seats', 'number')}
-            {commonInput(t('daily_rate'), 'pricePerDay', 'number')}
-            {commonInput(t('item_image'), 'image', 'text', true)}
+
+            <div className="md:col-span-2 border-t pt-6 mt-4">
+              <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Gestão da Frota</h4>
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Adicione e edite os veículos desta companhia</p>
+                 </div>
+                 <button type="button" onClick={addCar} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">+ Nova Viatura</button>
+              </div>
+              
+              <div className="space-y-6">
+                {editingItem.cars?.map((car: Car, idx: number) => (
+                  <div key={idx} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 space-y-4 relative group">
+                    <button type="button" onClick={() => removeCar(idx)} className="absolute top-4 right-4 text-red-500 hover:text-red-700 transition-colors">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Modelo do Veículo</label>
+                        <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" placeholder="Ex: Renault Clio" value={car.model} onChange={e => updateCar(idx, 'model', e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Tipo</label>
+                        <select className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm bg-white" value={car.type} onChange={e => updateCar(idx, 'type', e.target.value)}>
+                          <option value="Económico">Económico</option>
+                          <option value="SUV">SUV</option>
+                          <option value="Descapotável">Descapotável</option>
+                          <option value="Carrinha">Carrinha</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Combustível</label>
+                        <select className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm bg-white" value={car.fuelType} onChange={e => updateCar(idx, 'fuelType', e.target.value)}>
+                          <option value="Gasolina">Gasolina</option>
+                          <option value="Gasóleo">Gasóleo</option>
+                          <option value="Híbrido">Híbrido</option>
+                          <option value="Elétrico">Elétrico</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Lugares</label>
+                        <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" type="number" value={car.seats} onChange={e => updateCar(idx, 'seats', parseInt(e.target.value))} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Preço/Dia (€)</label>
+                        <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" type="number" value={car.pricePerDay} onChange={e => updateCar(idx, 'pricePerDay', parseFloat(e.target.value))} />
+                      </div>
+                      <div className="md:col-span-3">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">URL da Imagem</label>
+                        <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" value={car.image} onChange={e => updateCar(idx, 'image', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </>
         );
 
@@ -688,34 +954,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const getListItems = () => {
+    let list: any[] = [];
     switch (activeTab) {
-      case 'restaurants': return restaurants;
-      case 'shops': return shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter);
-      case 'beauty': return beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter);
-      case 'services': return services;
-      case 'auto_repairs': return autoRepairs;
-      case 'auto_electronics': return autoElectronics;
-      case 'used_market': return usedMarket;
-      case 'animals': return animals;
-      case 'real_estate': return realEstate;
-      case 'gyms': return gyms;
-      case 'stands': return stands;
-      case 'offices': return offices;
-      case 'it_services': return itServices;
-      case 'perfumes': return perfumes;
-      case 'activities': return activities;
-      case 'flights': return flights;
-      case 'hotels': return hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter);
-      case 'cars': return cars;
-      case 'buses': return busSchedules;
-      default: return [];
+      case 'restaurants': list = restaurants; break;
+      case 'shops': list = shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter); break;
+      case 'beauty': list = beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter); break;
+      case 'services': list = services; break;
+      case 'auto_repairs': list = autoRepairs; break;
+      case 'auto_electronics': list = autoElectronics; break;
+      case 'used_market': list = usedMarket; break;
+      case 'animals': list = animals; break;
+      case 'real_estate': list = realEstate; break;
+      case 'gyms': list = gyms; break;
+      case 'stands': list = stands; break;
+      case 'offices': list = offices; break;
+      case 'it_services': list = itServices; break;
+      case 'perfumes': list = perfumes; break;
+      case 'activities': list = activities; break;
+      case 'flights': list = flights; break;
+      case 'hotels': list = hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter); break;
+      case 'cars': list = cars; break;
+      case 'buses': list = busSchedules; break;
+      default: list = [];
     }
+
+    if (islandFilter !== 'all') {
+      list = list.filter(item => item.island === islandFilter);
+    }
+    return list;
   };
 
   const getItemName = (item: any) => {
     if (activeTab === 'flights') return `${item.airline} ${item.flightNumber} (${item.origin}->${item.destination})`;
     if (activeTab === 'buses') return `${item.company}: ${item.origin} -> ${item.destination}`;
     if (activeTab === 'activities') return item.title;
+    if (activeTab === 'cars') return item.name || 'Companhia Rent-a-car';
     return item.name || item.model || 'Sem Nome';
   };
 
@@ -1132,7 +1405,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 
                 <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">
                   <div>
-                    <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">{activeTab.replace('_', ' ')}</h1>
+                    <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">{activeTab.replace('_', ' ')} ({getListItems().length})</h1>
                     <p className="text-slate-400 font-medium italic">Gestão de conteúdos e registos da plataforma</p>
                   </div>
                   <div className="flex gap-3">
@@ -1158,7 +1431,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="bg-white p-8 rounded-[3rem] shadow-xl mb-8 border-2 border-amber-200"
                   >
                     <h3 className="text-lg font-black text-slate-800 uppercase mb-2">Lançamento Rápido em Massa</h3>
-                    <p className="text-xs text-slate-500 mb-4 font-bold">Cole uma lista de nomes (um por linha). Cada linha será criada como um novo item com valores padrão.</p>
+                    <p className="text-xs text-slate-500 mb-4 font-bold">Cole uma lista de nomes (um por linha). Selecione a Ilha e Subcategoria antes de publicar.</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Ilha</label>
+                        <select className="w-full border-2 border-slate-100 p-3 rounded-xl font-bold text-sm" value={bulkIsland} onChange={e => setBulkIsland(e.target.value)}>
+                          {['PDL', 'TER', 'HOR', 'PIX', 'SJZ', 'GRW', 'FLW', 'CVU', 'SMA'].map(i => <option key={i} value={i}>{i}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Subcategoria (Opcional)</label>
+                        <input className="w-full border-2 border-slate-100 p-3 rounded-xl font-bold text-sm" value={bulkSubcategory} onChange={e => setBulkSubcategory(e.target.value)} placeholder="Ex: beauty_salon" />
+                      </div>
+                    </div>
+
                     <textarea 
                       className="w-full h-48 border-2 border-slate-100 p-4 rounded-2xl font-mono text-sm focus:border-amber-400 outline-none transition-colors"
                       placeholder="Exemplo:&#10;Trilho da Lagoa&#10;Trilho do Pico&#10;Trilho das Sete Cidades"
@@ -1171,6 +1458,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </motion.div>
                 )}
+
+                {/* ISLAND FILTER BAR */}
+                <div className="flex flex-wrap gap-2 mb-8 bg-slate-50 p-4 rounded-[2rem] border border-slate-100">
+                   <button 
+                     onClick={() => { setIslandFilter('all'); setVisibleCount(6); }}
+                     className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${islandFilter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
+                   >
+                     Todas as Ilhas
+                   </button>
+                   {['PDL', 'TER', 'HOR', 'PIX', 'SJZ', 'GRW', 'FLW', 'CVU', 'SMA'].map(isl => (
+                     <button 
+                       key={isl}
+                       onClick={() => { setIslandFilter(isl); setVisibleCount(6); }}
+                       className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${islandFilter === isl ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
+                     >
+                       {isl}
+                     </button>
+                   ))}
+                </div>
               
               {/* SUBCATEGORY FILTER BAR for Beauty/Shops */}
               {activeTab === 'beauty' && (
@@ -1237,7 +1543,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {getListItems().map((item: any) => (
+             {getListItems().slice(0, visibleCount).map((item: any) => (
                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group relative">
                  
                  {/* Image or Icon Placeholder */}
@@ -1264,8 +1570,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="p-4 flex-1">
                   <h3 className="font-bold text-slate-800 leading-tight">{getItemName(item)}</h3>
+                  {activeTab === 'cars' && (
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
+                          {item.cars?.length || 0} Veículos na Frota
+                       </span>
+                    </div>
+                  )}
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                    {item.description || item.type || item.company}
+                    {item.description || item.type || item.company || item.address}
                   </p>
                   {activeTab === 'hotels' && item.type && (
                     <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${item.type === 'al' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -1289,6 +1602,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
              ))}
              </div>
+             
+             {getListItems().length > visibleCount && (
+               <div className="flex justify-center mt-12 mb-20">
+                 <button 
+                   onClick={() => setVisibleCount(prev => prev + 12)}
+                   className="px-12 py-5 bg-white border-2 border-slate-100 text-slate-800 rounded-[2rem] text-sm font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-xl shadow-slate-100"
+                 >
+                   Ver Mais Itens (+12)
+                 </button>
+               </div>
+             )}
            </div>
          )}
          {/* EDIT FORM */}

@@ -82,6 +82,10 @@ export interface CarRentalCompany {
   email: string;
   contact: string;
   image: string;
+  island: string;
+  cars?: Car[];
+  adminEmail?: string;
+  adminPassword?: string;
 }
 
 export interface Dish {
