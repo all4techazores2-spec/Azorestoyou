@@ -1167,10 +1167,10 @@ const App: React.FC = () => {
     const targetId = currentBusinessId.trim();
     let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices].find(b => b.id === targetId);
     
-    // Fallback: Se não encontrou no estado (sincronização pendente), procurar nas constantes estáticas
+    // Fallback: Se não encontrou no estado (sincronização pendente), apenas retornar erro amigável
     if (!biz) {
-      const allStatic = [...getRestaurants(language), ...getHotels(language), ...getShops(language), ...getBeauty(language), ...getServices(language)];
-      biz = allStatic.find(b => b.id === targetId || b.id === 'hotel-1'); // Forçar hotel-1 se for o caso
+      // O estado é sincronizado periodicamente, se não está aqui, o ID pode ser inválido
+      biz = null;
     }
 
     if (biz) {
@@ -1541,22 +1541,21 @@ const App: React.FC = () => {
                 let featuredItems: any[] = [];
                 const topRating = 4.5;
 
-                const allRestaurants = filterByIsland([...restaurants, ...getRestaurants(language).filter(r => !restaurants.find(br => br.id === r.id))]);
-                const allActivities = filterByIsland([...activities, ...getActivities(language).filter(a => !activities.find(ba => ba.id === a.id))]);
-                const allShops = filterByIsland([...shops, ...getShops(language).filter(s => !shops.find(bs => bs.id === s.id))]);
-                const allBeauty = filterByIsland([...beauty, ...getBeauty(language).filter(b => !beauty.find(bb => bb.id === b.id))]);
-                const allServices = filterByIsland([...services, ...getServices(language).filter(s => !services.find(bs => bs.id === s.id))]);
-                const allAutoRepairs = filterByIsland([...autoRepairs, ...getAutoRepairs(language).filter(a => !autoRepairs.find(ba => ba.id === a.id))]);
-
-                const allAutoElectronics = filterByIsland([...autoElectronics, ...getAutoElectronics(language).filter(a => !autoElectronics.find(ba => ba.id === a.id))]);
-                const allUsedMarket = filterByIsland([...usedMarket, ...getUsedMarket(language).filter(u => !usedMarket.find(bu => bu.id === u.id))]);
-                const allAnimals = filterByIsland([...animals, ...getAnimals(language).filter(a => !animals.find(ba => ba.id === a.id))]);
-                const allRealEstate = filterByIsland([...realEstate, ...getRealEstate(language).filter(r => !realEstate.find(br => br.id === r.id))]);
-                const allGyms = filterByIsland([...gyms, ...getGyms(language).filter(g => !gyms.find(bg => bg.id === g.id))]);
-                const allStands = filterByIsland([...stands, ...getStands(language).filter(s => !stands.find(bs => bs.id === s.id))]);
-                const allOffices = filterByIsland([...offices, ...getOffices(language).filter(o => !offices.find(bo => bo.id === o.id))]);
-                const allITServices = filterByIsland([...itServices, ...getITServices(language).filter(i => !itServices.find(bi => bi.id === i.id))]);
-                const allPerfumes = filterByIsland([...perfumes, ...getPerfumes(language).filter(p => !perfumes.find(bp => bp.id === p.id))]);
+                const allRestaurants = filterByIsland(restaurants);
+                const allActivities = filterByIsland(activities);
+                const allShops = filterByIsland(shops);
+                const allBeauty = filterByIsland(beauty);
+                const allServices = filterByIsland(services);
+                const allAutoRepairs = filterByIsland(autoRepairs);
+                const allAutoElectronics = filterByIsland(autoElectronics);
+                const allUsedMarket = filterByIsland(usedMarket);
+                const allAnimals = filterByIsland(animals);
+                const allRealEstate = filterByIsland(realEstate);
+                const allGyms = filterByIsland(gyms);
+                const allStands = filterByIsland(stands);
+                const allOffices = filterByIsland(offices);
+                const allITServices = filterByIsland(itServices);
+                const allPerfumes = filterByIsland(perfumes);
 
                 const sortFeatured = (items: any[]) => {
                   if (!isNearbyFilter || !userCoords) return items;
