@@ -117,6 +117,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [autoElectronicsFilter, setAutoElectronicsFilter] = useState<string | null>(null);
   const [usedMarketFilter, setUsedMarketFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [restaurantSearch, setRestaurantSearch] = useState('');
+  const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
+  const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
+
   
   const isNearby = destinationIsland?.startsWith('nearby:');
   const userCoords = isNearby ? destinationIsland?.replace('nearby:', '').split(',').map(Number) : null;
@@ -145,7 +149,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
   };
 
-  const filteredRestaurants = sortItems(allRestaurants.filter(r => isAllIslands || r.island === targetIsland));
+  const filteredRestaurants = sortItems(allRestaurants.filter(r => {
+    const matchesIsland = restaurantIslandFilter === 'all' ? (isAllIslands || r.island === targetIsland) : r.island === restaurantIslandFilter;
+    const matchesCuisine = restaurantCuisineFilter === 'all' || r.cuisine.toLowerCase().includes(restaurantCuisineFilter.toLowerCase());
+    const matchesSearch = !restaurantSearch || 
+      r.name.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+      r.cuisine.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+      r.island.toLowerCase().includes(restaurantSearch.toLowerCase());
+    return matchesIsland && matchesCuisine && matchesSearch;
+  }));
+
   
   // Mapping for the expanded categories
   const getActivitiesByType = (type: string) => {
@@ -342,51 +355,109 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
-  const renderRestaurants = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredRestaurants.map(r => {
-        const isFavorite = favoriteRestaurantIds.includes(r.id);
-        return (
-        <div 
-          key={r.id} 
-          className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group relative"
-          onClick={() => setSelectedRestaurant(r)}
-        >
-          <button 
-            className="absolute top-3 left-3 z-10 p-2 bg-white/90 backdrop-blur rounded-full text-red-500 hover:scale-110 transition-transform shadow-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite?.(r.id);
-            }}
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-          <div className="h-48 overflow-hidden relative">
-            <img 
-              src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image} 
-              alt={r.name} 
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-            />
-            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-               <MapPin className="w-3 h-3 text-red-500" /> {r.island}
+  const renderRestaurants = () => {
+    const cuisines = Array.from(new Set(allRestaurants.map(r => r.cuisine))).sort();
+    const islands = ["Santa Maria", "São Miguel", "Terceira", "Graciosa", "São Jorge", "Pico", "Faial", "Flores", "Corvo"];
+
+    return (
+      <div className="space-y-8">
+        {/* Elegant Filter Bar */}
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input 
+                type="text"
+                placeholder="Procurar restaurante, cozinha ou local..."
+                value={restaurantSearch}
+                onChange={(e) => setRestaurantSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-700"
+              />
+            </div>
+            <div className="flex gap-4">
+              <select 
+                value={restaurantIslandFilter}
+                onChange={(e) => setRestaurantIslandFilter(e.target.value)}
+                className="px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
+              >
+                <option value="all">Todas as Ilhas</option>
+                {islands.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+              <select 
+                value={restaurantCuisineFilter}
+                onChange={(e) => setRestaurantCuisineFilter(e.target.value)}
+                className="px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
+              >
+                <option value="all">Todas as Cozinhas</option>
+                {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </div>
-          <div className="p-5">
-            <h3 className="text-xl font-bold text-slate-800 mb-1">{r.name}</h3>
-            <p className="text-sm text-slate-500 mb-3">{r.cuisine} • {r.reviews} avaliações</p>
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-yellow-500 font-bold flex items-center gap-1">
-                ★ {r.rating}
+          
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                {filteredRestaurants.length} Restaurantes
               </span>
-              <span className="text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                {getTranslation(lang, 'view_menu')} <ArrowRight className="w-4 h-4" />
-              </span>
+              {restaurantSearch && (
+                <button 
+                  onClick={() => setRestaurantSearch('')}
+                  className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-1"
+                >
+                  <X size={10} /> Limpar Pesquisa
+                </button>
+              )}
             </div>
           </div>
         </div>
-      )})}
-    </div>
-  );
+
+        {filteredRestaurants.length === 0 ? renderEmptyState() : (
+          <div className="space-y-4">
+            {filteredRestaurants.map(r => (
+              <div 
+                key={r.id} 
+                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
+                onClick={() => setSelectedRestaurant(r)}
+              >
+                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
+                  <img 
+                    src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image} 
+                    alt={r.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                  />
+                  <div className="absolute top-1 right-1">
+                    <div className="bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-lg text-[8px] font-black flex items-center gap-0.5 shadow-sm">
+                      <Star size={8} className="text-yellow-500 fill-current" /> {r.rating}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{r.name}</h3>
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-blue-500" /> {r.island}
+                    </p>
+                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{r.cuisine}</p>
+                  </div>
+                  <p className="text-xs text-slate-500 line-clamp-1 font-medium leading-relaxed">{r.description || 'Restaurante típico com sabores regionais.'}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2 shrink-0 pr-2">
+                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                    {r.reviews} Avaliações
+                  </span>
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                    <ArrowRight size={20} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   const renderActivities = (type?: string) => {
     const data = sortItems(type ? getActivitiesByType(type) : allActivities);

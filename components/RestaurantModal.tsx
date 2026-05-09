@@ -377,850 +377,338 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   }, [currentSlide, slides.length]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white rounded-none sm:rounded-[32px] w-full max-w-4xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl relative border border-white/20">
-        <button 
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+          className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        />
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[95vh] flex flex-col border border-white/20"
         >
-          <X size={20} className="group-active:scale-90 transition-transform" />
-        </button>
-
-        {/* Left/Top: Slider */}
-        <div className="w-full md:w-[45%] h-[30vh] md:h-auto relative bg-slate-900 overflow-hidden">
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={currentSlide}
-              initial={{ opacity: 0, scale: 1.2, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
-              transition={{ 
-                duration: 1.2, 
-                ease: [0.22, 1, 0.36, 1] 
-              }}
-              className="absolute inset-0"
-            >
-              <img 
-                src={slides[currentSlide].image} 
-                alt={slides[currentSlide].title} 
-                className="w-full h-full object-cover opacity-60"
-              />
-            </motion.div>
-          </AnimatePresence>
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-          
-          <div className="absolute bottom-0 inset-x-0 p-4 md:p-8 text-white z-10">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              >
-                <h3 className="text-xl md:text-2xl font-black tracking-tight mb-1 drop-shadow-lg">{slides[currentSlide].title}</h3>
-                <p className="text-[9px] md:text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-md">{slides[currentSlide].desc}</p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          
-          {/* Controls */}
-          <div className="absolute top-1/2 -translate-y-1/2 inset-x-4 flex justify-between pointer-events-none z-10">
-            <button 
-              onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-              className="p-3 bg-white/5 hover:bg-white/20 rounded-2xl text-white backdrop-blur-xl border border-white/10 transition-all pointer-events-auto active:scale-90 group"
-            >
-              <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-              className="p-3 bg-white/5 hover:bg-white/20 rounded-2xl text-white backdrop-blur-xl border border-white/10 transition-all pointer-events-auto active:scale-90 group"
-            >
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-
-          {/* Modern Progress Indicators */}
-          <div className="absolute bottom-0 inset-x-0 flex gap-0.5 px-0.5">
-            {slides.map((_, i) => (
-              <div key={i} className="flex-1 h-1 bg-white/10 overflow-hidden">
-                {i === currentSlide && (
-                  <motion.div 
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 5, ease: "linear" }}
-                    className="h-full bg-blue-500"
+          {/* Header Image / Slider */}
+          {bookingStep === 'info' && (
+            <div className="relative h-64 md:h-80 shrink-0">
+              <div className="absolute inset-0">
+                <AnimatePresence mode="popLayout">
+                  <motion.img
+                    key={currentSlide}
+                    src={slides[currentSlide].image}
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.7 }}
+                    className="w-full h-full object-cover"
                   />
-                )}
-                {i < currentSlide && <div className="w-full h-full bg-white/40" />}
+                </AnimatePresence>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               </div>
-            ))}
-          </div>
-        </div>
+              
+              <button 
+                onClick={onClose} 
+                className="absolute top-6 right-6 z-50 p-3 bg-white/90 backdrop-blur text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-lg border border-white/20 group"
+              >
+                <X size={20} className="group-active:scale-90 transition-transform" />
+              </button>
+
+              {slides.length > 1 && (
+                <div className="absolute bottom-6 right-6 flex gap-2">
+                  <button onClick={(e) => { e.stopPropagation(); prevSlide(); }} className="p-2 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/40 transition-all border border-white/30">
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); nextSlide(); }} className="p-2 bg-white/20 backdrop-blur text-white rounded-full hover:bg-white/40 transition-all border border-white/30">
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+
+              <div className="absolute bottom-6 left-6 right-20">
+                <div className="flex items-center gap-2 text-white/90 text-xs font-black uppercase tracking-widest mb-2">
+                  <MapPin className="w-3.5 h-3.5 text-red-400" /> {restaurant.island}
+                  <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                  <div className="flex items-center gap-1">
+                    <Star size={12} className="text-yellow-400 fill-current" />
+                    {restaurant.rating}
+                  </div>
+                </div>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{restaurant.name}</h2>
+              </div>
+            </div>
+          )}
+
+          
+          {bookingStep !== 'info' && bookingStep !== 'success' && (
+            <div className="p-6 border-b border-slate-100 shrink-0 bg-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => {
+                    if (bookingStep === 'datetime') setBookingStep('info');
+                  }}
+                  className="p-3 bg-white rounded-2xl text-slate-400 hover:text-red-500 transition-all shadow-sm border border-slate-100 active:scale-95"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div>
+                  <h3 className="font-black text-slate-800 uppercase tracking-tight">Confirmar Reserva</h3>
+                  <div className="flex gap-1.5 mt-1.5">
+                    {[1,2,3].map(i => (
+                      <div key={i} className={`h-1.5 w-10 rounded-full transition-all duration-500 ${((bookingStep === 'datetime' && i >= 1) || (bookingStep === 'success' && i >= 3)) ? 'bg-red-500 shadow-sm shadow-red-100' : 'bg-slate-200'}`} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
+            </div>
+          )}
+
+
 
         {/* Right/Bottom: Info */}
-        <div className="w-full md:w-[55%] p-4 md:p-10 overflow-y-auto relative flex flex-col bg-white pb-safe md:pb-10">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
           <AnimatePresence mode="wait">
             {bookingStep === 'info' && (
               <motion.div 
                 key="info"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-8 space-y-8"
               >
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter mb-1">{restaurant.name}</h2>
-                    {restaurant.bookingPolicy === 'required' && (
-                      <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-[10px] font-black rounded-full uppercase tracking-widest">
-                        <AlertTriangle size={12} /> Reserva Obrigatória (Vagas Limitadas)
-                      </div>
-                    )}
-                    {restaurant.bookingPolicy === 'recommended' && (
-                      <div className="mb-2 inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-600 text-[10px] font-black rounded-full uppercase tracking-widest">
-                        <Info size={12} /> Reserva Recomendada (Experiência Premium)
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">
-                        {isBeauty ? getTranslation(currentLang, 'nav_beauty') : isShop ? getTranslation(currentLang, 'nav_shops') : restaurant.cuisine}
-                      </span>
-                      <div className="h-1 w-1 rounded-full bg-slate-200" />
-                      <div className="flex items-center gap-1 text-yellow-500 font-black text-xs">
-                        <Star className="w-3 h-3 fill-current" />
-                        {restaurant.rating}
-                      </div>
+
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
+                      <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{getTranslation(currentLang, 'cuisine')}</span>
+                      <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.cuisine}</span>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
+                      <Star className="w-5 h-5 text-yellow-500 mb-2" />
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Avaliação</span>
+                      <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.rating} / 5.0</span>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
+                      <ShoppingBag className="w-5 h-5 text-blue-500 mb-2" />
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Reviews</span>
+                      <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.reviews}</span>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
+                      <Clock className="w-5 h-5 text-emerald-500 mb-2" />
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Estado</span>
+                      <span className="font-bold text-emerald-600 text-[10px] mt-1 uppercase tracking-tighter">Aberto Agora</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Description Section */}
-                <div className="mb-6 md:mb-8">
-                   <div className="flex items-center justify-between mb-4">
-                     <h4 className="font-black text-slate-300 text-[10px] uppercase tracking-[0.2em]">{getTranslation(currentLang, 'about_restaurant')}</h4>
-                     <button 
-                       onClick={handleSpeak}
-                       className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black transition-all border
-                         ${isSpeaking 
-                           ? 'bg-red-50 text-red-600 border-red-100' 
-                           : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'}`}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                        <Info className="w-5 h-5 text-red-500" /> Sobre o Restaurante
+                      </h3>
+                      <button 
+                        onClick={handleSpeak}
+                        className={`p-2 rounded-xl transition-all ${isSpeaking ? 'bg-red-100 text-red-600 scale-110' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                       >
-                        {isSpeaking ? <StopCircle className="w-3.5 h-3.5" /> : <Ear className="w-3.5 h-3.5" />}
-                        {isSpeaking ? getTranslation(currentLang, 'audio_stop') : getTranslation(currentLang, 'listen')}
+                        <Ear size={20} />
                       </button>
                     </div>
-                    <div className="relative">
-                      <p className="text-slate-600 leading-relaxed text-xs md:text-sm font-medium">
-                        {restaurant.description}
-                      </p>
-                    </div>
-                    
-                    <div className="mt-4 flex flex-col gap-2">
-                       {restaurant.phone && (
-                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400"/></div>
-                             <span className="text-xs font-bold">{restaurant.phone}</span>
-                          </div>
-                       )}
-                       {restaurant.publicEmail && (
-                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400"/></div>
-                             <span className="text-xs font-bold">{restaurant.publicEmail}</span>
-                          </div>
-                       )}
-                       {restaurant.address && (
-                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                             <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400"/></div>
-                             <span className="text-xs font-bold truncate">{restaurant.address}</span>
-                          </div>
-                       )}
-                       {(restaurant.mapsUrl || (restaurant.latitude && restaurant.longitude)) && (
-                         <button 
-                           onClick={() => {
-                             const url = (restaurant.latitude && restaurant.longitude) 
-                               ? `https://maps.google.com/?q=${restaurant.latitude},${restaurant.longitude}` 
-                               : restaurant.mapsUrl;
-                             if (url) {
-                               if (onShowMap) {
-                                 onShowMap(url);
-                               } else {
-                                 window.open(url, '_blank');
-                               }
-                             }
-                           }} 
-                           className="mt-1 w-full px-4 py-3 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all"
-                         >
-                           <Map className="w-3.5 h-3.5" /> Ver Mapa
-                         </button>
-                       )}
-                    </div>
-                 </div>
+                    <p className="text-slate-600 leading-relaxed font-medium text-sm">{restaurant.description}</p>
+                  </div>
 
-                <div className="mb-6 md:mb-10">
-                  <button 
-                    className="w-full py-4 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 group"
-                     style={{ 
-                       backgroundColor: COLORS.primary,
-                       boxShadow: `0 20px 25px -5px ${COLORS.primary}33`
-                     }}
-                    onClick={startBooking}
-                  >
-                    {isBeauty ? <Sparkles className="w-4 h-4" /> : isShop ? <ShoppingBag className="w-4 h-4" /> : <CalendarCheck className="w-4 h-4" />}
-                    {isBeauty ? 'Agendar Serviço' : isShop ? 'Ver Catálogo' : isOffice ? 'Agendar Visita' : getTranslation(currentLang, 'make_reservation')}
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
+                  {/* Contacts Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     {restaurant.phone && (
+                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                          <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-red-50 group-hover:border-red-100 transition-all">
+                            <Phone className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
+                          </div>
+                          <span className="text-xs font-black text-slate-700 tracking-tight">{restaurant.phone}</span>
+                        </div>
+                     )}
+                     {restaurant.publicEmail && (
+                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                          <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-all">
+                            <Mail className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
+                          </div>
+                          <span className="text-xs font-black text-slate-700 truncate tracking-tight">{restaurant.publicEmail}</span>
+                        </div>
+                     )}
+                     <div className="md:col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                        <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-all shrink-0">
+                          <MapPin className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                        </div>
+                        <span className="text-xs font-black text-slate-700 tracking-tight truncate">{restaurant.island}, Azores</span>
+                     </div>
+                  </div>
 
-                <h4 className="font-black text-slate-300 text-[10px] uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                  {isBeauty ? 'Serviços Disponíveis' : isShop ? 'Produtos em Destaque' : getTranslation(currentLang, 'signature_dishes')}
-                  <div className="h-[1px] flex-1 bg-slate-100" />
-                </h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {/* Dynamic list based on business type */}
-                  {(isBeauty ? (restaurant.services || []) : isShop ? (restaurant.products || []) : (restaurant.dishes || [])).map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-all group">
-                       <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                         <img 
-                           src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
-                           alt={item.name} 
-                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                         />
-                       </div>
-                       <div className="min-w-0">
-                         <p className="font-bold text-slate-800 text-xs truncate">{item.name}</p>
-                         <p className="text-[10px] text-slate-400 font-black">€{item.price}</p>
-                       </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+                  {/* Main Action Button */}
+                  <div className="flex flex-col gap-3 pb-8">
+                    <button 
+                      onClick={startBooking}
+                      className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                    >
+                      <CalendarCheck className="w-5 h-5" /> 
+                      {isBeauty ? 'Agendar Serviço' : 'Fazer Reserva Agora'}
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const url = restaurant.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name}, ${restaurant.island}, Azores`)}`;
+                        if (onShowMap) {
+                          onShowMap(url);
+                          onClose();
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }}
+                      className="w-full py-5 bg-slate-900 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                    >
+                      <Map className="w-5 h-5" />
+                      Obter Direções
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
 
             {bookingStep === 'datetime' && (
               <motion.div 
                 key="datetime"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 flex flex-col"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-8 space-y-8"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <button onClick={() => setBookingStep('info')} className="p-2 hover:bg-slate-50 rounded-xl transition-colors border border-slate-100">
-                    <ArrowLeft className="w-4 h-4 text-slate-400" />
-                  </button>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight">{getTranslation(currentLang, 'booking_date_time')}</h3>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">12:00 - 15:00 • 19:00 - 23:00</p>
-                  </div>
-                </div>
-
-                <div className="space-y-6 flex-1">
-                  {!isBeauty && !isShop && (
-                    <div>
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5" /> Pessoas
-                      </p>
-                      <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100 overflow-x-auto custom-scrollbar">
-                        {[1,2,3,4,5,6,7,8].map(n => (
-                          <button
-                            key={n}
-                            onClick={() => setGuests(n)}
-                            className={`w-9 h-9 rounded-lg font-black text-xs transition-all flex-shrink-0 ${
-                              guests === n ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-400 hover:bg-white/50'
-                            }`}
-                          >
-                            {n}
-                          </button>
-                        ))}
+                {/* Number of People */}
+                {!isBeauty && !isAutoRepair && !isOffice && (
+                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                          <Users className="w-5 h-5 text-red-500" /> Número de Pessoas
+                        </h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Selecione para quantas pessoas</p>
+                      </div>
+                      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                        <button onClick={() => setGuests(Math.max(1, guests - 1))} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                          <Minus size={18} />
+                        </button>
+                        <span className="text-xl font-black text-slate-900 w-8 text-center">{guests}</span>
+                        <button onClick={() => setGuests(guests + 1)} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                          <Plus size={18} />
+                        </button>
                       </div>
                     </div>
-                  )}
-                  <div>
-                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'select_date')}
-                    </p>
-                    {renderCalendar()}
                   </div>
+                )}
 
-                  <div>
-                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5" /> {getTranslation(currentLang, 'available_times')}
-                    </p>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
+                {/* Calendar Integrated */}
+                <div className="space-y-4">
+                  <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-red-500" /> Selecione o Dia
+                  </h4>
+                  {renderCalendar()}
+                </div>
+
+                {/* Time Slots Integrated */}
+                {selectedDate && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-red-500" /> Horários Disponíveis
+                    </h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                       {timeSlots.map(time => (
-                        <button
-                          key={time}
+                        <button 
+                          key={time} 
                           onClick={() => setSelectedTime(time)}
-                          style={{ 
-                            backgroundColor: selectedTime === time ? COLORS.primary : undefined,
-                            borderColor: selectedTime === time ? COLORS.primary : undefined,
-                          }}
-                          className={`py-2 rounded-xl text-[9px] font-black transition-all border
+                          className={`py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all active:scale-95
                             ${selectedTime === time 
-                              ? 'text-white scale-105 z-10' 
-                              : 'bg-white text-slate-600 border-slate-100 hover:bg-slate-50'}`}
+                              ? 'border-red-500 bg-red-50 text-red-700 shadow-md' 
+                              : 'border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50'}`}
                         >
                           {time}
                         </button>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  <AnimatePresence mode="wait">
-                    {showBookingPopup && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-[70] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                          className="w-full max-w-sm bg-white rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-y-auto flex flex-col gap-6 max-h-[95%]"
-                        >
-                          <button 
-                            onClick={closePopup}
-                            className="absolute top-4 right-4 p-2 hover:bg-slate-50 rounded-full transition-colors"
-                          >
-                            <X className="w-4 h-4 text-slate-400" />
-                          </button>
-
-                          {popupStep !== 'notes' && (
-                            <button 
-                              onClick={() => {
-                                if (popupStep === 'preorder_choice') setPopupStep('notes');
-                                else if (popupStep === 'menu') setPopupStep('preorder_choice');
-                              else if (popupStep === 'prep_time') setPopupStep('menu');
-                              else if (popupStep === 'payment_methods') {
-                                if (preorderSelected) setPopupStep('prep_time');
-                                else setPopupStep('preorder_choice');
-                              }
-                              }}
-                              className="absolute top-4 left-4 p-2 hover:bg-slate-50 rounded-full transition-colors"
-                            >
-                              <ArrowLeft className="w-4 h-4 text-slate-400" />
-                            </button>
-                          )}
-
-                          <AnimatePresence mode="wait">
-                            {popupStep === 'notes' && (
-                              <motion.div
-                                key="step-notes"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                className="flex flex-col gap-6"
-                              >
-                                <div className="flex flex-col items-center text-center gap-2">
-                                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-2">
-                                    <CalendarCheck className="w-6 h-6" />
-                                  </div>
-                                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    Dados da Reserva
-                                  </h4>
-                                  <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                      {selectedDate?.toLocaleDateString()} • {selectedTime} {!isBeauty && `• ${guests} Pessoas`}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <div className="space-y-2">
-                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Nome da Reserva</p>
-                                    <input 
-                                      type="text" 
-                                      value={customerName}
-                                      onChange={(e) => setCustomerName(e.target.value)}
-                                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      placeholder="Seu nome"
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-2">
-                                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Telemóvel</p>
-                                      <input 
-                                        type="tel" 
-                                        value={customerPhone}
-                                        onChange={(e) => setCustomerPhone(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Email</p>
-                                      <input 
-                                        type="email" 
-                                        value={customerEmail}
-                                        onChange={(e) => setCustomerEmail(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    </div>
-                                  </div>
-                                  
-                                  {isAutoRepair && (
-                                    <div className="space-y-2">
-                                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">{getTranslation(currentLang, 'license_plate' as any)} (Opcional)</p>
-                                      <input 
-                                        type="text" 
-                                        value={licensePlate}
-                                        onChange={(e) => setLicensePlate(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
-                                        placeholder="00-AA-00"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="space-y-3">
-                                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] flex items-center gap-2">
-                                    <Ear className="w-3.5 h-3.5" /> {isAutoRepair ? getTranslation(currentLang, 'problem_description' as any) : getTranslation(currentLang, 'booking_notes' as any)}
-                                  </p>
-                                  <textarea
-                                    value={bookingNote}
-                                    onChange={(e) => setBookingNote(e.target.value)}
-                                    placeholder={isAutoRepair ? "Descreva o problema do seu veículo..." : getTranslation(currentLang, 'booking_notes_placeholder' as any)}
-                                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-medium text-slate-600 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all resize-none h-28"
-                                  />
-                                </div>
-
-                                <button 
-                                  style={{ 
-                                    backgroundColor: COLORS.primary,
-                                    boxShadow: `0 20px 25px -5px ${COLORS.primary}33`
-                                  }}
-                                  className="w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 text-white hover:opacity-90 transition-all active:scale-95 shadow-lg"
-                                  onClick={() => {
-                                    if (isBeauty || isShop) setPopupStep('payment_methods');
-                                    else setPopupStep('preorder_choice');
-                                  }}
-                                >
-                                  {isBeauty ? 'Avançar para Pagamento' : getTranslation(currentLang, 'finish_reservation')}
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              </motion.div>
-                            )}
-
-                            {popupStep === 'preorder_choice' && (
-                              <motion.div
-                                key="step-preorder-choice"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col gap-6"
-                              >
-                                <div className="flex flex-col items-center text-center gap-2">
-                                  <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-2">
-                                    <UtensilsCrossed className="w-6 h-6" />
-                                  </div>
-                                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    {getTranslation(currentLang, 'preorder_choice_title' as any)}
-                                  </h4>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-3">
-                                  <button
-                                    onClick={() => { setPreorderSelected(true); setPopupStep('menu'); }}
-                                    className="w-full p-6 rounded-2xl border-2 border-slate-50 bg-slate-50/50 hover:border-orange-200 hover:bg-orange-50/30 transition-all text-left group"
-                                  >
-                                    <p className="font-black text-slate-900 text-sm">{getTranslation(currentLang, 'preorder_yes' as any)}</p>
-                                    <p className="text-[10px] text-slate-500 mt-1">Escolha os pratos e bebidas antecipadamente</p>
-                                  </button>
-                                  <button
-                                    onClick={() => { setPreorderSelected(false); setPopupStep('payment_methods'); }}
-                                    className="w-full p-6 rounded-2xl border-2 border-slate-50 bg-slate-50/50 hover:border-blue-200 hover:bg-blue-50/30 transition-all text-left group"
-                                  >
-                                    <p className="font-black text-slate-900 text-sm">{getTranslation(currentLang, 'preorder_no' as any)}</p>
-                                    <p className="text-[10px] text-slate-500 mt-1">Apenas garantir a reserva da mesa</p>
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-
-                            {popupStep === 'menu' && (
-                              <motion.div
-                                key="step-menu"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col gap-6 max-h-[70vh]"
-                              >
-                                <div className="flex flex-col items-center text-center gap-2">
-                                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    {getTranslation(currentLang, 'preorder_menu_title' as any)}
-                                  </h4>
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {restaurant.name}
-                                  </p>
-                                </div>
-
-                                <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                                  {(restaurant.dishes || []).map((dish, idx) => {
-                                    const orderItem = orderItems.find(item => item.dish.name === dish.name);
-                                    const isSelected = !!orderItem;
-                                    
-                                    return (
-                                      <div key={idx} className={`p-4 rounded-2xl border-2 transition-all ${isSelected ? 'border-orange-200 bg-orange-50/20' : 'border-slate-50 bg-slate-50/50'}`}>
-                                        <div className="flex items-center gap-4">
-                                          <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                                            <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-slate-800 text-sm truncate">{dish.name}</p>
-                                            <p className="text-xs text-slate-400 font-bold">€{dish.price} • 10 {getTranslation(currentLang, 'credits_balance' as any)}</p>
-                                          </div>
-                                          <button 
-                                            onClick={() => toggleOrderItem(dish)}
-                                            className={`p-2 rounded-xl transition-all ${isSelected ? 'bg-orange-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}
-                                          >
-                                            {isSelected ? <CheckCircle className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                                          </button>
-                                        </div>
-
-                                        {isSelected && (
-                                          <motion.div 
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            className="mt-4 pt-4 border-t border-orange-100 space-y-4"
-                                          >
-                                            <div className="flex items-center justify-between">
-                                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getTranslation(currentLang, 'quantity' as any)}</span>
-                                              <div className="flex items-center gap-3 bg-white rounded-xl p-1 border border-orange-100">
-                                                <button onClick={() => updateQuantity(dish.name, -1)} className="p-1.5 hover:bg-orange-50 rounded-lg text-orange-500"><Minus className="w-3.5 h-3.5" /></button>
-                                                <span className="font-black text-slate-700 text-sm min-w-[20px] text-center">{orderItem.quantity}</span>
-                                                <button onClick={() => updateQuantity(dish.name, 1)} className="p-1.5 hover:bg-orange-50 rounded-lg text-orange-500"><Plus className="w-3.5 h-3.5" /></button>
-                                              </div>
-                                            </div>
-
-                                            {orderItem.meatPoint && (
-                                              <div className="space-y-2">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getTranslation(currentLang, 'meat_point' as any)}</span>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                  {['Mal passado', 'Médio mal', 'Médio', 'Médio bem', 'Bem passado'].map(p => (
-                                                    <button
-                                                      key={p}
-                                                      onClick={() => updateMeatPoint(dish.name, p)}
-                                                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all border
-                                                        ${orderItem.meatPoint === p 
-                                                          ? 'bg-orange-500 text-white border-orange-500' 
-                                                          : 'bg-white text-slate-500 border-slate-100 hover:border-orange-200'}`}
-                                                    >
-                                                      {p}
-                                                    </button>
-                                                  ))}
-                                                </div>
-                                              </div>
-                                            )}
-                                          </motion.div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-
-                                <button 
-                                  disabled={orderItems.length === 0}
-                                  style={{ 
-                                    backgroundColor: orderItems.length === 0 ? undefined : COLORS.primary,
-                                    boxShadow: orderItems.length === 0 ? undefined : `0 20px 25px -5px ${COLORS.primary}33`
-                                  }}
-                                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95
-                                    ${orderItems.length === 0 
-                                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
-                                      : 'text-white hover:opacity-90'}`}
-                                  onClick={() => setPopupStep('prep_time')}
-                                >
-                                  {getTranslation(currentLang, 'next' as any)}
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              </motion.div>
-                            )}
-
-                            {popupStep === 'prep_time' && (
-                              <motion.div
-                                key="step-prep-time"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col gap-6"
-                              >
-                                <div className="flex flex-col items-center text-center gap-2">
-                                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-2">
-                                    <Clock className="w-6 h-6" />
-                                  </div>
-                                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    Horário de Preparação
-                                  </h4>
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    Quando quer que a comida esteja pronta?
-                                  </p>
-                                </div>
-
-                                <div className="space-y-3">
-                                  {[
-                                    { id: 'at_reservation', title: 'À hora da reserva', desc: `Pronto às ${selectedTime}` },
-                                    { id: 'now', title: 'Preparar agora', desc: 'A cozinha começa já a preparar' },
-                                    { id: 'custom', title: 'Escolher horário', desc: 'Defina uma hora específica' }
-                                  ].map(opt => (
-                                    <button
-                                      key={opt.id}
-                                      onClick={() => setPrepTimeChoice(opt.id as any)}
-                                      className={`w-full p-5 rounded-2xl border-2 text-left transition-all ${
-                                        prepTimeChoice === opt.id ? 'border-blue-600 bg-blue-50/20' : 'border-slate-50 bg-slate-50/50'
-                                      }`}
-                                    >
-                                      <p className="font-black text-slate-900 text-sm">{opt.title}</p>
-                                      <p className="text-[10px] text-slate-500 mt-1">{opt.desc}</p>
-                                    </button>
-                                  ))}
-                                </div>
-
-                                {prepTimeChoice === 'custom' && (
-                                  <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Escolha a hora (Deve ser antes das {selectedTime})</label>
-                                    <input 
-                                      type="time" 
-                                      value={customPrepTime}
-                                      max={selectedTime || undefined}
-                                      onChange={(e) => setCustomPrepTime(e.target.value)}
-                                      className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-800"
-                                    />
-                                    {customPrepTime && selectedTime && customPrepTime >= selectedTime && (
-                                      <p className="text-[9px] text-red-500 font-black uppercase px-2">A hora de preparação deve ser antes da reserva!</p>
-                                    )}
-                                  </div>
-                                )}
-
-                                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
-                                   <Info size={14} className="text-amber-600 mt-0.5" />
-                                   <p className="text-[10px] font-medium text-amber-800 leading-tight">
-                                      Lembre-se: Temos uma tolerância de 15 min. Escolher um horário ligeiramente antes garante que a comida esteja pronta à sua chegada!
-                                   </p>
-                                </div>
-
-                                <button 
-                                  disabled={prepTimeChoice === 'custom' && (!customPrepTime || (selectedTime && customPrepTime >= selectedTime))}
-                                  style={{ 
-                                    backgroundColor: (prepTimeChoice === 'custom' && (!customPrepTime || (selectedTime && customPrepTime >= selectedTime))) ? undefined : COLORS.primary,
-                                    boxShadow: (prepTimeChoice === 'custom' && (!customPrepTime || (selectedTime && customPrepTime >= selectedTime))) ? undefined : `0 20px 25px -5px ${COLORS.primary}33`
-                                  }}
-                                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95
-                                    ${(prepTimeChoice === 'custom' && (!customPrepTime || (selectedTime && customPrepTime >= selectedTime))) 
-                                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
-                                      : 'text-white hover:opacity-90'}`}
-                                  onClick={() => setPopupStep('payment_methods')}
-                                >
-                                  {getTranslation(currentLang, 'next' as any)}
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              </motion.div>
-                            )}
-                            {popupStep === 'payment_methods' && (
-                              <motion.div
-                                key="step-payment"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex flex-col gap-6"
-                              >
-                                <div className="flex flex-col items-center text-center gap-2">
-                                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-2">
-                                    <CreditCard className="w-6 h-6" />
-                                  </div>
-                                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                                    {isBeauty ? 'Pagamento da Taxa' : getTranslation(currentLang, 'booking_payment')}
-                                  </h4>
-                                  {isBeauty ? (
-                                    <div className="flex flex-col items-center gap-1">
-                                      <div className="px-4 py-1.5 bg-pink-50 text-pink-600 rounded-full border border-pink-100 font-black text-xs">
-                                        Taxa de Reserva: {bookingFee.toFixed(2)}€
-                                      </div>
-                                      <p className="text-[10px] text-slate-400 font-medium max-w-[200px]">
-                                        {getTranslation(currentLang, 'booking_fee_desc' as any).replace('{amount}', bookingFee.toFixed(2))}
-                                      </p>
-                                    </div>
-                                  ) : orderItems.length > 0 && (
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-orange-50 rounded-full border border-orange-100">
-                                      <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">
-                                        {orderItems.length} {getTranslation(currentLang, 'order_summary' as any)} • {totalCreditsCost} {getTranslation(currentLang, 'credits_balance' as any)}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="space-y-3">
-                                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] text-center">
-                                    {getTranslation(currentLang, 'select_payment_method' as any)}
-                                  </p>
-                                  {[
-                                    { id: 'mbway', icon: Wallet, title: 'payment_mbway', desc: 'MBWay / Revolut' },
-                                    { id: 'transfer', icon: CreditCard, title: 'payment_transfer', desc: 'Transferência Bancária' },
-                                    { id: 'points', icon: Star, title: 'payment_points', desc: `Saldo: ${userCredits} créditos` },
-                                    { id: 'reserve', icon: CheckCircle, title: 'payment_reserve', desc: 'payment_reserve_desc' }
-                                  ].map((opt) => {
-                                    const isSelected = paymentType === opt.id;
-                                    const isPoints = opt.id === 'points';
-                                    const disabled = isPoints && !canAffordWithPoints && orderItems.length > 0;
-
-                                    return (
-                                      <button
-                                        key={opt.id}
-                                        disabled={disabled}
-                                        onClick={() => setPaymentType(opt.id as any)}
-                                        style={{ 
-                                          borderColor: isSelected ? (isBeauty ? '#FF2D78' : COLORS.primary) : undefined,
-                                          backgroundColor: isSelected ? (isBeauty ? '#FF2D7808' : `${COLORS.primary}08`) : undefined,
-                                          boxShadow: isSelected ? `0 10px 15px -3px ${isBeauty ? '#FF2D7815' : `${COLORS.primary}15`}` : undefined
-                                        }}
-                                        className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left group relative overflow-hidden
-                                          ${isSelected 
-                                            ? '' 
-                                            : disabled ? 'opacity-40 cursor-not-allowed border-slate-50 bg-slate-50/50' : 'border-slate-50 hover:border-slate-200 bg-slate-50/50'}`}
-                                      >
-                                        <div 
-                                          style={{ backgroundColor: isSelected ? (isBeauty ? '#FF2D78' : COLORS.primary) : undefined }}
-                                          className={`p-3 rounded-xl transition-all ${isSelected ? 'text-white' : 'bg-white text-slate-400 shadow-sm group-hover:scale-110'}`}
-                                        >
-                                          <opt.icon className="w-4 h-4" />
-                                        </div>
-                                        <div className="flex-1">
-                                          <p className="font-black text-slate-900 text-[11px] tracking-tight">{getTranslation(currentLang, opt.title as any)}</p>
-                                          <p className="text-[9px] font-medium text-slate-500 leading-tight">
-                                            {opt.id === 'reserve' ? getTranslation(currentLang, opt.desc as any) : opt.desc}
-                                          </p>
-                                        </div>
-                                        {isSelected && (
-                                          <motion.div 
-                                            layoutId="active-check"
-                                            className="w-5 h-5 rounded-full flex items-center justify-center text-white"
-                                            style={{ backgroundColor: isBeauty ? '#FF2D78' : COLORS.primary }}
-                                          >
-                                            <CheckCircle className="w-3 h-3" />
-                                          </motion.div>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-
-                                {/* Dynamic Payment Inputs */}
-                                <AnimatePresence mode="wait">
-                                  {paymentType === 'mbway' && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2 mt-2 px-1">
-                                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'mbway_phone' as any)}</label>
-                                      <input 
-                                        type="tel" 
-                                        value={mbwayPhone}
-                                        onChange={(e) => setMbwayPhone(e.target.value)}
-                                        placeholder="912 345 678"
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-pink-500 outline-none transition-all"
-                                      />
-                                    </motion.div>
-                                  )}
-                                  {paymentType === 'transfer' && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 mt-2 px-1">
-                                      <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_number' as any)}</label>
-                                        <input 
-                                          type="text" 
-                                          value={cardNumber}
-                                          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g,'').slice(0,16))}
-                                          placeholder="0000 0000 0000 0000"
-                                          className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                        />
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div className="space-y-1">
-                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_expiry' as any)}</label>
-                                          <input 
-                                            type="text" 
-                                            value={cardExpiry}
-                                            onChange={(e) => setCardExpiry(e.target.value)}
-                                            placeholder="MM/AA"
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                          />
-                                        </div>
-                                        <div className="space-y-1">
-                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{getTranslation(currentLang, 'card_cvv' as any)}</label>
-                                          <input 
-                                            type="text" 
-                                            value={cardCvv}
-                                            onChange={(e) => setCardCvv(e.target.value.replace(/\D/g,'').slice(0,3))}
-                                            placeholder="123"
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                          />
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-
-                                {paymentType === 'points' && (
-                                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <p className="text-[10px] font-medium text-blue-700 leading-relaxed">
-                                      {getTranslation(currentLang, 'total_credits_cost' as any)}: <span className="font-black">{totalCreditsCost}</span>. 
-                                      Seu saldo após reserva: <span className="font-black">{userCredits - totalCreditsCost + 2}</span> créditos.
-                                    </p>
-                                  </div>
-                                )}
-
-                                  {(() => {
-                                    const isDisabled = isProcessing || !paymentType || (paymentType === 'mbway' && !mbwayPhone) || (paymentType === 'transfer' && (!cardNumber || !cardExpiry || !cardCvv)) || (paymentType === 'points' && isBeauty && userCredits < bookingFee);
-                                    console.log('DEBUG Button State:', { isDisabled, paymentType, isProcessing });
-                                    return (
-                                      <button 
-                                        disabled={isDisabled}
-                                        style={{ 
-                                          backgroundColor: isDisabled ? undefined : (isBeauty ? '#FF2D78' : COLORS.primary),
-                                          boxShadow: isDisabled ? undefined : `0 20px 25px -5px ${isBeauty ? '#FF2D78' : COLORS.primary}33`
-                                        }}
-                                        className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 mb-24
-                                          ${isDisabled
-                                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
-                                            : 'text-white hover:opacity-90 cursor-pointer'}`}
-                                        onClick={() => {
-                                          console.log('Botão Confirmar clicado. PaymentType:', paymentType);
-                                          handleFinalize();
-                                        }}
-                                      >
-                                        {isProcessing ? (
-                                          <>
-                                            <motion.div
-                                              animate={{ rotate: 360 }}
-                                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                              className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full"
-                                            />
-                                            Processando...
-                                          </>
-                                        ) : (
-                                          <>
-                                            {isBeauty ? 'Confirmar Marcação' : getTranslation(currentLang, 'finish_reservation')}
-                                            <CheckCircle className="w-3.5 h-3.5" />
-                                          </>
-                                        )}
-                                      </button>
-                                    );
-                                  })()}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {!selectedTime && (
-                  <div className="mt-8">
-                    <div className="w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 bg-slate-100 text-slate-300 cursor-not-allowed">
-                      {getTranslation(currentLang, 'next')}
-                      <ArrowRight className="w-3.5 h-3.5" />
+                {/* Final Details Section (replaces the popup) */}
+                {selectedDate && selectedTime && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl text-white space-y-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xl font-black uppercase tracking-tighter">Detalhes Finais</h4>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize a sua reserva</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                        <CheckCircle className="text-red-500" />
+                      </div>
                     </div>
-                  </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                        <textarea 
+                          value={bookingNote}
+                          onChange={(e) => setBookingNote(e.target.value)}
+                          placeholder="Ex: Alergias, mesa perto da janela, aniversário..."
+                          className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-24"
+                        />
+                      </div>
+
+                      <div>
+                         <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Garantia de Reserva</h5>
+                         <div className="grid grid-cols-2 gap-2">
+                           {[
+                             { id: 'reserve', label: 'No Local', icon: <Wallet size={14} /> },
+                             { id: 'mbway', label: 'MBWay', icon: <Smartphone size={14} /> },
+                             { id: 'points', label: 'Créditos', icon: <Star size={14} /> },
+                             { id: 'transfer', label: 'Cartão', icon: <CreditCard size={14} /> }
+                           ].map(opt => (
+                             <button 
+                               key={opt.id}
+                               onClick={() => setPaymentType(opt.id as any)}
+                               className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95
+                                 ${paymentType === opt.id 
+                                   ? 'border-red-500 bg-red-500/10' 
+                                   : 'border-white/5 hover:border-white/20'}`}
+                             >
+                               <div className="flex items-center gap-2">
+                                 <div className={`p-1.5 rounded-lg ${paymentType === opt.id ? 'bg-red-500 text-white' : 'bg-white/10 text-slate-400'}`}>
+                                   {opt.icon}
+                                 </div>
+                                 <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
+                               </div>
+                             </button>
+                           ))}
+                         </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      disabled={isProcessing || !paymentType}
+                      onClick={handleFinalize}
+                      className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3
+                        ${(!paymentType || isProcessing) 
+                          ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                          : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                    >
+                      {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </motion.div>
                 )}
               </motion.div>
             )}
@@ -1228,53 +716,32 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
             {bookingStep === 'success' && (
               <motion.div 
                 key="success"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex-1 flex flex-col items-center justify-center text-center py-12"
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="h-full flex flex-col items-center justify-center p-12 text-center min-h-[500px]"
               >
-                <div className="w-24 h-24 bg-green-50 text-green-600 rounded-[32px] flex items-center justify-center mb-8 animate-bounce shadow-xl shadow-green-100">
-                  <CheckCircle className="w-12 h-12" />
+                <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-xl shadow-emerald-100 animate-bounce">
+                  <CheckCircle size={48} strokeWidth={3} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">{isBeauty ? 'Marcação Confirmada!' : getTranslation(currentLang, 'booking_success')}</h3>
-                <p className="text-slate-500 text-sm font-medium max-w-[280px] mx-auto leading-relaxed">
-                  {isBeauty ? 'O seu serviço foi agendado com sucesso. Receberá um SMS de confirmação em breve.' : getTranslation(currentLang, 'booking_success_desc')}
+                <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">{getTranslation(currentLang, 'booking_success')}</h3>
+                <p className="text-slate-500 mb-10 max-w-sm leading-relaxed font-medium">
+                  A sua reserva em <strong className="text-slate-800">{restaurant.name}</strong> para o dia <strong className="text-red-600">{selectedDate?.toLocaleDateString()}</strong> às <strong className="text-red-600">{selectedTime}</strong> foi confirmada.
+                  <br/><br/>
+                  Receberá uma confirmação no seu e-mail.
                 </p>
-                
-                <div className="mt-10 p-6 bg-slate-50 rounded-3xl border border-slate-100 w-full">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{isBeauty ? 'Estabelecimento' : 'Restaurante'}</span>
-                    <span className="font-bold text-slate-900">{restaurant.name}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data & Hora</span>
-                    <span className="font-bold text-slate-900">{selectedDate?.toLocaleDateString()} às {selectedTime}</span>
-                  </div>
-                  {bookingNote && (
-                    <div className="mt-4 pt-4 border-t border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nota</span>
-                      <p className="text-xs text-slate-600 italic">"{bookingNote}"</p>
-                    </div>
-                  )}
-                  {orderItems.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pedido Enviado</span>
-                      <div className="space-y-2">
-                        {orderItems.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs">
-                            <span className="text-slate-600 font-medium">{item.quantity}x {item.dish.name} {item.meatPoint ? `(${item.meatPoint})` : ''}</span>
-                            <span className="font-bold text-slate-900">€{(item.dish.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <button 
+                  onClick={onClose} 
+                  className="w-full py-5 bg-slate-900 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-xl hover:bg-black transition-all active:scale-[0.98]"
+                >
+                  Concluir e Voltar
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
+    </AnimatePresence>
   );
 };
 
