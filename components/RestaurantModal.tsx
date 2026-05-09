@@ -19,7 +19,7 @@ interface RestaurantModalProps {
   onShowMap?: (url: string) => void;
 }
 
-type BookingStep = 'info' | 'datetime' | 'success';
+type BookingStep = 'info' | 'datetime' | 'menu' | 'success';
 type PopupStep = 'notes' | 'preorder_choice' | 'menu' | 'prep_time' | 'payment_methods';
 
 const RestaurantModal: React.FC<RestaurantModalProps> = ({ 
@@ -56,6 +56,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '+351 912 345 678');
   const [customerName, setCustomerName] = useState(userProfile?.name || 'Cliente Viajante');
   const [preorderSelected, setPreorderSelected] = useState<boolean | null>(null);
+  const [selectedDishIdx, setSelectedDishIdx] = useState<number | null>(null);
   
   // Payment states for booking fee
   const [mbwayPhone, setMbwayPhone] = useState(userProfile?.phone || '');
@@ -450,13 +451,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 <button 
                   onClick={() => {
                     if (bookingStep === 'datetime') setBookingStep('info');
+                    if (bookingStep === 'menu') setBookingStep('info');
                   }}
                   className="p-3 bg-white rounded-2xl text-slate-400 hover:text-red-500 transition-all shadow-sm border border-slate-100 active:scale-95"
                 >
                   <ArrowLeft size={20} />
                 </button>
                 <div>
-                  <h3 className="font-black text-slate-800 uppercase tracking-tight">Confirmar Reserva</h3>
+                  <h3 className="font-black text-slate-800 uppercase tracking-tight">
+                    {bookingStep === 'menu' ? 'Ementa do Restaurante' : 'Confirmar Reserva'}
+                  </h3>
                   <div className="flex gap-1.5 mt-1.5">
                     {[1,2,3].map(i => (
                       <div key={i} className={`h-1.5 w-10 rounded-full transition-all duration-500 ${((bookingStep === 'datetime' && i >= 1) || (bookingStep === 'success' && i >= 3)) ? 'bg-red-500 shadow-sm shadow-red-100' : 'bg-slate-200'}`} />
@@ -550,6 +554,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
                   {/* Main Action Button */}
                   <div className="flex flex-col gap-3 pb-8">
+                    <button 
+                      onClick={() => setBookingStep('menu')}
+                      className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
+                    >
+                      <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
+                      Ver Ementa
+                      <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
+                    </button>
                     <button 
                       onClick={startBooking}
                       className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -711,6 +723,188 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     </button>
                   </motion.div>
                 )}
+              </motion.div>
+            )}
+
+            {bookingStep === 'menu' && (
+              <motion.div 
+                key="menu"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="p-8 space-y-8"
+              >
+                <div className="flex items-center justify-between mb-2">
+                   <div>
+                      <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Sugestões do Chef</h4>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Conheça as nossas especialidades</p>
+                   </div>
+                   <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                      <Sparkles size={24} />
+                   </div>
+                </div>
+
+                {restaurant.dishes && restaurant.dishes.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-6">
+                    {restaurant.dishes.map((dish, idx) => (
+                      <motion.div 
+                        key={idx}
+                        whileHover={{ y: -8 }}
+                        onClick={() => setSelectedDishIdx(idx)}
+                        className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all cursor-pointer group"
+                      >
+                        <div className="relative aspect-square overflow-hidden bg-slate-50">
+                          <img 
+                            src={dish.image.startsWith('/') ? `${API_BASE_URL}${dish.image}` : dish.image} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                            alt={dish.name} 
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg">
+                               <ArrowRight size={20} className="text-red-600" />
+                             </div>
+                          </div>
+                          <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm">
+                            {dish.price}€
+                          </div>
+                          <div className="absolute top-4 left-4">
+                             <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                               <Sparkles size={8} /> Sugestão
+                             </span>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                           <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{dish.name}</h5>
+                           <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Especialidade Local</span>
+                              <div className="flex items-center gap-1">
+                                 <Star size={10} className="text-yellow-400 fill-current" />
+                                 <span className="text-[9px] font-black text-slate-400">4.9</span>
+                              </div>
+                           </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                    <UtensilsCrossed size={48} className="mx-auto text-slate-300 mb-4" />
+                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Ementa em atualização...</p>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => setBookingStep('datetime')}
+                  className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  <CalendarCheck size={18} /> Reservar Mesa Agora
+                </button>
+
+                <AnimatePresence>
+                  {selectedDishIdx !== null && restaurant.dishes && restaurant.dishes[selectedDishIdx] && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-[110] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 sm:p-12"
+                    >
+                      <button 
+                        onClick={() => setSelectedDishIdx(null)}
+                        className="absolute top-8 right-8 p-3 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                      >
+                        <X size={24} />
+                      </button>
+                      
+                      <div className="flex flex-col md:flex-row items-center gap-12 w-full max-w-5xl">
+                         {/* Navigation Arrows (Desktop) */}
+                         <button 
+                           onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)}
+                           className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                         >
+                           <ChevronLeft size={32} />
+                         </button>
+
+                         <div className="flex-1 flex flex-col md:flex-row items-center gap-12">
+                            <motion.div 
+                              key={`dish-img-${selectedDishIdx}`}
+                              initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+                              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                              className="w-full md:w-[450px] aspect-square rounded-[3.5rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-8 border-white/5"
+                            >
+                              <img 
+                                src={restaurant.dishes[selectedDishIdx].image.startsWith('/') ? `${API_BASE_URL}${restaurant.dishes[selectedDishIdx].image}` : restaurant.dishes[selectedDishIdx].image} 
+                                className="w-full h-full object-cover" 
+                                alt="Dish Immersive" 
+                              />
+                            </motion.div>
+
+                            <motion.div 
+                              key={`dish-text-${selectedDishIdx}`}
+                              initial={{ opacity: 0, x: 30 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className="flex-1 text-center md:text-left text-white space-y-6"
+                            >
+                               <div>
+                                 <span className="px-4 py-1 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-red-900/40">
+                                   Especialidade Sugerida
+                                 </span>
+                                 <h3 className="text-3xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{restaurant.dishes[selectedDishIdx].name}</h3>
+                                 <p className="text-lg md:text-xl text-white/60 font-bold leading-relaxed max-w-md mx-auto md:mx-0">{restaurant.dishes[selectedDishIdx].description}</p>
+                               </div>
+                               
+                               <div className="flex flex-col md:flex-row items-center gap-6 pt-4">
+                                  <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
+                                  <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
+                                  <div className="flex flex-col items-center md:items-start opacity-50">
+                                     <span className="text-[10px] font-black uppercase tracking-widest">Disponível em</span>
+                                     <span className="text-xs font-bold">{restaurant.name}</span>
+                                  </div>
+                               </div>
+
+                               <button 
+                                 onClick={() => {
+                                   setSelectedDishIdx(null);
+                                   setBookingStep('datetime');
+                                 }}
+                                 className="w-full md:w-auto px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                               >
+                                 <CalendarCheck size={18} className="group-hover:rotate-12 transition-transform" />
+                                 Reservar Mesa Agora
+                               </button>
+
+                               {/* Mobile Navigation */}
+                               <div className="flex md:hidden justify-center gap-4 pt-4">
+                                  <button 
+                                    onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)} 
+                                    className="p-4 bg-white/10 rounded-2xl"
+                                  >
+                                    <ChevronLeft size={24} />
+                                  </button>
+                                  <button 
+                                    onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)} 
+                                    className="p-4 bg-white/10 rounded-2xl"
+                                  >
+                                    <ChevronRight size={24} />
+                                  </button>
+                               </div>
+                            </motion.div>
+                         </div>
+
+                         <button 
+                           onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)}
+                           className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                         >
+                           <ChevronRight size={32} />
+                         </button>
+                      </div>
+
+                      {/* Counter Indicator */}
+                      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
+                        {selectedDishIdx + 1} de {restaurant.dishes.length} especialidades
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 

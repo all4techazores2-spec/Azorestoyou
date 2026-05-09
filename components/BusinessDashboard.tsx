@@ -786,6 +786,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const newDish: Dish = { name: 'Novo Prato', description: '', price: 0, image: '' };
     const newDishes = [...business.dishes, newDish];
     handleUpdate({ dishes: newDishes });
+    // Abrir imediatamente o modal de edição para o novo prato
+    setEditingDish({ idx: newDishes.length - 1, dish: { ...newDish } });
   };
 
   const removeDish = (idx: number) => {
@@ -2068,7 +2070,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                    <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
                       <div className="h-48 relative overflow-hidden bg-slate-100">
                         {dish.image ? (
-                          <img src={dish.image} alt={dish.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          <img src={dish.image.startsWith('/') ? `${API_BASE_URL}${dish.image}` : dish.image} alt={dish.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-300"><ImageIcon className="w-12 h-12" /></div>
                         )}
