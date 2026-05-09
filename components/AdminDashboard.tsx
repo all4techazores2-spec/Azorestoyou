@@ -49,14 +49,15 @@ interface AdminDashboardProps {
   onUpdateOffices: (newOffices: Business[]) => void;
   onUpdateITServices: (newITServices: Business[]) => void;
   onUpdatePerfumes: (newPerfumes: Business[]) => void;
-  onUpdateActivities: (newActivities: Activity[]) => void;
-  onUpdateFlights: (newFlights: Flight[]) => void;
-  onUpdateHotels: (newHotels: Hotel[]) => void;
-  onUpdateCars: (newCars: Car[]) => void;
-  onUpdateBusSchedules: (newSchedules: BusSchedule[]) => void;
+  onUpdateActivities: (list: Activity[]) => void;
+  onUpdateFlights: (list: Flight[]) => void;
+  onUpdateHotels: (list: Hotel[]) => void;
+  onUpdateCars: (list: Car[]) => void;
+  onUpdateBusSchedules: (list: BusSchedule[]) => void;
 
   onLogout: () => void;
   onFullSync?: () => void;
+  dbStatus?: { storage: string, isMongo: boolean };
   language?: Language;
 }
 
@@ -65,7 +66,7 @@ type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
   onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
-  onLogout, onFullSync,
+  onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -1194,6 +1195,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
           </AnimatePresence>
         </nav>
+
+        {/* Database Status Badge */}
+        <div className="mx-4 mb-4 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+           <div className="flex items-center gap-2 mb-2">
+              <Database size={14} className={dbStatus?.isMongo ? 'text-emerald-400' : 'text-amber-400'} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da DB</span>
+           </div>
+           <p className={`text-[11px] font-bold ${dbStatus?.isMongo ? 'text-emerald-500' : 'text-amber-500'}`}>
+              {dbStatus?.storage}
+           </p>
+           {!dbStatus?.isMongo && (
+             <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                <p className="text-[9px] text-amber-600 leading-tight">
+                  Atenção: Os dados são <b>temporários</b> e serão perdidos ao reiniciar. Configure o MONGODB_URI no Render.
+                </p>
+             </div>
+           )}
+        </div>
+
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
             <button 

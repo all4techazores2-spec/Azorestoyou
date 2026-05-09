@@ -142,6 +142,7 @@ const App: React.FC = () => {
   const [offices, setOffices] = useState<Business[]>([]);
   const [itServices, setItServices] = useState<Business[]>([]);
   const [perfumes, setPerfumes] = useState<Business[]>([]);
+  const [dbStatus, setDbStatus] = useState<{storage: string, isMongo: boolean}>({ storage: 'A verificar...', isMongo: false });
 
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -274,6 +275,13 @@ const App: React.FC = () => {
       await fetchAndSet('activities', setActivities);
       await fetchAndSet('bus-schedules', setBusSchedules);
       await fetchAndSet('flights', setFlights);
+
+      // 4. Status da DB
+      try {
+        const sResp = await fetch(`${API_BASE_URL}/api/status`);
+        if (sResp.ok) setDbStatus(await sResp.json());
+      } catch (e) {}
+
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
     }
