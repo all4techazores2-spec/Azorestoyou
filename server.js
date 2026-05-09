@@ -1,11 +1,8 @@
-
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import { readDB, writeDB, connectDB } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,46 +54,9 @@ app.use(bodyParser.json());
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
- // DB Handlers
-const readDB = () => {
-    try {
-        const data = fs.readFileSync(dbPath, 'utf8');
-        const db = JSON.parse(data);
-        const defaults = { 
-            restaurants: [], flights: [], hotels: [], cars: [], 
-            activities: [], busSchedules: [], itineraries: [], 
-            shops: [], beauty: [], services: [], offices: [], 
-            animals: [], real_estate: [], gyms: [], stands: [],
-            auto_repairs: [], auto_electronics: [], used_market: [],
-            it_services: [], perfumes: [], users: [], posts: [] 
-        };
-        return { ...defaults, ...db };
-    } catch (err) {
-        console.error("Error reading db.json", err);
-        return { 
-            restaurants: [], flights: [], hotels: [], cars: [], 
-            activities: [], busSchedules: [], itineraries: [], 
-            shops: [], beauty: [], services: [], offices: [], 
-            animals: [], real_estate: [], gyms: [], stands: [],
-            auto_repairs: [], auto_electronics: [], used_market: [],
-            it_services: [], perfumes: [], users: [], posts: [] 
-        };
-    }
-};
-
-const writeDB = (data) => {
-    try {
-        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-    } catch (err) {
-        console.error("Error writing db.json", err);
-    }
-};
-
 // Initial Seed Function
-const seedIfNeeded = () => {
-    const db = readDB();
-    // Se tiver menos de 10 restaurantes, provavelmente é um novo deploy do Render
-    // que trouxe o db.json básico do repositório. Vamos forçar o seed dos +500.
+const seedIfNeeded = async () => {
+    const db = await readDB();
     if (!db.restaurants || db.restaurants.length < 10) {
         console.log("🌱 Startup: Database is empty or incomplete. Seeding from new_restaurants.json...");
         const seedPath = path.join(__dirname, 'new_restaurants.json');
@@ -104,7 +64,7 @@ const seedIfNeeded = () => {
             try {
                 const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
                 db.restaurants = seedData;
-                writeDB(db);
+                await writeDB(db);
                 console.log(`✅ Startup: Seeded ${seedData.length} restaurants successfully.`);
             } catch (seedErr) {
                 console.error("Error during initial seeding", seedErr);
@@ -114,9 +74,9 @@ const seedIfNeeded = () => {
 };
 
 // --- AUTH & USERS ---
-app.get('/api/users/:email', (req, res) => {
+app.get('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = readDB();
+    const db = await readDB();
     let user = db.users.find(u => normalizeEmail(u.email) === email);
     if (!user) {
         user = { 
@@ -130,21 +90,21 @@ app.get('/api/users/:email', (req, res) => {
             } 
         };
         db.users.push(user);
-        writeDB(db);
+        await writeDB(db);
     }
     res.json(user);
 });
 
-app.put('/api/users/:email', (req, res) => {
+app.put('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = readDB();
+    const db = await readDB();
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
         db.users[index] = { ...db.users[index], ...req.body, email };
     } else {
         db.users.push({ email, ...req.body });
     }
-    writeDB(db);
+    await writeDB(db);
     res.json({ success: true });
 });
 
@@ -178,9 +138,9 @@ const ALL_BUSINESS_COLLECTIONS = [
 ];
 
 // Generic Business Update Handler
-const handleBusinessUpdate = (req, res) => {
+const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
-    const db = readDB();
+    const db = await readDB();
     let targetArray = null;
     let index = -1;
     
@@ -193,7 +153,7 @@ const handleBusinessUpdate = (req, res) => {
 
     if (targetArray && index !== -1) {
         targetArray[index] = { ...targetArray[index], ...req.body };
-        writeDB(db);
+        await writeDB(db);
         res.json(targetArray[index]);
     } else {
         res.status(404).send("Business not found");
@@ -201,55 +161,58 @@ const handleBusinessUpdate = (req, res) => {
 };
 
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
-    app.get(`/api/${key}`, (req, res) => res.json(readDB()[key] || []));
+    app.get(`/api/${key}`, async (req, res) => {
+        const db = await readDB();
+        res.json(db[key] || []);
+    });
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
     
     // Bulk update for Admin Dashboard
-    app.post(`/api/${key}/bulk`, (req, res) => {
-        const db = readDB();
+    app.post(`/api/${key}/bulk`, async (req, res) => {
+        const db = await readDB();
         db[key] = req.body;
-        writeDB(db);
+        await writeDB(db);
         res.json({ success: true, count: req.body.length });
     });
 });
 
 // Full Sync for Admin Dashboard
-app.post('/api/full-sync', (req, res) => {
-    const db = readDB();
+app.post('/api/full-sync', async (req, res) => {
+    const db = await readDB();
     const updatedData = req.body;
     const finalDB = { ...db, ...updatedData };
-    writeDB(finalDB);
+    await writeDB(finalDB);
     res.json({ success: true });
 });
 
 // Adicionar rotas de bulk para outras coleções que não são "business" puras
 ['flights', 'busSchedules', 'activities', 'users', 'posts'].forEach(key => {
-    app.post(`/api/${key}/bulk`, (req, res) => {
-        const db = readDB();
+    app.post(`/api/${key}/bulk`, async (req, res) => {
+        const db = await readDB();
         db[key] = req.body;
-        writeDB(db);
+        await writeDB(db);
         res.json({ success: true, count: req.body.length });
     });
 });
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
-app.get('/api/hotels/:id', (req, res) => {
-    const db = readDB();
+app.get('/api/hotels/:id', async (req, res) => {
+    const db = await readDB();
     const hotel = db.hotels.find(h => h.id === req.params.id);
     if (hotel) res.json(hotel);
     else res.status(404).send("Hotel not found");
 });
 
-app.get('/api/cars/:id', (req, res) => {
-    const db = readDB();
+app.get('/api/cars/:id', async (req, res) => {
+    const db = await readDB();
     const car = db.cars.find(c => c.id === req.params.id);
     if (car) res.json(car);
     else res.status(404).send("Car not found");
 });
 
 // --- RESERVATIONS ---
-app.post('/api/reservations', (req, res) => {
-    const db = readDB();
+app.post('/api/reservations', async (req, res) => {
+    const db = await readDB();
     const { businessId, businessType, customerEmail } = req.body;
     const reservation = { ...req.body, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
     
@@ -276,16 +239,16 @@ app.post('/api/reservations', (req, res) => {
             user.reservations.push({ ...reservation, businessName: business.name });
         }
         
-        writeDB(db);
+        await writeDB(db);
         res.status(201).json(reservation);
     } else {
         res.status(404).send("Business not found");
     }
 });
 
-app.put('/api/reservations/:id', (req, res) => {
+app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = readDB();
+    const db = await readDB();
     let found = false;
 
     // 1. Atualizar nos Negócios
@@ -316,16 +279,16 @@ app.put('/api/reservations/:id', (req, res) => {
     }
 
     if (found) {
-        writeDB(db);
+        await writeDB(db);
         res.json({ success: true });
     } else {
         res.status(404).json({ error: "Reservation not found" });
     }
 });
 
-app.delete('/api/reservations/:id', (req, res) => {
+app.delete('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = readDB();
+    const db = await readDB();
     let found = false;
 
     // 1. Remover dos Negócios (Todas as Categorias)
@@ -351,7 +314,7 @@ app.delete('/api/reservations/:id', (req, res) => {
     }
 
     if (found) {
-        writeDB(db);
+        await writeDB(db);
         res.json({ success: true, message: "Reservation deleted permanently" });
     } else {
         res.status(404).json({ error: "Reservation not found" });
@@ -359,27 +322,49 @@ app.delete('/api/reservations/:id', (req, res) => {
 });
 
 // --- COMMUNITY ---
-app.get('/api/community/posts', (req, res) => res.json(readDB().posts || []));
-app.post('/api/community/posts', (req, res) => {
-    const db = readDB();
+app.get('/api/community/posts', async (req, res) => {
+    const db = await readDB();
+    res.json(db.posts || []);
+});
+
+app.post('/api/community/posts', async (req, res) => {
+    const db = await readDB();
     const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
     db.posts.unshift(newPost);
-    writeDB(db);
+    await writeDB(db);
     res.status(201).json(newPost);
 });
 
 // --- MISC ---
-app.get('/api/bus-schedules', (req, res) => res.json(readDB().busSchedules || []));
-app.get('/api/activities', (req, res) => res.json(readDB().activities || []));
-app.get('/api/flights', (req, res) => res.json(readDB().flights || []));
-app.get('/api/hotels', (req, res) => res.json(readDB().hotels || []));
-app.get('/api/cars', (req, res) => res.json(readDB().cars || []));
+app.get('/api/bus-schedules', async (req, res) => {
+    const db = await readDB();
+    res.json(db.busSchedules || []);
+});
+app.get('/api/activities', async (req, res) => {
+    const db = await readDB();
+    res.json(db.activities || []);
+});
+app.get('/api/flights', async (req, res) => {
+    const db = await readDB();
+    res.json(db.flights || []);
+});
+app.get('/api/hotels', async (req, res) => {
+    const db = await readDB();
+    res.json(db.hotels || []);
+});
+app.get('/api/cars', async (req, res) => {
+    const db = await readDB();
+    res.json(db.cars || []);
+});
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`🚀 Master Backend running on port ${PORT}`);
     
+    // Connect to external DB if available
+    await connectDB();
+    
     // Seed database if empty on startup
-    seedIfNeeded();
+    await seedIfNeeded();
     
     // Truque para manter o Render sempre ativo (Self-Ping cada 10 min)
     const selfPing = () => {
