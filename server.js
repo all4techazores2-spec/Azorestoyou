@@ -60,8 +60,10 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Initial Seed Function
 const seedIfNeeded = async () => {
     const db = await readDB();
-    if (!db.restaurants || db.restaurants.length < 10) {
-        console.log("🌱 Startup: Database is empty or incomplete. Seeding from new_restaurants.json...");
+    // Apenas faz o seed se a base de dados estiver ABSOLUTAMENTE vazia (zero restaurantes)
+    // Isso evita que ele sobrescreva o teu trabalho se decidires ter poucos restaurantes.
+    if (!db.restaurants || db.restaurants.length === 0) {
+        console.log("🌱 Startup: Database is empty. Seeding from new_restaurants.json...");
         const seedPath = path.join(__dirname, 'new_restaurants.json');
         if (fs.existsSync(seedPath)) {
             try {
@@ -73,6 +75,8 @@ const seedIfNeeded = async () => {
                 console.error("Error during initial seeding", seedErr);
             }
         }
+    } else {
+        console.log(`📊 Startup: Database already has ${db.restaurants.length} restaurants. Skipping seed.`);
     }
 };
 
