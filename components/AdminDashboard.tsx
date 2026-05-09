@@ -442,6 +442,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {commonInput(t('item_rating'), 'rating', 'number')}
             {commonInput(t('item_reviews'), 'reviews', 'number')}
+            
+            <div className="flex items-center gap-4 py-2 border-b border-slate-100 pb-4">
+               <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={editingItem.isPremium} onChange={e => setEditingItem({...editingItem, isPremium: e.target.checked})} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm font-bold text-slate-700">Destaque Premium</span>
+               </label>
+               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${editingItem.isPremium ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-slate-100 text-slate-400'}`}>
+                  {editingItem.isPremium ? 'Premium / Pago' : 'Grátis'}
+               </span>
+            </div>
+
             {commonInput('Google Maps Link', 'mapUrl', 'text', true)}
             
             {/* Image Upload Field */}
