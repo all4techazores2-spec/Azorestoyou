@@ -19,16 +19,19 @@ const dbSchema = new mongoose.Schema({
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
 export const connectDB = async () => {
+    console.log("🔍 Checking Database Configuration...");
     if (IS_MONGODB) {
         try {
+            console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(MONGODB_URI);
-            console.log("✅ Connected to MongoDB Atlas");
+            console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
         } catch (err) {
-            console.error("❌ MongoDB Connection Error:", err);
-            process.exit(1);
+            console.error("❌ DATABASE ERROR: MongoDB Connection Failed:", err.message);
+            console.log("⚠️ Falling back to local storage mode.");
         }
     } else {
-        console.log("📂 Using Local JSON Storage (db.json)");
+        console.log("📂 DATABASE STATUS: Using Local JSON Storage (db.json)");
+        console.log("ℹ️ To enable permanent storage, add MONGODB_URI to Render environment variables.");
     }
 };
 
