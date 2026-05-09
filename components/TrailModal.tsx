@@ -16,9 +16,10 @@ interface TrailModalProps {
   userCredits?: number;
   setUserCredits?: (credits: number) => void;
   onReserveSuccess?: (resData: any, itemName: string, itemId: string) => void;
+  onShowMap?: (url: string) => void;
 }
 
-const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAuthenticated, onShowAuth, userProfile, userCredits = 0, setUserCredits }) => {
+const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAuthenticated, onShowAuth, userProfile, userCredits = 0, setUserCredits, onReserveSuccess, onShowMap }) => {
   const [bookingStep, setBookingStep] = useState<'main' | 'datetime' | 'details' | 'payment' | 'success'>('main');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -73,7 +74,13 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
     if (wantsGuide) {
       setShowGuideList(true);
     } else {
-      setShowMap(true);
+      const url = trail.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${trail.title}, ${trail.island}, Azores`)}`;
+      if (onShowMap) {
+        onShowMap(url);
+        onClose();
+      } else {
+        setShowMap(true);
+      }
     }
   };
 
@@ -300,7 +307,20 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                           <Check className="w-5 h-5" /> Fazer Reserva
                         </button>
                       )}
-                      <button onClick={() => trail.mapUrl ? window.open(trail.mapUrl, '_blank') : handleDirectionsClick()} className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${trail.isPaid ? 'bg-slate-800 text-white hover:bg-slate-900' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                      <button 
+                        onClick={() => {
+                          const url = trail.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${trail.title}, ${trail.island}, Azores`)}`;
+                          if (onShowMap) {
+                            onShowMap(url);
+                            onClose();
+                          } else if (trail.mapUrl) {
+                            window.open(trail.mapUrl, '_blank');
+                          } else {
+                            handleDirectionsClick();
+                          }
+                        }} 
+                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${trail.isPaid ? 'bg-slate-800 text-white hover:bg-slate-900' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
                         <Navigation className="w-5 h-5" /> Obter Direções
                       </button>
                     </div>

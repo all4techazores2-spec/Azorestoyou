@@ -40,6 +40,7 @@ interface ExploreSectionProps {
   onReserveSuccess?: (resData: any, restName: string, restId: string) => void;
   userProfile?: { email: string; name: string; phone: string };
   onClose?: () => void;
+  onShowMap?: (url: string) => void;
 }
 
 const ExploreSection: React.FC<ExploreSectionProps> = ({ 
@@ -70,7 +71,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onToggleFavorite,
   onReserveSuccess,
   userProfile,
-  onClose
+  onClose,
+  onShowMap
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -1003,7 +1005,13 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                        const url = (s.latitude && s.longitude) 
                         ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
                         : '#';
-                       window.open(url, '_blank');
+                       if (url !== '#') {
+                         if (onShowMap) {
+                           onShowMap(url);
+                         } else {
+                           window.open(url, '_blank');
+                         }
+                       }
                      }}
                      className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
                    >
@@ -1111,7 +1119,13 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                        const url = (s.latitude && s.longitude) 
                         ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
                         : '#';
-                       window.open(url, '_blank');
+                       if (url !== '#') {
+                         if (onShowMap) {
+                           onShowMap(url);
+                         } else {
+                           window.open(url, '_blank');
+                         }
+                       }
                      }}
                      className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
                    >
@@ -1282,7 +1296,13 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                        const url = (u.latitude && u.longitude) 
                         ? `https://maps.google.com/?q=${u.latitude},${u.longitude}` 
                         : '#';
-                       window.open(url, '_blank');
+                       if (url !== '#') {
+                         if (onShowMap) {
+                           onShowMap(url);
+                         } else {
+                           window.open(url, '_blank');
+                         }
+                       }
                      }}
                      className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
                    >
@@ -1380,6 +1400,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           setUserCredits={setUserCredits}
           userProfile={userProfile}
           onReserveSuccess={onReserveSuccess}
+          onShowMap={onShowMap}
         />
       )}
 

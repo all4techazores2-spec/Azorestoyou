@@ -24,6 +24,7 @@ interface BookingWizardProps {
   // Dynamic Data Props
   hotels?: Hotel[];
   cars?: Car[];
+  onShowMap?: (url: string) => void;
 }
 
 const BookingWizard: React.FC<BookingWizardProps> = ({ 
@@ -39,7 +40,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   onClose,
   onConfirm,
   hotels = [],
-  cars = []
+  cars = [],
+  onShowMap
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -530,6 +532,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
               language={language}
               onClose={() => setSelectedAccommodationForDetail(null)}
               onConfirm={handleAccommodationConfirm}
+              onShowMap={onShowMap}
             />
           )}
         </AnimatePresence>

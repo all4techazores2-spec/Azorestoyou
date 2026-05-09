@@ -46,7 +46,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-50 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-[90] pb-safe">
         <div className="flex justify-around items-center h-20 px-2 relative">
           {/* Favoritos */}
           <button 

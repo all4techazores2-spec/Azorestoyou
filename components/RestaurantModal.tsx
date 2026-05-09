@@ -16,6 +16,7 @@ interface RestaurantModalProps {
   setUserCredits?: (credits: number) => void;
   onReserveSuccess?: (resData: any, restName: string, restId: string) => void;
   userProfile?: { email: string; name: string; phone: string };
+  onShowMap?: (url: string) => void;
 }
 
 type BookingStep = 'info' | 'datetime' | 'success';
@@ -30,7 +31,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   userCredits = 0,
   setUserCredits,
   onReserveSuccess,
-  userProfile
+  userProfile,
+  onShowMap
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -540,7 +542,13 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                              const url = (restaurant.latitude && restaurant.longitude) 
                                ? `https://maps.google.com/?q=${restaurant.latitude},${restaurant.longitude}` 
                                : restaurant.mapsUrl;
-                             if (url) window.open(url, '_blank');
+                             if (url) {
+                               if (onShowMap) {
+                                 onShowMap(url);
+                               } else {
+                                 window.open(url, '_blank');
+                               }
+                             }
                            }} 
                            className="mt-1 w-full px-4 py-3 bg-slate-800 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all"
                          >

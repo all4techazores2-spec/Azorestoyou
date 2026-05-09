@@ -12,6 +12,7 @@ interface FavoritesModalProps {
   favoriteRestaurantIds: string[];
   restaurants: Restaurant[];
   language?: Language;
+  onShowMap?: (url: string) => void;
 }
 
 const FavoritesModal: React.FC<FavoritesModalProps> = ({ 
@@ -19,7 +20,8 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({
   onClose, 
   favoriteRestaurantIds, 
   restaurants,
-  language = 'pt'
+  language = 'pt',
+  onShowMap
 }) => {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [bookingRestaurant, setBookingRestaurant] = useState<Restaurant | null>(null);
@@ -177,7 +179,13 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({
                           const url = (selectedRestaurant.latitude && selectedRestaurant.longitude) 
                             ? `https://maps.google.com/?q=${selectedRestaurant.latitude},${selectedRestaurant.longitude}` 
                             : selectedRestaurant.mapsUrl;
-                          if (url) window.open(url, '_blank');
+                          if (url) {
+                            if (onShowMap) {
+                              onShowMap(url);
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }
                         }} 
                         className="mt-5 w-full sm:w-auto px-6 py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
                       >
@@ -300,6 +308,7 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({
                  alert('Reserva efetuada com sucesso!');
                  setBookingRestaurant(null);
                }}
+               onShowMap={onShowMap}
             />
          </div>
       )}

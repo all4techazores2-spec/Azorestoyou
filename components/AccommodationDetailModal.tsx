@@ -14,13 +14,15 @@ interface AccommodationDetailModalProps {
   language: string;
   onClose: () => void;
   onConfirm: (accommodation: Hotel, selectedRoom?: Room, rentType?: 'room' | 'house') => void;
+  onShowMap?: (url: string) => void;
 }
 
 const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   accommodation,
   language,
   onClose,
-  onConfirm
+  onConfirm,
+  onShowMap
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -96,11 +98,11 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   };
 
   const openGoogleMaps = () => {
-    if (accommodation.mapsUrl) {
-      window.open(accommodation.mapsUrl, '_blank');
+    const url = accommodation.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${accommodation.name}, ${accommodation.island}, Azores`)}`;
+    if (onShowMap) {
+      onShowMap(url);
     } else {
-      const query = encodeURIComponent(`${accommodation.name}, ${accommodation.island}, Azores`);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+      window.open(url, '_blank');
     }
   };
 

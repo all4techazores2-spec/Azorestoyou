@@ -253,6 +253,7 @@ const App: React.FC = () => {
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
   // Function to fetch data from Backend
   const fetchData = async () => {
     try {
@@ -1657,6 +1658,7 @@ const App: React.FC = () => {
                      onConfirm={persistItinerary}
                      // Dynamic Data
                      hotels={hotels}
+                     onShowMap={(url: string) => setShowMapUrl(url)}
                    />
                 )}
 
@@ -1793,6 +1795,7 @@ const App: React.FC = () => {
                       }
                     }}
                     onClose={() => setExploreCategory(null)}
+                    onShowMap={(url: string) => setShowMapUrl(url)}
                   />
                 )}
               </div>
@@ -1801,6 +1804,49 @@ const App: React.FC = () => {
         )}
         </AnimatePresence>
       </main>
+
+      {/* Global Map Overlay */}
+      <AnimatePresence>
+        {showMapUrl && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex flex-col pt-20 pb-32"
+          >
+            <div className="flex-1 bg-white relative overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tighter">Localização no Mapa</h3>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Google Maps Integrado</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowMapUrl(null)}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-all active:scale-90"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 w-full h-full bg-slate-50">
+                <iframe 
+                  src={showMapUrl.includes('google.com/maps') 
+                    ? `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed` 
+                    : showMapUrl}
+                  className="w-full h-full border-none"
+                  allowFullScreen
+                  loading="lazy"
+                  title="Google Maps"
+                ></iframe>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Persistent Trip Button (Mobile) */}
       <BottomNav 
@@ -1910,6 +1956,7 @@ const App: React.FC = () => {
         favoriteRestaurantIds={favoriteRestaurantIds}
         restaurants={restaurants}
         language={language}
+        onShowMap={(url: string) => setShowMapUrl(url)}
       />
       <NotificationsModal 
         isOpen={showNotificationsModal} 
