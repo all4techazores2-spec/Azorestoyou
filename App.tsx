@@ -123,25 +123,25 @@ const App: React.FC = () => {
   // Em produção, apontamos sempre para o Render para garantir que o Cloudflare consiga ler os dados
   const API_BASE_URL = isLocal ? 'http://localhost:3001' : RENDER_BACKEND;
 
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(getRestaurants('pt'));
-  const [activities, setActivities] = useState<Activity[]>(getActivities('pt'));
-  const [flights, setFlights] = useState<Flight[]>(getFlights('pt'));
-  const [hotels, setHotels] = useState<Hotel[]>(getHotels('pt'));
-  const [cars, setCars] = useState<Car[]>(getCars('pt'));
-  const [busSchedules, setBusSchedules] = useState<BusSchedule[]>(BUS_SCHEDULES);
-  const [shops, setShops] = useState<Business[]>(getShops('pt'));
-  const [beauty, setBeauty] = useState<Business[]>(getBeauty('pt'));
-  const [services, setServices] = useState<Business[]>(getServices('pt'));
-  const [autoRepairs, setAutoRepairs] = useState<Business[]>(getAutoRepairs('pt'));
-  const [autoElectronics, setAutoElectronics] = useState<Business[]>(getAutoElectronics('pt'));
-  const [usedMarket, setUsedMarket] = useState<Business[]>(getUsedMarket('pt'));
-  const [animals, setAnimals] = useState<Business[]>(getAnimals('pt'));
-  const [realEstate, setRealEstate] = useState<Business[]>(getRealEstate('pt'));
-  const [gyms, setGyms] = useState<Business[]>(getGyms('pt'));
-  const [stands, setStands] = useState<Business[]>(getStands('pt'));
-  const [offices, setOffices] = useState<Business[]>(getOffices('pt'));
-  const [itServices, setItServices] = useState<Business[]>(getITServices('pt'));
-  const [perfumes, setPerfumes] = useState<Business[]>(getPerfumes('pt'));
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
+  const [busSchedules, setBusSchedules] = useState<BusSchedule[]>([]);
+  const [shops, setShops] = useState<Business[]>([]);
+  const [beauty, setBeauty] = useState<Business[]>([]);
+  const [services, setServices] = useState<Business[]>([]);
+  const [autoRepairs, setAutoRepairs] = useState<Business[]>([]);
+  const [autoElectronics, setAutoElectronics] = useState<Business[]>([]);
+  const [usedMarket, setUsedMarket] = useState<Business[]>([]);
+  const [animals, setAnimals] = useState<Business[]>([]);
+  const [realEstate, setRealEstate] = useState<Business[]>([]);
+  const [gyms, setGyms] = useState<Business[]>([]);
+  const [stands, setStands] = useState<Business[]>([]);
+  const [offices, setOffices] = useState<Business[]>([]);
+  const [itServices, setItServices] = useState<Business[]>([]);
+  const [perfumes, setPerfumes] = useState<Business[]>([]);
 
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -185,87 +185,11 @@ const App: React.FC = () => {
 
   // Initialize other static data on language change
   useEffect(() => {
-    // Apenas carregar dados estáticos se os estados estiverem vazios (evita apagar dados do servidor)
-    if (hotels.length <= 1) {
-      const baseHotels = getHotels(language);
-      const testHotel = { id: 'hotel-1', name: 'Azores Royal Garden', businessType: 'hotel', adminEmail: 'hotel@azores4you.com', reservations: [], image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', rating: 4.8, island: 'São Miguel' } as any;
-      if (!baseHotels.find(h => h.id === 'hotel-1')) {
-        setHotels([testHotel, ...baseHotels]);
-      } else {
-        setHotels(baseHotels);
-      }
-    }
-
-    if (cars.length <= 1) {
-      const testCompany = { 
-        id: 'rentcar-1', 
-        name: 'Auto Açores Rent', 
-        island: 'PDL', 
-        address: 'Aeroporto João Paulo II', 
-        email: 'reservas@autoacores.pt', 
-        contact: '+351 296 000 000', 
-        image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop', 
-        cars: [
-          { 
-            id: 'c1', 
-            model: 'Renault Clio', 
-            type: 'Económico' as const, 
-            fuelType: 'Gasolina' as const, 
-            pricePerDay: 45, 
-            image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=800', 
-            seats: 5, 
-            isAvailable: true, 
-            description: 'Económico e prático.', 
-            features: ['A/C', 'Manual'], 
-            companyId: 'rentcar-1' 
-          }
-        ],
-        adminEmail: 'rentcar@azores4you.com', 
-        adminPassword: 'admin' 
-      };
-      setCars([testCompany as any]);
-    }
-
-    if (activities.length === 0) setActivities(getActivities(language));
-    if (flights.length === 0) setFlights(getFlights(language));
-    if (busSchedules.length === 0) setBusSchedules(BUS_SCHEDULES);
-    
-    // Categorias secundárias - apenas carregar dados estáticos se o servidor ainda não tiver dados
-    // Isto evita que dados apagados no painel admin reapareçam após polling ou mudança de idioma
-    if (services.length === 0) setServices(getServices(language));
-    if (autoRepairs.length === 0) setAutoRepairs(getAutoRepairs(language));
-    if (autoElectronics.length === 0) setAutoElectronics(getAutoElectronics(language));
-    if (usedMarket.length === 0) setUsedMarket(getUsedMarket(language));
-    if (animals.length === 0) setAnimals(getAnimals(language));
-    if (realEstate.length === 0) setRealEstate(getRealEstate(language));
-    if (gyms.length === 0) setGyms(getGyms(language));
-    if (stands.length === 0) setStands(getStands(language));
-    if (offices.length === 0) setOffices(getOffices(language));
-    if (itServices.length === 0) setItServices(getITServices(language));
-    if (perfumes.length === 0) setPerfumes(getPerfumes(language));
-
-    // DEMO DATA FOR ISLAND FILTERING
-    const demoRestaurants: Partial<Restaurant>[] = [
-      { id: 'demo-smi-1', name: 'A Tasca', island: 'São Miguel', rating: 4.9, reviews: 1200, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Tradicional', description: 'O melhor petisco de Ponta Delgada.', priceRange: '€€', location: 'Ponta Delgada' },
-      { id: 'demo-pico-1', name: 'Cella Bar', island: 'Pico', rating: 4.8, reviews: 120, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Modern', description: 'O bar mais icónico do Pico.', priceRange: '€€€', location: 'Madalena' },
-      { id: 'demo-ter-1', name: 'O Pescador', island: 'Terceira', rating: 4.7, reviews: 95, image: 'https://images.unsplash.com/photo-1551731359-2b34fc973d2a?q=80&w=2070&auto=format&fit=crop', businessType: 'restaurant', category: 'Peixe Fresco', description: 'O melhor peixe da Terceira.', priceRange: '€€', location: 'Praia da Vitória' }
-    ];
-    setRestaurants(prev => [...prev.filter(r => !r.id.startsWith('demo-')), ...(demoRestaurants as Restaurant[])]);
-
-    const demoActivities: Partial<Activity>[] = [
-      { id: 'act-smi-1', title: 'Lagoa do Fogo', island: 'São Miguel', rating: 5.0, reviews: 5000, image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?q=80&w=2070&auto=format&fit=crop', description: 'Uma das 7 maravilhas de Portugal.', isPaid: false, type: 'landscape', phone: '+351 296 000 000', email: 'turismo@azores.gov.pt', address: 'São Miguel, Açores' },
-      { id: 'act-smi-2', title: 'Sete Cidades Kayak', island: 'São Miguel', rating: 4.8, reviews: 450, image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2070&auto=format&fit=crop', description: 'Aventura nas lagoas gémeas.', isPaid: true, price: 25, type: 'activity', phone: '+351 961 234 567', email: 'kayak@setecidades.pt', address: 'Lagoa das Sete Cidades' },
-      { id: 'act-ter-1', title: 'Algar do Carvão', island: 'Terceira', rating: 4.9, reviews: 300, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Visita ao interior de um vulcão.', isPaid: true, price: 10, type: 'activity', phone: '+351 295 123 456', email: 'montanheiros@terceira.pt', address: 'Cume da Terceira, Algar do Carvão' },
-      { id: 'act-fai-1', title: 'Vulcão dos Capelinhos', island: 'Faial', rating: 4.8, reviews: 250, image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop', description: 'Paisagem lunar única.', isPaid: false, type: 'landscape', phone: '+351 292 000 111', email: 'parquenatural@faial.pt', address: 'Capelo, Faial' }
-    ];
-    setActivities(prev => [...prev.filter(a => !a.id.startsWith('act-')), ...(demoActivities as Activity[])]);
-
-    const demoShops: Partial<ShopBusiness>[] = [
-      { id: 'shop-smi-1', name: 'Mercado da Graça', island: 'São Miguel', rating: 4.7, reviews: 800, image: 'https://images.unsplash.com/photo-1488459711635-0c0028970811?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Local Products' },
-      { id: 'shop-ter-1', name: 'Artesanato da Terceira', island: 'Terceira', rating: 4.6, reviews: 45, image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=2070&auto=format&fit=crop', businessType: 'shop', category: 'Handmade' }
-    ];
-    setShops(prev => [...prev.filter(s => !s.id.startsWith('shop-')), ...(demoShops as ShopBusiness[])]);
+    // Apenas configurar fallbacks para dados que normalmente vêm do server
+    // NÃO adicionar dados estáticos - o servidor é a única fonte de verdade
+    // Se o servidor estiver vazio, o frontend mostra vazio (correto)
   }, [language]);
+
 
 
   // Modal State
