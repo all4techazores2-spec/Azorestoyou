@@ -309,11 +309,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleBulkAdd = () => {
     if (!bulkText.trim()) return;
-    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const timestamp = Date.now();
-    
-    const newItems = lines.map((line, idx) => {
-      const { name, email, contact, address } = smartParseLine(line);
+
+    // Split into blocks separated by blank lines
+    // Each block = one business entry
+    const blocks = bulkText
+      .split(/\n\s*\n/) // split on blank lines
+      .map(block => block.trim())
+      .filter(block => block.length > 0);
+
+    const newItems = blocks.map((block, idx) => {
+      const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      
+      // First line = name of the business
+      const nameRaw = lines[0] || 'Sem Nome';
+      
+      // Remaining lines = contact/address info - merge and parse together
+      const contactBlock = lines.slice(1).join(' ');
+      
+      // Parse contact block for email, phone, address
+      const { email, contact, address } = smartParseLine(contactBlock);
+      
+      // Clean the name (remove any accidental contact info from name line too)
+      const { name: cleanName } = smartParseLine(nameRaw);
+      const name = cleanName || nameRaw;
+
       const id = `${activeTab.substring(0,3).toUpperCase()}${timestamp}${idx}`;
       
       switch (activeTab) {
@@ -1527,8 +1547,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     <textarea 
-                      className="w-full h-48 border-2 border-slate-100 p-4 rounded-2xl font-mono text-sm focus:border-amber-400 outline-none transition-colors"
-                      placeholder="Exemplo:&#10;Trilho da Lagoa&#10;Trilho do Pico&#10;Trilho das Sete Cidades"
+                      className="w-full h-72 border-2 border-slate-100 p-4 rounded-2xl font-mono text-sm focus:border-amber-400 outline-none transition-colors"
+                      placeholder={`Exemplo (separe cada negócio com uma linha em branco):
+
+Restaurante A Tasca
+Rua de Lisboa 12, Ponta Delgada
+(+351) 296 111 222  info@atasca.pt
+
+Cella Bar
+Av. do Mar, Madalena, Pico
+(+351) 292 555 888  cellbar@pico.pt`}
                       value={bulkText}
                       onChange={e => setBulkText(e.target.value)}
                     />
