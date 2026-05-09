@@ -95,15 +95,17 @@ const writeDB = (data) => {
 // Initial Seed Function
 const seedIfNeeded = () => {
     const db = readDB();
-    if (db.restaurants.length === 0) {
-        console.log("🌱 Startup: Database is empty. Seeding from new_restaurants.json...");
+    // Se tiver menos de 10 restaurantes, provavelmente é um novo deploy do Render
+    // que trouxe o db.json básico do repositório. Vamos forçar o seed dos +500.
+    if (!db.restaurants || db.restaurants.length < 10) {
+        console.log("🌱 Startup: Database is empty or incomplete. Seeding from new_restaurants.json...");
         const seedPath = path.join(__dirname, 'new_restaurants.json');
         if (fs.existsSync(seedPath)) {
             try {
                 const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
                 db.restaurants = seedData;
                 writeDB(db);
-                console.log(`✅ Startup: Seeded ${seedData.length} restaurants.`);
+                console.log(`✅ Startup: Seeded ${seedData.length} restaurants successfully.`);
             } catch (seedErr) {
                 console.error("Error during initial seeding", seedErr);
             }
