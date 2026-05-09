@@ -1036,6 +1036,17 @@ const App: React.FC = () => {
         restaurants={restaurants}
         shops={shops}
         beauty={beauty}
+        services={services}
+        autoRepairs={autoRepairs}
+        autoElectronics={autoElectronics}
+        usedMarket={usedMarket}
+        animals={animals}
+        realEstate={realEstate}
+        gyms={gyms}
+        stands={stands}
+        offices={offices}
+        itServices={itServices}
+        perfumes={perfumes}
         activities={activities}
         flights={flights}
         hotels={hotels}
@@ -1045,35 +1056,64 @@ const App: React.FC = () => {
         onUpdateRestaurants={async (updatedList) => {
           setRestaurants(updatedList);
           try {
-            const res = await fetch(`${API_BASE_URL}/api/restaurants/bulk`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(updatedList),
-            });
-            if (res.ok) alert('✅ Restaurantes gravados com sucesso!');
+            await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
           } catch (error) {}
         }}
         onUpdateShops={async (updatedList) => {
           setShops(updatedList);
           try {
-            const res = await fetch(`${API_BASE_URL}/api/shops/bulk`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(updatedList),
-            });
-            if (res.ok) alert('✅ Lojas gravadas com sucesso!');
+            await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
           } catch (error) {}
         }}
         onUpdateBeauty={async (updatedList) => {
           setBeauty(updatedList);
           try {
-            const res = await fetch(`${API_BASE_URL}/api/beauty/bulk`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(updatedList),
-            });
-            if (res.ok) alert('✅ Serviços de Beleza gravados com sucesso!');
+            await fetch(`${API_BASE_URL}/api/beauty/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
           } catch (error) {}
+        }}
+        onUpdateServices={async (list) => {
+          setServices(list);
+          await fetch(`${API_BASE_URL}/api/services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateAutoRepairs={async (list) => {
+          setAutoRepairs(list);
+          await fetch(`${API_BASE_URL}/api/auto_repairs/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateAutoElectronics={async (list) => {
+          setAutoElectronics(list);
+          await fetch(`${API_BASE_URL}/api/auto_electronics/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateUsedMarket={async (list) => {
+          setUsedMarket(list);
+          await fetch(`${API_BASE_URL}/api/used_market/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateAnimals={async (list) => {
+          setAnimals(list);
+          await fetch(`${API_BASE_URL}/api/animals/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateRealEstate={async (list) => {
+          setRealEstate(list);
+          await fetch(`${API_BASE_URL}/api/real_estate/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateGyms={async (list) => {
+          setGyms(list);
+          await fetch(`${API_BASE_URL}/api/gyms/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateStands={async (list) => {
+          setStands(list);
+          await fetch(`${API_BASE_URL}/api/stands/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateOffices={async (list) => {
+          setOffices(list);
+          await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdateITServices={async (list) => {
+          setItServices(list);
+          await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+        }}
+        onUpdatePerfumes={async (list) => {
+          setPerfumes(list);
+          await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
         }}
         onUpdateActivities={async (list) => {
           setActivities(list);
@@ -1103,14 +1143,9 @@ const App: React.FC = () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                restaurants,
-                shops,
-                beauty,
-                activities,
-                flights,
-                hotels,
-                cars,
-                busSchedules
+                restaurants, shops, beauty, services, autoRepairs, autoElectronics, usedMarket, animals,
+                realEstate, gyms, stands, offices, itServices, perfumes,
+                activities, flights, hotels, cars, busSchedules
               }),
             });
             if (res.ok) alert('✅ Sincronização TOTAL concluída com sucesso!');

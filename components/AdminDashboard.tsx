@@ -1,20 +1,34 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Restaurant, Activity, Language, Dish, Flight, Hotel, Car, BusSchedule } from '../types';
+import { Restaurant, Activity, Language, Dish, Flight, Hotel, Car, BusSchedule, Business } from '../types';
 import { getTranslation } from '../translations';
 import { 
   Utensils, Mountain, Edit, Trash2, Plus, Save, X, LogOut, 
   LayoutDashboard, Plane, BedDouble, Car as CarIcon, Bus, 
   Image as ImageIcon, Lock, Users, Cloud as CloudSync,
   ShoppingBag, Mail, MapPin, Phone, Sparkles,
-  Scissors, User, Flower2, Brush, ArrowRight, RefreshCw
+  Scissors, User, Flower2, Brush, ArrowRight, RefreshCw, Home,
+  Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
+  ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, 
+  MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar
 } from 'lucide-react';
 
 interface AdminDashboardProps {
   restaurants: Restaurant[];
-  shops: Restaurant[];
-  beauty: Restaurant[];
+  shops: Business[];
+  beauty: Business[];
+  services: Business[];
+  autoRepairs: Business[];
+  autoElectronics: Business[];
+  usedMarket: Business[];
+  animals: Business[];
+  realEstate: Business[];
+  gyms: Business[];
+  stands: Business[];
+  offices: Business[];
+  itServices: Business[];
+  perfumes: Business[];
   activities: Activity[];
   flights: Flight[];
   hotels: Hotel[];
@@ -22,8 +36,19 @@ interface AdminDashboardProps {
   busSchedules: BusSchedule[];
   
   onUpdateRestaurants: (newRestaurants: Restaurant[]) => void;
-  onUpdateShops: (newShops: Restaurant[]) => void;
-  onUpdateBeauty: (newBeauty: Restaurant[]) => void;
+  onUpdateShops: (newShops: Business[]) => void;
+  onUpdateBeauty: (newBeauty: Business[]) => void;
+  onUpdateServices: (newServices: Business[]) => void;
+  onUpdateAutoRepairs: (newAutoRepairs: Business[]) => void;
+  onUpdateAutoElectronics: (newAutoElectronics: Business[]) => void;
+  onUpdateUsedMarket: (newUsedMarket: Business[]) => void;
+  onUpdateAnimals: (newAnimals: Business[]) => void;
+  onUpdateRealEstate: (newRealEstate: Business[]) => void;
+  onUpdateGyms: (newGyms: Business[]) => void;
+  onUpdateStands: (newStands: Business[]) => void;
+  onUpdateOffices: (newOffices: Business[]) => void;
+  onUpdateITServices: (newITServices: Business[]) => void;
+  onUpdatePerfumes: (newPerfumes: Business[]) => void;
   onUpdateActivities: (newActivities: Activity[]) => void;
   onUpdateFlights: (newFlights: Flight[]) => void;
   onUpdateHotels: (newHotels: Hotel[]) => void;
@@ -35,11 +60,11 @@ interface AdminDashboardProps {
   language?: Language;
 }
 
-type Tab = 'restaurants' | 'shops' | 'beauty' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
+type Tab = 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants = [], shops = [], beauty = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
-  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
+  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
   onLogout, onFullSync,
   language = 'pt'
 }) => {
@@ -153,6 +178,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'restaurants': onUpdateRestaurants(restaurants.filter(r => r.id !== id)); break;
       case 'shops': onUpdateShops(shops.filter(s => s.id !== id)); break;
       case 'beauty': onUpdateBeauty(beauty.filter(b => b.id !== id)); break;
+      case 'services': onUpdateServices(services.filter(s => s.id !== id)); break;
+      case 'auto_repairs': onUpdateAutoRepairs(autoRepairs.filter(a => a.id !== id)); break;
+      case 'auto_electronics': onUpdateAutoElectronics(autoElectronics.filter(a => a.id !== id)); break;
+      case 'used_market': onUpdateUsedMarket(usedMarket.filter(u => u.id !== id)); break;
+      case 'animals': onUpdateAnimals(animals.filter(a => a.id !== id)); break;
+      case 'real_estate': onUpdateRealEstate(realEstate.filter(r => r.id !== id)); break;
+      case 'gyms': onUpdateGyms(gyms.filter(g => g.id !== id)); break;
+      case 'stands': onUpdateStands(stands.filter(s => s.id !== id)); break;
+      case 'offices': onUpdateOffices(offices.filter(o => o.id !== id)); break;
+      case 'it_services': onUpdateITServices(itServices.filter(i => i.id !== id)); break;
+      case 'perfumes': onUpdatePerfumes(perfumes.filter(p => p.id !== id)); break;
       case 'activities': onUpdateActivities(activities.filter(a => a.id !== id)); break;
       case 'flights': onUpdateFlights(flights.filter(f => f.id !== id)); break;
       case 'hotels': onUpdateHotels(hotels.filter(h => h.id !== id)); break;
@@ -181,6 +217,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'restaurants': updateList(restaurants, onUpdateRestaurants); break;
       case 'shops': updateList(shops, onUpdateShops); break;
       case 'beauty': updateList(beauty, onUpdateBeauty); break;
+      case 'services': updateList(services, onUpdateServices); break;
+      case 'auto_repairs': updateList(autoRepairs, onUpdateAutoRepairs); break;
+      case 'auto_electronics': updateList(autoElectronics, onUpdateAutoElectronics); break;
+      case 'used_market': updateList(usedMarket, onUpdateUsedMarket); break;
+      case 'animals': updateList(animals, onUpdateAnimals); break;
+      case 'real_estate': updateList(realEstate, onUpdateRealEstate); break;
+      case 'gyms': updateList(gyms, onUpdateGyms); break;
+      case 'stands': updateList(stands, onUpdateStands); break;
+      case 'offices': updateList(offices, onUpdateOffices); break;
+      case 'it_services': updateList(itServices, onUpdateITServices); break;
+      case 'perfumes': updateList(perfumes, onUpdatePerfumes); break;
       case 'activities': updateList(activities, onUpdateActivities); break;
       case 'flights': updateList(flights, onUpdateFlights); break;
       case 'hotels': updateList(hotels, onUpdateHotels); break;
@@ -205,51 +252,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     switch (activeTab) {
       case 'restaurants':
+      case 'shops':
+      case 'beauty':
+      case 'services':
+      case 'auto_repairs':
+      case 'auto_electronics':
+      case 'used_market':
+      case 'animals':
+      case 'real_estate':
+      case 'gyms':
+      case 'stands':
+      case 'offices':
+      case 'it_services':
+      case 'perfumes':
         newItem = { 
-          id: `R${timestamp}`, 
+          id: `${activeTab.substring(0,3).toUpperCase()}${timestamp}`, 
           name: '', 
           island: 'PDL', 
-          cuisine: '', 
           rating: 4.5, 
           reviews: 0, 
           image: '', 
           description: '', 
-          dishes: [],
           adminEmail: '',
           adminPassword: '',
           subcategory: '',
-          services: []
+          dishes: [],
+          services: [],
+          mapUrl: ''
         };
         break;
       case 'activities':
-        newItem = { id: `A${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado' };
+        newItem = { id: `ACT${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, mapUrl: '' };
         break;
       case 'flights':
-        newItem = { id: `F${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
+        newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
         break;
       case 'hotels':
-        newItem = { id: `H${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel' };
+        newItem = { id: `HOT${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel', mapUrl: '' };
         break;
       case 'cars':
-        newItem = { id: `C${timestamp}`, model: '', companyId: '', type: 'Económico', fuelType: 'Gasolina', pricePerDay: 0, image: '', seats: 5, isAvailable: true, description: '', features: [] };
+        newItem = { id: `CAR${timestamp}`, model: '', companyId: '', type: 'Económico', fuelType: 'Gasolina', pricePerDay: 0, image: '', seats: 5, isAvailable: true, description: '', features: [] };
         break;
       case 'buses':
-        newItem = { id: `B${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };
-        break;
-      case 'shops':
-        newItem = { 
-          id: `S${timestamp}`, name: '', island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
-          subcategory: shopsFilter !== 'all' ? shopsFilter : 'crafts',
-          adminEmail: '', adminPassword: ''
-        };
-        break;
-      case 'beauty':
-        newItem = { 
-          id: `B${timestamp}`, name: '', island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
-          subcategory: beautyFilter !== 'all' ? beautyFilter : 'beauty_salon',
-          adminEmail: '', adminPassword: '',
-          dishes: []
-        };
+        newItem = { id: `BUS${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };
         break;
       case 'suppliers':
         alert('Por favor, adicione fornecedores diretamente no cartão de cada restaurante abaixo.');
@@ -345,11 +390,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'restaurants':
       case 'shops':
       case 'beauty':
+      case 'services':
+      case 'auto_repairs':
+      case 'auto_electronics':
+      case 'used_market':
+      case 'animals':
+      case 'real_estate':
+      case 'gyms':
+      case 'stands':
+      case 'offices':
+      case 'it_services':
+      case 'perfumes':
         return (
           <>
             {commonInput(t('item_name'), 'name')}
             {islandSelect()}
             {activeTab === 'restaurants' && commonInput(t('field_cuisine'), 'cuisine')}
+            
+            {/* Subcategory selection based on Tab */}
             {activeTab === 'beauty' && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
@@ -367,12 +425,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
                 <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
                   <option value="crafts">Artesanato</option>
-                  <option value="food">Produtos Regionais / Gastronomia</option>
+                  <option value="food">Produtos Regionais</option>
                 </select>
               </div>
             )}
+            {activeTab === 'auto_repairs' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="parts">Peças</option>
+                  <option value="workshop">Oficina</option>
+                  <option value="bodywork">Bate-chapas</option>
+                </select>
+              </div>
+            )}
+
             {commonInput(t('item_rating'), 'rating', 'number')}
             {commonInput(t('item_reviews'), 'reviews', 'number')}
+            {commonInput('Google Maps Link', 'mapUrl', 'text', true)}
             
             {/* Image Upload Field */}
             <div className="md:col-span-2">
@@ -406,44 +476,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
             </div>
 
-            {/* Gallery / Slider Section */}
-            {(activeTab === 'restaurants' || activeTab === 'hotels') && (
-              <div className="md:col-span-2 border-t pt-4 mt-2">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria de Imagens (Slider)</h4>
-                  <label className={`cursor-pointer px-4 py-1 rounded-lg text-xs font-black uppercase transition-all ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-                    {isUploading ? 'A carregar...' : '+ Adicionar Foto'}
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      disabled={isUploading}
-                      onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'gallery')}
-                    />
-                  </label>
-                </div>
-                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                   {editingItem.gallery?.map((img: string, idx: number) => (
-                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border group">
-                        <img src={img} className="w-full h-full object-cover" alt="" />
-                        <button 
-                          type="button" 
-                          onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})}
-                          className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                     </div>
-                   ))}
-                </div>
+            {/* Gallery Section */}
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria de Imagens</h4>
+                <label className={`cursor-pointer px-4 py-1 rounded-lg text-xs font-black uppercase transition-all ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700'}`}>
+                  {isUploading ? 'A carregar...' : '+ Adicionar Foto'}
+                  <input type="file" className="hidden" accept="image/*" disabled={isUploading} onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'gallery')} />
+                </label>
               </div>
-            )}
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                 {editingItem.gallery?.map((img: string, idx: number) => (
+                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border group">
+                      <img src={img} className="w-full h-full object-cover" alt="" />
+                      <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Trash2 className="w-5 h-5" /></button>
+                   </div>
+                 ))}
+              </div>
+            </div>
             
             {/* Dishes/Services Section */}
             <div className="md:col-span-2 border-t pt-4 mt-2">
               <div className="flex justify-between items-center mb-2">
-                 <h4 className="font-bold">{activeTab === 'beauty' ? 'Serviços' : activeTab === 'shops' ? 'Produtos em Destaque' : t('dishes_management')}</h4>
-                 <button type="button" onClick={addDish} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">+ {activeTab === 'beauty' ? 'Serviço' : activeTab === 'shops' ? 'Produto' : t('add_dish')}</button>
+                 <h4 className="font-bold">Items/Serviços</h4>
+                 <button type="button" onClick={addDish} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">+ Novo Item</button>
               </div>
               <div className="space-y-3">
                 {editingItem.dishes?.map((dish: Dish, idx: number) => (
@@ -451,22 +507,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="flex gap-2">
                       <input className="border p-2 rounded-lg w-1/3 font-bold" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
                       <input className="border p-2 rounded-lg w-1/4" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
-                      <div className="flex-1 flex gap-2">
-                        <input className="flex-1 border p-2 rounded-lg text-xs" placeholder="URL da Imagem" value={dish.image} onChange={e => updateDish(idx, 'image', e.target.value)} />
-                        <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
-                           <ImageIcon className="w-4 h-4" />
-                           <input 
-                             type="file" 
-                             className="hidden" 
-                             accept="image/*"
-                             disabled={isUploading}
-                             onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'dish', idx)}
-                           />
-                        </label>
-                      </div>
                       <button type="button" onClick={() => removeDish(idx)} className="text-red-500 p-2"><Trash2 className="w-5 h-5" /></button>
                     </div>
-                    <textarea className="w-full border p-2 rounded-lg text-sm h-16" placeholder="Descrição do prato..." value={dish.description} onChange={e => updateDish(idx, 'description', e.target.value)} />
                   </div>
                 ))}
               </div>
@@ -490,6 +532,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                </select>
             </div>
             {commonInput(t('item_image'), 'image', 'text')}
+            {commonInput('Google Maps Link', 'mapUrl', 'text')}
+            <div className="flex items-center gap-4 py-2">
+               <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={editingItem.isPaid} onChange={e => setEditingItem({...editingItem, isPaid: e.target.checked})} />
+                  <span className="text-sm font-bold text-slate-700">Atividade Paga</span>
+               </label>
+               {editingItem.isPaid && commonInput('Preço (€)', 'price', 'number')}
+            </div>
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
@@ -516,8 +566,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  <option value="Cancelado">Cancelado</option>
                </select>
              </div>
-             {commonInput('Stops', 'stops', 'number')}
-             {commonInput('Duration', 'duration')}
           </>
         );
 
@@ -530,15 +578,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {commonInput(t('price_night'), 'pricePerNight', 'number')}
             <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Alojamento</label>
-                <select 
-                  className="w-full border p-2 rounded-lg bg-white font-bold" 
-                  value={editingItem.type || 'hotel'} 
-                  onChange={e => setEditingItem({...editingItem, type: e.target.value})}
-                >
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.type || 'hotel'} onChange={e => setEditingItem({...editingItem, type: e.target.value})}>
                   <option value="hotel">Hotel</option>
                   <option value="al">AL (Alojamento Local)</option>
                 </select>
             </div>
+            {commonInput('Google Maps Link', 'mapUrl', 'text')}
             {commonInput(t('item_image'), 'image', 'text', true)}
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
@@ -551,7 +596,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return (
           <>
             {commonInput(t('field_model'), 'model')}
-            {commonInput(t('company'), 'company')}
+            {commonInput('Empresa', 'company')}
             <div>
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('field_type')}</label>
                <select className="w-full border p-2 rounded-lg bg-white" value={editingItem.type} onChange={e => setEditingItem({...editingItem, type: e.target.value})}>
@@ -570,20 +615,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'buses':
         return (
           <>
-            {commonInput(t('company'), 'company')}
+            {commonInput('Empresa', 'company')}
             {islandSelect()}
-            {commonInput(t('bus_origin'), 'origin')}
-            {commonInput(t('bus_destination'), 'destination')}
+            {commonInput('Origem', 'origin')}
+            {commonInput('Destino', 'destination')}
             {commonInput(t('item_price'), 'price', 'number')}
-            {commonInput('Duration', 'duration')}
-            <div className="md:col-span-2">
-               <label className="block text-sm font-bold text-slate-700 mb-1">{t('field_times')}</label>
-               <textarea 
-                 className="w-full border p-2 rounded-lg h-24 font-mono text-sm" 
-                 value={Array.isArray(editingItem.times) ? editingItem.times.join(', ') : editingItem.times} 
-                 onChange={e => setEditingItem({...editingItem, times: e.target.value.split(',').map((t: string) => t.trim())})} 
-               />
-            </div>
           </>
         );
     }
@@ -592,14 +628,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const getListItems = () => {
     switch (activeTab) {
       case 'restaurants': return restaurants;
-      case 'shops': 
-        return shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter);
-      case 'beauty': 
-        return beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter);
+      case 'shops': return shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter);
+      case 'beauty': return beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter);
+      case 'services': return services;
+      case 'auto_repairs': return autoRepairs;
+      case 'auto_electronics': return autoElectronics;
+      case 'used_market': return usedMarket;
+      case 'animals': return animals;
+      case 'real_estate': return realEstate;
+      case 'gyms': return gyms;
+      case 'stands': return stands;
+      case 'offices': return offices;
+      case 'it_services': return itServices;
+      case 'perfumes': return perfumes;
       case 'activities': return activities;
       case 'flights': return flights;
-      case 'hotels': 
-        return hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter);
+      case 'hotels': return hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter);
       case 'cars': return cars;
       case 'buses': return busSchedules;
       default: return [];
@@ -609,7 +653,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const getItemName = (item: any) => {
     if (activeTab === 'flights') return `${item.airline} ${item.flightNumber} (${item.origin}->${item.destination})`;
     if (activeTab === 'buses') return `${item.company}: ${item.origin} -> ${item.destination}`;
-    return item.name || item.title || item.model;
+    if (activeTab === 'activities') return item.title;
+    return item.name || item.model || 'Sem Nome';
   };
 
   return (
@@ -626,7 +671,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <Plane className="w-5 h-5" /> {t('manage_flights')}
           </button>
           <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'hotels' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <BedDouble className="w-5 h-5" /> {t('manage_hotels')}
+            <Home className="w-5 h-5" /> Alojamentos
           </button>
           <button onClick={() => { setActiveTab('cars'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'cars' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <CarIcon className="w-5 h-5" /> {t('manage_cars')}
@@ -642,6 +687,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
           <button onClick={() => { setActiveTab('beauty'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'beauty' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <Sparkles className="w-5 h-5" /> Beleza Homem/Mulher
+          </button>
+          <button onClick={() => { setActiveTab('services'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'services' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Briefcase className="w-5 h-5" /> Serviços Técnicos
+          </button>
+          <button onClick={() => { setActiveTab('auto_repairs'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'auto_repairs' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Wrench className="w-5 h-5" /> Reparação Auto
+          </button>
+          <button onClick={() => { setActiveTab('auto_electronics'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'auto_electronics' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Zap className="w-5 h-5" /> Eletrónica Auto
+          </button>
+          <button onClick={() => { setActiveTab('used_market'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'used_market' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <ShoppingCart className="w-5 h-5" /> Mercado de Usados
+          </button>
+          <button onClick={() => { setActiveTab('animals'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'animals' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Dog className="w-5 h-5" /> Animais de Estimação
+          </button>
+          <button onClick={() => { setActiveTab('real_estate'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'real_estate' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Building2 className="w-5 h-5" /> Imobiliárias
+          </button>
+          <button onClick={() => { setActiveTab('gyms'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'gyms' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Dumbbell className="w-5 h-5" /> Ginásios
+          </button>
+          <button onClick={() => { setActiveTab('stands'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'stands' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <CarFront className="w-5 h-5" /> Stands de Automóveis
+          </button>
+          <button onClick={() => { setActiveTab('offices'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'offices' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Building2 className="w-5 h-5" /> Escritórios
+          </button>
+          <button onClick={() => { setActiveTab('it_services'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'it_services' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Laptop className="w-5 h-5" /> Informática
+          </button>
+          <button onClick={() => { setActiveTab('perfumes'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'perfumes' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
+            <Pipette className="w-5 h-5" /> Perfumaria
           </button>
           <button onClick={() => { setActiveTab('activities'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'activities' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
             <Mountain className="w-5 h-5" /> {t('manage_activities')}
