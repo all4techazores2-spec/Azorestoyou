@@ -300,6 +300,27 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                           {trail.isPaid ? `${trail.price}€ por pessoa` : 'Grátis'}
                         </span>
                       </div>
+                      
+                      <div className="mt-4 flex flex-col gap-2">
+                         {trail.phone && (
+                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400"/></div>
+                               <span className="text-xs font-bold">{trail.phone}</span>
+                            </div>
+                         )}
+                         {trail.email && (
+                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400"/></div>
+                               <span className="text-xs font-bold">{trail.email}</span>
+                            </div>
+                         )}
+                         {trail.address && (
+                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400"/></div>
+                               <span className="text-xs font-bold truncate">{trail.address}</span>
+                            </div>
+                         )}
+                      </div>
                     </div>
                     <div className="mt-8 flex flex-col gap-3">
                       {trail.isPaid && (

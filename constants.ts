@@ -5389,8 +5389,8 @@ const DATA: Record<Language, {
       { id: 'R_CASCATA', name: 'A Cascata', island: 'PDL', cuisine: 'Restaurante Cervejaria', rating: 4.5, reviews: 175, image: 'https://picsum.photos/400/300?random=30', description: 'Cervejaria e restaurante de referência.', phone: '(+351)296473162', address: 'Ribeira Grande, Matriz', businessType: 'restaurant', dishes: [] }
     ],
     activities: [
-      { id: 'A_CAN_1', title: 'Visita à CN Tower', type: 'activity', island: 'CAN', image: 'https://picsum.photos/400/300?random=156', description: 'Visite o ícone de Toronto.', latitude: '43.6426', longitude: '-79.3871' },
-      { id: 'A_CAN_2', title: 'High Park Trail', type: 'trail', island: 'CAN', image: 'https://picsum.photos/400/300?random=157', description: 'Trilho natural no maior parque de Toronto.', latitude: '43.6465', longitude: '-79.4637' }
+      { id: 'A_CAN_1', title: 'Visita à CN Tower', type: 'activity', island: 'CAN', image: 'https://picsum.photos/400/300?random=156', description: 'Visite o ícone de Toronto.', latitude: '43.6426', longitude: '-79.3871', phone: '+1 416-868-6937', email: 'info@cntower.ca', address: '290 Bremner Blvd, Toronto, ON M5V 3L9' },
+      { id: 'A_CAN_2', title: 'High Park Trail', type: 'trail', island: 'CAN', image: 'https://picsum.photos/400/300?random=157', description: 'Trilho natural no maior parque de Toronto.', latitude: '43.6465', longitude: '-79.4637', phone: '+1 416-338-4386', email: 'highpark@toronto.ca', address: '1873 Bloor St W, Toronto, ON M6R 2Z3' }
     ],
     beauty: [
       { id: 'B_CAN_1', name: 'Toronto Azores Spa', island: 'CAN', subcategory: 'beauty_salon', rating: 4.9, reviews: 85, image: 'https://picsum.photos/400/300?random=170', description: 'Tratamentos de luxo em Toronto.', latitude: '43.6550', longitude: '-79.3860' },

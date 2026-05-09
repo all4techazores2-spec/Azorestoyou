@@ -298,6 +298,9 @@ export interface Activity {
   isPaid?: boolean;
   price?: number;
   bookingPolicy?: 'required' | 'recommended';
+  email?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface TourGuide {
