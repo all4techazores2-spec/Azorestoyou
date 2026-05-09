@@ -98,7 +98,8 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   };
 
   const openGoogleMaps = () => {
-    const url = accommodation.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${accommodation.name}, ${accommodation.island}, Azores`)}`;
+    const query = `${accommodation.name}, ${accommodation.island}, Azores`;
+    const url = accommodation.mapsUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
     if (onShowMap) {
       onShowMap(url);
     } else {

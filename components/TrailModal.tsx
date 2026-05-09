@@ -74,7 +74,8 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
     if (wantsGuide) {
       setShowGuideList(true);
     } else {
-      const url = trail.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${trail.title}, ${trail.island}, Azores`)}`;
+      const query = `${trail.title}, ${trail.island}, Azores`;
+      const url = trail.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
       if (onShowMap) {
         onShowMap(url);
         onClose();
@@ -330,7 +331,8 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       )}
                       <button 
                         onClick={() => {
-                          const url = trail.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${trail.title}, ${trail.island}, Azores`)}`;
+                          const query = `${trail.title}, ${trail.island}, Azores`;
+                          const url = trail.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
                           if (onShowMap) {
                             onShowMap(url);
                             onClose();

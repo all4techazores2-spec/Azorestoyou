@@ -560,7 +560,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     </button>
                     <button 
                       onClick={() => {
-                        const url = restaurant.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name}, ${restaurant.island}, Azores`)}`;
+                        const query = `${restaurant.name}, ${restaurant.island}, Azores`;
+                        const url = restaurant.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
                         if (onShowMap) {
                           onShowMap(url);
                           onClose();

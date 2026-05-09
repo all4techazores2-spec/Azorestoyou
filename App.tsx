@@ -1834,9 +1834,24 @@ const App: React.FC = () => {
               </div>
               <div className="flex-1 w-full h-full bg-slate-50">
                 <iframe 
-                  src={showMapUrl.includes('google.com/maps') 
-                    ? `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed` 
-                    : showMapUrl}
+                  src={(() => {
+                    if (!showMapUrl) return '';
+                    // Se já for um URL de embed (contém /embed/ ou output=embed), usar como está
+                    if (showMapUrl.includes('/embed/') || showMapUrl.includes('output=embed')) return showMapUrl;
+                    
+                    // Se for um link de partilha do Google Maps (curto ou longo), tentar converter para embed
+                    if (showMapUrl.includes('google.com/maps') || showMapUrl.includes('maps.app.goo.gl')) {
+                      // Se for o formato de pesquisa, converter para o formato legado de embed que funciona melhor em iframes
+                      if (showMapUrl.includes('/search/')) {
+                         const urlObj = new URL(showMapUrl);
+                         const query = urlObj.searchParams.get('query');
+                         if (query) return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+                      }
+                      // Fallback: adicionar output=embed
+                      return `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed`;
+                    }
+                    return showMapUrl;
+                  })()}
                   className="w-full h-full border-none"
                   allowFullScreen
                   loading="lazy"
