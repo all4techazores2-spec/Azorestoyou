@@ -1083,60 +1083,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
            </h2>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          <button onClick={() => { setActiveTab('flights'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'flights' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Plane className="w-5 h-5" /> {t('manage_flights')}
-          </button>
-          <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'hotels' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Home className="w-5 h-5" /> Alojamentos
-          </button>
-          <button onClick={() => { setActiveTab('cars'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'cars' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <CarIcon className="w-5 h-5" /> {t('manage_cars')}
-          </button>
-          <button onClick={() => { setActiveTab('buses'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'buses' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Bus className="w-5 h-5" /> {t('manage_buses')}
-          </button>
-          <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'restaurants' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}>
-            <Utensils className="w-5 h-5" /> {t('manage_restaurants')}
-          </button>
-          {/* MAIN TABS (REORDERED) */}
-          <button onClick={() => { setActiveTab('dashboard'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'dashboard' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
-            <LayoutDashboard className="w-5 h-5" /> Dashboard
+          {/* DASHBOARD - SALIENTE E NO TOPO */}
+          <button 
+            onClick={() => { setActiveTab('dashboard'); setEditingItem(null); setShowOtherTabs(false); }} 
+            className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-indigo-600 to-blue-600 shadow-xl shadow-blue-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <LayoutDashboard className={`w-6 h-6 ${activeTab === 'dashboard' ? 'text-white' : 'text-blue-500'}`} /> 
+            <span className="font-black uppercase tracking-widest text-xs">Dashboard</span>
           </button>
           
-          <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'restaurants' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <div className="h-px bg-slate-800/50 my-4 mx-2"></div>
+
+          {/* MAIN TABS */}
+          <button onClick={() => { setActiveTab('restaurants'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'restaurants' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <Utensils className="w-5 h-5" /> Gerir Restaurantes
           </button>
 
-          <button onClick={() => { setActiveTab('buses'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'buses' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('buses'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'buses' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <Bus className="w-5 h-5" /> Gerir Autocarros
           </button>
 
-          <button onClick={() => { setActiveTab('cars'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'cars' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('cars'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'cars' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <CarIcon className="w-5 h-5" /> Gerir Rentcar
           </button>
 
-          <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'hotels' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('hotels'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'hotels' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <BedDouble className="w-5 h-5" /> Alojamentos
           </button>
 
-          <button onClick={() => { setActiveTab('activities'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'activities' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('activities'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'activities' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <Mountain className="w-5 h-5" /> Gerir Atividades
           </button>
 
-          <button onClick={() => { setActiveTab('trails'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 ${activeTab === 'trails' ? 'bg-blue-600 shadow-lg' : 'hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('trails'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'trails' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <MapPin className="w-5 h-5" /> Trilhos
           </button>
 
           {/* OUTROS BUTTON */}
           <button 
             onClick={() => setShowOtherTabs(!showOtherTabs)} 
-            className={`w-full text-left p-4 mt-4 rounded-2xl flex items-center justify-between transition-all border-2 ${showOtherTabs ? 'bg-blue-600 border-blue-400' : 'bg-slate-800/50 border-white/5 hover:bg-slate-800'}`}
+            className={`w-full text-left p-4 mt-6 rounded-2xl flex items-center justify-between transition-all border-2 ${showOtherTabs ? 'bg-slate-800 border-blue-500' : 'bg-slate-800/30 border-white/5 hover:bg-slate-800'}`}
           >
             <div className="flex items-center gap-3">
-              <Settings className="w-5 h-5" /> 
-              <span className="font-black uppercase tracking-widest text-[10px]">Outros Serviços</span>
+              <Settings className="w-5 h-5 text-slate-400" /> 
+              <span className="font-black uppercase tracking-widest text-[10px] text-slate-400">Outros Serviços</span>
             </div>
-            <ArrowRight size={16} className={`transition-transform duration-500 ${showOtherTabs ? 'rotate-90' : ''}`} />
+            <ArrowRight size={16} className={`text-slate-500 transition-transform duration-500 ${showOtherTabs ? 'rotate-90' : ''}`} />
           </button>
 
           {/* OTHER TABS SLIDER (ACCORDION STYLE) */}
