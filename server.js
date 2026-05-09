@@ -57,7 +57,7 @@ app.use(bodyParser.json());
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// DB Handlers
+ // DB Handlers
 const readDB = () => {
     try {
         const data = fs.readFileSync(dbPath, 'utf8');
@@ -70,10 +70,26 @@ const readDB = () => {
             auto_repairs: [], auto_electronics: [], used_market: [],
             it_services: [], perfumes: [], users: [], posts: [] 
         };
-        return { ...defaults, ...db };
+        const finalDB = { ...defaults, ...db };
+        
+        // Auto-seed restaurants if empty
+        if (finalDB.restaurants.length === 0) {
+            console.log("🌱 Database is empty. Seeding from new_restaurants.json...");
+            const seedPath = path.join(__dirname, 'new_restaurants.json');
+            if (fs.existsSync(seedPath)) {
+                const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+                finalDB.restaurants = seedData;
+                // Save seeded data immediately
+                fs.writeFileSync(dbPath, JSON.stringify(finalDB, null, 2));
+                console.log(`✅ Seeded ${seedData.length} restaurants.`);
+            }
+        }
+        
+        return finalDB;
     } catch (err) {
         console.error("Error reading db.json", err);
-        return { 
+        // If file doesn't exist, try to create it with seed data
+        const initialDB = { 
             restaurants: [], flights: [], hotels: [], cars: [], 
             activities: [], busSchedules: [], itineraries: [], 
             shops: [], beauty: [], services: [], offices: [], 
@@ -81,6 +97,19 @@ const readDB = () => {
             auto_repairs: [], auto_electronics: [], used_market: [],
             it_services: [], perfumes: [], users: [], posts: [] 
         };
+        
+        const seedPath = path.join(__dirname, 'new_restaurants.json');
+        if (fs.existsSync(seedPath)) {
+            try {
+                const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+                initialDB.restaurants = seedData;
+                fs.writeFileSync(dbPath, JSON.stringify(initialDB, null, 2));
+                console.log(`✅ Created db.json and seeded ${seedData.length} restaurants.`);
+            } catch (seedErr) {
+                console.error("Error seeding initial db.json", seedErr);
+            }
+        }
+        return initialDB;
     }
 };
 
