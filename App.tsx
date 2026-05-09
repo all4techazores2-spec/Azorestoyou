@@ -230,18 +230,19 @@ const App: React.FC = () => {
     if (flights.length === 0) setFlights(getFlights(language));
     if (busSchedules.length === 0) setBusSchedules(BUS_SCHEDULES);
     
-    // Categorias secundárias
-    setServices(getServices(language));
-    setAutoRepairs(getAutoRepairs(language));
-    setAutoElectronics(getAutoElectronics(language));
-    setUsedMarket(getUsedMarket(language));
-    setAnimals(getAnimals(language));
-    setRealEstate(getRealEstate(language));
-    setGyms(getGyms(language));
-    setStands(getStands(language));
-    setOffices(getOffices(language));
-    setItServices(getITServices(language));
-    setPerfumes(getPerfumes(language));
+    // Categorias secundárias - apenas carregar dados estáticos se o servidor ainda não tiver dados
+    // Isto evita que dados apagados no painel admin reapareçam após polling ou mudança de idioma
+    if (services.length === 0) setServices(getServices(language));
+    if (autoRepairs.length === 0) setAutoRepairs(getAutoRepairs(language));
+    if (autoElectronics.length === 0) setAutoElectronics(getAutoElectronics(language));
+    if (usedMarket.length === 0) setUsedMarket(getUsedMarket(language));
+    if (animals.length === 0) setAnimals(getAnimals(language));
+    if (realEstate.length === 0) setRealEstate(getRealEstate(language));
+    if (gyms.length === 0) setGyms(getGyms(language));
+    if (stands.length === 0) setStands(getStands(language));
+    if (offices.length === 0) setOffices(getOffices(language));
+    if (itServices.length === 0) setItServices(getITServices(language));
+    if (perfumes.length === 0) setPerfumes(getPerfumes(language));
 
     // DEMO DATA FOR ISLAND FILTERING
     const demoRestaurants: Partial<Restaurant>[] = [
