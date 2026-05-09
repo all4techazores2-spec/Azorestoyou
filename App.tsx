@@ -1,7 +1,7 @@
 // Azores4you - Main Application Entry - Build v1.0.1
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
-import { getAirports, getFlights, COLORS, getRestaurants, getActivities, getHotels, getCars, BUS_SCHEDULES, getBeauty, getShops, getServices, getAutoRepairs, getAutoElectronics, getUsedMarket, getAnimals, getRealEstate, getGyms, getStands, getOffices, getITServices, getPerfumes } from './constants';
+import { getAirports, COLORS, BUS_SCHEDULES } from './constants';
 import FlightBoard from './components/FlightBoard';
 import BookingWizard from './components/BookingWizard';
 import SummaryView from './components/SummaryView';
@@ -259,21 +259,21 @@ const App: React.FC = () => {
       }
 
       // 3. Outras Categorias (Hotéis, Carros, Atividades)
-      const fetchAndSet = async (endpoint: string, setter: Function, fallback: any) => {
+      const fetchAndSet = async (endpoint: string, setter: Function) => {
         try {
           const resp = await fetch(`${API_BASE_URL}/api/${endpoint}`);
           if (resp.ok) {
             const data = await resp.json();
             setter(data.map(normalizeBusiness));
-          } else setter(fallback);
-        } catch (e) { setter(fallback); }
+          } else setter([]);
+        } catch (e) { setter([]); }
       };
 
-      await fetchAndSet('hotels', setHotels, getHotels(language));
-      await fetchAndSet('cars', setCars, getCars(language));
-      await fetchAndSet('activities', setActivities, getActivities(language));
-      await fetchAndSet('bus-schedules', setBusSchedules, BUS_SCHEDULES);
-      await fetchAndSet('flights', setFlights, getFlights(language));
+      await fetchAndSet('hotels', setHotels);
+      await fetchAndSet('cars', setCars);
+      await fetchAndSet('activities', setActivities);
+      await fetchAndSet('bus-schedules', setBusSchedules);
+      await fetchAndSet('flights', setFlights);
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
     }

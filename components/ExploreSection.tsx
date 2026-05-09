@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Restaurant, Activity, ExploreCategory, Language, BusSchedule, Business, AutoRepairSubCategory } from '../types';
-import { COLORS, ISLAND_LOCALITIES, getRestaurants, getActivities, getShops, getBeauty, getServices, getAutoRepairs, getAutoElectronics, getUsedMarket, getAnimals, getRealEstate, getGyms, getStands, getOffices, getITServices, getPerfumes } from '../constants';
+import { COLORS, ISLAND_LOCALITIES } from '../constants';
 import RestaurantModal from './RestaurantModal';
 import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
@@ -81,22 +81,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const lang = currentLanguage as Language;
   const t = (key: any) => getTranslation(lang, key);
   
-  // MERGE BACKEND DATA WITH LOCAL EXAMPLES (Ensures simulation data is always present)
-  const allRestaurants = [...restaurants, ...getRestaurants(lang).filter(r => !restaurants.find(br => br.id === r.id))];
-  const allActivities = [...activities, ...getActivities(lang).filter(a => !activities.find(ba => ba.id === a.id))];
-  const allShops = [...shops, ...getShops(lang).filter(s => !shops.find(bs => bs.id === s.id))];
-  const allBeauty = [...beauty, ...getBeauty(lang).filter(b => !beauty.find(bb => bb.id === b.id))];
-  const allServices = [...services, ...getServices(lang).filter(s => !services.find(bs => bs.id === s.id))];
-  const allAutoRepairs = [...autoRepairs, ...getAutoRepairs(lang).filter(a => !autoRepairs.find(ba => ba.id === a.id))];
-  const allAutoElectronics = [...autoElectronics, ...getAutoElectronics(lang).filter(a => !autoElectronics.find(ba => ba.id === a.id))];
-  const allUsedMarket = [...usedMarket, ...getUsedMarket(lang).filter(u => !usedMarket.find(bu => bu.id === u.id))];
-  const allAnimals = [...animals, ...getAnimals(lang).filter(a => !animals.find(ba => ba.id === a.id))];
-  const allRealEstate = [...realEstate, ...getRealEstate(lang).filter(r => !realEstate.find(br => br.id === r.id))];
-  const allGyms = [...gyms, ...getGyms(lang).filter(g => !gyms.find(bg => bg.id === g.id))];
-  const allStands = [...stands, ...getStands(lang).filter(s => !stands.find(bs => bs.id === s.id))];
-  const allOffices = [...offices, ...getOffices(lang).filter(o => !offices.find(bo => bo.id === o.id))];
-  const allITServices = [...itServices, ...getITServices(lang).filter(i => !itServices.find(bi => bi.id === i.id))];
-  const allPerfumes = [...perfumes, ...getPerfumes(lang).filter(p => !perfumes.find(bp => bp.id === p.id))];
+  // DATA SOURCE: Only use data passed from server props
+  const allRestaurants = restaurants || [];
+  const allActivities = activities || [];
+  const allShops = shops || [];
+  const allBeauty = beauty || [];
+  const allServices = services || [];
+  const allAutoRepairs = autoRepairs || [];
+  const allAutoElectronics = autoElectronics || [];
+  const allUsedMarket = usedMarket || [];
+  const allAnimals = animals || [];
+  const allRealEstate = realEstate || [];
+  const allGyms = gyms || [];
+  const allStands = stands || [];
+  const allOffices = offices || [];
+  const allITServices = itServices || [];
+  const allPerfumes = perfumes || [];
 
   const [selectedRestaurant, setSelectedRestaurant] = useState<Business | null>(null);
   const [selectedOffice, setSelectedOffice] = useState<Business | null>(null);
