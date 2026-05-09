@@ -90,6 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [bulkText, setBulkText] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [islandFilter, setIslandFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [bulkIsland, setBulkIsland] = useState<string>('PDL');
@@ -186,9 +187,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       ...staffFormData
     };
     const findAndAdd = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: [...(r.staff || []), newStaff] } : r);
-    onUpdateRestaurants(findAndAdd(restaurants));
-    onUpdateRestaurants(findAndAdd(shops));
-    onUpdateRestaurants(findAndAdd(beauty));
+    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndAdd(restaurants));
+    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndAdd(shops));
+    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndAdd(beauty));
     setAddingStaffToId(null);
     setStaffFormData({ name: '', email: '', password: '', role: 'waiter' });
     alert('Funcionário adicionado com sucesso!');
@@ -197,9 +198,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleRemoveStaff = (restId: string, staffId: string) => {
     if (!window.confirm('Remover este funcionário?')) return;
     const findAndRemove = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: (r.staff || []).filter((s: any) => s.id !== staffId) } : r);
-    onUpdateRestaurants(findAndRemove(restaurants));
-    onUpdateRestaurants(findAndRemove(shops));
-    onUpdateRestaurants(findAndRemove(beauty));
+    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndRemove(restaurants));
+    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndRemove(shops));
+    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndRemove(beauty));
   };
   
   const handleAddSupplier = (restId: string, data: any) => {
@@ -209,18 +210,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       password: Math.random().toString(36).slice(-8)
     };
     const findAndAddSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: [...(r.suppliers || []), newSup] } : r);
-    onUpdateRestaurants(findAndAddSup(restaurants));
-    onUpdateRestaurants(findAndAddSup(shops));
-    onUpdateRestaurants(findAndAddSup(beauty));
+    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndAddSup(restaurants));
+    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndAddSup(shops));
+    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndAddSup(beauty));
     setAddingSupplierToId(null);
     alert('Fornecedor adicionado com sucesso!');
   };
 
   const handleUpdateSupplier = (restId: string, supId: string, data: any) => {
     const findAndUpdateSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: r.suppliers?.map(s => s.id === supId ? { ...s, ...data } : s) } : r);
-    onUpdateRestaurants(findAndUpdateSup(restaurants));
-    onUpdateRestaurants(findAndUpdateSup(shops));
-    onUpdateRestaurants(findAndUpdateSup(beauty));
+    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndUpdateSup(restaurants));
+    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndUpdateSup(shops));
+    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndUpdateSup(beauty));
     setEditingSupplierId(null);
     alert('Fornecedor atualizado com sucesso!');
   };
@@ -228,9 +229,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleRemoveSupplier = (restId: string, supId: string) => {
     if (!window.confirm('Remover este fornecedor?')) return;
     const findAndRemoveSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: (r.suppliers || []).filter((s: any) => s.id !== supId) } : r);
-    onUpdateRestaurants(findAndRemoveSup(restaurants));
-    onUpdateRestaurants(findAndRemoveSup(shops));
-    onUpdateRestaurants(findAndRemoveSup(beauty));
+    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndRemoveSup(restaurants));
+    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndRemoveSup(shops));
+    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndRemoveSup(beauty));
   };
 
   // -- CRUD HANDLERS --
@@ -385,9 +386,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     alert(`${newItems.length} itens adicionados e processados com sucesso!`);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingItem) return;
+    if (!editingItem || isSaving) return;
+    setIsSaving(true);
 
     // Helper to add or update item in list
     const updateList = (list: any[], setter: (l: any[]) => void) => {
@@ -425,6 +427,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     setEditingItem(null);
     setIsAddingNew(false);
+    
+    // Pequeno delay para evitar cliques rápidos e dar tempo ao React para atualizar o DOM
+    setTimeout(() => setIsSaving(false), 500);
   };
 
   const startEdit = (item: any) => {
@@ -1195,7 +1200,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onClick={onFullSync} 
               className="w-full flex items-center gap-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 p-3 rounded-xl transition-all border border-blue-500/30"
             >
-               <CloudSync className="w-5 h-5" /> Enviar p/ Servidor
+               <CloudSync className="w-5 h-5" /> Sincronizar do Servidor
             </button>
           )}
           <button onClick={onLogout} className="w-full flex items-center gap-3 text-red-400 hover:text-red-300 p-3 rounded-xl hover:bg-red-400/10">
@@ -1909,14 +1914,33 @@ Av. do Mar, Madalena, Pico
                  {renderFormFields()}
                </div>
 
-               <div className="flex gap-4 pt-6 border-t mt-6">
-                 <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 flex justify-center items-center gap-2">
-                    <Save className="w-5 h-5" /> {t('save')}
-                 </button>
-                 <button type="button" onClick={() => setEditingItem(null)} className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-300">
+                <div className="flex gap-4 pt-6 border-t mt-6">
+                  <button 
+                    type="submit" 
+                    disabled={isSaving}
+                    className={`flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all ${isSaving ? 'bg-slate-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'}`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        <span>A guardar...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        <span>{t('save')}</span>
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={isSaving}
+                    onClick={() => { setEditingItem(null); setIsAddingNew(false); }} 
+                    className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-300 disabled:opacity-50"
+                  >
                     {t('cancel')}
-                 </button>
-               </div>
+                  </button>
+                </div>
              </form>
            </div>
          )}

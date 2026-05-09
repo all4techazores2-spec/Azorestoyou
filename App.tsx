@@ -283,13 +283,20 @@ const App: React.FC = () => {
   useEffect(() => {
     fetchData();
     
-    // Polling mais frequente (3 segundos) para feedback instantâneo durante testes
-    const syncInterval = setInterval(() => {
-      fetchData();
-      console.log("🔄 Sincronização em tempo real executada...");
-    }, 3000);
-    return () => clearInterval(syncInterval);
-  }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, userProfile.email]);
+    // Polling apenas para clientes (não administradores ou negócios) para evitar conflitos de edição
+    // Aumentado para 10 segundos para maior estabilidade
+    let syncInterval: any;
+    if (!isAdmin && !isBusiness && !isStaff && !isSupplier) {
+      syncInterval = setInterval(() => {
+        fetchData();
+        console.log("🔄 Sincronização em tempo real executada...");
+      }, 10000);
+    }
+    
+    return () => {
+      if (syncInterval) clearInterval(syncInterval);
+    };
+  }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier]);
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
