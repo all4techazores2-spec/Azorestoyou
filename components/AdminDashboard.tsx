@@ -85,6 +85,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
   const [supplierFormData, setSupplierFormData] = useState({ name: '', email: '', phone: '', nif: '', address: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [bulkText, setBulkText] = useState('');
 
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -195,6 +197,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars': onUpdateCars(cars.filter(c => c.id !== id)); break;
       case 'buses': onUpdateBusSchedules(busSchedules.filter(b => b.id !== id)); break;
     }
+  };
+
+  const handleBulkAdd = () => {
+    if (!bulkText.trim()) return;
+    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const timestamp = Date.now();
+    
+    const newItems = lines.map((line, idx) => {
+      const id = `${activeTab.substring(0,3).toUpperCase()}${timestamp}${idx}`;
+      switch (activeTab) {
+        case 'activities':
+          return { id, title: line, type: 'trail', island: 'PDL', image: '', description: '', isPaid: false, price: 0, mapUrl: '' };
+        case 'flights':
+          return { id, airline: line, flightNumber: '---', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
+        case 'hotels':
+          return { id, name: line, island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: 'hotel', mapUrl: '' };
+        default:
+          return { 
+            id, name: line, island: 'PDL', rating: 4.5, reviews: 0, image: '', description: '', 
+            adminEmail: '', adminPassword: '', subcategory: '', dishes: [], services: [], mapUrl: '' 
+          };
+      }
+    });
+
+    switch (activeTab) {
+      case 'restaurants': onUpdateRestaurants([...restaurants, ...newItems]); break;
+      case 'shops': onUpdateShops([...shops, ...newItems]); break;
+      case 'beauty': onUpdateBeauty([...beauty, ...newItems]); break;
+      case 'services': onUpdateServices([...services, ...newItems]); break;
+      case 'auto_repairs': onUpdateAutoRepairs([...autoRepairs, ...newItems]); break;
+      case 'auto_electronics': onUpdateAutoElectronics([...autoElectronics, ...newItems]); break;
+      case 'used_market': onUpdateUsedMarket([...usedMarket, ...newItems]); break;
+      case 'animals': onUpdateAnimals([...animals, ...newItems]); break;
+      case 'real_estate': onUpdateRealEstate([...realEstate, ...newItems]); break;
+      case 'gyms': onUpdateGyms([...gyms, ...newItems]); break;
+      case 'stands': onUpdateStands([...stands, ...newItems]); break;
+      case 'offices': onUpdateOffices([...offices, ...newItems]); break;
+      case 'it_services': onUpdateITServices([...itServices, ...newItems]); break;
+      case 'perfumes': onUpdatePerfumes([...perfumes, ...newItems]); break;
+      case 'activities': onUpdateActivities([...activities, ...newItems]); break;
+      case 'flights': onUpdateFlights([...flights, ...newItems]); break;
+      case 'hotels': onUpdateHotels([...hotels, ...newItems]); break;
+      case 'cars': onUpdateCars([...cars, ...newItems]); break;
+      case 'buses': onUpdateBusSchedules([...busSchedules, ...newItems]); break;
+    }
+
+    setBulkText('');
+    setShowBulkAdd(false);
+    alert(`${newItems.length} itens adicionados com sucesso!`);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -1078,6 +1129,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* LIST VIEW */}
           {activeTab !== 'accounts' && activeTab !== 'suppliers' && !editingItem && (
             <div className="space-y-6">
+                
+                <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">
+                  <div>
+                    <h1 className="text-4xl font-black text-slate-800 uppercase tracking-tighter">{activeTab.replace('_', ' ')}</h1>
+                    <p className="text-slate-400 font-medium italic">Gestão de conteúdos e registos da plataforma</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setShowBulkAdd(!showBulkAdd)} 
+                      className={`px-8 py-4 ${showBulkAdd ? 'bg-amber-500' : 'bg-slate-800'} text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2`}
+                    >
+                      <Plus size={16} /> Lançamento Rápido (Lista)
+                    </button>
+                    <button 
+                      onClick={startAdd} 
+                      className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center gap-2"
+                    >
+                      <Plus size={16} /> Novo Registo
+                    </button>
+                  </div>
+                </div>
+
+                {showBulkAdd && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -20 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white p-8 rounded-[3rem] shadow-xl mb-8 border-2 border-amber-200"
+                  >
+                    <h3 className="text-lg font-black text-slate-800 uppercase mb-2">Lançamento Rápido em Massa</h3>
+                    <p className="text-xs text-slate-500 mb-4 font-bold">Cole uma lista de nomes (um por linha). Cada linha será criada como um novo item com valores padrão.</p>
+                    <textarea 
+                      className="w-full h-48 border-2 border-slate-100 p-4 rounded-2xl font-mono text-sm focus:border-amber-400 outline-none transition-colors"
+                      placeholder="Exemplo:&#10;Trilho da Lagoa&#10;Trilho do Pico&#10;Trilho das Sete Cidades"
+                      value={bulkText}
+                      onChange={e => setBulkText(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button onClick={() => setShowBulkAdd(false)} className="px-6 py-3 text-xs font-black uppercase text-slate-400 hover:text-slate-600">Cancelar</button>
+                      <button onClick={handleBulkAdd} className="px-10 py-3 bg-amber-500 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all">Publicar Lista Agora</button>
+                    </div>
+                  </motion.div>
+                )}
               
               {/* SUBCATEGORY FILTER BAR for Beauty/Shops */}
               {activeTab === 'beauty' && (
