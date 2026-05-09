@@ -76,6 +76,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [shopsFilter, setShopsFilter] = useState<string>('all');
   const [hotelFilter, setHotelFilter] = useState<string>('all');
   const [servicesFilter, setServicesFilter] = useState<string>('all');
+  const [autoRepairsFilter, setAutoRepairsFilter] = useState<string>('all');
   
   // Account management states
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
@@ -96,7 +97,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     setSelectedIds([]);
-  }, [activeTab, islandFilter, beautyFilter, shopsFilter, hotelFilter, servicesFilter]);
+  }, [activeTab, islandFilter, beautyFilter, shopsFilter, hotelFilter, servicesFilter, autoRepairsFilter]);
 
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -1018,7 +1019,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'shops': list = shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter); break;
       case 'beauty': list = beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter); break;
       case 'services': list = servicesFilter === 'all' ? services : services.filter(s => s.subcategory === servicesFilter); break;
-      case 'auto_repairs': list = autoRepairs; break;
+      case 'auto_repairs': list = autoRepairsFilter === 'all' ? autoRepairs : autoRepairs.filter(a => a.subcategory === autoRepairsFilter); break;
       case 'auto_electronics': list = autoElectronics; break;
       case 'used_market': list = usedMarket; break;
       case 'animals': list = animals; break;
@@ -1621,6 +1622,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
                         ${servicesFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
                       style={{ borderBottom: servicesFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
+                    >
+                      <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'auto_repairs' && (
+                <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+                  {[
+                    { id: 'all', label: 'Todos', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
+                    { id: 'parts', label: 'Compra de Peças', icon: <Settings size={18} />, color: '#EF4444' },
+                    { id: 'workshop', label: 'Oficinas', icon: <Wrench size={18} />, color: '#3B82F6' },
+                    { id: 'bodywork', label: 'Bate Chapa e Pintura', icon: <Paintbrush size={18} />, color: '#F59E0B' },
+                    { id: 'electric', label: 'Eletrónica Auto', icon: <Zap size={18} />, color: '#EAB308' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setAutoRepairsFilter(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap
+                        ${autoRepairsFilter === cat.id ? 'bg-white text-slate-900 border-slate-200 shadow-md' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                      style={{ borderBottom: autoRepairsFilter === cat.id ? `3px solid ${cat.color}` : undefined }}
                     >
                       <span style={{ color: cat.color }}>{cat.icon}</span> {cat.label}
                     </button>
