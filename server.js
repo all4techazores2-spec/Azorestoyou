@@ -17,37 +17,12 @@ const normalizeEmail = (email) => {
     return email.toLowerCase().trim();
 };
 
-// Ensure directories
-const imagesBaseDir = path.join(__dirname, 'imagens');
-if (!fs.existsSync(imagesBaseDir)) fs.mkdirSync(imagesBaseDir);
-const restDir = path.join(imagesBaseDir, 'restaurantes');
-if (!fs.existsSync(restDir)) fs.mkdirSync(restDir);
-const communityDir = path.join(imagesBaseDir, 'community');
-if (!fs.existsSync(communityDir)) fs.mkdirSync(communityDir);
-
-// Multer Storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const { restaurantId, type } = req.body;
-        let targetDir = imagesBaseDir;
-        
-        if (type === 'community') {
-            targetDir = communityDir;
-        } else if (restaurantId) {
-            targetDir = path.join(restDir, restaurantId);
-            if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir);
-        } else {
-            targetDir = restDir;
-        }
-        cb(null, targetDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
+// Multer Memory Storage (For Base64 storage in MongoDB)
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // Limite de 5MB por foto
 });
-
-const upload = multer({ storage: storage });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -115,24 +90,20 @@ app.put('/api/users/:email', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- MEDIA UPLOAD ---
+// --- MEDIA UPLOAD (BASE64) ---
 app.post('/api/upload', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const { restaurantId, type } = req.body;
-    const protocol = req.protocol;
-    const host = req.get('host');
     
-    let relativePath = '';
-    if (type === 'community') {
-        relativePath = `imagens/community/${req.file.filename}`;
-    } else if (restaurantId) {
-        relativePath = `imagens/restaurantes/${restaurantId}/${req.file.filename}`;
-    } else {
-        relativePath = `imagens/restaurantes/${req.file.filename}`;
+    try {
+        // Converter buffer para Base64 Data URI
+        const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        
+        console.log(`📸 Image Uploaded: ${req.file.originalname} (${req.file.size} bytes) converted to Base64`);
+        res.json({ url: base64Image });
+    } catch (err) {
+        console.error("❌ Error converting image to Base64:", err);
+        res.status(500).json({ error: "Failed to process image" });
     }
-    
-    const imageUrl = `/${relativePath}`;
-    res.json({ url: imageUrl });
 });
 
 // --- BUSINESSES (UNIFIED) ---
