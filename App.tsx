@@ -1308,17 +1308,6 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
-      {/* Indicador discreto de Sincronização em Segundo Plano */}
-      {(isSyncing || !isDataLoaded) && (
-        <div className="fixed top-0 left-0 right-0 h-1 z-[200] overflow-hidden bg-blue-100/30">
-          <motion.div 
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-            className="h-full w-1/3 bg-blue-600 shadow-[0_0_10px_#2563eb]"
-          />
-        </div>
-      )}
       {/* Navigation - CABEÇALHO FIXO PREMIUM */}
       {exploreCategory !== 'community' && (
         <nav className={`bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>

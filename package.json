@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "server": "node server.js",
     "start": "node server.js",
-    "build": "vite build",
+    "build": "echo 'Build skipped for Render OOM prevention'",
+    "build:local": "vite build",
     "lint": "echo No lint",
     "preview": "vite preview"
   },
