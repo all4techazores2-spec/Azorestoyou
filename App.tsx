@@ -72,25 +72,34 @@ const App: React.FC = () => {
 
   // App settings and URLs now centralized in config.ts
 
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [flights, setFlights] = useState<Flight[]>([]);
-  const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [cars, setCars] = useState<Car[]>([]);
-  const [busSchedules, setBusSchedules] = useState<BusSchedule[]>([]);
-  const [shops, setShops] = useState<Business[]>([]);
-  const [beauty, setBeauty] = useState<Business[]>([]);
-  const [services, setServices] = useState<Business[]>([]);
-  const [autoRepairs, setAutoRepairs] = useState<Business[]>([]);
-  const [autoElectronics, setAutoElectronics] = useState<Business[]>([]);
-  const [usedMarket, setUsedMarket] = useState<Business[]>([]);
-  const [animals, setAnimals] = useState<Business[]>([]);
-  const [realEstate, setRealEstate] = useState<Business[]>([]);
-  const [gyms, setGyms] = useState<Business[]>([]);
-  const [stands, setStands] = useState<Business[]>([]);
-  const [offices, setOffices] = useState<Business[]>([]);
-  const [itServices, setItServices] = useState<Business[]>([]);
-  const [perfumes, setPerfumes] = useState<Business[]>([]);
+  // Helper to load from cache
+  const loadFromCache = (key: string, fallback: any) => {
+    try {
+      const cached = localStorage.getItem(`azores_cache_${key}`);
+      return cached ? JSON.parse(cached) : fallback;
+    } catch (e) { return fallback; }
+  };
+
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(() => loadFromCache('restaurants', []));
+  const [activities, setActivities] = useState<Activity[]>(() => loadFromCache('activities', []));
+  const [flights, setFlights] = useState<Flight[]>(() => loadFromCache('flights', []));
+  const [hotels, setHotels] = useState<Hotel[]>(() => loadFromCache('hotels', []));
+  const [cars, setCars] = useState<Car[]>(() => loadFromCache('cars', []));
+  const [busSchedules, setBusSchedules] = useState<BusSchedule[]>(() => loadFromCache('bus-schedules', []));
+  const [shops, setShops] = useState<Business[]>(() => loadFromCache('shops', []));
+  const [beauty, setBeauty] = useState<Business[]>(() => loadFromCache('beauty', []));
+  const [services, setServices] = useState<Business[]>(() => loadFromCache('services', []));
+  const [autoRepairs, setAutoRepairs] = useState<Business[]>(() => loadFromCache('auto_repairs', []));
+  const [autoElectronics, setAutoElectronics] = useState<Business[]>(() => loadFromCache('auto_electronics', []));
+  const [usedMarket, setUsedMarket] = useState<Business[]>(() => loadFromCache('used_market', []));
+  const [animals, setAnimals] = useState<Business[]>(() => loadFromCache('animals', []));
+  const [realEstate, setRealEstate] = useState<Business[]>(() => loadFromCache('real_estate', []));
+  const [gyms, setGyms] = useState<Business[]>(() => loadFromCache('gyms', []));
+  const [stands, setStands] = useState<Business[]>(() => loadFromCache('stands', []));
+  const [offices, setOffices] = useState<Business[]>(() => loadFromCache('offices', []));
+  const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
+  const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
+  const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [dbStatus, setDbStatus] = useState<{storage: string, isMongo: boolean}>({ storage: 'A verificar...', isMongo: false });
 
   // Auth & User State
@@ -202,8 +211,11 @@ const App: React.FC = () => {
       fetchResults.forEach((data, index) => {
         const key = endpointKeys[index];
         const setter = setterMap[key];
-        if (setter) {
-          setter(data.map(normalizeBusiness));
+        if (setter && Array.isArray(data) && data.length > 0) {
+          const normalized = data.map(normalizeBusiness);
+          setter(normalized);
+          // Save to persistent cache
+          localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized));
         }
       });
 
@@ -1289,39 +1301,19 @@ const App: React.FC = () => {
     }
   };
 
-  // --- LOADING SCREEN ---
-  if (!isDataLoaded) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8">
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center gap-8"
-        >
-          <div className="relative">
-            <div className="w-24 h-24 rounded-[2rem] bg-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/40 relative z-10 animate-pulse">
-               <AzoresLogo size={48} color="white" />
-            </div>
-            <div className="absolute inset-0 rounded-[2rem] bg-blue-500 blur-2xl opacity-20 animate-pulse" />
-          </div>
-          
-          <div className="text-center space-y-4">
-             <h2 className="text-white text-3xl font-black uppercase tracking-tighter">Sincronizando Azores4you</h2>
-             <div className="flex items-center justify-center gap-3">
-                <RefreshCw className="text-blue-500 animate-spin" size={20} />
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">A despertar o servidor no Render...</p>
-             </div>
-             <p className="text-slate-500 text-xs max-w-xs mx-auto leading-relaxed">
-               A plataforma está a ligar-se à base de dados segura. Este processo pode demorar 30 segundos no primeiro acesso do dia.
-             </p>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
+      {/* Indicador discreto de Sincronização em Segundo Plano */}
+      {!isDataLoaded && (
+        <div className="fixed top-0 left-0 right-0 h-1 z-[200] overflow-hidden bg-blue-100/30">
+          <motion.div 
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+            className="h-full w-1/3 bg-blue-600 shadow-[0_0_10px_#2563eb]"
+          />
+        </div>
+      )}
       {/* Navigation - CABEÇALHO FIXO PREMIUM */}
       {exploreCategory !== 'community' && (
         <nav className={`bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
