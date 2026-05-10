@@ -345,7 +345,7 @@ const App: React.FC = () => {
           fetchData();
           console.log("🔄 Sincronização em tempo real executada...");
         }
-      }, 5000);
+      }, 1500);
     }
     
     return () => {
