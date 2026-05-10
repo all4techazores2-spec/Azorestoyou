@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import axios from 'axios';
 import { readDB, writeDB, connectDB } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -366,16 +367,16 @@ app.listen(PORT, async () => {
     // Seed database if empty on startup
     await seedIfNeeded();
     
-    // Truque para manter o Render sempre ativo (Self-Ping cada 10 min)
+    // Truque para manter o Render sempre ativo (Self-Ping cada 5 min)
     const selfPing = () => {
         const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-        fetch(`${url}/api/bus-schedules`)
+        axios.get(`${url}/api/status`)
             .then(() => console.log('💓 Keep-alive ping enviado com sucesso'))
             .catch(err => console.log('⚠️ Erro no self-ping (normal em startup):', err.message));
     };
     
-    setInterval(selfPing, 600000); // 10 minutos
-    setTimeout(selfPing, 5000); // Primeiro ping após 5 segundos
+    setInterval(selfPing, 300000); // 5 minutos
+    setTimeout(selfPing, 10000); // Primeiro ping após 10 segundos
 });
 
 // SPA Catch-all (Deve ser a ÚLTIMA rota)
