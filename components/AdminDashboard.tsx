@@ -314,8 +314,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return { name, email, contact, address };
   };
 
-  const handleBulkAdd = () => {
-    if (!bulkText.trim()) return;
+  const handleBulkAdd = async () => {
+    if (!bulkText.trim() || isSaving) return;
+    setIsSaving(true);
     const timestamp = Date.now();
 
     // Split into blocks separated by blank lines
@@ -364,31 +365,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
     });
 
-    switch (activeTab) {
-      case 'restaurants': onUpdateRestaurants([...restaurants, ...newItems]); break;
-      case 'shops': onUpdateShops([...shops, ...newItems]); break;
-      case 'beauty': onUpdateBeauty([...beauty, ...newItems]); break;
-      case 'services': onUpdateServices([...services, ...newItems]); break;
-      case 'auto_repairs': onUpdateAutoRepairs([...autoRepairs, ...newItems]); break;
-      case 'auto_electronics': onUpdateAutoElectronics([...autoElectronics, ...newItems]); break;
-      case 'used_market': onUpdateUsedMarket([...usedMarket, ...newItems]); break;
-      case 'animals': onUpdateAnimals([...animals, ...newItems]); break;
-      case 'real_estate': onUpdateRealEstate([...realEstate, ...newItems]); break;
-      case 'gyms': onUpdateGyms([...gyms, ...newItems]); break;
-      case 'stands': onUpdateStands([...stands, ...newItems]); break;
-      case 'offices': onUpdateOffices([...offices, ...newItems]); break;
-      case 'it_services': onUpdateITServices([...itServices, ...newItems]); break;
-      case 'perfumes': onUpdatePerfumes([...perfumes, ...newItems]); break;
-      case 'activities': onUpdateActivities([...activities, ...newItems]); break;
-      case 'flights': onUpdateFlights([...flights, ...newItems]); break;
-      case 'hotels': onUpdateHotels([...hotels, ...newItems]); break;
-      case 'cars': onUpdateCars([...cars, ...newItems]); break;
-      case 'buses': onUpdateBusSchedules([...busSchedules, ...newItems]); break;
-    }
+    try {
+      switch (activeTab) {
+        case 'restaurants': await onUpdateRestaurants([...restaurants, ...newItems]); break;
+        case 'shops': await onUpdateShops([...shops, ...newItems]); break;
+        case 'beauty': await onUpdateBeauty([...beauty, ...newItems]); break;
+        case 'services': await onUpdateServices([...services, ...newItems]); break;
+        case 'auto_repairs': await onUpdateAutoRepairs([...autoRepairs, ...newItems]); break;
+        case 'auto_electronics': await onUpdateAutoElectronics([...autoElectronics, ...newItems]); break;
+        case 'used_market': await onUpdateUsedMarket([...usedMarket, ...newItems]); break;
+        case 'animals': await onUpdateAnimals([...animals, ...newItems]); break;
+        case 'real_estate': await onUpdateRealEstate([...realEstate, ...newItems]); break;
+        case 'gyms': await onUpdateGyms([...gyms, ...newItems]); break;
+        case 'stands': await onUpdateStands([...stands, ...newItems]); break;
+        case 'offices': await onUpdateOffices([...offices, ...newItems]); break;
+        case 'it_services': await onUpdateITServices([...itServices, ...newItems]); break;
+        case 'perfumes': await onUpdatePerfumes([...perfumes, ...newItems]); break;
+        case 'activities': await onUpdateActivities([...activities, ...newItems]); break;
+        case 'flights': await onUpdateFlights([...flights, ...newItems]); break;
+        case 'hotels': await onUpdateHotels([...hotels, ...newItems]); break;
+        case 'cars': await onUpdateCars([...cars, ...newItems]); break;
+        case 'buses': await onUpdateBusSchedules([...busSchedules, ...newItems]); break;
+      }
 
-    setBulkText('');
-    setShowBulkAdd(false);
-    alert(`${newItems.length} itens adicionados e processados com sucesso!`);
+      setBulkText('');
+      setShowBulkAdd(false);
+      alert(`✅ ${newItems.length} itens adicionados e guardados no servidor com sucesso!`);
+    } catch (e) {
+      alert('❌ Erro ao guardar lista em massa.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
