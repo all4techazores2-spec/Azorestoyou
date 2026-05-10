@@ -743,8 +743,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     if (fileArray.length === 0) return;
 
-    const shouldCompress = window.confirm(`Deseja otimizar e comprimir as ${fileArray.length} imagens para carregar mais rápido e poupar espaço na base de dados? (Recomendado)`);
-    
     setIsUploading(true);
     
     try {
@@ -758,30 +756,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           reader.readAsDataURL(file);
         });
 
-        let finalUrl = '';
-
-        if (shouldCompress) {
-          finalUrl = await compressImage(base64);
-        } else {
-          // Upload convencional via FormData
-          const formData = new FormData();
-          formData.append('restaurantId', editingItem.id);
-          formData.append('type', type);
-          formData.append('image', file);
-
-          const response = await fetch(`${API_BASE_URL}/api/upload`, {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            finalUrl = data.url;
-          } else {
-            // Fallback para base64 direto se o upload falhar
-            finalUrl = base64;
-          }
-        }
+        // Sempre comprimir para garantir performance
+        finalUrl = await compressImage(base64);
 
         // Atualizar estado conforme o tipo
         if (type === 'main') {
@@ -1525,7 +1501,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               >
                  <div className="flex items-center gap-3 w-full justify-center">
                     {isCompressing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
-                    <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Otimizar...' : 'Enviar e Otimizar Fotos'}</span>
+                    <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Publicar...' : 'Publicar no Frontend'}</span>
                  </div>
                  {isCompressing && (
                    <div className="w-full mt-2">
@@ -1549,19 +1525,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  )}
               </button>
 
-              {/* BUTTON 2: QUICK SYNC */}
-              <button 
-                onClick={async () => {
-                  setIsSyncing(true);
-                  await onFullSync();
-                  setIsSyncing(false);
-                }} 
-                disabled={isSyncing || isCompressing}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-600'}`}
-              >
-                 {isSyncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudSync className="w-5 h-5" />}
-                 <span className="font-bold uppercase text-[10px] tracking-widest">{isSyncing ? 'A Enviar...' : 'Sincronizar (Apenas Texto)'}</span>
-              </button>
+              {/* Sincronização de Texto Removida para simplificar */}
 
               {/* BUTTON 3: DANGER ZONE - WIPE ALL */}
               <button 
