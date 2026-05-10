@@ -31,10 +31,14 @@ const PORT = process.env.PORT || 3001;
 
 // Configuração robusta de CORS
 app.use(cors({
-    origin: '*', // Permitir qualquer origem para facilitar a ligação Render -> Cloudflare
+    origin: [
+        'https://azorestoyou.pt', 
+        'https://www.azorestoyou.pt', 
+        'http://localhost:5173', 
+        'http://localhost:3000'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 app.use(bodyParser.json({ limit: '50mb' }));
