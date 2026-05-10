@@ -407,9 +407,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     try {
       const itemToSave = { ...editingItem };
+      console.log("🛠️ Iniciar otimização de imagens para:", itemToSave.id);
       
       // Auto-compress all images inside the object before sending to server
       const updatedItem = await compressObjectImages(itemToSave);
+      console.log("✅ Otimização concluída. A enviar para o servidor...");
       
       // 1. If it's a NEW item, we still need to add it to the list first (Bulk style)
       // 2. If it's an EDIT, we can try individual save if the prop exists
@@ -489,16 +491,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.6): Promise<string> => {
+  const compressImage = (base64Str: string, maxWidth = 1000, quality = 0.5): Promise<string> => {
     return new Promise((resolve) => {
       if (!base64Str || !base64Str.startsWith('data:image')) {
         resolve(base64Str);
         return;
       }
       
+      // Safety timeout: 5 seconds per image
+      const timeout = setTimeout(() => {
+        console.warn("⚠️ Compression timeout for an image. Using original.");
+        resolve(base64Str);
+      }, 5000);
+
       const img = new Image();
       img.src = base64Str;
       img.onload = () => {
+        clearTimeout(timeout);
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
@@ -512,9 +521,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        const result = canvas.toDataURL('image/jpeg', quality);
+        console.log(`📉 Imagem comprimida: ${(base64Str.length / 1024).toFixed(0)}KB -> ${(result.length / 1024).toFixed(0)}KB`);
+        resolve(result);
       };
-      img.onerror = () => resolve(base64Str);
+      img.onerror = () => {
+        clearTimeout(timeout);
+        console.error("❌ Erro ao carregar imagem para compressão.");
+        resolve(base64Str);
+      };
     });
   };
 
