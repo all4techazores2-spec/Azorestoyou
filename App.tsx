@@ -1212,7 +1212,8 @@ const App: React.FC = () => {
             setBusSchedules(list);
           } catch (e: any) { alert('❌ Erro ao guardar autocarros: ' + e.message); }
         }}
-        // Logic
+        // Status & Logic
+        dbStatus={dbStatus}
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
         onFullSync={async () => {
           try {

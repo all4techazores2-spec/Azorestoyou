@@ -57,7 +57,7 @@ interface AdminDashboardProps {
 
   onLogout: () => void;
   onFullSync?: () => void;
-  dbStatus?: { storage: string, isMongo: boolean };
+  dbStatus?: any;
   language?: Language;
 }
 
