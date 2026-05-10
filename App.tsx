@@ -1,4 +1,4 @@
-// Azores4you - Main Application Entry - Build v1.0.2 - Triggering Deploy
+// Azores4you - Main Application Entry - Build v1.1.8 - Stabilized Production
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
 import { getAirports, COLORS, BUS_SCHEDULES } from './constants';
@@ -1075,143 +1075,26 @@ const App: React.FC = () => {
         cars={cars}
         busSchedules={busSchedules}
         // Updaters - Server-first: save to MongoDB THEN update UI state
-        onUpdateRestaurants={async (updatedList) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-            if (!r.ok) throw new Error(await r.text());
-            setRestaurants(updatedList);
-            await setCache('azores_cache_restaurants', updatedList);
-          } catch (e: any) { alert('❌ Erro ao guardar restaurantes: ' + e.message); }
-        }}
-        onUpdateShops={async (updatedList) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-            if (!r.ok) throw new Error(await r.text());
-            setShops(updatedList);
-            await setCache('azores_cache_shops', updatedList);
-          } catch (e: any) { alert('❌ Erro ao guardar lojas: ' + e.message); }
-        }}
-        onUpdateBeauty={async (updatedList) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/beauty/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-            if (!r.ok) throw new Error(await r.text());
-            setBeauty(updatedList);
-            await setCache('azores_cache_beauty', updatedList);
-          } catch (e: any) { alert('❌ Erro ao guardar beleza: ' + e.message); }
-        }}
-        onUpdateServices={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setServices(list);
-            await setCache('azores_cache_services', list);
-          } catch (e: any) { alert('❌ Erro ao guardar serviços: ' + e.message); }
-        }}
-        onUpdateAutoRepairs={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/auto_repairs/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setAutoRepairs(list);
-          } catch (e: any) { alert('❌ Erro ao guardar auto reparações: ' + e.message); }
-        }}
-        onUpdateAutoElectronics={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/auto_electronics/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setAutoElectronics(list);
-          } catch (e: any) { alert('❌ Erro ao guardar auto electrónica: ' + e.message); }
-        }}
-        onUpdateUsedMarket={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/used_market/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setUsedMarket(list);
-          } catch (e: any) { alert('❌ Erro ao guardar mercado usados: ' + e.message); }
-        }}
-        onUpdateAnimals={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/animals/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setAnimals(list);
-          } catch (e: any) { alert('❌ Erro ao guardar animais: ' + e.message); }
-        }}
-        onUpdateRealEstate={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/real_estate/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setRealEstate(list);
-          } catch (e: any) { alert('❌ Erro ao guardar imobiliária: ' + e.message); }
-        }}
-        onUpdateGyms={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/gyms/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setGyms(list);
-          } catch (e: any) { alert('❌ Erro ao guardar ginásios: ' + e.message); }
-        }}
-        onUpdateStands={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/stands/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setStands(list);
-          } catch (e: any) { alert('❌ Erro ao guardar stands: ' + e.message); }
-        }}
-        onUpdateOffices={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setOffices(list);
-          } catch (e: any) { alert('❌ Erro ao guardar escritórios: ' + e.message); }
-        }}
-        onUpdateITServices={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setItServices(list);
-          } catch (e: any) { alert('❌ Erro ao guardar IT: ' + e.message); }
-        }}
-        onUpdatePerfumes={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setPerfumes(list);
-          } catch (e: any) { alert('❌ Erro ao guardar perfumes: ' + e.message); }
-        }}
-        onUpdateActivities={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setActivities(list);
-          } catch (e: any) { alert('❌ Erro ao guardar atividades: ' + e.message); }
-        }}
-        onUpdateFlights={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setFlights(list);
-          } catch (e: any) { alert('❌ Erro ao guardar voos: ' + e.message); }
-        }}
-        onUpdateHotels={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setHotels(list);
-          } catch (e: any) { alert('❌ Erro ao guardar hotéis: ' + e.message); }
-        }}
-        onUpdateCars={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setCars(list);
-          } catch (e: any) { alert('❌ Erro ao guardar carros: ' + e.message); }
-        }}
-        onUpdateBusSchedules={async (list) => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
-            if (!r.ok) throw new Error(await r.text());
-            setBusSchedules(list);
-          } catch (e: any) { alert('❌ Erro ao guardar autocarros: ' + e.message); }
-        }}
+        onUpdateRestaurants={(list) => setRestaurants(list)}
+        onUpdateShops={(list) => setShops(list)}
+        onUpdateBeauty={(list) => setBeauty(list)}
+        onUpdateServices={(list) => setServices(list)}
+
+        onUpdateAutoRepairs={(list) => setAutoRepairs(list)}
+        onUpdateAutoElectronics={(list) => setAutoElectronics(list)}
+        onUpdateUsedMarket={(list) => setUsedMarket(list)}
+        onUpdateAnimals={(list) => setAnimals(list)}
+        onUpdateRealEstate={(list) => setRealEstate(list)}
+        onUpdateGyms={(list) => setGyms(list)}
+        onUpdateStands={(list) => setStands(list)}
+        onUpdateOffices={(list) => setOffices(list)}
+        onUpdateITServices={(list) => setItServices(list)}
+        onUpdatePerfumes={(list) => setPerfumes(list)}
+        onUpdateActivities={(list) => setActivities(list)}
+        onUpdateFlights={(list) => setFlights(list)}
+        onUpdateHotels={(list) => setHotels(list)}
+        onUpdateCars={(list) => setCars(list)}
+        onUpdateBusSchedules={(list) => setBusSchedules(list)}
         // Status & Logic
         dbStatus={dbStatus}
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
