@@ -1,4 +1,4 @@
-// Stabilized Production - Build v1.1.5 - 2026-05-10
+// Stabilized Production - Build v1.1.6 - 2026-05-10
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -7,7 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
-import { readDB, writeDB, connectDB, getDbStatus } from './db.js';
+import { readDB, writeDB, connectDB, getDbStatus, updateCollection } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
