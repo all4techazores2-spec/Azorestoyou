@@ -149,8 +149,8 @@ const App: React.FC = () => {
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
-  // Function to fetch data from Backend
-  const fetchData = async () => {
+  // Function to fetch data from Backend with Retry logic for Cold Starts
+  const fetchData = async (retries = 3) => {
     try {
       const normalizeBusiness = (b: any) => ({
         ...b,
@@ -181,6 +181,14 @@ const App: React.FC = () => {
             .catch(() => [])
         )
       );
+
+      // Check if we got NO data at all (server might still be sleeping)
+      const allEmpty = fetchResults.every(res => Array.isArray(res) && res.length === 0);
+      if (allEmpty && retries > 0) {
+        console.log(`⚠️ Server awake check failed. Retrying in 3s... (${retries} attempts left)`);
+        setTimeout(() => fetchData(retries - 1), 3000);
+        return;
+      }
 
       // Map setters to results
       const setterMap: Record<string, Function> = {
@@ -218,8 +226,11 @@ const App: React.FC = () => {
       setIsDataLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
-      // Optional: Set data loaded anyway to stop spinner, or show error screen
-      // setIsDataLoaded(true); 
+      if (retries > 0) {
+        setTimeout(() => fetchData(retries - 1), 3000);
+      } else {
+        setIsDataLoaded(true); // Fallback to show empty app if server is dead
+      }
     }
   };
 
