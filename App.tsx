@@ -318,15 +318,19 @@ const App: React.FC = () => {
 
   // Initial Load and Sync Polling
   useEffect(() => {
-    fetchData();
+    // Only load data when entering the app (not admin editing)
+    if (!isAdmin) {
+      fetchData();
+    }
     
-    // Polling apenas para clientes (não administradores ou negócios) para evitar conflitos de edição
-    // Reduzido para 5 segundos para atualizações mais rápidas
+    // Poll ONLY for regular clients - NEVER for admin/business to avoid overwriting edits
     let syncInterval: any;
     if (!isAdmin && !isBusiness && !isStaff && !isSupplier) {
       syncInterval = setInterval(() => {
-        fetchData();
-        console.log("🔄 Sincronização em tempo real executada...");
+        if (!isAdmin) { // double-check to be safe
+          fetchData();
+          console.log("🔄 Sincronização em tempo real executada...");
+        }
       }, 5000);
     }
     
@@ -1056,88 +1060,143 @@ const App: React.FC = () => {
         hotels={hotels}
         cars={cars}
         busSchedules={busSchedules}
-        // Updaters
+        // Updaters - Server-first: save to MongoDB THEN update UI state
         onUpdateRestaurants={async (updatedList) => {
-          setRestaurants(updatedList);
           try {
-            await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-          } catch (error) {}
+            const r = await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
+            if (!r.ok) throw new Error(await r.text());
+            setRestaurants(updatedList);
+            await setCache('azores_cache_restaurants', updatedList);
+          } catch (e: any) { alert('❌ Erro ao guardar restaurantes: ' + e.message); }
         }}
         onUpdateShops={async (updatedList) => {
-          setShops(updatedList);
           try {
-            await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-          } catch (error) {}
+            const r = await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
+            if (!r.ok) throw new Error(await r.text());
+            setShops(updatedList);
+            await setCache('azores_cache_shops', updatedList);
+          } catch (e: any) { alert('❌ Erro ao guardar lojas: ' + e.message); }
         }}
         onUpdateBeauty={async (updatedList) => {
-          setBeauty(updatedList);
           try {
-            await fetch(`${API_BASE_URL}/api/beauty/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
-          } catch (error) {}
+            const r = await fetch(`${API_BASE_URL}/api/beauty/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedList) });
+            if (!r.ok) throw new Error(await r.text());
+            setBeauty(updatedList);
+            await setCache('azores_cache_beauty', updatedList);
+          } catch (e: any) { alert('❌ Erro ao guardar beleza: ' + e.message); }
         }}
         onUpdateServices={async (list) => {
-          setServices(list);
-          await fetch(`${API_BASE_URL}/api/services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setServices(list);
+            await setCache('azores_cache_services', list);
+          } catch (e: any) { alert('❌ Erro ao guardar serviços: ' + e.message); }
         }}
         onUpdateAutoRepairs={async (list) => {
-          setAutoRepairs(list);
-          await fetch(`${API_BASE_URL}/api/auto_repairs/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/auto_repairs/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setAutoRepairs(list);
+          } catch (e: any) { alert('❌ Erro ao guardar auto reparações: ' + e.message); }
         }}
         onUpdateAutoElectronics={async (list) => {
-          setAutoElectronics(list);
-          await fetch(`${API_BASE_URL}/api/auto_electronics/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/auto_electronics/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setAutoElectronics(list);
+          } catch (e: any) { alert('❌ Erro ao guardar auto electrónica: ' + e.message); }
         }}
         onUpdateUsedMarket={async (list) => {
-          setUsedMarket(list);
-          await fetch(`${API_BASE_URL}/api/used_market/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/used_market/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setUsedMarket(list);
+          } catch (e: any) { alert('❌ Erro ao guardar mercado usados: ' + e.message); }
         }}
         onUpdateAnimals={async (list) => {
-          setAnimals(list);
-          await fetch(`${API_BASE_URL}/api/animals/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/animals/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setAnimals(list);
+          } catch (e: any) { alert('❌ Erro ao guardar animais: ' + e.message); }
         }}
         onUpdateRealEstate={async (list) => {
-          setRealEstate(list);
-          await fetch(`${API_BASE_URL}/api/real_estate/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/real_estate/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setRealEstate(list);
+          } catch (e: any) { alert('❌ Erro ao guardar imobiliária: ' + e.message); }
         }}
         onUpdateGyms={async (list) => {
-          setGyms(list);
-          await fetch(`${API_BASE_URL}/api/gyms/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/gyms/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setGyms(list);
+          } catch (e: any) { alert('❌ Erro ao guardar ginásios: ' + e.message); }
         }}
         onUpdateStands={async (list) => {
-          setStands(list);
-          await fetch(`${API_BASE_URL}/api/stands/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/stands/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setStands(list);
+          } catch (e: any) { alert('❌ Erro ao guardar stands: ' + e.message); }
         }}
         onUpdateOffices={async (list) => {
-          setOffices(list);
-          await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setOffices(list);
+          } catch (e: any) { alert('❌ Erro ao guardar escritórios: ' + e.message); }
         }}
         onUpdateITServices={async (list) => {
-          setItServices(list);
-          await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setItServices(list);
+          } catch (e: any) { alert('❌ Erro ao guardar IT: ' + e.message); }
         }}
         onUpdatePerfumes={async (list) => {
-          setPerfumes(list);
-          await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setPerfumes(list);
+          } catch (e: any) { alert('❌ Erro ao guardar perfumes: ' + e.message); }
         }}
         onUpdateActivities={async (list) => {
-          setActivities(list);
-          await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setActivities(list);
+          } catch (e: any) { alert('❌ Erro ao guardar atividades: ' + e.message); }
         }}
         onUpdateFlights={async (list) => {
-          setFlights(list);
-          await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setFlights(list);
+          } catch (e: any) { alert('❌ Erro ao guardar voos: ' + e.message); }
         }}
         onUpdateHotels={async (list) => {
-          setHotels(list);
-          await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setHotels(list);
+          } catch (e: any) { alert('❌ Erro ao guardar hotéis: ' + e.message); }
         }}
         onUpdateCars={async (list) => {
-          setCars(list);
-          await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setCars(list);
+          } catch (e: any) { alert('❌ Erro ao guardar carros: ' + e.message); }
         }}
         onUpdateBusSchedules={async (list) => {
-          setBusSchedules(list);
-          await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          try {
+            const r = await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+            if (!r.ok) throw new Error(await r.text());
+            setBusSchedules(list);
+          } catch (e: any) { alert('❌ Erro ao guardar autocarros: ' + e.message); }
         }}
         // Logic
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
