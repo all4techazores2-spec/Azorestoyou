@@ -494,11 +494,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return;
       }
       
-      // Safety timeout: 5 seconds per image
-      const timeout = setTimeout(() => {
-        console.warn("⚠️ Compression timeout for an image. Using original.");
-        resolve(base64Str);
-      }, 5000);
+      const timeout = setTimeout(() => resolve(base64Str), 5000);
 
       const img = new Image();
       img.src = base64Str;
@@ -507,23 +503,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        
         if (width > maxWidth) {
           height = (maxWidth / width) * height;
           width = maxWidth;
         }
-        
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        const result = canvas.toDataURL('image/jpeg', quality);
-        console.log(`📉 Imagem comprimida: ${(base64Str.length / 1024).toFixed(0)}KB -> ${(result.length / 1024).toFixed(0)}KB`);
-        resolve(result);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.onerror = () => {
         clearTimeout(timeout);
-        console.error("❌ Erro ao carregar imagem para compressão.");
         resolve(base64Str);
       };
     });
