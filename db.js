@@ -47,7 +47,8 @@ const DEFAULT_DB = {
 export const readDB = async () => {
     if (IS_MONGODB) {
         try {
-            const doc = await DBModel.findOne({ key: 'master_db' });
+            // Usa .lean() para evitar que o Mongoose crie objetos pesados em memória (evita o erro OOM)
+            const doc = await DBModel.findOne({ key: 'master_db' }).lean();
             return doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
         } catch (err) {
             console.error("Error reading from MongoDB", err);
