@@ -7,7 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
-import { readDB, writeDB, connectDB } from './db.js';
+import { readDB, writeDB, connectDB, getDbStatus } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,12 +48,8 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // --- DATABASE STATUS ---
 app.get('/api/status', async (req, res) => {
-    const isMongo = !!process.env.MONGODB_URI;
-    res.json({ 
-        storage: isMongo ? 'MongoDB Atlas (Cloud)' : 'Local JSON (Ephemeral)',
-        isMongo,
-        timestamp: new Date().toISOString()
-    });
+    // Returns REAL connection state, not just whether the env var exists
+    res.json(getDbStatus());
 });
 
 // Initial Seed Function
@@ -153,49 +149,68 @@ const ALL_BUSINESS_COLLECTIONS = [
 // Generic Business Update Handler
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
-    const db = await readDB();
-    let targetArray = null;
-    let index = -1;
-    
-    ALL_BUSINESS_COLLECTIONS.forEach(key => {
-        if (db[key]) {
-            const idx = db[key].findIndex(item => item.id === id);
-            if (idx !== -1) { index = idx; targetArray = db[key]; }
-        }
-    });
+    try {
+        const db = await readDB();
+        let targetArray = null;
+        let index = -1;
+        
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key]) {
+                const idx = db[key].findIndex(item => item.id === id);
+                if (idx !== -1) { index = idx; targetArray = db[key]; }
+            }
+        });
 
-    if (targetArray && index !== -1) {
-        targetArray[index] = { ...targetArray[index], ...req.body };
-        await writeDB(db);
-        res.json(targetArray[index]);
-    } else {
-        res.status(404).send("Business not found");
+        if (targetArray && index !== -1) {
+            targetArray[index] = { ...targetArray[index], ...req.body };
+            await writeDB(db);
+            res.json(targetArray[index]);
+        } else {
+            res.status(404).send("Business not found");
+        }
+    } catch (err) {
+        console.error("❌ handleBusinessUpdate failed:", err.message);
+        res.status(500).json({ error: err.message });
     }
 };
 
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
     app.get(`/api/${key}`, async (req, res) => {
-        const db = await readDB();
-        res.json(db[key] || []);
+        try {
+            const db = await readDB();
+            res.json(db[key] || []);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     });
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
     
     // Bulk update for Admin Dashboard
     app.post(`/api/${key}/bulk`, async (req, res) => {
-        const db = await readDB();
-        db[key] = req.body;
-        await writeDB(db);
-        res.json({ success: true, count: req.body.length });
+        try {
+            const db = await readDB();
+            db[key] = req.body;
+            await writeDB(db);
+            res.json({ success: true, count: req.body.length });
+        } catch (err) {
+            console.error(`❌ Bulk update for ${key} failed:`, err.message);
+            res.status(500).json({ error: err.message });
+        }
     });
 });
 
 // Full Sync for Admin Dashboard
 app.post('/api/full-sync', async (req, res) => {
-    const db = await readDB();
-    const updatedData = req.body;
-    const finalDB = { ...db, ...updatedData };
-    await writeDB(finalDB);
-    res.json({ success: true });
+    try {
+        const db = await readDB();
+        const updatedData = req.body;
+        const finalDB = { ...db, ...updatedData };
+        await writeDB(finalDB);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("❌ Full sync failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Adicionar rotas de bulk para outras coleções que não são "business" puras
