@@ -52,38 +52,9 @@ app.get('/api/status', async (req, res) => {
     res.json(getDbStatus());
 });
 
-// Initial Seed Function
+// Initial Seed Function - DISABLED as requested by user to keep a clean slate
 const seedIfNeeded = async () => {
-    const isMongo = !!process.env.MONGODB_URI;
-    // Se estiver no Render e SEM MongoDB, o seed vai rodar a cada restart (perda de dados)
-    // Se estiver com MongoDB, o seed só roda UMA VEZ na vida da DB.
-    const db = await readDB();
-    
-    if (!db.restaurants || db.restaurants.length === 0) {
-        console.log("🌱 Startup: Database is empty. Checking if seed is allowed...");
-        
-        // Em produção (Render) sem MongoDB, vamos EVITAR o seed automático de 330 itens se o utilizador não pediu
-        // para não causar confusão com "dados que aparecem do nada".
-        const shouldSeed = !process.env.RENDER || isMongo; 
-        
-        if (shouldSeed) {
-            const seedPath = path.join(__dirname, 'new_restaurants.json');
-            if (fs.existsSync(seedPath)) {
-                try {
-                    const seedData = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-                    db.restaurants = seedData;
-                    await writeDB(db);
-                    console.log(`✅ Startup: Seeded ${seedData.length} restaurants successfully.`);
-                } catch (seedErr) {
-                    console.error("Error during initial seeding", seedErr);
-                }
-            }
-        } else {
-            console.log("⚠️ Startup: Production environment without MongoDB. Skipping auto-seed to prevent confusion.");
-        }
-    } else {
-        console.log(`📊 Startup: Database already has ${db.restaurants.length} restaurants. Skipping seed.`);
-    }
+    console.log("ℹ️ Startup: Automatic seeding is disabled.");
 };
 
 // --- AUTH & USERS ---

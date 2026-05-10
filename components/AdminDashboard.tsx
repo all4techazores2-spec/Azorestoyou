@@ -1327,34 +1327,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
             <>
+              {/* BUTTON 1: COMPRESS & SYNC */}
               <button 
                 onClick={handleSyncAndCompress} 
                 disabled={isSyncing || isCompressing}
-                className={`w-full flex flex-col items-center gap-1 p-3 rounded-xl transition-all border ${isCompressing ? 'bg-amber-600/20 text-amber-400 border-amber-500/30' : 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border-emerald-500/30'}`}
+                className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
               >
                  <div className="flex items-center gap-3 w-full justify-center">
-                    {isCompressing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                    <span className="font-bold">{isCompressing ? 'A Comprimir...' : 'Enviar e Comprimir'}</span>
+                    {isCompressing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
+                    <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Otimizar...' : 'Enviar e Otimizar Fotos'}</span>
                  </div>
                  {isCompressing && (
                    <div className="w-full mt-2">
-                      <div className="flex justify-between text-[8px] uppercase font-black mb-1">
+                      <div className="flex justify-between text-[10px] uppercase font-black mb-1">
                          <span>Progresso</span>
                          <span>{Math.round((compressionProgress.current / compressionProgress.total) * 100)}%</span>
                       </div>
-                      <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-white/10">
                          <div 
-                           className="h-full bg-amber-500 transition-all duration-300" 
+                           className="h-full bg-white transition-all duration-300" 
                            style={{ width: `${(compressionProgress.current / compressionProgress.total) * 100}%` }}
                          />
                       </div>
-                      <p className="text-[8px] mt-1 text-center opacity-50">
-                        {compressionProgress.current} / {compressionProgress.total} itens
+                      <p className="text-[9px] mt-1 text-center font-bold">
+                        {compressionProgress.current} / {compressionProgress.total} itens processados
                       </p>
                    </div>
                  )}
               </button>
 
+              {/* BUTTON 2: QUICK SYNC */}
               <button 
                 onClick={async () => {
                   setIsSyncing(true);
@@ -1362,15 +1364,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   setIsSyncing(false);
                 }} 
                 disabled={isSyncing || isCompressing}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border-blue-500/30'}`}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border-slate-600'}`}
               >
                  {isSyncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudSync className="w-5 h-5" />}
-                 {isSyncing ? 'A Sincronizar...' : 'Sincronizar (Rápido)'}
+                 <span className="font-bold uppercase text-[10px] tracking-widest">{isSyncing ? 'A Enviar...' : 'Sincronizar (Apenas Texto)'}</span>
+              </button>
+
+              {/* BUTTON 3: DANGER ZONE - WIPE ALL */}
+              <button 
+                onClick={async () => {
+                  if (window.confirm('⚠️ AVISO CRÍTICO: Isto vai apagar TODOS os restaurantes, lojas, hotéis, etc. de uma só vez! Deseja recomeçar do zero?')) {
+                    if (window.confirm('TEM A CERTEZA ABSOLUTA? Esta ação não pode ser revertida.')) {
+                       onUpdateRestaurants([]);
+                       onUpdateShops([]);
+                       onUpdateBeauty([]);
+                       onUpdateServices([]);
+                       onUpdateAutoRepairs([]);
+                       onUpdateAutoElectronics([]);
+                       onUpdateUsedMarket([]);
+                       onUpdateAnimals([]);
+                       onUpdateRealEstate([]);
+                       onUpdateGyms([]);
+                       onUpdateStands([]);
+                       onUpdateOffices([]);
+                       onUpdateITServices([]);
+                       onUpdatePerfumes([]);
+                       onUpdateActivities([]);
+                       onUpdateFlights([]);
+                       onUpdateHotels([]);
+                       onUpdateCars([]);
+                       onUpdateBusSchedules([]);
+                       
+                       // After clearing local state, sync empty lists to server
+                       setTimeout(async () => {
+                         await onFullSync();
+                         alert('✅ Base de dados LIMPA! Agora pode começar a adicionar do zero.');
+                       }, 500);
+                    }
+                  }
+                }} 
+                disabled={isSyncing || isCompressing}
+                className="w-full flex items-center gap-3 p-2 rounded-xl transition-all border border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10"
+              >
+                 <Trash2 className="w-4 h-4" />
+                 <span className="font-bold uppercase text-[9px] tracking-widest">Limpar Tudo (Reset)</span>
               </button>
             </>
           )}
-          <button onClick={onLogout} className="w-full flex items-center gap-3 text-red-400 hover:text-red-300 p-3 rounded-xl hover:bg-red-400/10">
-             <LogOut className="w-5 h-5" /> {t('logout_admin')}
+          <button onClick={onLogout} className="w-full flex items-center gap-3 text-slate-500 hover:text-red-400 p-3 rounded-xl hover:bg-red-400/5 transition-colors">
+             <LogOut className="w-5 h-5" /> <span className="font-bold uppercase text-[10px] tracking-widest">{t('logout_admin')}</span>
           </button>
         </div>
       </aside>
