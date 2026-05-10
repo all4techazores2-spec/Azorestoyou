@@ -27,8 +27,11 @@ export const connectDB = async () => {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(MONGODB_URI, {
-                serverSelectionTimeoutMS: 10000,
-                socketTimeoutMS: 45000,
+                serverSelectionTimeoutMS: 20000,
+                socketTimeoutMS: 60000,
+                connectTimeoutMS: 30000,
+                maxPoolSize: 10,
+                minPoolSize: 2,
             });
             isMongoConnected = true;
             console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
@@ -113,21 +116,26 @@ export const readDB = async () => {
 
 export const writeDB = async (data) => {
     if (isMongoConnected) {
-        try {
-            // Write to MongoDB FIRST - only update cache if successful
-            await DBModel.findOneAndUpdate(
-                { key: 'master_db' },
-                { data },
-                { upsert: true, new: true }
-            );
-            // Only update cache after confirmed write
-            memoryCache = data;
-            lastCacheTime = Date.now();
-            console.log("✅ Data persisted to MongoDB successfully.");
-        } catch (err) {
-            console.error("❌ CRITICAL: Failed to write to MongoDB:", err.message);
-            // DO NOT update cache - throw error so caller knows the write failed
-            throw new Error(`MongoDB write failed: ${err.message}`);
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                await DBModel.findOneAndUpdate(
+                    { key: 'master_db' },
+                    { data },
+                    { upsert: true, new: true, maxTimeMS: 30000 }
+                );
+                memoryCache = data;
+                lastCacheTime = Date.now();
+                console.log("✅ Data persisted to MongoDB successfully.");
+                return;
+            } catch (err) {
+                retries--;
+                console.error(`❌ PERSISTENCE ERROR (Retries left: ${retries}):`, err.message);
+                if (retries === 0) {
+                    throw new Error(`MongoDB write failed after multiple attempts: ${err.message}`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
     } else if (IS_MONGODB) {
         console.error("❌ Cannot write: MongoDB is configured but not connected.");
