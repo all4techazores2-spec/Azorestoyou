@@ -1317,8 +1317,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
            </p>
            {!dbStatus?.isMongo && (
              <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                <p className="text-[9px] text-amber-600 leading-tight">
-                  Atenção: Os dados são <b>temporários</b> e serão perdidos ao reiniciar. Configure o MONGODB_URI no Render.
+                <p className="text-[9px] text-amber-600 leading-tight mb-1">
+                  Atenção: Os dados são <b>temporários</b> e serão perdidos ao reiniciar.
+                </p>
+                <p className="text-[8px] text-slate-500">
+                  Config: {dbStatus?.isConfigured ? '✅ URI Detetada' : '❌ URI em falta no Render'}
+                </p>
+                <p className="text-[8px] text-slate-500">
+                  Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou (Ver Logs)'}
                 </p>
              </div>
            )}

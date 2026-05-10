@@ -56,8 +56,10 @@ export const connectDB = async () => {
 
 // Export real connection status for /api/status endpoint
 export const getDbStatus = () => ({
-    storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (IS_MONGODB ? 'MongoDB (Connecting...)' : 'Local JSON (Ephemeral)'),
+    storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (IS_MONGODB ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
     isMongo: isMongoConnected,
+    isConfigured: IS_MONGODB,
+    uriFound: !!MONGODB_URI,
     timestamp: new Date().toISOString()
 });
 

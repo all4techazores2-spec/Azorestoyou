@@ -327,6 +327,14 @@ app.get('/api/community/posts', async (req, res) => {
     res.json(db.posts || []);
 });
 
+export const getDbStatus = () => ({
+    storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (IS_MONGODB ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
+    isMongo: isMongoConnected,
+    isConfigured: IS_MONGODB,
+    uriFound: !!MONGODB_URI,
+    timestamp: new Date().toISOString()
+});
+
 app.post('/api/community/posts', async (req, res) => {
     const db = await readDB();
     const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
@@ -357,26 +365,34 @@ app.get('/api/cars', async (req, res) => {
     res.json(db.cars || []);
 });
 
-app.listen(PORT, async () => {
-    console.log(`🚀 Master Backend running on port ${PORT}`);
+// Start Database first, then Server
+const startServer = async () => {
+    console.log("🔍 Iniciando sequência de arranque...");
     
-    // Connect to external DB if available
+    // 1. Connect to Database
     await connectDB();
     
-    // Seed database if empty on startup
+    // 2. Seed if needed
     await seedIfNeeded();
     
-    // Truque para manter o Render sempre ativo (Self-Ping cada 1 min)
-    const selfPing = () => {
-        const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-        axios.get(`${url}/api/status`)
-            .then(() => console.log('💓 Keep-alive ping enviado com sucesso'))
-            .catch(err => console.log('⚠️ Erro no self-ping (normal em startup):', err.message));
-    };
-    
-    setInterval(selfPing, 60000); // 1 minuto
-    setTimeout(selfPing, 10000); // Primeiro ping após 10 segundos
-});
+    // 3. Start Listening
+    app.listen(PORT, () => {
+        console.log(`🚀 Master Backend running on port ${PORT}`);
+        
+        // Self-Ping para manter o Render ativo
+        const selfPing = () => {
+            const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+            axios.get(`${url}/api/status`)
+                .then(() => console.log('💓 Keep-alive ping enviado'))
+                .catch(err => console.log('⚠️ Erro no self-ping (normal em startup)'));
+        };
+        
+        setInterval(selfPing, 60000); 
+        setTimeout(selfPing, 5000); 
+    });
+};
+
+startServer();
 
 // SPA Catch-all (Deve ser a ÚLTIMA rota)
 app.use((req, res) => {
