@@ -131,7 +131,12 @@ const App: React.FC = () => {
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
-  const [dbStatus, setDbStatus] = useState<{storage: string, isMongo: boolean}>({ storage: 'A verificar...', isMongo: false });
+  const [dbStatus, setDbStatus] = useState<any>({ 
+    storage: 'A ligar...', 
+    isMongo: false, 
+    isConfigured: false, 
+    timestamp: null 
+  });
 
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
@@ -299,9 +304,18 @@ const App: React.FC = () => {
 
       // 3. Status da DB
       try {
+        console.log("🌐 A solicitar diagnóstico da base de dados...");
         const sResp = await fetch(`${API_BASE_URL}/api/db-diagnostics?t=${Date.now()}`);
-        if (sResp.ok) setDbStatus(await sResp.json());
-      } catch (e) {}
+        if (sResp.ok) {
+          const statusData = await sResp.json();
+          console.log("✅ Diagnóstico recebido:", statusData);
+          setDbStatus(statusData);
+        } else {
+          console.error("❌ Falha no diagnóstico:", sResp.status, sResp.statusText);
+        }
+      } catch (e) {
+        console.error("❌ Erro de rede ao contactar servidor:", e);
+      }
 
       setIsDataLoaded(true);
       setIsSyncing(false);
