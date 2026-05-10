@@ -158,8 +158,10 @@ const App: React.FC = () => {
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   // Function to fetch data from Backend with Retry logic for Cold Starts
   const fetchData = async (retries = 3) => {
+    setIsSyncing(true);
     try {
       const normalizeBusiness = (b: any) => ({
         ...b,
@@ -191,14 +193,6 @@ const App: React.FC = () => {
         )
       );
 
-      // Check if we got NO data at all (server might still be sleeping)
-      const allEmpty = fetchResults.every(res => Array.isArray(res) && res.length === 0);
-      if (allEmpty && retries > 0) {
-        console.log(`⚠️ Server awake check failed. Retrying in 3s... (${retries} attempts left)`);
-        setTimeout(() => fetchData(retries - 1), 3000);
-        return;
-      }
-
       // Map setters to results
       const setterMap: Record<string, Function> = {
         'restaurants': setRestaurants, 'hotels': setHotels, 'cars': setCars, 'shops': setShops,
@@ -211,13 +205,22 @@ const App: React.FC = () => {
       fetchResults.forEach((data, index) => {
         const key = endpointKeys[index];
         const setter = setterMap[key];
-        if (setter && Array.isArray(data) && data.length > 0) {
+        if (setter && Array.isArray(data)) {
           const normalized = data.map(normalizeBusiness);
           setter(normalized);
-          // Save to persistent cache
+          // Save to persistent cache (only if not empty to avoid clearing cache on network error, 
+          // but here we want to allow clearing if server is empty)
           localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized));
         }
       });
+
+      // Check if we got NO data at all (server might still be sleeping)
+      const allEmpty = fetchResults.every(res => Array.isArray(res) && res.length === 0);
+      if (allEmpty && retries > 0) {
+        console.log(`⚠️ Server awake check failed. Retrying in 3s... (${retries} attempts left)`);
+        setTimeout(() => fetchData(retries - 1), 3000);
+        return;
+      }
 
       // 2. Utilizador (Sincronização de Reservas)
       if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
@@ -236,12 +239,14 @@ const App: React.FC = () => {
       } catch (e) {}
 
       setIsDataLoaded(true);
+      setIsSyncing(false);
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
       if (retries > 0) {
         setTimeout(() => fetchData(retries - 1), 3000);
       } else {
         setIsDataLoaded(true); // Fallback to show empty app if server is dead
+        setIsSyncing(false);
       }
     }
   };
@@ -251,13 +256,13 @@ const App: React.FC = () => {
     fetchData();
     
     // Polling apenas para clientes (não administradores ou negócios) para evitar conflitos de edição
-    // Aumentado para 10 segundos para maior estabilidade
+    // Reduzido para 5 segundos para atualizações mais rápidas
     let syncInterval: any;
     if (!isAdmin && !isBusiness && !isStaff && !isSupplier) {
       syncInterval = setInterval(() => {
         fetchData();
         console.log("🔄 Sincronização em tempo real executada...");
-      }, 10000);
+      }, 5000);
     }
     
     return () => {
@@ -1304,7 +1309,7 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
       {/* Indicador discreto de Sincronização em Segundo Plano */}
-      {!isDataLoaded && (
+      {(isSyncing || !isDataLoaded) && (
         <div className="fixed top-0 left-0 right-0 h-1 z-[200] overflow-hidden bg-blue-100/30">
           <motion.div 
             initial={{ x: "-100%" }}
