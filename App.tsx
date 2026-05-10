@@ -64,6 +64,37 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
+// --- INDEXED DB HELPER ---
+const initDB = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const request = indexedDB.open('azores_db', 1);
+  request.onupgradeneeded = (e: any) => {
+    e.target.result.createObjectStore('cache_store');
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+
+const setCache = async (key: string, val: any) => {
+  try {
+    const db = await initDB();
+    const tx = db.transaction('cache_store', 'readwrite');
+    tx.objectStore('cache_store').put(val, key);
+  } catch(e) {}
+};
+
+const getCache = async (key: string): Promise<any> => {
+  try {
+    const db = await initDB();
+    const tx = db.transaction('cache_store', 'readonly');
+    const request = tx.objectStore('cache_store').get(key);
+    return new Promise((res) => {
+      request.onsuccess = () => res(request.result);
+      request.onerror = () => res(null);
+    });
+  } catch(e) { return null; }
+};
+// -------------------------
+
 // Business type mapping moved to config.ts
 
 const App: React.FC = () => {
@@ -101,6 +132,40 @@ const App: React.FC = () => {
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [dbStatus, setDbStatus] = useState<{storage: string, isMongo: boolean}>({ storage: 'A verificar...', isMongo: false });
+
+  // Load from IndexedDB on initial mount for massive storage capacity
+  useEffect(() => {
+    const loadCaches = async () => {
+      const endpoints = [
+        { key: 'restaurants', setter: setRestaurants },
+        { key: 'hotels', setter: setHotels },
+        { key: 'cars', setter: setCars as Function },
+        { key: 'shops', setter: setShops },
+        { key: 'beauty', setter: setBeauty },
+        { key: 'services', setter: setServices },
+        { key: 'offices', setter: setOffices },
+        { key: 'animals', setter: setAnimals },
+        { key: 'real_estate', setter: setRealEstate },
+        { key: 'gyms', setter: setGyms },
+        { key: 'stands', setter: setStands },
+        { key: 'auto_repairs', setter: setAutoRepairs },
+        { key: 'auto_electronics', setter: setAutoElectronics },
+        { key: 'used_market', setter: setUsedMarket },
+        { key: 'it_services', setter: setItServices },
+        { key: 'perfumes', setter: setPerfumes },
+        { key: 'activities', setter: setActivities as Function },
+        { key: 'bus-schedules', setter: setBusSchedules as Function },
+        { key: 'flights', setter: setFlights as Function }
+      ];
+      for (const ep of endpoints) {
+        const cached = await getCache(`azores_cache_${ep.key}`);
+        if (cached && Array.isArray(cached) && cached.length > 0) {
+          ep.setter(cached);
+        }
+      }
+    };
+    loadCaches();
+  }, []);
 
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -177,7 +242,7 @@ const App: React.FC = () => {
         }))
       });
 
-      // 1. Fetching in parallel for maximum speed
+      // 1. Streaming Fetch for ZERO delay
       const endpointKeys = [
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
@@ -185,15 +250,6 @@ const App: React.FC = () => {
         'activities', 'bus-schedules', 'flights'
       ];
 
-      const fetchResults = await Promise.all(
-        endpointKeys.map(key => 
-          fetch(`${API_BASE_URL}/api/${key}`)
-            .then(r => r.ok ? r.json() : [])
-            .catch(() => [])
-        )
-      );
-
-      // Map setters to results
       const setterMap: Record<string, Function> = {
         'restaurants': setRestaurants, 'hotels': setHotels, 'cars': setCars, 'shops': setShops,
         'beauty': setBeauty, 'services': setServices, 'offices': setOffices, 'animals': setAnimals,
@@ -202,28 +258,34 @@ const App: React.FC = () => {
         'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights
       };
 
-      fetchResults.forEach((data, index) => {
-        const key = endpointKeys[index];
-        const setter = setterMap[key];
-        if (setter && Array.isArray(data)) {
-          const normalized = data.map(normalizeBusiness);
-          setter(normalized);
-          // Save to persistent cache with try-catch to avoid QuotaExceededError crashing the app
-          try {
-             localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized));
-          } catch (storageError) {
-             console.warn(`Local storage quota exceeded when saving ${key}.`);
-          }
-        }
-      });
+      let emptyCount = 0;
+      let completedCount = 0;
 
-      // Check if we got NO data at all (server might still be sleeping)
-      const allEmpty = fetchResults.every(res => Array.isArray(res) && res.length === 0);
-      if (allEmpty && retries > 0) {
-        console.log(`⚠️ Server awake check failed. Retrying in 3s... (${retries} attempts left)`);
-        setTimeout(() => fetchData(retries - 1), 3000);
-        return;
-      }
+      endpointKeys.forEach(key => {
+        fetch(`${API_BASE_URL}/api/${key}`)
+          .then(r => r.ok ? r.json() : [])
+          .then(data => {
+             completedCount++;
+             if (Array.isArray(data) && data.length === 0) emptyCount++;
+             const setter = setterMap[key];
+             if (setter && Array.isArray(data)) {
+               const normalized = data.map(normalizeBusiness);
+               setter(normalized);
+               // Save to IndexedDB which has massive storage capacity!
+               setCache(`azores_cache_${key}`, normalized);
+               // Also try localStorage for fallback if it's small enough
+               try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+             }
+             if (completedCount === endpointKeys.length) {
+                if (emptyCount === endpointKeys.length && retries > 0) {
+                   setTimeout(() => fetchData(retries - 1), 3000);
+                }
+             }
+          })
+          .catch(() => {
+             completedCount++;
+          });
+      });
 
       // 2. Utilizador (Sincronização de Reservas)
       if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
