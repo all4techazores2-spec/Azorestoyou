@@ -101,6 +101,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 });
+  const [compressionLabel, setCompressionLabel] = useState('');
 
   useEffect(() => {
     setSelectedIds([]);
@@ -476,19 +477,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleSyncAndCompress = async () => {
     if (!onFullSync) return;
     setIsCompressing(true);
+    setCompressionLabel('A iniciar otimização...');
     
     // Helper to compress images in a list
     const compressList = async (list: any[], label: string) => {
-      const newList = [...list];
+      const newList = JSON.parse(JSON.stringify(list)); // Deep clone
       for (let i = 0; i < newList.length; i++) {
+        const currentNum = compressionProgress.current + i + 1;
+        const itemName = newList[i].name || newList[i].title || newList[i].id;
+        setCompressionLabel(`[${label}] a processar: ${itemName}`);
         setCompressionProgress(prev => ({ ...prev, current: prev.current + 1 }));
+        
+        // 1. Main image
         if (newList[i].image && newList[i].image.startsWith('data:image')) {
           newList[i].image = await compressImage(newList[i].image);
         }
-        if (newList[i].gallery) {
+        
+        // 2. Gallery
+        if (newList[i].gallery && Array.isArray(newList[i].gallery)) {
            newList[i].gallery = await Promise.all(
              newList[i].gallery.map((img: any) => typeof img === 'string' && img.startsWith('data:image') ? compressImage(img) : img)
            );
+        }
+
+        // 3. Dishes/Items
+        if (newList[i].dishes && Array.isArray(newList[i].dishes)) {
+           for (let d = 0; d < newList[i].dishes.length; d++) {
+             if (newList[i].dishes[d].image && newList[i].dishes[d].image.startsWith('data:image')) {
+               newList[i].dishes[d].image = await compressImage(newList[i].dishes[d].image);
+             }
+           }
         }
       }
       return newList;
@@ -509,19 +527,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setCompressionProgress({ current: 0, total: totalItems });
 
     try {
-      const updatedData: any = {};
       for (const listObj of lists) {
+        if (listObj.data.length === 0) continue;
         const compressed = await compressList(listObj.data, listObj.label);
-        updatedData[listObj.label.toLowerCase()] = compressed;
-        listObj.setter(compressed);
+        setCompressionLabel(`A enviar ${listObj.label} para o servidor...`);
+        await listObj.setter(compressed);
       }
       
+      setCompressionLabel('A finalizar sincronização total...');
       await onFullSync();
-      alert('✅ Dados comprimidos e sincronizados com sucesso!');
+      alert('✅ Todos os dados e imagens foram otimizados e guardados com sucesso!');
     } catch (e) {
-      alert('❌ Erro na compressão/sincronização');
+      alert('❌ Erro na compressão/sincronização. Verifique a consola.');
+      console.error(e);
     } finally {
       setIsCompressing(false);
+      setCompressionLabel('');
     }
   };
 
@@ -1465,7 +1486,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                            style={{ width: `${(compressionProgress.current / compressionProgress.total) * 100}%` }}
                          />
                       </div>
-                      <p className="text-[9px] mt-1 text-center font-bold">
+                      <p className="text-[9px] mt-1 text-center font-bold text-white/90 truncate">
+                        {compressionLabel}
+                      </p>
+                      <p className="text-[8px] mt-0.5 text-center font-black text-amber-300">
                         {compressionProgress.current} / {compressionProgress.total} itens processados
                       </p>
                    </div>
