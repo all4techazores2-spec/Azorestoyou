@@ -94,6 +94,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [islandFilter, setIslandFilter] = useState<string>('all');
+  const [cuisineFilter, setCuisineFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [bulkIsland, setBulkIsland] = useState<string>('PDL');
   const [bulkSubcategory, setBulkSubcategory] = useState<string>('');
@@ -639,7 +640,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <>
             {commonInput(t('item_name'), 'name')}
             {islandSelect()}
-            {activeTab === 'restaurants' && commonInput(t('field_cuisine'), 'cuisine')}
+            {activeTab === 'restaurants' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Cozinha</label>
+                <input 
+                  type="text" 
+                  className="w-full border p-2 rounded-lg"
+                  value={editingItem.cuisine || ''}
+                  onChange={e => setEditingItem({...editingItem, cuisine: e.target.value})}
+                  placeholder="Ex: Regional, Peixe, Carne..."
+                />
+              </div>
+            )}
             
             {/* Subcategory selection based on Tab */}
             {activeTab === 'beauty' && (
@@ -1043,7 +1055,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const getListItems = () => {
     let list: any[] = [];
     switch (activeTab) {
-      case 'restaurants': list = restaurants; break;
+      case 'restaurants': 
+        list = restaurants; 
+        if (cuisineFilter !== 'all') {
+          list = list.filter(r => r.cuisine === cuisineFilter);
+        }
+        break;
       case 'shops': list = shopsFilter === 'all' ? shops : shops.filter(s => s.subcategory === shopsFilter); break;
       case 'beauty': list = beautyFilter === 'all' ? beauty : beauty.filter(b => b.subcategory === beautyFilter); break;
       case 'services': list = servicesFilter === 'all' ? services : services.filter(s => s.subcategory === servicesFilter); break;
@@ -1199,9 +1216,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Database Status Badge */}
         <div className="mx-4 mb-4 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-           <div className="flex items-center gap-2 mb-2">
-              <Database size={14} className={dbStatus?.isMongo ? 'text-emerald-400' : 'text-amber-400'} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da DB</span>
+           <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center gap-2">
+                <Database size={14} className={dbStatus?.isMongo ? 'text-emerald-400' : 'text-amber-400'} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da DB</span>
+              </div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="p-1 hover:bg-slate-700 rounded-md text-slate-400 transition-colors"
+                title="Recarregar Dados"
+              >
+                <RefreshCw size={12} />
+              </button>
            </div>
            <p className={`text-[11px] font-bold ${dbStatus?.isMongo ? 'text-emerald-500' : 'text-amber-500'}`}>
               {dbStatus?.storage}
@@ -1242,14 +1268,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">
               {activeTab === 'dashboard' ? 'Panorama Geral' : `${t(`manage_${activeTab}`)} (${getListItems().length})`}
             </h1>
-            {activeTab !== 'dashboard' && (
-              <button 
-                onClick={startAdd}
-                className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-2 hover:bg-blue-600 shadow-xl transition-all active:scale-95"
-              >
-                <Plus className="w-5 h-5" /> Adicionar Novo
-              </button>
-            )}
          </div>
 
           {/* DASHBOARD VIEW */}
@@ -1623,6 +1641,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-6">
                 
                 <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">
+                   <div className="flex gap-4 items-center">
+                     <select 
+                       className="border-2 border-slate-100 p-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-wider text-slate-500 focus:border-blue-500 outline-none transition-all"
+                       value={islandFilter}
+                       onChange={e => setIslandFilter(e.target.value)}
+                     >
+                        <option value="all">Todas as Ilhas</option>
+                        {['PDL', 'TER', 'HOR', 'PIX', 'SJZ', 'GRW', 'FLW', 'CVU', 'SMA'].map(i => <option key={i} value={i}>{i}</option>)}
+                     </select>
+
+                     {activeTab === 'restaurants' && (
+                       <select 
+                         className="border-2 border-slate-100 p-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-wider text-slate-500 focus:border-blue-500 outline-none transition-all"
+                         value={cuisineFilter}
+                         onChange={e => setCuisineFilter(e.target.value)}
+                       >
+                         <option value="all">Todos os Tipos de Cozinha</option>
+                         {Array.from(new Set(restaurants.map(r => r.cuisine).filter(Boolean))).sort().map(c => (
+                           <option key={c} value={c}>{c}</option>
+                         ))}
+                       </select>
+                     )}
+                   </div>
+
                    <div className="flex items-center gap-6">
                      <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
                         <input 

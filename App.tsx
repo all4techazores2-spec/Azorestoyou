@@ -1067,7 +1067,7 @@ const App: React.FC = () => {
         }}
         onUpdateBusSchedules={async (list) => {
           setBusSchedules(list);
-          await fetch(`${API_BASE_URL}/api/busSchedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
+          await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) });
         }}
         // Logic
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}

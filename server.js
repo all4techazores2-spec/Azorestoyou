@@ -28,7 +28,14 @@ const upload = multer({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Configuração robusta de CORS
+app.use(cors({
+    origin: '*', // Permitir qualquer origem para facilitar a ligação Render -> Cloudflare
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true
+}));
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
@@ -187,10 +194,11 @@ app.post('/api/full-sync', async (req, res) => {
 });
 
 // Adicionar rotas de bulk para outras coleções que não são "business" puras
-['flights', 'busSchedules', 'activities', 'users', 'posts'].forEach(key => {
+['flights', 'bus-schedules', 'activities', 'users', 'posts'].forEach(key => {
     app.post(`/api/${key}/bulk`, async (req, res) => {
         const db = await readDB();
-        db[key] = req.body;
+        const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
+        db[dbKey] = req.body;
         await writeDB(db);
         res.json({ success: true, count: req.body.length });
     });
@@ -381,6 +389,11 @@ app.listen(PORT, async () => {
 
 // SPA Catch-all (Deve ser a ÚLTIMA rota)
 app.use((req, res) => {
+    // Evitar cache agressivo do index.html para evitar erros 404 em assets (CSS/JS) novos após build
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
         if (err) {
             console.error("❌ Erro ao enviar index.html:", err);
