@@ -785,13 +785,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {activeTab === 'restaurants' && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Cozinha</label>
-                <input 
-                  type="text" 
-                  className="w-full border p-2 rounded-lg"
-                  value={editingItem.cuisine || ''}
+                <select 
+                  className="w-full border p-2 rounded-lg bg-white font-bold"
+                  value={editingItem.cuisine || 'Regional'}
                   onChange={e => setEditingItem({...editingItem, cuisine: e.target.value})}
-                  placeholder="Ex: Regional, Peixe, Carne..."
-                />
+                >
+                  <option value="Regional">Regional (Açoriana)</option>
+                  <option value="Portuguesa">Portuguesa</option>
+                  <option value="Italiana">Italiana</option>
+                  <option value="Pizzaria">Pizzaria</option>
+                  <option value="Chinesa">Chinesa</option>
+                  <option value="Japonesa">Japonesa / Sushi</option>
+                  <option value="Mexicana">Mexicana</option>
+                  <option value="Americana">Americana / Fast Food</option>
+                  <option value="Hamburgueria">Hamburgueria</option>
+                  <option value="Vegetariana">Vegetariana</option>
+                  <option value="Vegan">Vegan</option>
+                  <option value="Marisco">Marisco</option>
+                  <option value="Peixe Fresco">Peixe Fresco</option>
+                  <option value="Churrasco">Churrasco / Grelhados</option>
+                  <option value="Mediterrânica">Mediterrânica</option>
+                  <option value="Francesa">Francesa</option>
+                  <option value="Indiana">Indiana</option>
+                  <option value="Tailandesa">Tailandesa</option>
+                  <option value="Brasileira">Brasileira</option>
+                  <option value="Snack-Bar">Snack-Bar / Petiscos</option>
+                  <option value="Pastelaria">Pastelaria / Café</option>
+                  <option value="Gourmet">Gourmet / Autor</option>
+                </select>
               </div>
             )}
             
