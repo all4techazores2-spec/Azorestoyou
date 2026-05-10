@@ -1326,6 +1326,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="text-[8px] text-slate-500">
                   Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou (Ver Logs)'}
                 </p>
+                <p className="text-[7px] text-slate-600 mt-1 opacity-50">
+                  Srv Time: {dbStatus?.timestamp ? new Date(dbStatus.timestamp).toLocaleTimeString() : 'N/A'}
+                </p>
              </div>
            )}
         </div>

@@ -46,9 +46,9 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// --- DATABASE STATUS ---
-app.get('/api/status', async (req, res) => {
-    // Returns REAL connection state, not just whether the env var exists
+// --- DATABASE DIAGNOSTICS ---
+app.get('/api/db-diagnostics', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.json(getDbStatus());
 });
 
@@ -374,7 +374,7 @@ const startServer = async () => {
         // Self-Ping para manter o Render ativo
         const selfPing = () => {
             const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-            axios.get(`${url}/api/status`)
+            axios.get(`${url}/api/db-diagnostics?t=${Date.now()}`)
                 .then(() => console.log('💓 Keep-alive ping enviado'))
                 .catch(err => console.log('⚠️ Erro no self-ping (normal em startup)'));
         };

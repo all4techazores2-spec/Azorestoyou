@@ -262,7 +262,7 @@ const App: React.FC = () => {
       let completedCount = 0;
 
       endpointKeys.forEach(key => {
-        fetch(`${API_BASE_URL}/api/${key}`)
+        fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}`)
           .then(r => r.ok ? r.json() : [])
           .then(data => {
              completedCount++;
@@ -289,7 +289,7 @@ const App: React.FC = () => {
 
       // 2. Utilizador (Sincronização de Reservas)
       if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
-        const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`);
+        const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}?t=${Date.now()}`);
         if (userResp.ok) {
           const userData = await userResp.json();
           setUserCredits(userData.credits || 0);
@@ -299,7 +299,7 @@ const App: React.FC = () => {
 
       // 3. Status da DB
       try {
-        const sResp = await fetch(`${API_BASE_URL}/api/status`);
+        const sResp = await fetch(`${API_BASE_URL}/api/db-diagnostics?t=${Date.now()}`);
         if (sResp.ok) setDbStatus(await sResp.json());
       } catch (e) {}
 
@@ -1202,7 +1202,7 @@ const App: React.FC = () => {
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
         onFullSync={async () => {
           try {
-            const res = await fetch(`${API_BASE_URL}/api/full-sync`, {
+            const res = await fetch(`${API_BASE_URL}/api/full-sync?t=${Date.now()}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
