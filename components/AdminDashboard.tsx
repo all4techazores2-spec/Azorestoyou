@@ -103,6 +103,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 });
   const [compressionLabel, setCompressionLabel] = useState('');
+  const [syncLogs, setSyncLogs] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -406,12 +407,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
 
     try {
-      const itemToSave = { ...editingItem };
-      console.log("🛠️ Iniciar otimização de imagens para:", itemToSave.id);
-      
-      // Auto-compress all images inside the object before sending to server
-      const updatedItem = await compressObjectImages(itemToSave);
-      console.log("✅ Otimização concluída. A enviar para o servidor...");
+      const updatedItem = { ...editingItem };
       
       // 1. If it's a NEW item, we still need to add it to the list first (Bulk style)
       // 2. If it's an EDIT, we can try individual save if the prop exists
@@ -548,39 +544,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return newObj;
   };
 
+  const addLog = (msg: string) => {
+    setSyncLogs(prev => [msg, ...prev].slice(0, 50));
+    console.log(msg);
+  };
+
   const handleSyncAndCompress = async () => {
     if (!onFullSync) return;
     setIsCompressing(true);
-    setCompressionLabel('A iniciar otimização...');
+    setSyncLogs([]);
+    addLog('🚀 A iniciar processo de otimização global...');
+    setCompressionLabel('A preparar dados...');
     
     // Helper to compress images in a list
     const compressList = async (list: any[], label: string) => {
       const newList = JSON.parse(JSON.stringify(list)); // Deep clone
       for (let i = 0; i < newList.length; i++) {
-        const currentNum = compressionProgress.current + i + 1;
         const itemName = newList[i].name || newList[i].title || newList[i].id;
         setCompressionLabel(`[${label}] a processar: ${itemName}`);
+        addLog(`📸 A otimizar: ${itemName} (${label})`);
         setCompressionProgress(prev => ({ ...prev, current: prev.current + 1 }));
         
-        // 1. Main image
-        if (newList[i].image && newList[i].image.startsWith('data:image')) {
-          newList[i].image = await compressImage(newList[i].image);
-        }
-        
-        // 2. Gallery
-        if (newList[i].gallery && Array.isArray(newList[i].gallery)) {
-           newList[i].gallery = await Promise.all(
-             newList[i].gallery.map((img: any) => typeof img === 'string' && img.startsWith('data:image') ? compressImage(img) : img)
-           );
-        }
+        try {
+          // 1. Main image
+          if (newList[i].image && newList[i].image.startsWith('data:image')) {
+            newList[i].image = await compressImage(newList[i].image);
+          }
+          
+          // 2. Gallery
+          if (newList[i].gallery && Array.isArray(newList[i].gallery)) {
+             newList[i].gallery = await Promise.all(
+               newList[i].gallery.map((img: any) => typeof img === 'string' && img.startsWith('data:image') ? compressImage(img) : img)
+             );
+          }
 
-        // 3. Dishes/Items
-        if (newList[i].dishes && Array.isArray(newList[i].dishes)) {
-           for (let d = 0; d < newList[i].dishes.length; d++) {
-             if (newList[i].dishes[d].image && newList[i].dishes[d].image.startsWith('data:image')) {
-               newList[i].dishes[d].image = await compressImage(newList[i].dishes[d].image);
+          // 3. Dishes/Items
+          if (newList[i].dishes && Array.isArray(newList[i].dishes)) {
+             for (let d = 0; d < newList[i].dishes.length; d++) {
+               if (newList[i].dishes[d].image && newList[i].dishes[d].image.startsWith('data:image')) {
+                 newList[i].dishes[d].image = await compressImage(newList[i].dishes[d].image);
+               }
              }
-           }
+          }
+        } catch (err: any) {
+          addLog(`❌ Erro em ${itemName}: ${err.message}`);
         }
       }
       return newList;
@@ -603,17 +610,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       for (const listObj of lists) {
         if (listObj.data.length === 0) continue;
+        addLog(`📦 A processar categoria: ${listObj.label}...`);
         const compressed = await compressList(listObj.data, listObj.label);
         setCompressionLabel(`A enviar ${listObj.label} para o servidor...`);
+        addLog(`☁️ A enviar ${listObj.label} para a base de dados...`);
         await listObj.setter(compressed);
+        addLog(`✅ ${listObj.label} guardados.`);
       }
       
       setCompressionLabel('A finalizar sincronização total...');
+      addLog('🔄 A finalizar sincronização final...');
       await onFullSync();
+      addLog('✨ PROCESSO CONCLUÍDO COM SUCESSO!');
       alert('✅ Todos os dados e imagens foram otimizados e guardados com sucesso!');
-    } catch (e) {
-      alert('❌ Erro na compressão/sincronização. Verifique a consola.');
-      console.error(e);
+    } catch (e: any) {
+      addLog(`❌ ERRO FATAL: ${e.message}`);
+      alert('❌ Erro na compressão/sincronização. Verifique o log.');
     } finally {
       setIsCompressing(false);
       setCompressionLabel('');
@@ -2333,6 +2345,60 @@ Av. do Mar, Madalena, Pico
              )}
            </div>
          )}
+          {/* SYNC PROGRESS MODAL */}
+          <AnimatePresence>
+            {isCompressing && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                >
+                  <div className="p-8 border-b bg-slate-50">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                        <RefreshCw className="animate-spin" size={24} />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Otimização em Curso</h2>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{compressionLabel}</p>
+                      </div>
+                    </div>
+
+                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                       <motion.div 
+                         initial={{ width: 0 }}
+                         animate={{ width: `${(compressionProgress.current / compressionProgress.total) * 100}%` }}
+                         className="h-full bg-blue-600"
+                       />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progresso Total</span>
+                       <span className="text-sm font-black text-blue-600">{Math.round((compressionProgress.current / compressionProgress.total) * 100)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 p-6 overflow-y-auto bg-slate-900 font-mono text-[10px] space-y-1">
+                    {syncLogs.map((log, i) => (
+                      <div key={i} className={`flex gap-3 ${log.includes('✅') ? 'text-emerald-400' : log.includes('❌') ? 'text-red-400' : 'text-blue-300'}`}>
+                        <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
+                        <span className="flex-1">{log}</span>
+                      </div>
+                    ))}
+                    {syncLogs.length === 0 && (
+                      <div className="text-slate-600 italic">A aguardar início do processo...</div>
+                    )}
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border-t flex justify-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Não feche esta janela enquanto o processo não terminar
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
          {/* EDIT FORM */}
          {editingItem && (
            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto border border-slate-200 animate-in fade-in slide-in-from-bottom-4 mb-20">
@@ -2361,7 +2427,7 @@ Av. do Mar, Madalena, Pico
                     {isSaving ? (
                       <>
                         <RefreshCw className="w-5 h-5 animate-spin" />
-                        <span>A otimizar e guardar...</span>
+                        <span>A guardar...</span>
                       </>
                     ) : (
                       <>
