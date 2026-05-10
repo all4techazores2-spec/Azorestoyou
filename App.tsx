@@ -208,9 +208,12 @@ const App: React.FC = () => {
         if (setter && Array.isArray(data)) {
           const normalized = data.map(normalizeBusiness);
           setter(normalized);
-          // Save to persistent cache (only if not empty to avoid clearing cache on network error, 
-          // but here we want to allow clearing if server is empty)
-          localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized));
+          // Save to persistent cache with try-catch to avoid QuotaExceededError crashing the app
+          try {
+             localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized));
+          } catch (storageError) {
+             console.warn(`Local storage quota exceeded when saving ${key}.`);
+          }
         }
       });
 
