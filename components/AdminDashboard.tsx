@@ -57,7 +57,6 @@ interface AdminDashboardProps {
 
   onLogout: () => void;
   onFullSync?: () => void;
-  onSaveSingleItem?: (item: any, collection: Tab) => Promise<void>;
   dbStatus?: any;
   language?: Language;
 }
@@ -67,7 +66,7 @@ type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
   onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
-  onLogout, onFullSync, onSaveSingleItem, dbStatus,
+  onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -409,79 +408,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const updatedItem = { ...editingItem };
       
-      // 1. If it's a NEW item, we still need to add it to the list first (Bulk style)
-      // 2. If it's an EDIT, we can try individual save if the prop exists
-      
-      if (!isAddingNew && onSaveSingleItem) {
-        // Individual optimization: Save only this item to DB
-        await onSaveSingleItem(updatedItem, activeTab);
-        
-        // Update local list state so it reflects immediately
-        const updateLocal = (list: any[], setter: (l: any[]) => void) => {
+      // Helper to add or update item in local list (NO SERVER SYNC HERE)
+      const updateLocal = (list: any[], setter: (l: any[]) => void) => {
+        if (isAddingNew) {
+          if (!updatedItem.id) updatedItem.id = `${activeTab.substring(0,3).toUpperCase()}${Date.now()}`;
+          setter([...list, updatedItem]);
+        } else {
           setter(list.map(item => item.id === updatedItem.id ? updatedItem : item));
-        };
-
-        switch (activeTab) {
-          case 'restaurants': updateLocal(restaurants, (l) => onUpdateRestaurants(l)); break;
-          case 'shops': updateLocal(shops, (l) => onUpdateShops(l)); break;
-          case 'beauty': updateLocal(beauty, (l) => onUpdateBeauty(l)); break;
-          case 'services': updateLocal(services, (l) => onUpdateServices(l)); break;
-          case 'auto_repairs': updateLocal(autoRepairs, (l) => onUpdateAutoRepairs(l)); break;
-          case 'auto_electronics': updateLocal(autoElectronics, (l) => onUpdateAutoElectronics(l)); break;
-          case 'used_market': updateLocal(usedMarket, (l) => onUpdateUsedMarket(l)); break;
-          case 'animals': updateLocal(animals, (l) => onUpdateAnimals(l)); break;
-          case 'real_estate': updateLocal(realEstate, (l) => onUpdateRealEstate(l)); break;
-          case 'gyms': updateLocal(gyms, (l) => onUpdateGyms(l)); break;
-          case 'stands': updateLocal(stands, (l) => onUpdateStands(l)); break;
-          case 'offices': updateLocal(offices, (l) => onUpdateOffices(l)); break;
-          case 'it_services': updateLocal(itServices, (l) => onUpdateITServices(l)); break;
-          case 'perfumes': updateLocal(perfumes, (l) => onUpdatePerfumes(l)); break;
-          case 'activities': updateLocal(activities, (l) => onUpdateActivities(l)); break;
-          case 'flights': updateLocal(flights, (l) => onUpdateFlights(l)); break;
-          case 'hotels': updateLocal(hotels, (l) => onUpdateHotels(l)); break;
-          case 'cars': updateLocal(cars, (l) => onUpdateCars(l)); break;
-          case 'buses': updateLocal(busSchedules, (l) => onUpdateBusSchedules(l)); break;
         }
-      } else {
-        // Fallback or NEW item: Update the whole list
-        const updateList = async (list: any[], setter: (l: any[]) => void) => {
-          if (isAddingNew) {
-            if (!updatedItem.id) updatedItem.id = `${activeTab.substring(0,3).toUpperCase()}${Date.now()}`;
-            await setter([...list, updatedItem]);
-          } else {
-            await setter(list.map(item => item.id === updatedItem.id ? updatedItem : item));
-          }
-        };
+      };
 
-        switch (activeTab) {
-          case 'restaurants': await updateList(restaurants, onUpdateRestaurants); break;
-          case 'shops': await updateList(shops, onUpdateShops); break;
-          case 'beauty': await updateList(beauty, onUpdateBeauty); break;
-          case 'services': await updateList(services, onUpdateServices); break;
-          case 'auto_repairs': await updateList(autoRepairs, onUpdateAutoRepairs); break;
-          case 'auto_electronics': await updateList(autoElectronics, onUpdateAutoElectronics); break;
-          case 'used_market': await updateList(usedMarket, onUpdateUsedMarket); break;
-          case 'animals': await updateList(animals, onUpdateAnimals); break;
-          case 'real_estate': await updateList(realEstate, onUpdateRealEstate); break;
-          case 'gyms': await updateList(gyms, onUpdateGyms); break;
-          case 'stands': await updateList(stands, onUpdateStands); break;
-          case 'offices': await updateList(offices, onUpdateOffices); break;
-          case 'it_services': await updateList(itServices, onUpdateITServices); break;
-          case 'perfumes': await updateList(perfumes, onUpdatePerfumes); break;
-          case 'activities': await updateList(activities, onUpdateActivities); break;
-          case 'flights': await updateList(flights, onUpdateFlights); break;
-          case 'hotels': await updateList(hotels, onUpdateHotels); break;
-          case 'cars': await updateList(cars, onUpdateCars); break;
-          case 'buses': await updateList(busSchedules, onUpdateBusSchedules); break;
-        }
+      switch (activeTab) {
+        case 'restaurants': updateLocal(restaurants, onUpdateRestaurants); break;
+        case 'shops': updateLocal(shops, onUpdateShops); break;
+        case 'beauty': updateLocal(beauty, onUpdateBeauty); break;
+        case 'services': updateLocal(services, onUpdateServices); break;
+        case 'auto_repairs': updateLocal(autoRepairs, onUpdateAutoRepairs); break;
+        case 'auto_electronics': updateLocal(autoElectronics, onUpdateAutoElectronics); break;
+        case 'used_market': updateLocal(usedMarket, onUpdateUsedMarket); break;
+        case 'animals': updateLocal(animals, onUpdateAnimals); break;
+        case 'real_estate': updateLocal(realEstate, onUpdateRealEstate); break;
+        case 'gyms': updateLocal(gyms, onUpdateGyms); break;
+        case 'stands': updateLocal(stands, onUpdateStands); break;
+        case 'offices': updateLocal(offices, onUpdateOffices); break;
+        case 'it_services': updateLocal(itServices, onUpdateITServices); break;
+        case 'perfumes': updateLocal(perfumes, onUpdatePerfumes); break;
+        case 'activities': updateLocal(activities, onUpdateActivities); break;
+        case 'flights': updateLocal(flights, onUpdateFlights); break;
+        case 'hotels': updateLocal(hotels, onUpdateHotels); break;
+        case 'cars': updateLocal(cars, onUpdateCars); break;
+        case 'buses': updateLocal(busSchedules, onUpdateBusSchedules); break;
       }
 
       setEditingItem(null);
       setIsAddingNew(false);
-      alert('✅ Alterações guardadas com sucesso!');
+      alert('✅ Alterações guardadas localmente. Clique no botão verde para enviar para o servidor.');
     } catch (err: any) {
-      console.error("Save failed:", err);
-      alert('❌ Erro ao guardar alterações: ' + err.message);
+      alert('❌ Erro: ' + err.message);
     } finally {
       setIsSaving(false);
     }
