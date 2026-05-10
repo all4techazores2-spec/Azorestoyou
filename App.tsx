@@ -166,36 +166,38 @@ const App: React.FC = () => {
         }))
       });
 
-      // 1. Restaurantes e categorias base
-      const endpoints = [
-        { key: 'restaurants', setter: setRestaurants },
-        { key: 'hotels', setter: setHotels },
-        { key: 'cars', setter: setCars },
-        { key: 'shops', setter: setShops },
-        { key: 'beauty', setter: setBeauty },
-        { key: 'services', setter: setServices },
-        { key: 'offices', setter: setOffices },
-        { key: 'animals', setter: setAnimals },
-        { key: 'real_estate', setter: setRealEstate },
-        { key: 'gyms', setter: setGyms },
-        { key: 'stands', setter: setStands },
-        { key: 'auto_repairs', setter: setAutoRepairs },
-        { key: 'auto_electronics', setter: setAutoElectronics },
-        { key: 'used_market', setter: setUsedMarket },
-        { key: 'it_services', setter: setItServices },
-        { key: 'perfumes', setter: setPerfumes }
+      // 1. Fetching in parallel for maximum speed
+      const endpointKeys = [
+        'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
+        'offices', 'animals', 'real_estate', 'gyms', 'stands', 
+        'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes',
+        'activities', 'bus-schedules', 'flights'
       ];
 
-      for (const endpoint of endpoints) {
-        try {
-          const resp = await fetch(`${API_BASE_URL}/api/${endpoint.key}`);
-          if (resp.ok) {
-            const raw = await resp.json();
-            const latest = raw.map(normalizeBusiness);
-            endpoint.setter(latest);
-          }
-        } catch (e) { console.error(`Erro ao carregar ${endpoint.key}:`, e); }
-      }
+      const fetchResults = await Promise.all(
+        endpointKeys.map(key => 
+          fetch(`${API_BASE_URL}/api/${key}`)
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
+      );
+
+      // Map setters to results
+      const setterMap: Record<string, Function> = {
+        'restaurants': setRestaurants, 'hotels': setHotels, 'cars': setCars, 'shops': setShops,
+        'beauty': setBeauty, 'services': setServices, 'offices': setOffices, 'animals': setAnimals,
+        'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
+        'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
+        'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights
+      };
+
+      fetchResults.forEach((data, index) => {
+        const key = endpointKeys[index];
+        const setter = setterMap[key];
+        if (setter) {
+          setter(data.map(normalizeBusiness));
+        }
+      });
 
       // 2. Utilizador (Sincronização de Reservas)
       if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
@@ -204,35 +206,20 @@ const App: React.FC = () => {
           const userData = await userResp.json();
           setUserCredits(userData.credits || 0);
           setMyReservations(userData.reservations || []);
-          setIsDataLoaded(true);
         }
       }
 
-      // 3. Outras Categorias (Hotéis, Carros, Atividades)
-      const fetchAndSet = async (endpoint: string, setter: Function) => {
-        try {
-          const resp = await fetch(`${API_BASE_URL}/api/${endpoint}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            setter(data.map(normalizeBusiness));
-          } else setter([]);
-        } catch (e) { setter([]); }
-      };
-
-      await fetchAndSet('hotels', setHotels);
-      await fetchAndSet('cars', setCars);
-      await fetchAndSet('activities', setActivities);
-      await fetchAndSet('bus-schedules', setBusSchedules);
-      await fetchAndSet('flights', setFlights);
-
-      // 4. Status da DB
+      // 3. Status da DB
       try {
         const sResp = await fetch(`${API_BASE_URL}/api/status`);
         if (sResp.ok) setDbStatus(await sResp.json());
       } catch (e) {}
 
+      setIsDataLoaded(true);
     } catch (error) {
       console.error('Erro ao carregar dados do backend:', error);
+      // Optional: Set data loaded anyway to stop spinner, or show error screen
+      // setIsDataLoaded(true); 
     }
   };
 
@@ -1290,6 +1277,37 @@ const App: React.FC = () => {
       console.error("Erro ao enviar avaliação:", err);
     }
   };
+
+  // --- LOADING SCREEN ---
+  if (!isDataLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center gap-8"
+        >
+          <div className="relative">
+            <div className="w-24 h-24 rounded-[2rem] bg-blue-600 flex items-center justify-center shadow-2xl shadow-blue-500/40 relative z-10 animate-pulse">
+               <AzoresLogo size={48} color="white" />
+            </div>
+            <div className="absolute inset-0 rounded-[2rem] bg-blue-500 blur-2xl opacity-20 animate-pulse" />
+          </div>
+          
+          <div className="text-center space-y-4">
+             <h2 className="text-white text-3xl font-black uppercase tracking-tighter">Sincronizando Azores4you</h2>
+             <div className="flex items-center justify-center gap-3">
+                <RefreshCw className="text-blue-500 animate-spin" size={20} />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">A despertar o servidor no Render...</p>
+             </div>
+             <p className="text-slate-500 text-xs max-w-xs mx-auto leading-relaxed">
+               A plataforma está a ligar-se à base de dados segura. Este processo pode demorar 30 segundos no primeiro acesso do dia.
+             </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
