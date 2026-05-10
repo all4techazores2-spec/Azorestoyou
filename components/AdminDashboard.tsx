@@ -639,36 +639,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, cars: (editingItem.cars || []).filter((_:any, i:number) => i !== index) });
   };
 
-  const handleImageUpload = async (file: File, type: 'main' | 'gallery' | 'dish', extraIndex?: number) => {
+  const moveGalleryImage = (fromIndex: number, toIndex: number) => {
+    if (!editingItem || !editingItem.gallery) return;
+    if (toIndex < 0 || toIndex >= editingItem.gallery.length) return;
+    const newGallery = [...editingItem.gallery];
+    const [moved] = newGallery.splice(fromIndex, 1);
+    newGallery.splice(toIndex, 0, moved);
+    setEditingItem({ ...editingItem, gallery: newGallery });
+  };
+
+  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish', extraIndex?: number) => {
     if (!editingItem) return;
+    
+    let fileArray: File[] = [];
+    if (files instanceof FileList) {
+      fileArray = Array.from(files);
+    } else if (Array.isArray(files)) {
+      fileArray = files;
+    } else {
+      fileArray = [files];
+    }
+
+    if (fileArray.length === 0) return;
+
+    const shouldCompress = window.confirm(`Deseja otimizar e comprimir as ${fileArray.length} imagens para carregar mais rápido e poupar espaço na base de dados? (Recomendado)`);
+    
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('restaurantId', editingItem.id);
-    formData.append('type', type);
-    formData.append('image', file);
-
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+      for (const file of fileArray) {
+        let finalImage: any = file;
 
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      
-      if (type === 'main') {
-        setEditingItem({ ...editingItem, image: data.url });
-      } else if (type === 'gallery') {
-        const gallery = editingItem.gallery || [];
-        setEditingItem({ ...editingItem, gallery: [...gallery, data.url] });
-      } else if (type === 'dish' && extraIndex !== undefined) {
-        const dishes = [...(editingItem.dishes || [])];
-        dishes[extraIndex] = { ...dishes[extraIndex], image: data.url };
-        setEditingItem({ ...editingItem, dishes });
+        // Converter para Base64 para compressão ou se falhar o upload convencional
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        let finalUrl = '';
+
+        if (shouldCompress) {
+          finalUrl = await compressImage(base64);
+        } else {
+          // Upload convencional via FormData
+          const formData = new FormData();
+          formData.append('restaurantId', editingItem.id);
+          formData.append('type', type);
+          formData.append('image', file);
+
+          const response = await fetch(`${API_BASE_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            finalUrl = data.url;
+          } else {
+            // Fallback para base64 direto se o upload falhar
+            finalUrl = base64;
+          }
+        }
+
+        // Atualizar estado conforme o tipo
+        if (type === 'main') {
+          setEditingItem(prev => ({ ...prev, image: finalUrl }));
+        } else if (type === 'gallery') {
+          setEditingItem(prev => ({ 
+            ...prev, 
+            gallery: [...(prev.gallery || []), finalUrl] 
+          }));
+        } else if (type === 'dish' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const dishes = [...(prev.dishes || [])];
+            dishes[extraIndex] = { ...dishes[extraIndex], image: finalUrl };
+            return { ...prev, dishes };
+          });
+        }
       }
     } catch (error) {
       console.error('Error uploading:', error);
-      alert('Erro ao carregar imagem.');
+      alert('Erro ao carregar uma ou mais imagens.');
     } finally {
       setIsUploading(false);
     }
@@ -934,17 +986,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Gallery Section */}
             <div className="md:col-span-2 border-t pt-4 mt-2">
               <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria de Imagens</h4>
-                <label className={`cursor-pointer px-4 py-1 rounded-lg text-xs font-black uppercase transition-all ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-                  {isUploading ? 'A carregar...' : '+ Adicionar Foto'}
-                  <input type="file" className="hidden" accept="image/*" disabled={isUploading} onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'gallery')} />
+                <div>
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria de Imagens</h4>
+                  <p className="text-[9px] text-slate-400">Arraste para reordenar ou use as setas</p>
+                </div>
+                <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-500/20'}`}>
+                  {isUploading ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
+                  {isUploading ? 'A carregar...' : 'Adicionar Fotos (Múltiplas)'}
+                  <input type="file" multiple className="hidden" accept="image/*" disabled={isUploading} onChange={e => e.target.files && handleImageUpload(e.target.files, 'gallery')} />
                 </label>
               </div>
-              <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                  {editingItem.gallery?.map((img: string, idx: number) => (
-                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border group">
+                   <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 group shadow-sm hover:shadow-md transition-all">
                       <img src={img} className="w-full h-full object-cover" alt="" />
-                      <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Trash2 className="w-5 h-5" /></button>
+                      
+                      {/* Hover Controls */}
+                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                         <div className="flex gap-1">
+                            <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} disabled={idx === 0} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white disabled:opacity-30"><ArrowRight size={14} className="rotate-180" /></button>
+                            <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} disabled={idx === editingItem.gallery.length - 1} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white disabled:opacity-30"><ArrowRight size={14} /></button>
+                         </div>
+                         <button 
+                            type="button" 
+                            onClick={() => {
+                              const newGallery = editingItem.gallery.filter((_:any, i:number) => i !== idx);
+                              setEditingItem({ ...editingItem, image: img, gallery: newGallery });
+                            }} 
+                            className="px-3 py-1 bg-blue-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600"
+                          >
+                            Tornar Principal
+                          </button>
+                         <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 text-white rounded-lg hover:bg-red-600"><Trash2 size={14} /></button>
+                      </div>
+                      
+                      {/* Index Badge */}
+                      <div className="absolute top-2 left-2 bg-black/50 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-md">
+                        {idx + 1}
+                      </div>
                    </div>
                  ))}
               </div>
