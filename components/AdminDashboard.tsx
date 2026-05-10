@@ -99,6 +99,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [bulkIsland, setBulkIsland] = useState<string>('PDL');
   const [bulkSubcategory, setBulkSubcategory] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     setSelectedIds([]);
@@ -433,6 +435,87 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     
     // Pequeno delay para evitar cliques rápidos e dar tempo ao React para atualizar o DOM
     setTimeout(() => setIsSaving(false), 500);
+  };
+
+  const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!base64Str || !base64Str.startsWith('data:image')) {
+        resolve(base64Str);
+        return;
+      }
+      
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (maxWidth / width) * height;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(base64Str);
+    });
+  };
+
+  const handleSyncAndCompress = async () => {
+    if (!onFullSync) return;
+    setIsCompressing(true);
+    
+    // Helper to compress images in a list
+    const compressList = async (list: any[], label: string) => {
+      const newList = [...list];
+      for (let i = 0; i < newList.length; i++) {
+        setCompressionProgress(prev => ({ ...prev, current: prev.current + 1 }));
+        if (newList[i].image && newList[i].image.startsWith('data:image')) {
+          newList[i].image = await compressImage(newList[i].image);
+        }
+        if (newList[i].gallery) {
+           newList[i].gallery = await Promise.all(
+             newList[i].gallery.map((img: any) => typeof img === 'string' && img.startsWith('data:image') ? compressImage(img) : img)
+           );
+        }
+      }
+      return newList;
+    };
+
+    const lists = [
+      { data: restaurants, setter: onUpdateRestaurants, label: 'Restaurantes' },
+      { data: shops, setter: onUpdateShops, label: 'Lojas' },
+      { data: beauty, setter: onUpdateBeauty, label: 'Beleza' },
+      { data: hotels, setter: onUpdateHotels, label: 'Hotéis' },
+      { data: cars, setter: onUpdateCars, label: 'Carros' },
+      { data: activities, setter: onUpdateActivities, label: 'Atividades' },
+      { data: services, setter: onUpdateServices, label: 'Serviços' },
+      { data: autoRepairs, setter: onUpdateAutoRepairs, label: 'Oficinas' }
+    ];
+
+    const totalItems = lists.reduce((sum, l) => sum + l.data.length, 0);
+    setCompressionProgress({ current: 0, total: totalItems });
+
+    try {
+      const updatedData: any = {};
+      for (const listObj of lists) {
+        const compressed = await compressList(listObj.data, listObj.label);
+        updatedData[listObj.label.toLowerCase()] = compressed;
+        listObj.setter(compressed);
+      }
+      
+      await onFullSync();
+      alert('✅ Dados comprimidos e sincronizados com sucesso!');
+    } catch (e) {
+      alert('❌ Erro na compressão/sincronização');
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const startEdit = (item: any) => {
@@ -1243,18 +1326,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
-            <button 
-              onClick={async () => {
-                setIsSyncing(true);
-                await onFullSync();
-                setIsSyncing(false);
-              }} 
-              disabled={isSyncing}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border-blue-500/30'}`}
-            >
-               {isSyncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudSync className="w-5 h-5" />}
-               {isSyncing ? 'A Sincronizar...' : 'Sincronizar para o Servidor'}
-            </button>
+            <>
+              <button 
+                onClick={handleSyncAndCompress} 
+                disabled={isSyncing || isCompressing}
+                className={`w-full flex flex-col items-center gap-1 p-3 rounded-xl transition-all border ${isCompressing ? 'bg-amber-600/20 text-amber-400 border-amber-500/30' : 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border-emerald-500/30'}`}
+              >
+                 <div className="flex items-center gap-3 w-full justify-center">
+                    {isCompressing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                    <span className="font-bold">{isCompressing ? 'A Comprimir...' : 'Enviar e Comprimir'}</span>
+                 </div>
+                 {isCompressing && (
+                   <div className="w-full mt-2">
+                      <div className="flex justify-between text-[8px] uppercase font-black mb-1">
+                         <span>Progresso</span>
+                         <span>{Math.round((compressionProgress.current / compressionProgress.total) * 100)}%</span>
+                      </div>
+                      <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                         <div 
+                           className="h-full bg-amber-500 transition-all duration-300" 
+                           style={{ width: `${(compressionProgress.current / compressionProgress.total) * 100}%` }}
+                         />
+                      </div>
+                      <p className="text-[8px] mt-1 text-center opacity-50">
+                        {compressionProgress.current} / {compressionProgress.total} itens
+                      </p>
+                   </div>
+                 )}
+              </button>
+
+              <button 
+                onClick={async () => {
+                  setIsSyncing(true);
+                  await onFullSync();
+                  setIsSyncing(false);
+                }} 
+                disabled={isSyncing || isCompressing}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border-blue-500/30'}`}
+              >
+                 {isSyncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudSync className="w-5 h-5" />}
+                 {isSyncing ? 'A Sincronizar...' : 'Sincronizar (Rápido)'}
+              </button>
+            </>
           )}
           <button onClick={onLogout} className="w-full flex items-center gap-3 text-red-400 hover:text-red-300 p-3 rounded-xl hover:bg-red-400/10">
              <LogOut className="w-5 h-5" /> {t('logout_admin')}
