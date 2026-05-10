@@ -367,7 +367,7 @@ app.listen(PORT, async () => {
     // Seed database if empty on startup
     await seedIfNeeded();
     
-    // Truque para manter o Render sempre ativo (Self-Ping cada 5 min)
+    // Truque para manter o Render sempre ativo (Self-Ping cada 1 min)
     const selfPing = () => {
         const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
         axios.get(`${url}/api/status`)
@@ -375,7 +375,7 @@ app.listen(PORT, async () => {
             .catch(err => console.log('⚠️ Erro no self-ping (normal em startup):', err.message));
     };
     
-    setInterval(selfPing, 300000); // 5 minutos
+    setInterval(selfPing, 60000); // 1 minuto
     setTimeout(selfPing, 10000); // Primeiro ping após 10 segundos
 });
 
