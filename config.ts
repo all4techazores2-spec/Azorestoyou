@@ -9,8 +9,7 @@ export const isLocal = () => {
            window.location.hostname === '127.0.0.1';
 };
 
-// Use relative paths in production to avoid CORS/domain issues
-export const API_BASE_URL = isLocal() ? LOCAL_BACKEND : ''; 
+export const API_BASE_URL = isLocal() ? LOCAL_BACKEND : RENDER_BACKEND;
 export const FRONTEND_URL = `https://${OFFICIAL_DOMAIN}`;
 
 export const BUSINESS_TYPE_TO_ENDPOINT: Record<string, string> = {
