@@ -508,91 +508,62 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsCompressing(true);
     setSyncLogs([]);
     addLog('🚀 A iniciar processo de otimização global...');
-    setCompressionLabel('A preparar dados...');
     
-    // Helper to compress images in a list
-    const compressList = async (list: any[], label: string) => {
-      const newList = JSON.parse(JSON.stringify(list)); // Deep clone
-      for (let i = 0; i < newList.length; i++) {
-        const itemName = newList[i].name || newList[i].title || newList[i].id;
-        setCompressionLabel(`[${label}] a processar: ${itemName}`);
-        addLog(`📸 A otimizar: ${itemName} (${label})`);
-        setCompressionProgress(prev => ({ ...prev, current: prev.current + 1 }));
-        
-        try {
-          // 1. Main image
-          if (newList[i].image && newList[i].image.startsWith('data:image')) {
-            newList[i].image = await compressImage(newList[i].image);
-          }
-          
-          // 2. Gallery
-          if (newList[i].gallery && Array.isArray(newList[i].gallery)) {
-             newList[i].gallery = await Promise.all(
-               newList[i].gallery.map((img: any) => typeof img === 'string' && img.startsWith('data:image') ? compressImage(img) : img)
-             );
-          }
-
-          // 3. Dishes/Items
-          if (newList[i].dishes && Array.isArray(newList[i].dishes)) {
-             for (let d = 0; d < newList[i].dishes.length; d++) {
-               if (newList[i].dishes[d].image && newList[i].dishes[d].image.startsWith('data:image')) {
-                 newList[i].dishes[d].image = await compressImage(newList[i].dishes[d].image);
-               }
-             }
-          }
-        } catch (err: any) {
-          addLog(`❌ Erro em ${itemName}: ${err.message}`);
-        }
-      }
-      return newList;
-    };
-
     const lists = [
-      { data: restaurants, setter: onUpdateRestaurants, label: 'Restaurantes' },
-      { data: shops, setter: onUpdateShops, label: 'Lojas' },
-      { data: beauty, setter: onUpdateBeauty, label: 'Beleza' },
-      { data: hotels, setter: onUpdateHotels, label: 'Hotéis' },
-      { data: cars, setter: onUpdateCars, label: 'Carros' },
-      { data: activities, setter: onUpdateActivities, label: 'Atividades' },
-      { data: services, setter: onUpdateServices, label: 'Serviços' },
-      { data: autoRepairs, setter: onUpdateAutoRepairs, label: 'Oficinas' }
+      { data: restaurants, label: 'restaurants' },
+      { data: shops, label: 'shops' },
+      { data: beauty, label: 'beauty' },
+      { data: hotels, label: 'hotels' },
+      { data: cars, label: 'cars' },
+      { data: activities, label: 'activities' },
+      { data: services, label: 'services' },
+      { data: autoRepairs, label: 'auto_repairs' },
+      { data: autoElectronics, label: 'auto_electronics' },
+      { data: usedMarket, label: 'used_market' },
+      { data: animals, label: 'animals' },
+      { data: realEstate, label: 'real_estate' },
+      { data: gyms, label: 'gyms' },
+      { data: stands, label: 'stands' },
+      { data: offices, label: 'offices' },
+      { data: itServices, label: 'it_services' },
+      { data: perfumes, label: 'perfumes' },
+      { data: flights, label: 'flights' },
+      { data: busSchedules, label: 'bus-schedules' }
     ];
 
     const totalItems = lists.reduce((sum, l) => sum + l.data.length, 0);
     setCompressionProgress({ current: 0, total: totalItems });
 
     try {
+      addLog(`📦 Preparando ${lists.length} categorias para envio...`);
+      
       for (const listObj of lists) {
-        if (listObj.data.length === 0) continue;
-        addLog(`📦 A processar categoria: ${listObj.label}...`);
-        const compressed = await compressList(listObj.data, listObj.label);
-        const totalSize = (JSON.stringify(compressed).length / 1024 / 1024).toFixed(2);
-        addLog(`📏 Tamanho do payload: ${totalSize}MB`);
+        setCompressionLabel(`A enviar ${listObj.label}...`);
+        const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
+        addLog(`📤 Categoria: ${listObj.label} (${payloadSize}MB)`);
         
-        if (parseFloat(totalSize) > 14) {
-          addLog(`⚠️ AVISO: O tamanho (${totalSize}MB) está próximo do limite do MongoDB (16MB).`);
+        const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(listObj.data)
+        });
+
+        if (!response.ok) {
+           const errorText = await response.text();
+           throw new Error(`Falha em ${listObj.label}: ${errorText}`);
         }
-
-        setCompressionLabel(`A enviar ${listObj.label} para o servidor...`);
-        addLog(`☁️ A enviar ${listObj.label} para a base de dados...`);
         
-        const sendPromise = listObj.setter(compressed);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Tempo limite de envio excedido (60s)')), 60000)
-        );
-
-        await Promise.race([sendPromise, timeoutPromise]);
-        addLog(`✅ ${listObj.label} guardados.`);
+        setCompressionProgress(prev => ({ ...prev, current: prev.current + listObj.data.length }));
+        addLog(`✅ ${listObj.label} sincronizados.`);
       }
       
-      setCompressionLabel('A finalizar sincronização total...');
-      addLog('🔄 A finalizar sincronização final...');
+      setCompressionLabel('A finalizar sincronização global...');
       await onFullSync();
-      addLog('✨ PROCESSO CONCLUÍDO COM SUCESSO!');
-      alert('✅ Todos os dados e imagens foram otimizados e guardados com sucesso!');
+      addLog('✨ SUCESSO: Tudo publicado no Frontend!');
+      alert('✅ Publicação concluída com sucesso!');
     } catch (e: any) {
-      addLog(`❌ ERRO FATAL: ${e.message}`);
-      alert('❌ Erro na compressão/sincronização. Verifique o log.');
+      addLog(`❌ ERRO: ${e.message}`);
+      alert('❌ Erro na publicação. Verifique o log de erros na tela.');
     } finally {
       setIsCompressing(false);
       setCompressionLabel('');
@@ -1343,7 +1314,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-800">
            <h2 className="text-xl font-bold flex items-center gap-2">
-             <LayoutDashboard className="text-blue-500" /> Admin
+             <LayoutDashboard className="text-blue-500" /> Admin v1.2.0
            </h2>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -1525,13 +1496,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  )}
               </button>
 
-              {/* Sincronização de Texto Removida para simplificar */}
-
               {/* BUTTON 3: DANGER ZONE - WIPE ALL */}
               <button 
                 onClick={async () => {
                   if (window.confirm('⚠️ AVISO CRÍTICO: Isto vai apagar TODOS os restaurantes, lojas, hotéis, etc. de uma só vez! Deseja recomeçar do zero?')) {
                     if (window.confirm('TEM A CERTEZA ABSOLUTA? Esta ação não pode ser revertida.')) {
+                       setIsCompressing(true);
+                       setSyncLogs([]);
+                       addLog('🧨 A iniciar limpeza total da base de dados...');
+                       
                        onUpdateRestaurants([]);
                        onUpdateShops([]);
                        onUpdateBeauty([]);
@@ -1552,19 +1525,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                        onUpdateCars([]);
                        onUpdateBusSchedules([]);
                        
-                       // After clearing local state, sync empty lists to server
+                       addLog('🧹 Estado local limpo. A sincronizar com o servidor...');
+                       
                        setTimeout(async () => {
-                         await onFullSync();
-                         alert('✅ Base de dados LIMPA! Agora pode começar a adicionar do zero.');
-                       }, 500);
+                         try {
+                           const res = await fetch(`${API_BASE_URL}/api/full-sync`, {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({
+                               restaurants: [], shops: [], beauty: [], services: [], 
+                               auto_repairs: [], auto_electronics: [], used_market: [], 
+                               animals: [], real_estate: [], gyms: [], stands: [], 
+                               offices: [], it_services: [], perfumes: [], 
+                               activities: [], flights: [], hotels: [], cars: [], 
+                               busSchedules: []
+                             }),
+                           });
+                           if (res.ok) {
+                             addLog('✅ Base de dados limpa com sucesso!');
+                             alert('✅ Base de dados LIMPA!');
+                           } else {
+                             addLog('❌ Falha ao limpar servidor.');
+                           }
+                         } catch (err) {
+                           addLog('❌ Erro de ligação ao limpar.');
+                         } finally {
+                           setIsCompressing(false);
+                         }
+                       }, 1000);
                     }
                   }
                 }} 
                 disabled={isSyncing || isCompressing}
                 className="w-full flex items-center gap-3 p-2 rounded-xl transition-all border border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10"
               >
-                 <Trash2 className="w-4 h-4" />
-                 <span className="font-bold uppercase text-[9px] tracking-widest">Limpar Tudo (Reset)</span>
+                 <Trash2 size={16} /> Limpar Tudo (RESET)
               </button>
             </>
           )}
