@@ -406,7 +406,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
 
     try {
-      const updatedItem = { ...editingItem };
+      const itemToSave = { ...editingItem };
+      
+      // Auto-compress all images inside the object before sending to server
+      const updatedItem = await compressObjectImages(itemToSave);
       
       // 1. If it's a NEW item, we still need to add it to the list first (Bulk style)
       // 2. If it's an EDIT, we can try individual save if the prop exists
@@ -486,7 +489,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.7): Promise<string> => {
+  const compressImage = (base64Str: string, maxWidth = 1200, quality = 0.6): Promise<string> => {
     return new Promise((resolve) => {
       if (!base64Str || !base64Str.startsWith('data:image')) {
         resolve(base64Str);
@@ -513,6 +516,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       };
       img.onerror = () => resolve(base64Str);
     });
+  };
+
+  const compressObjectImages = async (obj: any) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    const newObj = Array.isArray(obj) ? [...obj] : { ...obj };
+
+    for (const key in newObj) {
+      const value = newObj[key];
+      if (typeof value === 'string' && value.startsWith('data:image')) {
+        newObj[key] = await compressImage(value);
+      } else if (typeof value === 'object' && value !== null) {
+        newObj[key] = await compressObjectImages(value);
+      }
+    }
+    return newObj;
   };
 
   const handleSyncAndCompress = async () => {
@@ -2328,7 +2346,7 @@ Av. do Mar, Madalena, Pico
                     {isSaving ? (
                       <>
                         <RefreshCw className="w-5 h-5 animate-spin" />
-                        <span>A guardar...</span>
+                        <span>A otimizar e guardar...</span>
                       </>
                     ) : (
                       <>
