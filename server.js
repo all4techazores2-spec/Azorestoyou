@@ -1,4 +1,4 @@
-// Stabilized Production - Build v1.1.3 - 2026-05-10
+// Stabilized Production - Build v1.1.5 - 2026-05-10
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -156,12 +156,10 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
     });
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
     
-    // Bulk update for Admin Dashboard
+    // Bulk update for Admin Dashboard - OPTIMIZED: Use partial update
     app.post(`/api/${key}/bulk`, async (req, res) => {
         try {
-            const db = await readDB();
-            db[key] = req.body;
-            await writeDB(db);
+            await updateCollection(key, req.body);
             res.json({ success: true, count: req.body.length });
         } catch (err) {
             console.error(`❌ Bulk update for ${key} failed:`, err.message);
@@ -187,11 +185,13 @@ app.post('/api/full-sync', async (req, res) => {
 // Adicionar rotas de bulk para outras coleções que não são "business" puras
 ['flights', 'bus-schedules', 'activities', 'users', 'posts'].forEach(key => {
     app.post(`/api/${key}/bulk`, async (req, res) => {
-        const db = await readDB();
-        const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
-        db[dbKey] = req.body;
-        await writeDB(db);
-        res.json({ success: true, count: req.body.length });
+        try {
+            const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
+            await updateCollection(dbKey, req.body);
+            res.json({ success: true, count: req.body.length });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
     });
 });
 

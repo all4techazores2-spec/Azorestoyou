@@ -152,3 +152,30 @@ export const writeDB = async (data) => {
         }
     }
 };
+
+export const updateCollection = async (key, data) => {
+    if (isMongoConnected) {
+        try {
+            const updateObj = {};
+            updateObj[`data.${key}`] = data;
+            
+            await DBModel.findOneAndUpdate(
+                { key: 'master_db' },
+                { $set: updateObj },
+                { upsert: true, new: true, maxTimeMS: 30000 }
+            );
+            
+            // Invalidate cache
+            memoryCache = null;
+            console.log(`✅ Collection ${key} updated in MongoDB.`);
+            return;
+        } catch (err) {
+            console.error(`❌ Error updating collection ${key}:`, err.message);
+            throw err;
+        }
+    } else {
+        const db = await readDB();
+        db[key] = data;
+        await writeDB(db);
+    }
+};
