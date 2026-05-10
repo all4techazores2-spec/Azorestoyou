@@ -44,15 +44,29 @@ const DEFAULT_DB = {
     it_services: [], perfumes: [], users: [], posts: [] 
 };
 
+let memoryCache = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 5000; // 5 seconds cache
+
 export const readDB = async () => {
     if (IS_MONGODB) {
         try {
-            // Usa .lean() para evitar que o Mongoose crie objetos pesados em memória (evita o erro OOM)
+            // Use cache to prevent 19 parallel requests from causing Out of Memory (OOM)
+            const now = Date.now();
+            if (memoryCache && (now - lastCacheTime < CACHE_TTL_MS)) {
+                return memoryCache;
+            }
+
+            // Usa .lean() para evitar que o Mongoose crie objetos pesados em memória
             const doc = await DBModel.findOne({ key: 'master_db' }).lean();
-            return doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
+            const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
+            
+            memoryCache = data;
+            lastCacheTime = now;
+            return data;
         } catch (err) {
             console.error("Error reading from MongoDB", err);
-            return DEFAULT_DB;
+            return memoryCache || DEFAULT_DB;
         }
     } else {
         try {
@@ -67,6 +81,10 @@ export const readDB = async () => {
 };
 
 export const writeDB = async (data) => {
+    // Keep in-memory cache instantly in sync
+    memoryCache = data;
+    lastCacheTime = Date.now();
+
     if (IS_MONGODB) {
         try {
             await DBModel.findOneAndUpdate(
