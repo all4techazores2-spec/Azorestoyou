@@ -1215,6 +1215,14 @@ const App: React.FC = () => {
         // Status & Logic
         dbStatus={dbStatus}
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
+        onSaveSingleItem={async (item, collection) => {
+          try {
+            const endpointMap: any = { 'buses': 'bus-schedules' };
+            const endpoint = endpointMap[collection] || collection;
+            const r = await fetch(`${API_BASE_URL}/api/${endpoint}/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
+            if (!r.ok) throw new Error(await r.text() || `Status: ${r.status}`);
+          } catch (e: any) { throw e; }
+        }}
         onFullSync={async () => {
           try {
             const res = await fetch(`${API_BASE_URL}/api/full-sync?t=${Date.now()}`, {

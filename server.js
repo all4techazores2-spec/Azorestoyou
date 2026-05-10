@@ -1,4 +1,4 @@
-// Stabilized Production - Build v1.0.7 - 2026-05-10
+// Stabilized Production - Build v1.0.8 - 2026-05-10
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -41,8 +41,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
