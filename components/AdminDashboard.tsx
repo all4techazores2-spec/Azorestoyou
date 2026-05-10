@@ -566,9 +566,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         if (listObj.data.length === 0) continue;
         addLog(`📦 A processar categoria: ${listObj.label}...`);
         const compressed = await compressList(listObj.data, listObj.label);
+        const totalSize = (JSON.stringify(compressed).length / 1024 / 1024).toFixed(2);
+        addLog(`📏 Tamanho do payload: ${totalSize}MB`);
+        
+        if (parseFloat(totalSize) > 14) {
+          addLog(`⚠️ AVISO: O tamanho (${totalSize}MB) está próximo do limite do MongoDB (16MB).`);
+        }
+
         setCompressionLabel(`A enviar ${listObj.label} para o servidor...`);
         addLog(`☁️ A enviar ${listObj.label} para a base de dados...`);
-        await listObj.setter(compressed);
+        
+        const sendPromise = listObj.setter(compressed);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Tempo limite de envio excedido (60s)')), 60000)
+        );
+
+        await Promise.race([sendPromise, timeoutPromise]);
         addLog(`✅ ${listObj.label} guardados.`);
       }
       
@@ -2345,8 +2358,21 @@ Av. do Mar, Madalena, Pico
                     )}
                   </div>
 
-                  <div className="p-4 bg-slate-50 border-t flex justify-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Não feche esta janela enquanto o processo não terminar
+                  <div className="p-4 bg-slate-50 border-t flex flex-col items-center gap-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Não feche esta janela enquanto o processo não terminar
+                    </p>
+                    <button 
+                      onClick={() => {
+                        if (window.confirm("Tem a certeza que deseja cancelar? O processo pode ficar incompleto.")) {
+                          setIsCompressing(false);
+                          window.location.reload(); // Hard reset to stop the process
+                        }
+                      }}
+                      className="text-[10px] font-black text-red-500 uppercase hover:underline"
+                    >
+                      Cancelar e Recarregar
+                    </button>
                   </div>
                 </motion.div>
               </div>
