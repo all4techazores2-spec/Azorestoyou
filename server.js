@@ -327,14 +327,6 @@ app.get('/api/community/posts', async (req, res) => {
     res.json(db.posts || []);
 });
 
-export const getDbStatus = () => ({
-    storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (IS_MONGODB ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
-    isMongo: isMongoConnected,
-    isConfigured: IS_MONGODB,
-    uriFound: !!MONGODB_URI,
-    timestamp: new Date().toISOString()
-});
-
 app.post('/api/community/posts', async (req, res) => {
     const db = await readDB();
     const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
