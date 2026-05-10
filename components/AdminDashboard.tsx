@@ -11,7 +11,7 @@ import {
   Scissors, User, Flower2, Brush, ArrowRight, RefreshCw, Home,
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, 
-  MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar
+  MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -92,6 +92,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [islandFilter, setIslandFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [bulkIsland, setBulkIsland] = useState<string>('PDL');
@@ -1217,10 +1218,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
             <button 
-              onClick={onFullSync} 
-              className="w-full flex items-center gap-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 p-3 rounded-xl transition-all border border-blue-500/30"
+              onClick={async () => {
+                setIsSyncing(true);
+                await onFullSync();
+                setIsSyncing(false);
+              }} 
+              disabled={isSyncing}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border ${isSyncing ? 'bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed' : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border-blue-500/30'}`}
             >
-               <CloudSync className="w-5 h-5" /> Sincronizar do Servidor
+               {isSyncing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CloudSync className="w-5 h-5" />}
+               {isSyncing ? 'A Sincronizar...' : 'Sincronizar para o Servidor'}
             </button>
           )}
           <button onClick={onLogout} className="w-full flex items-center gap-3 text-red-400 hover:text-red-300 p-3 rounded-xl hover:bg-red-400/10">

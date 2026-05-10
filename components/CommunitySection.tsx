@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -7,11 +6,14 @@ import {
   CheckCircle2, X, Camera, Type, Palette, Filter, Music, Radio,
   ThumbsUp, User as UserIcon
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
 
 interface CommunitySectionProps {
   isAuthenticated: boolean;
   userName: string;
+  posts: Post[];
+  onSyncPosts: () => void;
   onShowAuth: () => void;
   onClose: () => void;
 }
@@ -37,23 +39,15 @@ interface Comment {
   time: string;
 }
 
-const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, userName, onShowAuth, onClose }) => {
+const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, userName, posts, onSyncPosts, onShowAuth, onClose }) => {
   const [communityStep, setCommunityStep] = useState<'landing' | 'feed'>('landing');
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: 1,
-      author: 'Explorador Açoreano',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-      time: '2h atrás',
-      location: 'S. Miguel',
-      content: 'Hoje visitei a Lagoa das Sete Cidades e foi mágico! 🌊⛰️ Os Açores nunca deixam de surpreender. #AzoresToYou',
-      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800',
-      likes: 124,
-      comments: [
-        { id: 101, author: 'Maria Silva', text: 'Que vista incrível! 😍', time: '1h atrás' }
-      ]
+  
+  // Real-time sync when entering feed
+  useEffect(() => {
+    if (communityStep === 'feed') {
+      onSyncPosts();
     }
-  ]);
+  }, [communityStep]);
 
   // UI State
   const [showShareModal, setShowShareModal] = useState(false);
@@ -87,14 +81,14 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, us
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!postText && !selectedMedia) return;
 
     const newPost: Post = {
       id: Date.now(),
       author: userName,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
-      time: 'Agora',
+      time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       location: 'Açores',
       content: postText,
       image: showMediaEditor === 'photo' ? selectedMedia || undefined : undefined,
@@ -103,25 +97,57 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, us
       comments: []
     };
 
-    setPosts([newPost, ...posts]);
-    setPostText('');
-    setSelectedMedia(null);
-    setShowMediaEditor(null);
-    setEditorText('');
+    try {
+       await fetch(`${API_BASE_URL}/api/posts/bulk`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify([newPost])
+       });
+       onSyncPosts();
+       setPostText('');
+       setSelectedMedia(null);
+       setShowMediaEditor(null);
+       setEditorText('');
+    } catch (err) {
+       console.error("Error publishing post:", err);
+       alert("Erro ao publicar post. Verifique sua conexão.");
+    }
   };
 
-  const toggleLike = (id: number) => {
-    setPosts(prev => prev.map(p => 
+  const toggleLike = async (id: number) => {
+    const updatedPosts = posts.map(p => 
       p.id === id ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked } : p
-    ));
+    );
+    
+    try {
+       await fetch(`${API_BASE_URL}/api/posts`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(updatedPosts)
+       });
+       onSyncPosts();
+    } catch (err) {
+       console.error("Error liking post:", err);
+    }
   };
 
-  const handleAddComment = (postId: number) => {
+  const handleAddComment = async (postId: number) => {
     if (!newComment.trim()) return;
-    setPosts(prev => prev.map(p => 
+    const updatedPosts = posts.map(p => 
       p.id === postId ? { ...p, comments: [...p.comments, { id: Date.now(), author: userName, text: newComment, time: 'Agora' }] } : p
-    ));
-    setNewComment('');
+    );
+
+    try {
+       await fetch(`${API_BASE_URL}/api/posts`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(updatedPosts)
+       });
+       onSyncPosts();
+       setNewComment('');
+    } catch (err) {
+       console.error("Error commenting:", err);
+    }
   };
 
   // Live Stream Simulation

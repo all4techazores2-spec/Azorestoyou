@@ -5,6 +5,7 @@ import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clo
 import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
 
 interface RestaurantModalProps {
   restaurant: Business | null;
@@ -34,9 +35,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   userProfile,
   onShowMap
 }) => {
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-1.onrender.com';
+  // API_BASE_URL centralized in config.ts
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);

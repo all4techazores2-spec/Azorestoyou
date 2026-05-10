@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
 import { Hotel, Room, Language } from '../types';
 import { 
   X, Mail, Phone, MapPin, Star, BedDouble, 
@@ -24,9 +25,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   onConfirm,
   onShowMap
 }) => {
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-1.onrender.com';
+  // API_BASE_URL centralized in config.ts
 
   const [rentType, setRentType] = useState<'room' | 'house' | null>(null);
   const [showALOptions, setShowALOptions] = useState(accommodation.type === 'al');

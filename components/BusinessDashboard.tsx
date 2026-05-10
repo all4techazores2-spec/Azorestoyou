@@ -11,6 +11,7 @@ import {
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
 
 
@@ -129,9 +130,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-1.onrender.com';
+  // API_BASE_URL centralized in config.ts
 
   const bType = (business.businessType || (business as any).type || '').toLowerCase();
   const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service');

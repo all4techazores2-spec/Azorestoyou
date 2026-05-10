@@ -31,6 +31,7 @@ import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL, BUSINESS_TYPE_TO_ENDPOINT, OFFICIAL_DOMAIN, RENDER_BACKEND, FRONTEND_URL, isLocal, getGoogleMapsEmbedUrl } from './config';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -63,65 +64,13 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
-export const BUSINESS_TYPE_TO_ENDPOINT: Record<string, string> = {
-  'restaurant': 'restaurants',
-  'hotel': 'hotels',
-  'al': 'hotels',
-  'accommodation': 'hotels',
-  'car': 'cars',
-  'rentcar': 'cars',
-  'beauty': 'beauty',
-  'hair': 'beauty',
-  'barber': 'beauty',
-  'nails': 'beauty',
-  'spa': 'beauty',
-  'glow': 'beauty',
-  'zen': 'beauty',
-  'diva': 'beauty',
-  'art': 'beauty',
-  'shop': 'shops',
-  'clothing': 'shops',
-  'electronics': 'shops',
-  'grocery': 'shops',
-  'crafts': 'shops',
-  'perfume': 'perfumes',
-  'perfumes': 'perfumes',
-  'service': 'services',
-  'gardening': 'services',
-  'architect': 'services',
-  'engineer': 'services',
-  'hvac': 'services',
-  'office': 'offices',
-  'cowork': 'offices',
-  'it_services': 'it_services',
-  'animal': 'animals',
-  'animals': 'animals',
-  'real_estate': 'real_estate',
-  'gym': 'gyms',
-  'gyms': 'gyms',
-  'stand': 'stands',
-  'stands': 'stands',
-  'auto_repair': 'auto_repairs',
-  'auto_repairs': 'auto_repairs',
-  'auto_electronics': 'auto_electronics',
-  'used_market': 'used_market'
-};
+// Business type mapping moved to config.ts
 
 const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
 
-  // Configuração de Domínios
-  const OFFICIAL_DOMAIN = 'azorestoyou.pt';
-  const RENDER_BACKEND = 'https://azorestoyou-1.onrender.com';
-  
-  const FRONTEND_URL = `https://${OFFICIAL_DOMAIN}`;
-
-  // Detetar se estamos em localhost
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  
-  // Em produção, apontamos sempre para o Render para garantir que o Cloudflare consiga ler os dados
-  const API_BASE_URL = isLocal ? 'http://localhost:3001' : RENDER_BACKEND;
+  // App settings and URLs now centralized in config.ts
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -1120,7 +1069,7 @@ const App: React.FC = () => {
               body: JSON.stringify({
                 restaurants, shops, beauty, services, autoRepairs, autoElectronics, usedMarket, animals,
                 realEstate, gyms, stands, offices, itServices, perfumes,
-                activities, flights, hotels, cars, busSchedules
+                activities, flights, hotels, cars, busSchedules, posts
               }),
             });
             if (res.ok) alert('✅ Sincronização TOTAL concluída com sucesso!');
@@ -1703,6 +1652,11 @@ const App: React.FC = () => {
                   <CommunitySection 
                     isAuthenticated={isAuthenticated}
                     userName={userProfile.name}
+                    posts={posts}
+                    onSyncPosts={async () => {
+                       const updated = await fetch(`${API_BASE_URL}/api/posts`).then(r => r.json());
+                       setPosts(updated);
+                    }}
                     onShowAuth={() => setShowAuthModal(true)}
                     onClose={() => setExploreCategory(null)}
                   />
@@ -1843,41 +1797,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex-1 w-full h-full bg-slate-50">
                 <iframe 
-                  src={(() => {
-                    if (!showMapUrl) return '';
-                    
-                    // Se já for um URL de embed ou tiver output=embed, manter mas garantir output=embed
-                    if (showMapUrl.includes('/embed/') || showMapUrl.includes('output=embed')) {
-                      return showMapUrl.includes('output=embed') ? showMapUrl : `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed`;
-                    }
-                    
-                    // Se for um link do Google Maps
-                    if (showMapUrl.includes('google.com/maps') || showMapUrl.includes('maps.app.goo.gl')) {
-                      // 1. Tentar extrair coordenadas (formato @37.77,-25.31)
-                      const coordMatch = showMapUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                      if (coordMatch) {
-                        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&hl=pt&z=16&output=embed`;
-                      }
-                      
-                      // 2. Tentar extrair nome do local (/place/NOME_DO_LOCAL)
-                      const placeMatch = showMapUrl.match(/\/place\/([^\/]+)/);
-                      if (placeMatch) {
-                        return `https://maps.google.com/maps?q=${placeMatch[1]}&hl=pt&z=16&output=embed`;
-                      }
-
-                      // 3. Se for link de busca direto
-                      if (showMapUrl.includes('?q=')) {
-                        const urlObj = new URL(showMapUrl);
-                        const q = urlObj.searchParams.get('q');
-                        if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&hl=pt&z=16&output=embed`;
-                      }
-
-                      // Fallback: Forçar output=embed no link original
-                      return `${showMapUrl}${showMapUrl.includes('?') ? '&' : '?'}output=embed`;
-                    }
-                    
-                    return showMapUrl;
-                  })()}
+                  src={getGoogleMapsEmbedUrl(showMapUrl)}
                   className="w-full h-full border-none"
                   allowFullScreen
                   loading="lazy"
@@ -2006,6 +1926,12 @@ const App: React.FC = () => {
         onMarkAsRead={(id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
         onClearAll={() => setNotifications([])}
         language={language}
+      />
+      <SOSModal 
+        isOpen={showSOSModal} 
+        onClose={() => setShowSOSModal(false)} 
+        language={language} 
+        onShowMap={(url: string) => setShowMapUrl(url)}
       />
     </div>
   );

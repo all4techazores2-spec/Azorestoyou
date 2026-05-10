@@ -8,9 +8,10 @@ interface SOSModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: Language;
+  onShowMap?: (url: string) => void;
 }
 
-const SOSModal: React.FC<SOSModalProps> = ({ isOpen, onClose, language }) => {
+const SOSModal: React.FC<SOSModalProps> = ({ isOpen, onClose, language, onShowMap }) => {
   const [isDetecting, setIsDetecting] = useState(true);
   const [location, setLocation] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(5);
@@ -65,14 +66,24 @@ const SOSModal: React.FC<SOSModalProps> = ({ isOpen, onClose, language }) => {
                 <span className="text-sm font-black text-slate-700 uppercase tracking-tight">A detetar localização exata...</span>
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-                  <MapPin size={20} />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                    <MapPin size={20} />
+                  </div>
+                  <div className="text-left">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Localização Detetada</span>
+                    <span className="text-lg font-black text-slate-800">{location}</span>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Localização Detetada</span>
-                  <span className="text-lg font-black text-slate-800">{location}</span>
-                </div>
+                {onShowMap && (
+                  <button 
+                    onClick={() => onShowMap(`https://maps.google.com/maps?q=${encodeURIComponent(location || '')}&z=16&output=embed`)}
+                    className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Ver no Mapa
+                  </button>
+                )}
               </div>
             )}
           </div>
