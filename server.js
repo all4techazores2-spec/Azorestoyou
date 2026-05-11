@@ -35,11 +35,9 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
+    preflightContinue: false // Deixa o middleware lidar com o OPTIONS automaticamente
 }));
-
-// Handler explícito para pre-flight (OPTIONS)
-app.options('*', cors());
 
 // Middleware para processar JSON (Deve estar ANTES das rotas)
 app.use(bodyParser.json({ limit: '100mb' }));
