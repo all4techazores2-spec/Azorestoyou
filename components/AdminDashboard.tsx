@@ -711,7 +711,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, gallery: newGallery });
   };
 
-  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish', extraIndex?: number) => {
+  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car', extraIndex?: number) => {
     if (!editingItem) return;
     
     let fileArray: File[] = [];
@@ -754,6 +754,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             const dishes = [...(prev.dishes || [])];
             dishes[extraIndex] = { ...dishes[extraIndex], image: finalUrl };
             return { ...prev, dishes };
+          });
+        } else if (type === 'car' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const cars = [...(prev.cars || [])];
+            cars[extraIndex] = { ...cars[extraIndex], image: finalUrl };
+            return { ...prev, cars };
           });
         }
       }
@@ -1196,7 +1202,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {commonInput('Contacto Telefónico', 'contact')}
             {commonInput('Email Admin', 'adminEmail')}
             {commonInput('Password Admin', 'adminPassword')}
-            {commonInput('Logo / Imagem', 'image', 'text', true)}
+            
+            {/* Company Logo Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Logo da Companhia (URL ou Upload)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 border p-2 rounded-lg"
+                  value={editingItem.image}
+                  onChange={e => setEditingItem({...editingItem, image: e.target.value})}
+                  placeholder="URL do logo..."
+                />
+                <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                   {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                   <input 
+                     type="file" 
+                     className="hidden" 
+                     accept="image/*,.webp"
+                     disabled={isUploading}
+                     onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'main')}
+                   />
+                </label>
+              </div>
+            </div>
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
@@ -1250,8 +1279,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" type="number" value={car.pricePerDay} onChange={e => updateCar(idx, 'pricePerDay', parseFloat(e.target.value))} />
                       </div>
                       <div className="md:col-span-3">
-                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">URL da Imagem</label>
-                        <input className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" value={car.image} onChange={e => updateCar(idx, 'image', e.target.value)} />
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Foto do Veículo (URL ou Upload)</label>
+                        <div className="flex gap-2">
+                          <input 
+                            className="flex-1 border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm" 
+                            placeholder="URL da foto..." 
+                            value={car.image} 
+                            onChange={e => updateCar(idx, 'image', e.target.value)} 
+                          />
+                          <label className={`cursor-pointer px-4 rounded-xl border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-white border-blue-100 text-blue-600 hover:bg-blue-50'}`}>
+                             {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                             <input 
+                               type="file" 
+                               className="hidden" 
+                               accept="image/*,.webp"
+                               disabled={isUploading}
+                               onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'car', idx)}
+                             />
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
