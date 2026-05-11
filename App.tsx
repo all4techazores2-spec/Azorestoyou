@@ -352,26 +352,27 @@ const App: React.FC = () => {
 
   // Initial Load and Sync Polling
   useEffect(() => {
-    // Only load data when entering the app (not admin editing)
-    if (!isAdmin) {
+    // Determine if user is in any management mode
+    const isManager = isAdmin || isBusiness || isStaff || isSupplier;
+    
+    // Initial fetch - Only if not already loaded or if entering management mode
+    if (!isDataLoaded) {
       fetchData();
     }
     
-    // Poll ONLY for regular clients - NEVER for admin/business to avoid overwriting edits
+    // Poll ONLY for regular clients - NEVER for admin/business to avoid flooding and overwriting
     let syncInterval: any;
-    if (!isAdmin && !isBusiness && !isStaff && !isSupplier) {
+    if (!isManager && isDataLoaded) {
       syncInterval = setInterval(() => {
-        if (!isAdmin) { // double-check to be safe
-          fetchData();
-          console.log("🔄 Sincronização em tempo real executada...");
-        }
-      }, 1500);
+        fetchData();
+        console.log("🔄 Client-side real-time sync...");
+      }, 5000); // Increased to 5s for better stability
     }
     
     return () => {
       if (syncInterval) clearInterval(syncInterval);
     };
-  }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier]);
+  }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier, isDataLoaded]);
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
