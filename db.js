@@ -8,10 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, 'db.json');
 
-const MONGODB_URI = process.env.MONGODB_URI;
-const IS_MONGODB = !!MONGODB_URI;
+// Helper to get URI safely
+const getMongoURI = () => process.env.MONGODB_URI;
 
-// Track actual connection state (not just env var presence)
+// Track actual connection state
 let isMongoConnected = false;
 
 // --- SCHEMA DEFINITION ---
@@ -23,8 +23,9 @@ const dbSchema = new mongoose.Schema({
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
 export const connectDB = async () => {
-    const uri = process.env.MONGODB_URI;
+    const uri = getMongoURI();
     console.log("🔍 Checking Database Configuration...");
+    console.log(`📡 MONGODB_URI found: ${!!uri ? 'YES (length: ' + uri.length + ')' : 'NO'}`);
     if (uri) {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
@@ -61,7 +62,7 @@ export const connectDB = async () => {
 
 // Export real connection status for /api/status endpoint
 export const getDbStatus = () => {
-    const uri = process.env.MONGODB_URI;
+    const uri = getMongoURI();
     return {
         storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (uri ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
         isMongo: isMongoConnected,
@@ -103,7 +104,7 @@ export const readDB = async () => {
             // Return cache if available, otherwise empty default
             return memoryCache || DEFAULT_DB;
         }
-    } else if (IS_MONGODB) {
+    } else if (getMongoURI()) {
         // MongoDB URI exists but not yet connected - return cache or default
         return memoryCache || DEFAULT_DB;
     } else {
@@ -142,7 +143,7 @@ export const writeDB = async (data) => {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-    } else if (IS_MONGODB) {
+    } else if (getMongoURI()) {
         console.error("❌ Cannot write: MongoDB is configured but not connected.");
         throw new Error("MongoDB not connected");
     } else {

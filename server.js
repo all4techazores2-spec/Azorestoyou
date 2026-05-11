@@ -1,9 +1,7 @@
-// Stabilized Production - Build v1.2.0 - 2026-05-10
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
