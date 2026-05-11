@@ -372,6 +372,7 @@ const App: React.FC = () => {
     
     return () => {
       if (syncInterval) clearInterval(syncInterval);
+    };
   }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier, isDataLoaded]);
 
   // 3. NAVIGATION & UI STATE
