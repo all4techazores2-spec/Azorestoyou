@@ -30,11 +30,10 @@ export const connectDB = async () => {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(uri, {
-                serverSelectionTimeoutMS: 20000,
-                socketTimeoutMS: 60000,
-                connectTimeoutMS: 30000,
                 maxPoolSize: 10,
                 minPoolSize: 2,
+                connectTimeoutMS: 30000,
+                socketTimeoutMS: 45000,
             });
             isMongoConnected = true;
             mongoError = null;
