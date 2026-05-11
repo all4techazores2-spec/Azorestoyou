@@ -1569,8 +1569,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Config: {dbStatus?.isConfigured ? '✅ URI Detetada' : '❌ URI em falta no Render'}
                 </p>
                 <p className="text-[8px] text-slate-500">
-                  Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou (Ver Logs)'}
+                  Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou'}
                 </p>
+                {dbStatus?.error && (
+                  <p className="text-[7px] text-red-400 mt-1 font-mono break-all leading-tight">
+                    Erro: {dbStatus.error}
+                  </p>
+                )}
                 <p className="text-[7px] text-slate-600 mt-1 opacity-50">
                   Srv Time: {dbStatus?.timestamp ? new Date(dbStatus.timestamp).toLocaleTimeString() : 'N/A'}
                 </p>

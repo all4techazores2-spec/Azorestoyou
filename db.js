@@ -13,6 +13,7 @@ const getMongoURI = () => process.env.MONGODB_URI;
 
 // Track actual connection state
 let isMongoConnected = false;
+let mongoError = null;
 
 // --- SCHEMA DEFINITION ---
 const dbSchema = new mongoose.Schema({
@@ -25,7 +26,6 @@ const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 export const connectDB = async () => {
     const uri = getMongoURI();
     console.log("🔍 Checking Database Configuration...");
-    console.log(`📡 MONGODB_URI found: ${!!uri ? 'YES (length: ' + uri.length + ')' : 'NO'}`);
     if (uri) {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
@@ -37,6 +37,7 @@ export const connectDB = async () => {
                 minPoolSize: 2,
             });
             isMongoConnected = true;
+            mongoError = null;
             console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
 
             // Listen for disconnection events
@@ -51,13 +52,25 @@ export const connectDB = async () => {
 
         } catch (err) {
             isMongoConnected = false;
+            mongoError = err.message;
             console.error("❌ DATABASE ERROR: MongoDB Connection Failed:", err.message);
             console.log("⚠️ Running in local JSON fallback mode.");
         }
     } else {
+        mongoError = "No MONGODB_URI found in environment variables.";
         console.log("📂 DATABASE STATUS: Using Local JSON Storage (db.json)");
-        console.log("ℹ️ To enable permanent storage, add MONGODB_URI to Render environment variables.");
     }
+};
+
+export const getDbStatus = () => {
+    return {
+        storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : 'Local JSON File (Temporário)',
+        isMongo: isMongoConnected,
+        isConfigured: !!getMongoURI(),
+        uriFound: !!getMongoURI(),
+        error: mongoError,
+        timestamp: new Date().toISOString()
+    };
 };
 
 // Export real connection status for /api/status endpoint
@@ -184,22 +197,39 @@ export const updateCollection = async (key, data) => {
             const updateObj = {};
             updateObj[`data.${key}`] = data;
             
-            await DBModel.findOneAndUpdate(
+            // Tenta atualização atómica ($set) para performance
+            const result = await DBModel.findOneAndUpdate(
                 { key: 'master_db' },
                 { $set: updateObj },
                 { upsert: true, new: true, maxTimeMS: 30000 }
             );
             
+            if (!result) {
+                throw new Error("Falha ao encontrar ou criar o documento master_db");
+            }
+
             if (memoryCache) {
                 memoryCache[key] = data;
                 lastCacheTime = Date.now();
             }
             
-            console.log(`✅ [DB] Coleção ${key} atualizada via $set rápido.`);
+            console.log(`✅ [DB] Coleção ${key} atualizada com sucesso via $set.`);
             return { success: true, count: data.length };
         } catch (err) {
-            console.error(`❌ [DB] Erro ao atualizar ${key}:`, err.message);
-            throw err;
+            console.error(`❌ [DB] Erro na atualização atómica de ${key}:`, err.message);
+            
+            // FALLBACK: Se o $set falhar, tenta gravar o DB completo para não perder dados
+            console.log(`⚠️ [DB] Tentando fallback para gravação completa para ${key}...`);
+            try {
+                const fullDB = await readDB();
+                fullDB[key] = data;
+                await writeDB(fullDB);
+                console.log(`✅ [DB] Fallback concluído com sucesso para ${key}.`);
+                return { success: true, count: data.length, fallback: true };
+            } catch (fallbackErr) {
+                console.error(`🚨 [DB] Falha crítica no fallback de ${key}:`, fallbackErr.message);
+                throw fallbackErr;
+            }
         }
     } else {
         const db = await readDB();
