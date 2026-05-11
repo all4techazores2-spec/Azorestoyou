@@ -192,7 +192,8 @@ ALL_KEYS.forEach(key => {
     const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
     
     // GET /api/posts, /api/users, /api/activities, etc.
-    if (!app._router.stack.some(r => r.route && r.route.path === `/api/${key}`)) {
+    // Apenas adicionamos se não for uma coleção de "business" (que já têm GET definido no loop anterior)
+    if (!ALL_BUSINESS_COLLECTIONS.includes(key)) {
         app.get(`/api/${key}`, async (req, res) => {
             try {
                 const db = await readDB();
