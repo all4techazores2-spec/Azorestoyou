@@ -550,14 +550,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       addLog(`📦 Sincronizando ${lists.length} categorias selecionadas...`);
       
       for (const listObj of lists) {
-        setCompressionLabel(`A enviar ${listObj.title}...`);
-        const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
+        setCompressionLabel(`A otimizar e enviar ${listObj.title}...`);
+        
+        // Otimizar todas as imagens antes de enviar para o servidor
+        const optimizedData = await compressObjectImages(listObj.data);
+        
+        const payloadSize = (JSON.stringify(optimizedData).length / 1024 / 1024).toFixed(2);
         addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB)`);
         
         const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(listObj.data)
+          body: JSON.stringify(optimizedData)
         });
 
         if (!response.ok) {
