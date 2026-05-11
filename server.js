@@ -42,10 +42,21 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- ALL API ROUTES FIRST ---
+const ALL_BUSINESS_COLLECTIONS = [
+    'restaurants', 'beauty', 'shops', 'services', 'offices', 
+    'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
+    'real_estate', 'gyms', 'stands', 'auto_repairs', 
+    'auto_electronics', 'used_market'
+];
+
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
+
+// --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
+
+app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
 
 app.get('/api/db-diagnostics', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -53,11 +64,9 @@ app.get('/api/db-diagnostics', (req, res) => {
         const status = getDbStatus();
         res.json(status);
     } catch (err) {
-        res.status(500).json({ error: "Failed to get DB status", message: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
-
-app.get('/api/test', (req, res) => res.send("Backend API is ALIVE"));
 
 // Generic Business Update Handler
 const handleBusinessUpdate = async (req, res) => {
@@ -87,15 +96,6 @@ const handleBusinessUpdate = async (req, res) => {
     }
 };
 
-const ALL_BUSINESS_COLLECTIONS = [
-    'restaurants', 'beauty', 'shops', 'services', 'offices', 
-    'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
-    'real_estate', 'gyms', 'stands', 'auto_repairs', 
-    'auto_electronics', 'used_market'
-];
-
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
-
 // Register all business routes
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
     app.get(`/api/${key}`, async (req, res) => {
@@ -106,6 +106,7 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
             res.status(500).json({ error: err.message });
         }
     });
+    
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
     
     app.post(`/api/${key}/bulk`, async (req, res) => {
