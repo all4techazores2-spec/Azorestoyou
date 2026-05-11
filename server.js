@@ -1,4 +1,5 @@
 // Stabilized Production - Build v1.2.0 - 2026-05-10
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -194,6 +195,11 @@ app.post('/api/reset-db', async (req, res) => {
         console.error("❌ Reset failed:", err.message);
         res.status(500).json({ error: err.message });
     }
+});
+
+// Database Diagnostics Endpoint
+app.get('/api/db-diagnostics', (req, res) => {
+    res.json(getDbStatus());
 });
 
 // --- INDIVIDUAL COLLECTION ENDPOINTS ---

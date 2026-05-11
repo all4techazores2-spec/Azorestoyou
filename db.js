@@ -22,11 +22,12 @@ const dbSchema = new mongoose.Schema({
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
 export const connectDB = async () => {
+    const uri = process.env.MONGODB_URI;
     console.log("🔍 Checking Database Configuration...");
-    if (IS_MONGODB) {
+    if (uri) {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
-            await mongoose.connect(MONGODB_URI, {
+            await mongoose.connect(uri, {
                 serverSelectionTimeoutMS: 20000,
                 socketTimeoutMS: 60000,
                 connectTimeoutMS: 30000,
@@ -58,13 +59,16 @@ export const connectDB = async () => {
 };
 
 // Export real connection status for /api/status endpoint
-export const getDbStatus = () => ({
-    storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (IS_MONGODB ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
-    isMongo: isMongoConnected,
-    isConfigured: IS_MONGODB,
-    uriFound: !!MONGODB_URI,
-    timestamp: new Date().toISOString()
-});
+export const getDbStatus = () => {
+    const uri = process.env.MONGODB_URI;
+    return {
+        storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (uri ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
+        isMongo: isMongoConnected,
+        isConfigured: !!uri,
+        uriFound: !!uri,
+        timestamp: new Date().toISOString()
+    };
+};
 
 const DEFAULT_DB = { 
     restaurants: [], flights: [], hotels: [], cars: [], 
