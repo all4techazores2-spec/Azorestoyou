@@ -742,6 +742,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, rooms: (editingItem.rooms || []).filter((_:any, i:number) => i !== index) });
   };
 
+  const applyStandardRooms = () => {
+    if (!editingItem) return;
+    const basePrice = editingItem.pricePerNight || 100;
+    const standardRooms: Room[] = [
+      {
+        id: `RM_${editingItem.id}_001`,
+        name: "Duplo Standard",
+        pricePerNight: basePrice,
+        capacity: 2,
+        image: "",
+        gallery: [],
+        description: "Quarto de 28m² com Varanda, Vista cidade, Banheira, Ar condicionado, Casa de banho privativa, Televisão de ecrã plano, Insonorização, Máquina de café, Minibar e Wi-Fi gratuito."
+      },
+      {
+        id: `RM_${editingItem.id}_002`,
+        name: "Duplo com Vista Mar",
+        pricePerNight: Math.round(basePrice * 1.2),
+        capacity: 2,
+        image: "",
+        gallery: [],
+        description: "Quarto de 28m² com 1 cama de casal grande, Varanda, Vista mar, Vista piscina, Banheira, Ar condicionado, Casa de banho privativa, Televisão de ecrã plano, Insonorização, Terraço, Máquina de café, Minibar e Wi-Fi gratuito."
+      },
+      {
+        id: `RM_${editingItem.id}_003`,
+        name: "Individual Standard",
+        pricePerNight: Math.round(basePrice * 0.85),
+        capacity: 1,
+        image: "",
+        gallery: [],
+        description: "Quarto de 28m² com Varanda, Vista cidade, Banheira, Ar condicionado, Casa de banho privativa, Televisão de ecrã plano, Insonorização, Máquina de café, Minibar e Wi-Fi gratuito."
+      }
+    ];
+    setEditingItem({ ...editingItem, rooms: standardRooms });
+  };
+
   const moveGalleryImage = (fromIndex: number, toIndex: number) => {
     if (!editingItem || !editingItem.gallery) return;
     if (toIndex < 0 || toIndex >= editingItem.gallery.length) return;
@@ -1302,7 +1337,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Gestão de Quartos</h4>
                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Adicione e edite os tipos de quartos disponíveis</p>
                  </div>
-                 <button type="button" onClick={addRoom} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">+ Novo Quarto</button>
+                 <div className="flex gap-2">
+                    <button type="button" onClick={applyStandardRooms} className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      Padronizar (3 Tipos)
+                    </button>
+                    <button type="button" onClick={addRoom} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">+ Novo Quarto</button>
+                 </div>
               </div>
               
               <div className="space-y-8">
