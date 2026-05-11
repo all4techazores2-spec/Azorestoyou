@@ -556,13 +556,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setCompressionLabel(`A enviar ${listObj.title}...`);
         
         const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
-        addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB)`);
+        addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB) - A enviar...`);
         
         const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(listObj.data)
         });
+        
+        addLog(`⏳ A aguardar confirmação do servidor para ${listObj.title}...`);
 
         if (!response.ok) {
            const errorText = await response.text();
@@ -574,15 +576,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
       
       setCompressionLabel('A finalizar sincronização...');
+      addLog('📡 A refrescar frontend...');
       await onFullSync(); 
       setModifiedCategories(prev => {
         const next = new Set(prev);
         lists.forEach(l => next.delete(l.label));
         return next;
       });
-      addLog('✨ SUCESSO: Categorias selecionadas publicadas!');
+      addLog('✨ SUCESSO: Tudo carregado e sincronizado!');
       setShowSyncSuccess(true);
-      setTimeout(() => setShowSyncSuccess(false), 5000); // Auto close success after 5s
+      setTimeout(() => setShowSyncSuccess(false), 8000); 
     } catch (e: any) {
       addLog(`❌ ERRO: ${e.message}`);
       alert('❌ Erro na publicação: ' + e.message);
