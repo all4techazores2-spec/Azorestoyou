@@ -1226,6 +1226,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </label>
               </div>
             </div>
+            
+            {/* Rentcar Gallery Section */}
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria da Companhia (Slider)</h4>
+                  <p className="text-[10px] text-slate-400">Estas fotos aparecerão no slider da Rent-a-car</p>
+                </div>
+                <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'}`}>
+                   {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                   Adicionar Fotos
+                   <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'gallery')} disabled={isUploading} />
+                </label>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {editingItem.gallery?.map((img: string, idx: number) => (
+                  <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border-2 border-white shadow-sm">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                       <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white"><ArrowRight className="w-4 h-4 rotate-180" /></button>
+                       <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"><Trash2 className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white"><ArrowRight className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+                {(!editingItem.gallery || editingItem.gallery.length === 0) && (
+                  <div className="col-span-full py-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 italic text-sm">
+                    <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
+                    Nenhuma foto na galeria
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">Descrição</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
