@@ -5610,6 +5610,8 @@ export const getServices = (lang: Language): Business[] => DATA[lang]?.services?
 export const getAutoRepairs = (lang: Language): Business[] => DATA[lang]?.auto_repair?.length ? DATA[lang].auto_repair : DATA['pt'].auto_repair;
 export const getAutoElectronics = (lang: Language): Business[] => DATA[lang]?.auto_electronics?.length ? DATA[lang].auto_electronics : DATA['pt'].auto_electronics;
 export const getUsedMarket = (lang: Language): Business[] => DATA[lang]?.used_market?.length ? DATA[lang].used_market : DATA['pt'].used_market;
+
+export { DATA };
 export const getAnimals = (lang: Language): Business[] => DATA[lang]?.animals?.length ? DATA[lang].animals : DATA['pt'].animals;
 export const getRealEstate = (lang: Language): Business[] => DATA[lang]?.real_estate?.length ? DATA[lang].real_estate : DATA['pt'].real_estate;
 export const getGyms = (lang: Language): Business[] => DATA[lang]?.gyms?.length ? DATA[lang].gyms : DATA['pt'].gyms;

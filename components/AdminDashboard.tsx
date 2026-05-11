@@ -120,25 +120,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     addLog('🚒 A iniciar restauro de emergência...');
     
     try {
-        const data = constants.DATA[lang];
+        // Garantir que acedemos corretamente ao objeto DATA
+        const allData = (constants as any).DATA || (constants as any).default?.DATA || (constants as any).default;
+        if (!allData) throw new Error('Não foi possível carregar os dados das constantes.');
+        
+        const data = allData[lang] || allData['pt'];
+        if (!data) throw new Error(`Dados para a língua ${lang} não encontrados.`);
+
         const categories = [
-            { key: 'restaurants', label: 'Restaurantes', items: data.restaurants },
-            { key: 'hotels', label: 'Alojamentos', items: data.hotels },
-            { key: 'activities', label: 'Atividades', items: data.activities },
-            { key: 'cars', label: 'Rentcar', items: data.cars },
-            { key: 'shops', label: 'Lojas', items: data.shops },
-            { key: 'beauty', label: 'Beleza', items: data.beauty },
-            { key: 'services', label: 'Serviços', items: data.services },
-            { key: 'auto_repairs', label: 'Reparação Auto', items: data.auto_repair },
-            { key: 'auto_electronics', label: 'Eletrónica Auto', items: data.auto_electronics },
-            { key: 'used_market', label: 'Mercado Usados', items: data.used_market },
-            { key: 'animals', label: 'Animais', items: data.animals },
-            { key: 'real_estate', label: 'Imobiliária', items: data.real_estate },
-            { key: 'gyms', label: 'Ginásios', items: data.gyms },
-            { key: 'stands', label: 'Stands', items: data.stands },
-            { key: 'offices', label: 'Escritórios', items: data.offices },
-            { key: 'it_services', label: 'Informática', items: data.it_services },
-            { key: 'perfumes', label: 'Perfumaria', items: data.perfumes }
+            { key: 'restaurants', label: 'Restaurantes', items: data.restaurants || [] },
+            { key: 'hotels', label: 'Alojamentos', items: data.hotels || [] },
+            { key: 'activities', label: 'Atividades', items: data.activities || [] },
+            { key: 'cars', label: 'Rentcar', items: data.cars || [] },
+            { key: 'shops', label: 'Lojas', items: data.shops || [] },
+            { key: 'beauty', label: 'Beleza', items: data.beauty || [] },
+            { key: 'services', label: 'Serviços', items: data.services || [] },
+            { key: 'auto_repairs', label: 'Reparação Auto', items: data.auto_repair || [] },
+            { key: 'auto_electronics', label: 'Eletrónica Auto', items: data.auto_electronics || [] },
+            { key: 'used_market', label: 'Mercado Usados', items: data.used_market || [] },
+            { key: 'animals', label: 'Animais', items: data.animals || [] },
+            { key: 'real_estate', label: 'Imobiliária', items: data.real_estate || [] },
+            { key: 'gyms', label: 'Ginásios', items: data.gyms || [] },
+            { key: 'stands', label: 'Stands', items: data.stands || [] },
+            { key: 'offices', label: 'Escritórios', items: data.offices || [] },
+            { key: 'it_services', label: 'Informática', items: data.it_services || [] },
+            { key: 'perfumes', label: 'Perfumaria', items: data.perfumes || [] }
         ];
 
         for (const cat of categories) {
