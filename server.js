@@ -29,17 +29,32 @@ const upload = multer({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configuração super-explícita de CORS para evitar bloqueios em qualquer ambiente
+// Configuração de CORS ultra-robusta
+const allowedOrigins = [
+  'https://azorestoyou.pt',
+  'https://www.azorestoyou.pt',
+  'https://azorestoyou2.all4techazores2.workers.dev',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173'
+];
+
 app.use(cors({
     origin: function(origin, callback) {
-        // Permitir todos os origins, mas espelhando a origem exata em vez de usar '*'
-        callback(null, true);
+        // Permitir requests sem origin (como apps mobile ou curl)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com')) {
+            callback(null, true);
+        } else {
+            // Em caso de dúvida, permitimos para evitar bloqueios em produção enquanto diagnosticamos
+            callback(null, true);
+        }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
-    optionsSuccessStatus: 200,
-    preflightContinue: false // Deixa o middleware lidar com o OPTIONS automaticamente
+    optionsSuccessStatus: 200
 }));
 
 // Middleware para processar JSON (Deve estar ANTES das rotas)
