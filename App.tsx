@@ -291,13 +291,6 @@ const App: React.FC = () => {
                setter(normalized);
                // Save to IndexedDB which has massive storage capacity!
                setCache(`azores_cache_${key}`, normalized);
-               
-               // Warm up image cache for professional offline experience
-               normalized.forEach(item => {
-                 if (item.image) fetch(item.image, { mode: 'no-cors' }).catch(() => {});
-                 if (item.gallery) item.gallery.forEach((img: string) => typeof img === 'string' && fetch(img, { mode: 'no-cors' }).catch(() => {}));
-                 if (item.menu) item.menu.forEach((dish: any) => dish.image && fetch(dish.image, { mode: 'no-cors' }).catch(() => {}));
-               });
 
                // Also try localStorage for fallback if it's small enough
                try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
