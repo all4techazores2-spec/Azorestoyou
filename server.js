@@ -34,11 +34,15 @@ app.use(cors());
 
 // Logger de requisições para diagnóstico
 app.use((req, res, next) => {
-    console.log(`📡 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Origin: ${req.get('origin')}`);
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`📡 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Status: ${res.statusCode} (${duration}ms) - Origin: ${req.get('origin')}`);
+    });
     next();
 });
 
-// --- API ROUTES FIRST ---
+// --- ALL API ROUTES FIRST ---
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
@@ -55,6 +59,93 @@ app.get('/api/db-diagnostics', (req, res) => {
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE"));
 
+// Generic Business Update Handler
+const handleBusinessUpdate = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await readDB();
+        let targetArray = null;
+        let index = -1;
+        
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key]) {
+                const idx = db[key].findIndex(item => item.id === id);
+                if (idx !== -1) { index = idx; targetArray = db[key]; }
+            }
+        });
+
+        if (targetArray && index !== -1) {
+            targetArray[index] = { ...targetArray[index], ...req.body };
+            await writeDB(db);
+            res.json(targetArray[index]);
+        } else {
+            res.status(404).send("Business not found");
+        }
+    } catch (err) {
+        console.error("❌ handleBusinessUpdate failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const ALL_BUSINESS_COLLECTIONS = [
+    'restaurants', 'beauty', 'shops', 'services', 'offices', 
+    'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
+    'real_estate', 'gyms', 'stands', 'auto_repairs', 
+    'auto_electronics', 'used_market'
+];
+
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
+
+// Register all business routes
+ALL_BUSINESS_COLLECTIONS.forEach(key => {
+    app.get(`/api/${key}`, async (req, res) => {
+        try {
+            const db = await readDB();
+            res.json(db[key] || []);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+    app.put(`/api/${key}/:id`, handleBusinessUpdate);
+    
+    app.post(`/api/${key}/bulk`, async (req, res) => {
+        try {
+            await updateCollection(key, req.body);
+            res.json({ success: true, count: req.body.length });
+        } catch (err) {
+            console.error(`❌ Bulk update for ${key} failed:`, err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+});
+
+// Register other keys
+ALL_KEYS.forEach(key => {
+    const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
+    
+    if (!ALL_BUSINESS_COLLECTIONS.includes(key)) {
+        app.get(`/api/${key}`, async (req, res) => {
+            try {
+                const db = await readDB();
+                res.json(db[dbKey] || []);
+            } catch (err) {
+                res.status(500).json({ error: err.message });
+            }
+        });
+    }
+
+    app.post(`/api/${key}/bulk`, async (req, res) => {
+        try {
+            await updateCollection(dbKey, req.body);
+            res.json({ success: true, count: req.body.length });
+        } catch (err) {
+            console.error(`❌ Bulk update for ${key} failed:`, err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+});
+
+// --- STATIC FILES AFTER API ---
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
@@ -116,66 +207,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
     }
 });
 
-// --- BUSINESSES (UNIFIED) ---
-
-const ALL_BUSINESS_COLLECTIONS = [
-    'restaurants', 'beauty', 'shops', 'services', 'offices', 
-    'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
-    'real_estate', 'gyms', 'stands', 'auto_repairs', 
-    'auto_electronics', 'used_market'
-];
-
-// Generic Business Update Handler
-const handleBusinessUpdate = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const db = await readDB();
-        let targetArray = null;
-        let index = -1;
-        
-        ALL_BUSINESS_COLLECTIONS.forEach(key => {
-            if (db[key]) {
-                const idx = db[key].findIndex(item => item.id === id);
-                if (idx !== -1) { index = idx; targetArray = db[key]; }
-            }
-        });
-
-        if (targetArray && index !== -1) {
-            targetArray[index] = { ...targetArray[index], ...req.body };
-            await writeDB(db);
-            res.json(targetArray[index]);
-        } else {
-            res.status(404).send("Business not found");
-        }
-    } catch (err) {
-        console.error("❌ handleBusinessUpdate failed:", err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
-
-ALL_BUSINESS_COLLECTIONS.forEach(key => {
-    app.get(`/api/${key}`, async (req, res) => {
-        try {
-            const db = await readDB();
-            res.json(db[key] || []);
-        } catch (err) {
-            res.status(500).json({ error: err.message });
-        }
-    });
-    app.put(`/api/${key}/:id`, handleBusinessUpdate);
-    
-    // Bulk update for Admin Dashboard - OPTIMIZED: Use partial update
-    app.post(`/api/${key}/bulk`, async (req, res) => {
-        try {
-            await updateCollection(key, req.body);
-            res.json({ success: true, count: req.body.length });
-        } catch (err) {
-            console.error(`❌ Bulk update for ${key} failed:`, err.message);
-            res.status(500).json({ error: err.message });
-        }
-    });
-});
-
 // Full Sync for Admin Dashboard
 app.post('/api/full-sync', async (req, res) => {
     try {
@@ -210,38 +241,6 @@ app.get('/api/env-check', (req, res) => {
         hasMongoUri: !!process.env.MONGODB_URI,
         nodeEnv: process.env.NODE_ENV,
         port: process.env.PORT
-    });
-});
-
-// --- INDIVIDUAL COLLECTION ENDPOINTS ---
-// Define GET routes for all keys to ensure consistency
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
-
-ALL_KEYS.forEach(key => {
-    const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
-    
-    // GET /api/posts, /api/users, /api/activities, etc.
-    // Apenas adicionamos se não for uma coleção de "business" (que já têm GET definido no loop anterior)
-    if (!ALL_BUSINESS_COLLECTIONS.includes(key)) {
-        app.get(`/api/${key}`, async (req, res) => {
-            try {
-                const db = await readDB();
-                res.json(db[dbKey] || []);
-            } catch (err) {
-                res.status(500).json({ error: err.message });
-            }
-        });
-    }
-
-    // POST /api/${key}/bulk
-    app.post(`/api/${key}/bulk`, async (req, res) => {
-        try {
-            await updateCollection(dbKey, req.body);
-            res.json({ success: true, count: req.body.length });
-        } catch (err) {
-            console.error(`❌ Bulk update for ${key} failed:`, err.message);
-            res.status(500).json({ error: err.message });
-        }
     });
 });
 
