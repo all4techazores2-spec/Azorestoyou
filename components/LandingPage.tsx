@@ -22,27 +22,36 @@ const translations = {
     subtitle: 'A sua viagem de sonho começa aqui.',
     login: 'Login',
     explore: 'Explorar os Açores "Grátis"',
+    offline: 'Descarregar App',
+    ios_instructions: 'Para instalar no iPhone:\n1. Toque no botão Partilhar (quadrado com seta)\n2. Escolha "Ecrã Principal"'
   },
   en: {
     subtitle: 'Your dream trip starts here.',
     login: 'Login',
     explore: 'Explore Azores "Free"',
+    offline: 'Download App',
+    ios_instructions: 'To install on iPhone:\n1. Tap the Share button (square with arrow)\n2. Select "Add to Home Screen"'
   },
   es: {
     subtitle: 'Tu viaje soñado comienza aquí.',
     login: 'Iniciar Sesión',
     explore: 'Explorar Azores "Gratis"',
+    offline: 'Descargar App',
+    ios_instructions: 'Para instalar en iPhone:\n1. Toca el botón Compartir (cuadrado con flecha)\n2. Elige "Añadir a la pantalla de inicio"'
   },
   it: {
-    subtitle: 'Il viaggio dei tuoi sogni inizia qui.',
+    subtitle: 'Il viaggio dei tuoi sogni inizia aqui.',
     login: 'Accedi',
     explore: 'Esplora Azzorre "Gratis"',
+    offline: 'Scarica App',
+    ios_instructions: 'Per installare su iPhone:\n1. Tocca il pulsante Condividi (quadrato con freccia)\n2. Scegli "Aggiungi alla schermata home"'
   },
   de: {
     subtitle: 'Ihre Traumreise beginnt hier.',
     login: 'Anmelden',
     explore: 'Azoren entdecken "Gratis"',
-    offline: 'Descarregar Offline'
+    offline: 'App Herunterladen',
+    ios_instructions: 'Auf iPhone installieren:\n1. Tippen Sie auf die Teilen-Schaltfläche\n2. Wählen Sie "Zum Home-Bildschirm"'
   }
 };
 
@@ -59,22 +68,34 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    });
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
   const handleInstall = async () => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+    const isAndroid = /android/i.test(userAgent);
+
+    if (isIOS) {
+      alert(translations[currentLanguage].ios_instructions);
+      return;
+    }
+
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
       }
+    } else if (isAndroid) {
+      alert('Para instalar no Android:\n1. Toque nos 3 pontos do Chrome\n2. Escolha "Instalar App" ou "Adicionar ao Ecrã Principal"');
     } else {
-      // Se não houver prompt nativo (iOS), avisamos como fazer
-      alert('Para descarregar no iPhone:\n1. Toque no botão Partilhar (quadrado com seta)\n2. Escolha "Ecrã Principal"');
+      alert('Esta App pode ser instalada diretamente no seu ecrã através das opções do seu navegador.');
     }
   };
 
