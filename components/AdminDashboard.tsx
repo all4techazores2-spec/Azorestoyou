@@ -109,6 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showSyncSelector, setShowSyncSelector] = useState(false);
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [syncSelection, setSyncSelection] = useState<string[]>([]);
+  const [modifiedCategories, setModifiedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setSelectedIds([]);
@@ -268,6 +269,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars': onUpdateCars(cars.filter(c => c.id !== id)); break;
       case 'buses': onUpdateBusSchedules(busSchedules.filter(b => b.id !== id)); break;
     }
+    setModifiedCategories(prev => new Set(prev).add(activeTab));
   };
 
   const smartParseLine = (line: string) => {
@@ -393,6 +395,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       setBulkText('');
       setShowBulkAdd(false);
+      setModifiedCategories(prev => new Set(prev).add(activeTab));
       alert(`✅ ${newItems.length} itens adicionados e guardados no servidor com sucesso!`);
     } catch (e) {
       alert('❌ Erro ao guardar lista em massa.');
@@ -443,6 +446,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       setEditingItem(null);
       setIsAddingNew(false);
+      setModifiedCategories(prev => new Set(prev).add(activeTab));
       alert('✅ Alterações guardadas localmente. Clique no botão verde para enviar para o servidor.');
     } catch (err: any) {
       alert('❌ Erro: ' + err.message);
@@ -571,6 +575,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       setCompressionLabel('A finalizar sincronização...');
       await onFullSync(); 
+      setModifiedCategories(prev => {
+        const next = new Set(prev);
+        lists.forEach(l => next.delete(l.label));
+        return next;
+      });
       addLog('✨ SUCESSO: Categorias selecionadas publicadas!');
       setShowSyncSuccess(true);
       setTimeout(() => setShowSyncSuccess(false), 5000); // Auto close success after 5s
@@ -1576,11 +1585,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    setShowSyncSelector(true);
                  }} 
                  disabled={isSyncing || isCompressing}
-                 className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
+                 className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg relative ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
                >
                  <div className="flex items-center gap-3 w-full justify-center">
                     {isCompressing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
                     <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Publicar...' : 'Publicar no Frontend'}</span>
+                    {modifiedCategories.size > 0 && !isCompressing && (
+                       <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-2 py-1 rounded-full animate-bounce shadow-lg border-2 border-slate-900">
+                         {modifiedCategories.size}
+                       </span>
+                     )}
                  </div>
                  {isCompressing && (
                    <div className="w-full mt-2">
@@ -2491,6 +2505,20 @@ Av. do Mar, Madalena, Pico
                  </div>
                  <button 
                    onClick={() => {
+                     if (modifiedCategories.size === 0) {
+                        alert('Não existem categorias com alterações pendentes.');
+                        return;
+                     }
+                     setSyncSelection(Array.from(modifiedCategories));
+                     setTimeout(handleSyncAndCompress, 100);
+                   }}
+                   className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-white font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                 >
+                   <CloudSync size={16} /> Publicar Apenas Alterações ({modifiedCategories.size})
+                 </button>
+                 
+                 <button 
+                   onClick={() => {
                      setSyncSelection([
                        'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
                        'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
@@ -2498,9 +2526,9 @@ Av. do Mar, Madalena, Pico
                      ]);
                      setTimeout(handleSyncAndCompress, 100);
                    }}
-                   className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-white font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                   className="mt-2 w-full py-2 bg-slate-800 text-slate-400 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                  >
-                   <CloudSync size={16} /> Publicar Tudo Agora (Full Sync)
+                   Forçar Publicação de Tudo (Reset Sync)
                  </button>
               </div>
 
@@ -2571,6 +2599,11 @@ Av. do Mar, Madalena, Pico
                          <span className={`text-[11px] font-black uppercase tracking-tight ${syncSelection.includes(cat.id) ? 'text-blue-900' : 'text-slate-500'}`}>
                             {cat.label}
                          </span>
+                         {modifiedCategories.has(cat.id) && (
+                            <span className="ml-auto bg-amber-100 text-amber-600 text-[8px] font-black px-2 py-0.5 rounded-full border border-amber-200">
+                              ALTERADO
+                            </span>
+                          )}
                       </label>
                     ))}
                  </div>
@@ -2587,7 +2620,7 @@ Av. do Mar, Madalena, Pico
                       disabled={syncSelection.length === 0}
                       className="flex-[2] py-4 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                     >
-                       <Zap size={18} /> Iniciar Publicação ({syncSelection.length})
+                       <Zap size={18} /> Publicar Selecionados ({syncSelection.length})
                     </button>
                  </div>
               </div>
