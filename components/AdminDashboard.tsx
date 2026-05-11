@@ -14,6 +14,8 @@ import {
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database
 } from 'lucide-react';
 
+import { API_BASE_URL } from '../config';
+
 interface AdminDashboardProps {
   restaurants: Restaurant[];
   shops: Business[];
@@ -109,11 +111,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   useEffect(() => {
     setSelectedIds([]);
   }, [activeTab, islandFilter, beautyFilter, shopsFilter, hotelFilter, servicesFilter, autoRepairsFilter]);
-
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-1.onrender.com';
-
 
   const togglePassword = (id: string) => {
     setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
@@ -550,18 +547,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       addLog(`📦 Sincronizando ${lists.length} categorias selecionadas...`);
       
       for (const listObj of lists) {
-        setCompressionLabel(`A otimizar e enviar ${listObj.title}...`);
+        setCompressionLabel(`A enviar ${listObj.title}...`);
         
-        // Otimizar todas as imagens antes de enviar para o servidor
-        const optimizedData = await compressObjectImages(listObj.data);
-        
-        const payloadSize = (JSON.stringify(optimizedData).length / 1024 / 1024).toFixed(2);
+        const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
         addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB)`);
         
         const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(optimizedData)
+          body: JSON.stringify(listObj.data)
         });
 
         if (!response.ok) {
