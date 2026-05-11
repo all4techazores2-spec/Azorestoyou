@@ -30,10 +30,12 @@ export const connectDB = async () => {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(uri, {
-                maxPoolSize: 10,
-                minPoolSize: 2,
-                connectTimeoutMS: 30000,
-                socketTimeoutMS: 45000,
+                maxPoolSize: 20, // Aumentado para lidar com mais tráfego
+                minPoolSize: 5,
+                connectTimeoutMS: 60000, // 60 segundos
+                socketTimeoutMS: 60000,
+                serverSelectionTimeoutMS: 60000,
+                heartbeatFrequencyMS: 10000,
             });
             isMongoConnected = true;
             mongoError = null;
@@ -179,51 +181,45 @@ export const writeDB = async (data) => {
 };
 
 export const updateCollection = async (key, data) => {
-    if (isMongoConnected) {
-        try {
-            console.log(`🔄 [DB] Sincronizando apenas a coleção: ${key} (${data.length} itens)...`);
-            
-            const updateObj = {};
-            updateObj[`data.${key}`] = data;
-            
-            // Tenta atualização atómica ($set) para performance
-            const result = await DBModel.findOneAndUpdate(
-                { key: 'master_db' },
-                { $set: updateObj },
-                { upsert: true, new: true, maxTimeMS: 30000 }
-            );
-            
-            if (!result) {
-                throw new Error("Falha ao encontrar ou criar o documento master_db");
+    try {
+        await connectDB();
+        
+        console.log(`💾 A atualizar coleção '${key}' no Atlas (${data.length} itens)...`);
+        
+        // Tentar atualização atómica ($set) para maior performance e evitar limites de tamanho de documento
+        const result = await DBModel.findOneAndUpdate(
+            { key: 'master_db' },
+            { $set: { [`data.${key}`]: data } },
+            { 
+                upsert: true, 
+                new: true,
+                maxTimeMS: 60000 // Tempo estendido para payloads grandes
             }
+        );
 
+        if (result) {
+            console.log(`✅ Coleção '${key}' sincronizada com sucesso.`);
+            // Atualizar cache local se existir
             if (memoryCache) {
                 memoryCache[key] = data;
                 lastCacheTime = Date.now();
             }
-            
-            console.log(`✅ [DB] Coleção ${key} atualizada com sucesso via $set.`);
-            return { success: true, count: data.length };
-        } catch (err) {
-            console.error(`❌ [DB] Erro na atualização atómica de ${key}:`, err.message);
-            
-            // FALLBACK: Se o $set falhar, tenta gravar o DB completo para não perder dados
-            console.log(`⚠️ [DB] Tentando fallback para gravação completa para ${key}...`);
-            try {
-                const fullDB = await readDB();
-                fullDB[key] = data;
-                await writeDB(fullDB);
-                console.log(`✅ [DB] Fallback concluído com sucesso para ${key}.`);
-                return { success: true, count: data.length, fallback: true };
-            } catch (fallbackErr) {
-                console.error(`🚨 [DB] Falha crítica no fallback de ${key}:`, fallbackErr.message);
-                throw fallbackErr;
-            }
+            return { success: true };
         }
-    } else {
-        const db = await readDB();
-        db[key] = data;
-        await writeDB(db);
+    } catch (err) {
+        console.error(`❌ Erro na sincronização de '${key}':`, err.message);
+        
+        // Fallback para gravação total se o $set falhar
+        try {
+            console.log("⚠️ A tentar fallback para gravação completa...");
+            const fullDB = await readDB();
+            fullDB[key] = data;
+            await writeDB(fullDB);
+            return { success: true, fallback: true };
+        } catch (fallbackErr) {
+            console.error("🚨 Falha crítica no fallback:", fallbackErr.message);
+            throw fallbackErr;
+        }
     }
 };
 
