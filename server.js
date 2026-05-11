@@ -3,6 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -200,6 +201,16 @@ app.post('/api/reset-db', async (req, res) => {
 // Database Diagnostics Endpoint
 app.get('/api/db-diagnostics', (req, res) => {
     res.json(getDbStatus());
+});
+
+// Secure Env Check (Only returns keys, not values)
+app.get('/api/env-check', (req, res) => {
+    res.json({
+        keys: Object.keys(process.env).filter(k => !k.includes('PASS') && !k.includes('SECRET') && !k.includes('KEY')),
+        hasMongoUri: !!process.env.MONGODB_URI,
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT
+    });
 });
 
 // --- INDIVIDUAL COLLECTION ENDPOINTS ---
