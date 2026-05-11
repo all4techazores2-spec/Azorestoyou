@@ -10,8 +10,9 @@ import {
   ShoppingBag, Mail, MapPin, Phone, Sparkles,
   Scissors, User, Flower2, Brush, ArrowRight, RefreshCw, Home,
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
-  ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, 
-  MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database
+  ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
+  MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
+  CheckCircle
 } from 'lucide-react';
 
 import { API_BASE_URL } from '../config';
@@ -106,6 +107,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [compressionLabel, setCompressionLabel] = useState('');
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
   const [showSyncSelector, setShowSyncSelector] = useState(false);
+  const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [syncSelection, setSyncSelection] = useState<string[]>([]);
 
   useEffect(() => {
@@ -568,13 +570,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
       
       setCompressionLabel('A finalizar sincronização...');
-      // No need for a full global sync if we only changed subsets, but we call it to refresh global app state if needed
       await onFullSync(); 
       addLog('✨ SUCESSO: Categorias selecionadas publicadas!');
-      alert('✅ Publicação parcial concluída com sucesso!');
+      setShowSyncSuccess(true);
+      setTimeout(() => setShowSyncSuccess(false), 5000); // Auto close success after 5s
     } catch (e: any) {
       addLog(`❌ ERRO: ${e.message}`);
-      alert('❌ Erro na publicação. Verifique o log de erros na tela.');
+      alert('❌ Erro na publicação: ' + e.message);
     } finally {
       setIsCompressing(false);
       setCompressionLabel('');
@@ -2487,6 +2489,19 @@ Av. do Mar, Madalena, Pico
                        <p className="text-blue-200 text-xs font-bold opacity-80 uppercase tracking-widest">Selecione o que deseja sincronizar</p>
                     </div>
                  </div>
+                 <button 
+                   onClick={() => {
+                     setSyncSelection([
+                       'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                       'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
+                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                     ]);
+                     setTimeout(handleSyncAndCompress, 100);
+                   }}
+                   className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-white font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                 >
+                   <CloudSync size={16} /> Publicar Tudo Agora (Full Sync)
+                 </button>
               </div>
 
               <div className="p-8">
@@ -2633,6 +2648,26 @@ Av. do Mar, Madalena, Pico
                    <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.5em] animate-pulse">Não feche esta janela até terminar</p>
                 </div>
              </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* SUCCESS MODAL */}
+      <AnimatePresence>
+        {showSyncSuccess && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-10 right-10 z-[200] bg-emerald-600 text-white p-8 rounded-[2.5rem] shadow-2xl flex items-center gap-6 border-4 border-emerald-400/30 backdrop-blur-xl"
+          >
+             <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                <CheckCircle size={32} className="text-emerald-600" />
+             </div>
+             <div className="pr-4">
+                <h4 className="text-2xl font-black uppercase tracking-tighter">Publicado com Sucesso!</h4>
+                <p className="text-emerald-100 text-sm font-bold opacity-90">Todos os dados foram enviados e já estão visíveis no Frontend.</p>
+             </div>
+             <button onClick={() => setShowSyncSuccess(false)} className="p-2 hover:bg-white/10 rounded-full">
+                <X size={20} />
+             </button>
           </motion.div>
         )}
       </AnimatePresence>
