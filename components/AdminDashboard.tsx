@@ -1536,11 +1536,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da DB</span>
               </div>
               <button 
-                onClick={() => window.location.reload()} 
-                className="p-1 hover:bg-slate-700 rounded-md text-slate-400 transition-colors"
-                title="Recarregar Dados"
+                onClick={async () => {
+                  if (onFullSync) {
+                    setIsSyncing(true);
+                    try {
+                      await onFullSync();
+                      addLog('🔄 Dados sincronizados manualmente do Atlas.');
+                    } finally {
+                      setIsSyncing(false);
+                    }
+                  }
+                }} 
+                disabled={isSyncing}
+                className="p-1 hover:bg-slate-700 rounded-md text-slate-400 transition-colors disabled:opacity-50"
+                title="Sincronizar com Atlas"
               >
-                <RefreshCw size={12} />
+                <RefreshCw size={12} className={isSyncing ? 'animate-spin text-blue-400' : ''} />
               </button>
            </div>
            <p className={`text-[11px] font-bold ${dbStatus?.isMongo ? 'text-emerald-500' : 'text-amber-500'}`}>
