@@ -29,17 +29,14 @@ const upload = multer({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configuração robusta de CORS
-app.use(cors({
-    origin: [
-        'https://azorestoyou.pt', 
-        'https://www.azorestoyou.pt', 
-        'http://localhost:5173', 
-        'http://localhost:3000'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+// Configuração super-permissiva de CORS para evitar bloqueios
+app.use(cors());
+
+// Logger de requisições para diagnóstico
+app.use((req, res, next) => {
+    console.log(`📡 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Origin: ${req.get('origin')}`);
+    next();
+});
 
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
