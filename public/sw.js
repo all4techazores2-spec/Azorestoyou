@@ -1,4 +1,4 @@
-const CACHE_NAME = 'azores-toyou-v1';
+const CACHE_NAME = 'azores-toyou-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -13,31 +13,52 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+      );
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Solo cachear GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Retornar do cache se existir, senão buscar na rede
-      return response || fetch(event.request).then((networkResponse) => {
-        // Cachear novas respostas de assets estáticos (não API)
-        const url = new URL(event.request.url);
-        if (url.pathname.includes('/assets/') || url.pathname.endsWith('.png') || url.pathname.endsWith('.mp4')) {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
+    caches.match(event.request).then((cachedResponse) => {
+      // 1. Sempre retornar do cache se for uma imagem e já existir
+      if (cachedResponse && event.request.url.match(/\.(jpg|jpeg|png|gif|svg|webp)/)) {
+        return cachedResponse;
+      }
+
+      // 2. Senão, ir à rede
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && !event.request.url.includes('onrender.com')) {
+           return networkResponse;
+        }
+
+        // Cachear dinamicamente todas as imagens e assets estáticos
+        const url = event.request.url;
+        if (url.match(/\.(jpg|jpeg|png|gif|svg|webp|mp4|css|js)/) || url.includes('/imagens/')) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
           });
         }
+
         return networkResponse;
+      }).catch(() => {
+        // Fallback para navegação offline
+        if (event.request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
+        return cachedResponse;
       });
-    }).catch(() => {
-      // Fallback offline para navegação
-      if (event.request.mode === 'navigate') {
-        return caches.match('/index.html');
-      }
     })
   );
 });

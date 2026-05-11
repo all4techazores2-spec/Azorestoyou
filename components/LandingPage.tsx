@@ -132,13 +132,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
           </button>
 
           {/* Offline Download Button */}
-          <button 
-            onClick={handleInstall}
-            className="w-full py-4 rounded-xl font-bold text-lg shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105 transition-all flex items-center justify-center gap-2 border-b-4 border-blue-800"
-          >
-            <Download className="w-5 h-5 animate-bounce" />
-            Descarregar Offline
-          </button>
+          <div className="flex justify-center pt-2">
+            <button 
+              onClick={handleInstall}
+              className="px-6 py-2.5 rounded-full font-black text-xs shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105 transition-all flex items-center gap-2 border-b-2 border-blue-800 uppercase tracking-widest"
+            >
+              <Download className="w-3.5 h-3.5 animate-bounce" />
+              {t.offline}
+            </button>
+          </div>
         </div>
 
         {/* Language Selector (Modern Flags) */}
