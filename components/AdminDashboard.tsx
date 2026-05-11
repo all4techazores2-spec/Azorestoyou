@@ -12,8 +12,10 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle
+  CheckCircle, AlertTriangle
 } from 'lucide-react';
+
+import * as constants from '../constants';
 
 import { API_BASE_URL } from '../config';
 
@@ -110,6 +112,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [syncSelection, setSyncSelection] = useState<string[]>([]);
   const [modifiedCategories, setModifiedCategories] = useState<Set<string>>(new Set());
+
+  const handleEmergencyRestore = async () => {
+    if (!confirm('🚨 ATENÇÃO: Isto vai substituir os dados do Atlas pelos dados originais do sistema. Continuar?')) return;
+    
+    setIsSyncing(true);
+    addLog('🚒 A iniciar restauro de emergência...');
+    
+    try {
+        const data = constants.DATA[lang];
+        const categories = [
+            { key: 'restaurants', label: 'Restaurantes', items: data.restaurants },
+            { key: 'hotels', label: 'Alojamentos', items: data.hotels },
+            { key: 'activities', label: 'Atividades', items: data.activities },
+            { key: 'cars', label: 'Rentcar', items: data.cars },
+            { key: 'shops', label: 'Lojas', items: data.shops },
+            { key: 'beauty', label: 'Beleza', items: data.beauty },
+            { key: 'services', label: 'Serviços', items: data.services },
+            { key: 'auto_repairs', label: 'Reparação Auto', items: data.auto_repair },
+            { key: 'auto_electronics', label: 'Eletrónica Auto', items: data.auto_electronics },
+            { key: 'used_market', label: 'Mercado Usados', items: data.used_market },
+            { key: 'animals', label: 'Animais', items: data.animals },
+            { key: 'real_estate', label: 'Imobiliária', items: data.real_estate },
+            { key: 'gyms', label: 'Ginásios', items: data.gyms },
+            { key: 'stands', label: 'Stands', items: data.stands },
+            { key: 'offices', label: 'Escritórios', items: data.offices },
+            { key: 'it_services', label: 'Informática', items: data.it_services },
+            { key: 'perfumes', label: 'Perfumaria', items: data.perfumes }
+        ];
+
+        for (const cat of categories) {
+            addLog(`📤 A enviar ${cat.label}...`);
+            const res = await fetch(`${API_BASE_URL}/api/${cat.key}/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cat.items)
+            });
+            if (!res.ok) throw new Error(`Falha em ${cat.label}`);
+        }
+        
+        addLog('✨ Restauro concluído! A atualizar página...');
+        alert('✅ Dados restaurados com sucesso! A página vai recarregar.');
+        window.location.reload();
+    } catch (err: any) {
+        addLog(`❌ Erro no restauro: ${err.message}`);
+        alert('Erro ao restaurar: ' + err.message);
+    } finally {
+        setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     setSelectedIds([]);
@@ -1891,6 +1942,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">
               {activeTab === 'dashboard' ? 'Panorama Geral' : `${t(`manage_${activeTab}`)} (${getListItems().length})`}
             </h1>
+            
+            {activeTab === 'dashboard' && (
+              <button 
+                onClick={handleEmergencyRestore}
+                disabled={isSyncing}
+                className="group relative px-6 py-3 bg-red-50 border-2 border-red-100 text-red-600 rounded-2xl text-xs font-black uppercase flex items-center gap-3 hover:bg-red-600 hover:text-white hover:border-red-600 transition-all shadow-xl shadow-red-500/5 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <AlertTriangle className="w-4 h-4" />
+                <span>Repovoar Atlas (Emergência)</span>
+              </button>
+            )}
          </div>
 
           {/* DASHBOARD VIEW */}
