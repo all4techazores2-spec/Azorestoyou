@@ -47,12 +47,21 @@ app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // --- DATABASE DIAGNOSTICS ---
-app.get('/api/db-diagnostics', async (req, res) => {
+app.get('/api/db-diagnostics', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.json(getDbStatus());
+    try {
+        const status = getDbStatus();
+        res.json(status);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to get DB status", message: err.message });
+    }
 });
 
-// Initial Seed Function - DISABLED as requested by user to keep a clean slate
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+// Initial Seed Function - DISABLED
 const seedIfNeeded = async () => {
     console.log("ℹ️ Startup: Automatic seeding is disabled.");
 };
@@ -187,18 +196,12 @@ app.post('/api/full-sync', async (req, res) => {
 // Reset Database Endpoint
 app.post('/api/reset-db', async (req, res) => {
     try {
-        const { resetDB } = await import('./db.js');
         await resetDB();
         res.json({ success: true, message: "Database wiped successfully" });
     } catch (err) {
         console.error("❌ Reset failed:", err.message);
         res.status(500).json({ error: err.message });
     }
-});
-
-// Database Diagnostics Endpoint
-app.get('/api/db-diagnostics', (req, res) => {
-    res.json(getDbStatus());
 });
 
 // Secure Env Check (Only returns keys, not values)
@@ -419,24 +422,24 @@ app.get('/api/cars', async (req, res) => {
     res.json(db.cars || []);
 });
 
-// Start Database first, then Server
-const startServer = async () => {
+// Start Server and then Database
+const startServer = () => {
     console.log("🔍 Iniciando sequência de arranque...");
     
-    // 1. Connect to Database
-    await connectDB();
-    
-    // 2. Seed if needed
-    await seedIfNeeded();
-    
-    // 3. Start Listening
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`🚀 Master Backend running on port ${PORT}`);
         
-        // Self-Ping para manter o Render ativo
+        // Initial Database Connection (don't await to not block server start)
+        connectDB().then(() => {
+            console.log("📡 Database connection attempt finished.");
+        }).catch(err => {
+            console.error("🚨 Critical database connection error:", err.message);
+        });
+
+        // Self-Ping to keep Render active
         const selfPing = () => {
             const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-            axios.get(`${url}/api/db-diagnostics?t=${Date.now()}`)
+            axios.get(`${url}/api/health?t=${Date.now()}`)
                 .then(() => console.log('💓 Keep-alive ping enviado'))
                 .catch(err => console.log('⚠️ Erro no self-ping (normal em startup)'));
         };
@@ -444,6 +447,9 @@ const startServer = async () => {
         setInterval(selfPing, 60000); 
         setTimeout(selfPing, 5000); 
     });
+
+    server.keepAliveTimeout = 120000;
+    server.headersTimeout = 125000;
 };
 
 startServer();
