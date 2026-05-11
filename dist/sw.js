@@ -57,7 +57,16 @@ self.addEventListener('fetch', (event) => {
         if (event.request.mode === 'navigate') {
           return caches.match('/index.html');
         }
-        return cachedResponse;
+        
+        // Se for API e falhar, retornar um erro JSON formatado em vez de undefined (que causa erro TypeError)
+        if (event.request.url.includes('/api/')) {
+            return new Response(JSON.stringify({ error: 'Offline ou Servidor Indisponível' }), {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        
+        return cachedResponse || new Response('', { status: 404 });
       });
     })
   );

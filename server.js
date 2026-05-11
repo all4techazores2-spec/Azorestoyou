@@ -31,7 +31,10 @@ const PORT = process.env.PORT || 3001;
 
 // Configuração super-explícita de CORS para evitar bloqueios em qualquer ambiente
 app.use(cors({
-    origin: '*',
+    origin: function(origin, callback) {
+        // Permitir todos os origins, mas espelhando a origem exata em vez de usar '*'
+        callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
