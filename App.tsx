@@ -252,7 +252,7 @@ const App: React.FC = () => {
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
         'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes',
-        'activities', 'bus-schedules', 'flights'
+        'activities', 'bus-schedules', 'flights', 'posts'
       ];
 
       const setterMap: Record<string, Function> = {
@@ -260,7 +260,8 @@ const App: React.FC = () => {
         'beauty': setBeauty, 'services': setServices, 'offices': setOffices, 'animals': setAnimals,
         'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
         'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
-        'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights
+        'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
+        'posts': setPosts
       };
 
       let emptyCount = 0;
@@ -1074,27 +1075,27 @@ const App: React.FC = () => {
         hotels={hotels}
         cars={cars}
         busSchedules={busSchedules}
-        // Updaters - Server-first: save to MongoDB THEN update UI state
-        onUpdateRestaurants={(list) => setRestaurants(list)}
-        onUpdateShops={(list) => setShops(list)}
-        onUpdateBeauty={(list) => setBeauty(list)}
-        onUpdateServices={(list) => setServices(list)}
-
-        onUpdateAutoRepairs={(list) => setAutoRepairs(list)}
-        onUpdateAutoElectronics={(list) => setAutoElectronics(list)}
-        onUpdateUsedMarket={(list) => setUsedMarket(list)}
-        onUpdateAnimals={(list) => setAnimals(list)}
-        onUpdateRealEstate={(list) => setRealEstate(list)}
-        onUpdateGyms={(list) => setGyms(list)}
-        onUpdateStands={(list) => setStands(list)}
-        onUpdateOffices={(list) => setOffices(list)}
-        onUpdateITServices={(list) => setItServices(list)}
-        onUpdatePerfumes={(list) => setPerfumes(list)}
-        onUpdateActivities={(list) => setActivities(list)}
-        onUpdateFlights={(list) => setFlights(list)}
-        onUpdateHotels={(list) => setHotels(list)}
-        onUpdateCars={(list) => setCars(list)}
-        onUpdateBusSchedules={(list) => setBusSchedules(list)}
+        // Updaters - AUTO-SYNC: save to MongoDB immediately
+        onUpdateRestaurants={async (list) => { setRestaurants(list); await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateShops={async (list) => { setShops(list); await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateBeauty={async (list) => { setBeauty(list); await fetch(`${API_BASE_URL}/api/beauty/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateServices={async (list) => { setServices(list); await fetch(`${API_BASE_URL}/api/services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateAutoRepairs={async (list) => { setAutoRepairs(list); await fetch(`${API_BASE_URL}/api/auto_repairs/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateAutoElectronics={async (list) => { setAutoElectronics(list); await fetch(`${API_BASE_URL}/api/auto_electronics/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateUsedMarket={async (list) => { setUsedMarket(list); await fetch(`${API_BASE_URL}/api/used_market/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateAnimals={async (list) => { setAnimals(list); await fetch(`${API_BASE_URL}/api/animals/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateRealEstate={async (list) => { setRealEstate(list); await fetch(`${API_BASE_URL}/api/real_estate/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateGyms={async (list) => { setGyms(list); await fetch(`${API_BASE_URL}/api/gyms/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateStands={async (list) => { setStands(list); await fetch(`${API_BASE_URL}/api/stands/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateOffices={async (list) => { setOffices(list); await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateITServices={async (list) => { setItServices(list); await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdatePerfumes={async (list) => { setPerfumes(list); await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateActivities={async (list) => { setActivities(list); await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateFlights={async (list) => { setFlights(list); await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateHotels={async (list) => { setHotels(list); await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateCars={async (list) => { setCars(list); await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateBusSchedules={async (list) => { setBusSchedules(list); await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        
         // Status & Logic
         dbStatus={dbStatus}
         onLogout={() => { setIsAdmin(false); setIsAuthenticated(false); setHasEnteredApp(false); }}
@@ -1137,10 +1138,10 @@ const App: React.FC = () => {
                setRestaurants(updatedList);
                // Sincronizar no servidor
                try {
-                 await fetch(`${API_BASE_URL}/api/sync-all`, {
+                 await fetch(`${API_BASE_URL}/api/restaurants/bulk`, {
                    method: 'POST',
                    headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ restaurants: updatedList }),
+                   body: JSON.stringify(updatedList),
                  });
                } catch (e) { console.error(e); }
             }}

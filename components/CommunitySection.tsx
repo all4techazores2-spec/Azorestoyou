@@ -98,10 +98,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, us
     };
 
     try {
-       await fetch(`${API_BASE_URL}/api/posts/bulk`, {
+       await fetch(`${API_BASE_URL}/api/posts`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify([newPost])
+         body: JSON.stringify(newPost)
        });
        onSyncPosts();
        setPostText('');

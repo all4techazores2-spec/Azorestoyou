@@ -474,7 +474,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        // Optimized for WebP as requested by user
+        resolve(canvas.toDataURL('image/webp', quality));
       };
       img.onerror = () => {
         clearTimeout(timeout);
@@ -728,7 +729,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
 
         // Sempre comprimir para garantir performance
-        finalUrl = await compressImage(base64);
+        const finalUrl = await compressImage(base64);
 
         // Atualizar estado conforme o tipo
         if (type === 'main') {
@@ -1016,7 +1017,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <input 
                      type="file" 
                      className="hidden" 
-                     accept="image/*"
+                     accept="image/*,.webp"
                      disabled={isUploading}
                      onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'main')}
                    />
@@ -1042,7 +1043,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <label className={`cursor-pointer px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-500/20'}`}>
                   {isUploading ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
                   {isUploading ? 'A carregar...' : 'Adicionar Fotos (Múltiplas)'}
-                  <input type="file" multiple className="hidden" accept="image/*" disabled={isUploading} onChange={e => e.target.files && handleImageUpload(e.target.files, 'gallery')} />
+                  <input type="file" multiple className="hidden" accept="image/*,.webp" disabled={isUploading} onChange={e => e.target.files && handleImageUpload(e.target.files, 'gallery')} />
                 </label>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">

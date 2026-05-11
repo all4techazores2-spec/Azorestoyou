@@ -173,6 +173,8 @@ app.post('/api/full-sync', async (req, res) => {
     try {
         const db = await readDB();
         const updatedData = req.body;
+        
+        // Mantemos dados essenciais que não vêm no full-sync (ex: logs ou contadores se houvessem)
         const finalDB = { ...db, ...updatedData };
         await writeDB(finalDB);
         res.json({ success: true });
@@ -182,17 +184,49 @@ app.post('/api/full-sync', async (req, res) => {
     }
 });
 
-// Adicionar rotas de bulk para outras coleções que não são "business" puras
-['flights', 'bus-schedules', 'activities', 'users', 'posts'].forEach(key => {
+// --- INDIVIDUAL COLLECTION ENDPOINTS ---
+// Define GET routes for all keys to ensure consistency
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
+
+ALL_KEYS.forEach(key => {
+    const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
+    
+    // GET /api/posts, /api/users, /api/activities, etc.
+    if (!app._router.stack.some(r => r.route && r.route.path === `/api/${key}`)) {
+        app.get(`/api/${key}`, async (req, res) => {
+            try {
+                const db = await readDB();
+                res.json(db[dbKey] || []);
+            } catch (err) {
+                res.status(500).json({ error: err.message });
+            }
+        });
+    }
+
+    // POST /api/${key}/bulk
     app.post(`/api/${key}/bulk`, async (req, res) => {
         try {
-            const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
             await updateCollection(dbKey, req.body);
             res.json({ success: true, count: req.body.length });
         } catch (err) {
+            console.error(`❌ Bulk update for ${key} failed:`, err.message);
             res.status(500).json({ error: err.message });
         }
     });
+});
+
+// Aliases para compatibilidade
+app.get('/api/posts', async (req, res) => {
+    const db = await readDB();
+    res.json(db.posts || []);
+});
+
+app.post('/api/posts', async (req, res) => {
+    const db = await readDB();
+    const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
+    db.posts.unshift(newPost);
+    await writeDB(db);
+    res.status(201).json(newPost);
 });
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
