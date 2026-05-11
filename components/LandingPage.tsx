@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { COLORS } from '../constants';
 import AzoresLogo from './AzoresLogo';
-import { LogIn } from 'lucide-react';
+import { LogIn, Download, Smartphone } from 'lucide-react';
 import AuthModal from './AuthModal';
 import { Language, Restaurant } from '../types';
 
@@ -42,6 +42,7 @@ const translations = {
     subtitle: 'Ihre Traumreise beginnt hier.',
     login: 'Anmelden',
     explore: 'Azoren entdecken "Gratis"',
+    offline: 'Descarregar Offline'
   }
 };
 
@@ -55,6 +56,27 @@ const languageOptions: { code: Language; country: string; label: string }[] = [
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplore, onAuthSuccess, currentLanguage, onLanguageChange, restaurants, shops, beauty }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Se não houver prompt nativo (iOS), avisamos como fazer
+      alert('Para descarregar no iPhone:\n1. Toque no botão Partilhar (quadrado com seta)\n2. Escolha "Ecrã Principal"');
+    }
+  };
 
   const t = translations[currentLanguage];
 
@@ -107,6 +129,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
             className="w-full py-4 rounded-xl font-bold text-lg shadow-lg bg-white border-2 border-slate-200 text-slate-800 hover:bg-slate-50 hover:scale-105 transition-all"
           >
             {t.explore}
+          </button>
+
+          {/* Offline Download Button */}
+          <button 
+            onClick={handleInstall}
+            className="w-full py-4 rounded-xl font-bold text-lg shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105 transition-all flex items-center justify-center gap-2 border-b-4 border-blue-800"
+          >
+            <Download className="w-5 h-5 animate-bounce" />
+            Descarregar Offline
           </button>
         </div>
 

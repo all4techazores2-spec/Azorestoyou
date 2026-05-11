@@ -248,6 +248,7 @@ const App: React.FC = () => {
       });
 
       // 1. Streaming Fetch for ZERO delay
+      // 1. Streaming Fetch for ZERO delay
       const endpointKeys = [
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
@@ -263,6 +264,16 @@ const App: React.FC = () => {
         'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
         'posts': setPosts
       };
+
+      // 0. Load from Cache immediately for Offline Support
+      endpointKeys.forEach(async key => {
+        try {
+          const cached = await getCache(`azores_cache_${key}`);
+          if (cached && setterMap[key]) {
+            setterMap[key](cached);
+          }
+        } catch (e) {}
+      });
 
       let emptyCount = 0;
       let completedCount = 0;
