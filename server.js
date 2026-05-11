@@ -38,12 +38,11 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(bodyParser.json({ limit: '100mb' }));
-app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
-app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
-app.use(express.static(path.join(__dirname, 'dist')));
+// --- API ROUTES FIRST ---
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
 
-// --- DATABASE DIAGNOSTICS ---
 app.get('/api/db-diagnostics', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {
@@ -54,9 +53,12 @@ app.get('/api/db-diagnostics', (req, res) => {
     }
 });
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
-});
+app.get('/api/test', (req, res) => res.send("Backend API is ALIVE"));
+
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
+app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Initial Seed Function - DISABLED
 const seedIfNeeded = async () => {
