@@ -131,12 +131,10 @@ const App: React.FC = () => {
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
-  const [dbStatus, setDbStatus] = useState<any>({ 
-    storage: 'A ligar...', 
-    isMongo: false, 
     isConfigured: false, 
     timestamp: null 
   });
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
@@ -371,10 +369,7 @@ const App: React.FC = () => {
     
     return () => {
       if (syncInterval) clearInterval(syncInterval);
-    };
   }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier, isDataLoaded]);
-
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // 3. NAVIGATION & UI STATE
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
