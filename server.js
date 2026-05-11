@@ -29,15 +29,28 @@ const upload = multer({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configuração super-permissiva de CORS para evitar bloqueios
-app.use(cors());
+// Configuração super-explícita de CORS para evitar bloqueios em qualquer ambiente
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
+
+// Handler explícito para pre-flight (OPTIONS)
+app.options('*', cors());
+
+// Middleware para processar JSON (Deve estar ANTES das rotas)
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 // Logger de requisições para diagnóstico
 app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
         const duration = Date.now() - start;
-        console.log(`📡 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Status: ${res.statusCode} (${duration}ms) - Origin: ${req.get('origin')}`);
+        console.log(`📡 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url} - Status: ${res.statusCode} (${duration}ms) - Origin: ${req.get('origin') || 'Direct'}`);
     });
     next();
 });
@@ -111,6 +124,9 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
     
     app.post(`/api/${key}/bulk`, async (req, res) => {
         try {
+            if (!req.body || !Array.isArray(req.body)) {
+                return res.status(400).json({ error: "Missing or invalid body data" });
+            }
             await updateCollection(key, req.body);
             res.json({ success: true, count: req.body.length });
         } catch (err) {
@@ -147,8 +163,6 @@ ALL_KEYS.forEach(key => {
 });
 
 // --- STATIC FILES AFTER API ---
-app.use(bodyParser.json({ limit: '100mb' }));
-app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
