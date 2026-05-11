@@ -131,10 +131,13 @@ const App: React.FC = () => {
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [dbStatus, setDbStatus] = useState<any>({ 
+    storage: 'A ligar...', 
+    isMongo: false, 
     isConfigured: false, 
     timestamp: null 
   });
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
