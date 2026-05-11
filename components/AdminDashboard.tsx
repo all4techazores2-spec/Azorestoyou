@@ -716,6 +716,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, cars: (editingItem.cars || []).filter((_:any, i:number) => i !== index) });
   };
 
+  const addRoom = () => {
+    if (!editingItem) return;
+    const newRoom: Room = {
+      id: `R${Date.now()}`,
+      name: 'Novo Quarto',
+      description: 'Descrição do quarto...',
+      pricePerNight: 100,
+      image: '',
+      capacity: 2,
+      gallery: []
+    };
+    setEditingItem({ ...editingItem, rooms: [...(editingItem.rooms || []), newRoom] });
+  };
+
+  const updateRoom = (index: number, field: keyof Room, value: any) => {
+    if (!editingItem) return;
+    const newRooms = [...(editingItem.rooms || [])];
+    newRooms[index] = { ...newRooms[index], [field]: value };
+    setEditingItem({ ...editingItem, rooms: newRooms });
+  };
+
+  const removeRoom = (index: number) => {
+    if (!editingItem) return;
+    setEditingItem({ ...editingItem, rooms: (editingItem.rooms || []).filter((_:any, i:number) => i !== index) });
+  };
+
   const moveGalleryImage = (fromIndex: number, toIndex: number) => {
     if (!editingItem || !editingItem.gallery) return;
     if (toIndex < 0 || toIndex >= editingItem.gallery.length) return;
@@ -725,7 +751,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingItem({ ...editingItem, gallery: newGallery });
   };
 
-  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car', extraIndex?: number) => {
+  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'room_main' | 'room_gallery', extraIndex?: number, roomGalleryIndex?: number) => {
     if (!editingItem) return;
     
     let fileArray: File[] = [];
@@ -774,6 +800,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             const cars = [...(prev.cars || [])];
             cars[extraIndex] = { ...cars[extraIndex], image: finalUrl };
             return { ...prev, cars };
+          });
+        } else if (type === 'room_main' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const rooms = [...(prev.rooms || [])];
+            rooms[extraIndex] = { ...rooms[extraIndex], image: finalUrl };
+            return { ...prev, rooms };
+          });
+        } else if (type === 'room_gallery' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const rooms = [...(prev.rooms || [])];
+            const roomGallery = [...(rooms[extraIndex].gallery || [])];
+            rooms[extraIndex] = { ...rooms[extraIndex], gallery: [...roomGallery, finalUrl] };
+            return { ...prev, rooms };
           });
         }
       }
@@ -1198,10 +1237,136 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </select>
             </div>
             {commonInput('Google Maps Link', 'mapUrl', 'text')}
-            {commonInput(t('item_image'), 'image', 'text', true)}
+            
+            {/* Hotel Main Photo */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Foto de Perfil do Hotel/AL</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 border p-2 rounded-lg"
+                  value={editingItem.image}
+                  onChange={e => setEditingItem({...editingItem, image: e.target.value})}
+                  placeholder="URL da imagem..."
+                />
+                <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                   {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                   <input 
+                     type="file" 
+                     className="hidden" 
+                     accept="image/*,.webp"
+                     disabled={isUploading}
+                     onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'main')}
+                   />
+                </label>
+              </div>
+            </div>
+
+            {/* Hotel Gallery Slider */}
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria Principal (Slider)</h4>
+                  <p className="text-[10px] text-slate-400">Estas fotos aparecerão no carrossel de fotos do hotel</p>
+                </div>
+                <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'}`}>
+                   {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                   Adicionar Fotos
+                   <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'gallery')} disabled={isUploading} />
+                </label>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {editingItem.gallery?.map((img: string, idx: number) => (
+                  <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border-2 border-white shadow-sm">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                       <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white"><ArrowRight className="w-4 h-4 rotate-180" /></button>
+                       <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"><Trash2 className="w-4 h-4" /></button>
+                       <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white"><ArrowRight className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
+            </div>
+
+            {/* Rooms Management */}
+            <div className="md:col-span-2 border-t pt-6 mt-4">
+              <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Gestão de Quartos</h4>
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Adicione e edite os tipos de quartos disponíveis</p>
+                 </div>
+                 <button type="button" onClick={addRoom} className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">+ Novo Quarto</button>
+              </div>
+              
+              <div className="space-y-8">
+                {editingItem.rooms?.map((room: Room, rIdx: number) => (
+                  <div key={rIdx} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 space-y-4 relative group">
+                    <button type="button" onClick={() => removeRoom(rIdx)} className="absolute top-4 right-4 text-red-500 hover:text-red-700 transition-colors">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Nome do Quarto</label>
+                        <input type="text" className="w-full border p-2 rounded-xl" value={room.name} onChange={e => updateRoom(rIdx, 'name', e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Preço por Noite (€)</label>
+                        <input type="number" className="w-full border p-2 rounded-xl" value={room.pricePerNight} onChange={e => updateRoom(rIdx, 'pricePerNight', Number(e.target.value))} />
+                      </div>
+                      
+                      {/* Room Main Photo */}
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Foto de Perfil do Quarto</label>
+                        <div className="flex gap-2">
+                          <input type="text" className="flex-1 border p-2 rounded-xl text-xs" value={room.image} onChange={e => updateRoom(rIdx, 'image', e.target.value)} placeholder="URL..." />
+                          <label className={`cursor-pointer p-2 rounded-xl border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-white border-slate-200 text-blue-600 hover:bg-blue-50'}`}>
+                             {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                             <input type="file" className="hidden" accept="image/*,.webp" disabled={isUploading} onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'room_main', rIdx)} />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Room Gallery */}
+                      <div className="md:col-span-2">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="block text-[10px] font-black uppercase text-slate-400 ml-2">Galeria do Quarto</label>
+                          <label className={`cursor-pointer px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-md'}`}>
+                             {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                             Fotos
+                             <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'room_gallery', rIdx)} disabled={isUploading} />
+                          </label>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto py-2">
+                          {room.gallery?.map((img, iIdx) => (
+                            <div key={iIdx} className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 group">
+                              <img src={img} className="w-full h-full object-cover" />
+                              <button type="button" onClick={() => {
+                                const newGal = room.gallery?.filter((_, i) => i !== iIdx);
+                                updateRoom(rIdx, 'gallery', newGal);
+                              }} className="absolute inset-0 bg-red-500/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Descrição do Quarto</label>
+                        <textarea className="w-full border p-2 rounded-xl h-20 text-xs" value={room.description} onChange={e => updateRoom(rIdx, 'description', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         );
