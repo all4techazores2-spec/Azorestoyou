@@ -86,6 +86,9 @@ let memoryCache = null;
 let lastCacheTime = 0;
 const CACHE_TTL_MS = 5000; // 5 seconds
 
+// Lock for preventing Cache Stampedes (Thundering Herd problem)
+let activeFetchPromise = null;
+
 export const readDB = async () => {
     if (isMongoConnected) {
         try {
@@ -93,13 +96,27 @@ export const readDB = async () => {
             if (memoryCache && (now - lastCacheTime < CACHE_TTL_MS)) {
                 return memoryCache;
             }
-            // .lean() returns plain JS object - much lighter on memory than Mongoose documents
-            const doc = await DBModel.findOne({ key: 'master_db' }).lean();
-            const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
-            memoryCache = data;
-            lastCacheTime = now;
-            return data;
+            
+            // If a fetch is already in progress, wait for it instead of firing another massive DB query
+            if (activeFetchPromise) {
+                return await activeFetchPromise;
+            }
+            
+            // Start a new fetch and lock it
+            activeFetchPromise = (async () => {
+                // .lean() returns plain JS object - much lighter on memory than Mongoose documents
+                const doc = await DBModel.findOne({ key: 'master_db' }).lean();
+                const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
+                memoryCache = data;
+                lastCacheTime = Date.now();
+                return data;
+            })();
+            
+            const result = await activeFetchPromise;
+            activeFetchPromise = null; // Clear lock after success
+            return result;
         } catch (err) {
+            activeFetchPromise = null; // Clear lock on error
             console.error("Error reading from MongoDB:", err.message);
             // Return cache if available, otherwise empty default
             return memoryCache || DEFAULT_DB;
