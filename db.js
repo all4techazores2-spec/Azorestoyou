@@ -160,32 +160,20 @@ export const writeDB = async (data) => {
 };
 
 export const updateCollection = async (key, data) => {
-    if (isMongoConnected) {
-        try {
-            const updateObj = {};
-            updateObj[`data.${key}`] = data;
-            
-            await DBModel.findOneAndUpdate(
-                { key: 'master_db' },
-                { $set: updateObj },
-                { upsert: true, new: true, maxTimeMS: 30000 }
-            );
-            
-            // Optimization: Update cache instead of invalidating it
-            if (memoryCache) {
-                memoryCache[key] = data;
-                lastCacheTime = Date.now();
-            }
-            console.log(`✅ Collection ${key} updated in MongoDB.`);
-            return;
-        } catch (err) {
-            console.error(`❌ Error updating collection ${key}:`, err.message);
-            throw err;
-        }
-    } else {
-        const db = await readDB();
-        db[key] = data;
-        await writeDB(db);
+    try {
+        console.log(`🔄 [DB] Iniciando atualização da coleção: ${key} (${data.length} itens)...`);
+        
+        // Em vez de $set parcial, lemos, atualizamos e gravamos tudo para garantir consistência total
+        const currentDB = await readDB();
+        currentDB[key] = data;
+        
+        await writeDB(currentDB);
+        
+        console.log(`✅ [DB] Coleção ${key} sincronizada com sucesso no MongoDB Atlas.`);
+        return { success: true, count: data.length };
+    } catch (err) {
+        console.error(`❌ [DB] Falha crítica ao atualizar ${key}:`, err.message);
+        throw err;
     }
 };
 

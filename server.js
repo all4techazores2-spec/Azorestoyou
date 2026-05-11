@@ -79,6 +79,28 @@ app.get('/api/db-diagnostics', (req, res) => {
     }
 });
 
+// Debug endpoint to check DB contents
+app.get('/api/debug-db', async (req, res) => {
+    try {
+        const db = await readDB();
+        const stats = {};
+        Object.keys(db).forEach(k => {
+            if (Array.isArray(db[k])) stats[k] = db[k].length;
+        });
+        res.json({
+            status: getDbStatus(),
+            collections_summary: stats,
+            // Only show a small preview to avoid crashing browser with massive JSON
+            preview: {
+                restaurants_count: db.restaurants?.length || 0,
+                first_restaurant: db.restaurants?.[0]?.name || 'N/A'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Generic Business Update Handler
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
