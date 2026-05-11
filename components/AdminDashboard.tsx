@@ -103,6 +103,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [compressionProgress, setCompressionProgress] = useState({ current: 0, total: 0 });
   const [compressionLabel, setCompressionLabel] = useState('');
   const [syncLogs, setSyncLogs] = useState<string[]>([]);
+  const [showSyncSelector, setShowSyncSelector] = useState(false);
+  const [syncSelection, setSyncSelection] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -506,42 +508,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSyncAndCompress = async () => {
     if (!onFullSync) return;
+    if (syncSelection.length === 0) {
+      alert('Por favor, selecione pelo menos uma categoria para publicar.');
+      return;
+    }
+
     setIsCompressing(true);
+    setShowSyncSelector(false); // Close selector when starting
     setSyncLogs([]);
-    addLog('🚀 A iniciar processo de otimização global...');
+    addLog('🚀 A iniciar processo de sincronização seletiva...');
     
-    const lists = [
-      { data: restaurants, label: 'restaurants' },
-      { data: shops, label: 'shops' },
-      { data: beauty, label: 'beauty' },
-      { data: hotels, label: 'hotels' },
-      { data: cars, label: 'cars' },
-      { data: activities, label: 'activities' },
-      { data: services, label: 'services' },
-      { data: autoRepairs, label: 'auto_repairs' },
-      { data: autoElectronics, label: 'auto_electronics' },
-      { data: usedMarket, label: 'used_market' },
-      { data: animals, label: 'animals' },
-      { data: realEstate, label: 'real_estate' },
-      { data: gyms, label: 'gyms' },
-      { data: stands, label: 'stands' },
-      { data: offices, label: 'offices' },
-      { data: itServices, label: 'it_services' },
-      { data: perfumes, label: 'perfumes' },
-      { data: flights, label: 'flights' },
-      { data: busSchedules, label: 'bus-schedules' }
+    const allLists = [
+      { data: restaurants, label: 'restaurants', title: 'Restaurantes' },
+      { data: shops, label: 'shops', title: 'Lojas' },
+      { data: beauty, label: 'beauty', title: 'Beleza' },
+      { data: hotels, label: 'hotels', title: 'Alojamentos' },
+      { data: cars, label: 'cars', title: 'Rentcar' },
+      { data: activities, label: 'activities', title: 'Atividades' },
+      { data: services, label: 'services', title: 'Serviços' },
+      { data: autoRepairs, label: 'auto_repairs', title: 'Reparação Auto' },
+      { data: autoElectronics, label: 'auto_electronics', title: 'Eletrónica Auto' },
+      { data: usedMarket, label: 'used_market', title: 'Mercado Usados' },
+      { data: animals, label: 'animals', title: 'Animais' },
+      { data: realEstate, label: 'real_estate', title: 'Imobiliária' },
+      { data: gyms, label: 'gyms', title: 'Ginásios' },
+      { data: stands, label: 'stands', title: 'Stands' },
+      { data: offices, label: 'offices', title: 'Escritórios' },
+      { data: itServices, label: 'it_services', title: 'Informática' },
+      { data: perfumes, label: 'perfumes', title: 'Perfumaria' },
+      { data: flights, label: 'flights', title: 'Voos' },
+      { data: busSchedules, label: 'bus-schedules', title: 'Autocarros' }
     ];
+
+    // Filter based on user selection
+    const lists = allLists.filter(l => syncSelection.includes(l.label));
 
     const totalItems = lists.reduce((sum, l) => sum + l.data.length, 0);
     setCompressionProgress({ current: 0, total: totalItems });
 
     try {
-      addLog(`📦 Preparando ${lists.length} categorias para envio...`);
+      addLog(`📦 Sincronizando ${lists.length} categorias selecionadas...`);
       
       for (const listObj of lists) {
-        setCompressionLabel(`A enviar ${listObj.label}...`);
+        setCompressionLabel(`A enviar ${listObj.title}...`);
         const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
-        addLog(`📤 Categoria: ${listObj.label} (${payloadSize}MB)`);
+        addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB)`);
         
         const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
           method: 'POST',
@@ -551,17 +562,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         if (!response.ok) {
            const errorText = await response.text();
-           throw new Error(`Falha em ${listObj.label}: ${errorText}`);
+           throw new Error(`Falha em ${listObj.title}: ${errorText}`);
         }
         
         setCompressionProgress(prev => ({ ...prev, current: prev.current + listObj.data.length }));
-        addLog(`✅ ${listObj.label} sincronizados.`);
+        addLog(`✅ ${listObj.title} sincronizados com sucesso.`);
       }
       
-      setCompressionLabel('A finalizar sincronização global...');
-      await onFullSync();
-      addLog('✨ SUCESSO: Tudo publicado no Frontend!');
-      alert('✅ Publicação concluída com sucesso!');
+      setCompressionLabel('A finalizar sincronização...');
+      // No need for a full global sync if we only changed subsets, but we call it to refresh global app state if needed
+      await onFullSync(); 
+      addLog('✨ SUCESSO: Categorias selecionadas publicadas!');
+      alert('✅ Publicação parcial concluída com sucesso!');
     } catch (e: any) {
       addLog(`❌ ERRO: ${e.message}`);
       alert('❌ Erro na publicação. Verifique o log de erros na tela.');
@@ -1465,12 +1477,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="p-4 border-t border-slate-800 space-y-2">
           {onFullSync && (
             <>
-              {/* BUTTON 1: COMPRESS & SYNC */}
-              <button 
-                onClick={handleSyncAndCompress} 
-                disabled={isSyncing || isCompressing}
-                className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
-              >
+               {/* BUTTON 1: COMPRESS & SYNC */}
+               <button 
+                 onClick={() => {
+                   // Auto-select current active tab category if applicable
+                   const currentCategory = activeTab;
+                   const allCategories = [
+                     'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                     'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
+                     'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                   ];
+                   if (allCategories.includes(currentCategory)) {
+                     setSyncSelection([currentCategory]);
+                   } else {
+                     setSyncSelection([]);
+                   }
+                   setShowSyncSelector(true);
+                 }} 
+                 disabled={isSyncing || isCompressing}
+                 className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
+               >
                  <div className="flex items-center gap-3 w-full justify-center">
                     {isCompressing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
                     <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Publicar...' : 'Publicar no Frontend'}</span>
@@ -2389,6 +2415,179 @@ Av. do Mar, Madalena, Pico
            </div>
          )}
       </main>
+      {/* SYNC SELECTOR MODAL */}
+      <AnimatePresence>
+        {showSyncSelector && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/20"
+            >
+              <div className="p-8 bg-gradient-to-br from-slate-900 to-blue-900 text-white relative">
+                 <button onClick={() => setShowSyncSelector(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors">
+                    <X size={24} />
+                 </button>
+                 <div className="flex items-center gap-4 mb-2">
+                    <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/40">
+                       <Zap className="text-white" />
+                    </div>
+                    <div>
+                       <h3 className="text-2xl font-black uppercase tracking-tighter">Publicar Alterações</h3>
+                       <p className="text-blue-200 text-xs font-bold opacity-80 uppercase tracking-widest">Selecione o que deseja sincronizar</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-8">
+                 <div className="flex justify-between items-center mb-6">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Categorias Disponíveis</p>
+                    <div className="flex gap-4">
+                       <button 
+                         onClick={() => setSyncSelection([
+                           'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                           'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
+                           'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                         ])}
+                         className="text-[10px] font-black text-blue-600 uppercase hover:underline"
+                       >
+                         Selecionar Todas
+                       </button>
+                       <button 
+                         onClick={() => setSyncSelection([])}
+                         className="text-[10px] font-black text-slate-400 uppercase hover:underline"
+                       >
+                         Limpar
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[40vh] overflow-y-auto p-2 scrollbar-hide">
+                    {[
+                      { id: 'restaurants', label: 'Restaurantes', icon: Utensils },
+                      { id: 'hotels', label: 'Alojamentos', icon: BedDouble },
+                      { id: 'cars', label: 'Rentcar', icon: CarIcon },
+                      { id: 'activities', label: 'Atividades', icon: Mountain },
+                      { id: 'shops', label: 'Lojas', icon: ShoppingBag },
+                      { id: 'beauty', label: 'Beleza', icon: Sparkles },
+                      { id: 'services', label: 'Serviços', icon: Briefcase },
+                      { id: 'auto_repairs', label: 'Reparação Auto', icon: Wrench },
+                      { id: 'auto_electronics', label: 'Eletrónica Auto', icon: Zap },
+                      { id: 'used_market', label: 'Mercado Usados', icon: ShoppingCart },
+                      { id: 'animals', label: 'Animais', icon: Dog },
+                      { id: 'real_estate', label: 'Imobiliária', icon: Building2 },
+                      { id: 'gyms', label: 'Ginásios', icon: Dumbbell },
+                      { id: 'stands', label: 'Stands', icon: CarFront },
+                      { id: 'offices', label: 'Escritórios', icon: Building2 },
+                      { id: 'it_services', label: 'Informática', icon: Laptop },
+                      { id: 'perfumes', label: 'Perfumaria', icon: Pipette },
+                      { id: 'flights', label: 'Voos', icon: Plane },
+                      { id: 'bus-schedules', label: 'Autocarros', icon: Bus }
+                    ].map(cat => (
+                      <label 
+                        key={cat.id} 
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer group ${syncSelection.includes(cat.id) ? 'bg-blue-50 border-blue-500 shadow-md shadow-blue-500/10' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
+                      >
+                         <input 
+                           type="checkbox" 
+                           className="hidden" 
+                           checked={syncSelection.includes(cat.id)}
+                           onChange={() => {
+                             if (syncSelection.includes(cat.id)) {
+                               setSyncSelection(syncSelection.filter(s => s !== cat.id));
+                             } else {
+                               setSyncSelection([...syncSelection, cat.id]);
+                             }
+                           }}
+                         />
+                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${syncSelection.includes(cat.id) ? 'bg-blue-600 text-white' : 'bg-white text-slate-400 group-hover:text-blue-500'}`}>
+                            <cat.icon size={16} />
+                         </div>
+                         <span className={`text-[11px] font-black uppercase tracking-tight ${syncSelection.includes(cat.id) ? 'text-blue-900' : 'text-slate-500'}`}>
+                            {cat.label}
+                         </span>
+                      </label>
+                    ))}
+                 </div>
+
+                 <div className="mt-10 flex gap-4">
+                    <button 
+                      onClick={() => setShowSyncSelector(false)}
+                      className="flex-1 py-4 rounded-2xl border-2 border-slate-100 text-slate-400 font-black uppercase text-xs tracking-widest hover:bg-slate-50 transition-all"
+                    >
+                       Cancelar
+                    </button>
+                    <button 
+                      onClick={handleSyncAndCompress}
+                      disabled={syncSelection.length === 0}
+                      className="flex-[2] py-4 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    >
+                       <Zap size={18} /> Iniciar Publicação ({syncSelection.length})
+                    </button>
+                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* SYNC PROGRESS OVERLAY */}
+      <AnimatePresence>
+        {isCompressing && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
+          >
+             <div className="w-full max-w-lg space-y-12">
+                <div className="relative">
+                   <div className="absolute inset-0 bg-blue-500/20 blur-[100px] animate-pulse rounded-full" />
+                   <motion.div 
+                     animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                     className="w-24 h-24 border-4 border-blue-500/30 border-t-blue-500 rounded-full mx-auto relative z-10"
+                   />
+                   <Zap size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-500 animate-bounce" />
+                </div>
+
+                <div className="space-y-4 relative z-10">
+                   <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Sincronização em Curso</h2>
+                   <p className="text-blue-400 font-bold uppercase tracking-[0.3em] text-sm">{compressionLabel}</p>
+                </div>
+
+                <div className="space-y-6 relative z-10">
+                   <div className="flex justify-between text-xs font-black text-white/50 uppercase tracking-widest">
+                      <span>Progresso Geral</span>
+                      <span>{Math.round((compressionProgress.current / (compressionProgress.total || 1)) * 100)}%</span>
+                   </div>
+                   <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(compressionProgress.current / (compressionProgress.total || 1)) * 100}%` }}
+                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                      />
+                   </div>
+                   <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                      {compressionProgress.current} de {compressionProgress.total} itens processados
+                   </p>
+                </div>
+
+                <div className="bg-black/40 border border-white/10 rounded-[2rem] p-6 h-48 overflow-y-auto text-left font-mono text-[10px] space-y-2 scrollbar-hide shadow-inner">
+                   {syncLogs.map((log, i) => (
+                     <div key={i} className={`flex gap-3 ${log.includes('✅') ? 'text-emerald-400' : log.includes('❌') ? 'text-red-400' : 'text-slate-400'}`}>
+                        <span className="opacity-30">[{new Date().toLocaleTimeString()}]</span>
+                        <span className="font-bold">{log}</span>
+                     </div>
+                   ))}
+                </div>
+
+                <div className="pt-4">
+                   <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.5em] animate-pulse">Não feche esta janela até terminar</p>
+                </div>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
