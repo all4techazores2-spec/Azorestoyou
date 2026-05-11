@@ -74,16 +74,6 @@ export const getDbStatus = () => {
 };
 
 // Export real connection status for /api/status endpoint
-export const getDbStatus = () => {
-    const uri = getMongoURI();
-    return {
-        storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : (uri ? 'MongoDB (Falha/Ligando...)' : 'Local JSON (Efémero)'),
-        isMongo: isMongoConnected,
-        isConfigured: !!uri,
-        uriFound: !!uri,
-        timestamp: new Date().toISOString()
-    };
-};
 
 const DEFAULT_DB = { 
     restaurants: [], flights: [], hotels: [], cars: [], 
