@@ -1505,12 +1505,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <div className="w-full mt-2">
                       <div className="flex justify-between text-[10px] uppercase font-black mb-1">
                          <span>Progresso</span>
-                         <span>{Math.round((compressionProgress.current / compressionProgress.total) * 100)}%</span>
+                         <span>{compressionProgress.total > 0 ? Math.round((compressionProgress.current / compressionProgress.total) * 100) : 0}%</span>
                       </div>
                       <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-white/10">
                          <div 
                            className="h-full bg-white transition-all duration-300" 
-                           style={{ width: `${(compressionProgress.current / compressionProgress.total) * 100}%` }}
+                           style={{ width: `${compressionProgress.total > 0 ? (compressionProgress.current / compressionProgress.total) * 100 : 0}%` }}
                          />
                       </div>
                       <p className="text-[9px] mt-1 text-center font-bold text-white/90 truncate">
@@ -1532,54 +1532,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                        setSyncLogs([]);
                        addLog('🧨 A iniciar limpeza total da base de dados...');
                        
-                       onUpdateRestaurants([]);
-                       onUpdateShops([]);
-                       onUpdateBeauty([]);
-                       onUpdateServices([]);
-                       onUpdateAutoRepairs([]);
-                       onUpdateAutoElectronics([]);
-                       onUpdateUsedMarket([]);
-                       onUpdateAnimals([]);
-                       onUpdateRealEstate([]);
-                       onUpdateGyms([]);
-                       onUpdateStands([]);
-                       onUpdateOffices([]);
-                       onUpdateITServices([]);
-                       onUpdatePerfumes([]);
-                       onUpdateActivities([]);
-                       onUpdateFlights([]);
-                       onUpdateHotels([]);
-                       onUpdateCars([]);
-                       onUpdateBusSchedules([]);
-                       
-                       addLog('🧹 Estado local limpo. A sincronizar com o servidor...');
-                       
                        setTimeout(async () => {
-                         try {
-                           const res = await fetch(`${API_BASE_URL}/api/full-sync`, {
-                             method: 'POST',
-                             headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify({
-                               restaurants: [], shops: [], beauty: [], services: [], 
-                               auto_repairs: [], auto_electronics: [], used_market: [], 
-                               animals: [], real_estate: [], gyms: [], stands: [], 
-                               offices: [], it_services: [], perfumes: [], 
-                               activities: [], flights: [], hotels: [], cars: [], 
-                               busSchedules: []
-                             }),
-                           });
-                           if (res.ok) {
-                             addLog('✅ Base de dados limpa com sucesso!');
-                             alert('✅ Base de dados LIMPA!');
-                           } else {
-                             addLog('❌ Falha ao limpar servidor.');
-                           }
-                         } catch (err) {
-                           addLog('❌ Erro de ligação ao limpar.');
-                         } finally {
-                           setIsCompressing(false);
-                         }
-                       }, 1000);
+                          try {
+                            const res = await fetch(`${API_BASE_URL}/api/reset-db`, {
+                              method: 'POST'
+                            });
+                            if (res.ok) {
+                              addLog('✅ Base de dados limpa com sucesso!');
+                              alert('✅ Base de dados LIMPA!');
+                            } else {
+                              addLog('❌ Falha ao limpar servidor.');
+                            }
+                          } catch (err) {
+                            addLog('❌ Erro de ligação ao limpar.');
+                          } finally {
+                            setIsCompressing(false);
+                          }
+                        }, 1000);
                     }
                   }
                 }} 
@@ -2563,7 +2532,7 @@ Av. do Mar, Madalena, Pico
                    <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
                       <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${(compressionProgress.current / (compressionProgress.total || 1)) * 100}%` }}
+                        animate={{ width: `${compressionProgress.total > 0 ? (compressionProgress.current / compressionProgress.total) * 100 : 0}%` }}
                         className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"
                       />
                    </div>

@@ -184,6 +184,18 @@ app.post('/api/full-sync', async (req, res) => {
     }
 });
 
+// Reset Database Endpoint
+app.post('/api/reset-db', async (req, res) => {
+    try {
+        const { resetDB } = await import('./db.js');
+        await resetDB();
+        res.json({ success: true, message: "Database wiped successfully" });
+    } catch (err) {
+        console.error("❌ Reset failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- INDIVIDUAL COLLECTION ENDPOINTS ---
 // Define GET routes for all keys to ensure consistency
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];

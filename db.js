@@ -165,8 +165,11 @@ export const updateCollection = async (key, data) => {
                 { upsert: true, new: true, maxTimeMS: 30000 }
             );
             
-            // Invalidate cache
-            memoryCache = null;
+            // Optimization: Update cache instead of invalidating it
+            if (memoryCache) {
+                memoryCache[key] = data;
+                lastCacheTime = Date.now();
+            }
             console.log(`✅ Collection ${key} updated in MongoDB.`);
             return;
         } catch (err) {
@@ -178,4 +181,19 @@ export const updateCollection = async (key, data) => {
         db[key] = data;
         await writeDB(db);
     }
+};
+
+export const resetDB = async () => {
+    if (isMongoConnected) {
+        await DBModel.findOneAndUpdate(
+            { key: 'master_db' },
+            { data: DEFAULT_DB },
+            { upsert: true }
+        );
+    } else {
+        fs.writeFileSync(dbPath, JSON.stringify(DEFAULT_DB, null, 2));
+    }
+    memoryCache = DEFAULT_DB;
+    lastCacheTime = Date.now();
+    console.log("🧨 Database RESET executed.");
 };
