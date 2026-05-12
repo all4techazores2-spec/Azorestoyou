@@ -1824,22 +1824,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     if (islandFilter !== 'all') {
-      list = list.filter(item => item.island === islandFilter);
+    list = list.filter(item => item.island === islandFilter);
     }
     return list;
-  };
-
-  // Helper to get items for the main list view (excluding configs)
-  const getVisibleItems = () => {
-    return getListItems().filter(item => !item.id?.startsWith('CONFIG_SLIDER_'));
   };
 
   const getItemName = (item: any) => {
     if (activeTab === 'flights') return `${item.airline} ${item.flightNumber} (${item.origin}->${item.destination})`;
     if (activeTab === 'buses') return `${item.company}: ${item.origin} -> ${item.destination}`;
-    if (activeTab === 'activities') return item.title;
+    if (activeTab === 'itineraries') return `Roteiro: ${item.id}`;
+    if (activeTab === 'trails') return item.title || 'Trilho sem nome';
     if (activeTab === 'cars') return item.name || 'Companhia Rent-a-car';
-    return item.name || item.model || 'Sem Nome';
+    return item.name || item.title || item.model || 'Sem Nome';
+  };
+
+  const getTabTitle = () => {
+    const titles: any = {
+      'restaurants': 'Restaurantes',
+      'accommodation': 'Alojamentos',
+      'rentcar': 'Rent-a-car',
+      'activities': 'Atividades',
+      'trails': 'Trilhos',
+      'flights': 'Voos',
+      'buses': 'Autocarros',
+      'shops': 'Lojas',
+      'beauty': 'Beleza & Estética',
+      'services': 'Serviços Diversos',
+      'auto_repair': 'Oficinas',
+      'auto_electronics': 'Eletricidade Auto',
+      'used_market': 'Mercado de Usados',
+      'animals': 'Animais',
+      'real_estate': 'Imobiliária',
+      'gyms': 'Ginásios',
+      'stands': 'Stands de Automóveis',
+      'offices': 'Escritórios & Cowork',
+      'it_services': 'Serviços IT',
+      'perfumes': 'Perfumes & Fragrâncias'
+    };
+    return titles[activeTab as string] || activeTab?.toUpperCase() || 'Painel';
+  };
+
+  // Helper to inject data into the DOM if needed for debug/export
+  const injectData = (data: any) => {
+    console.log('Injected Data:', data);
+    return JSON.stringify(data);
+  };
+
+  // Helper to get items for the main list view (excluding configs)
+  const getVisibleItems = () => {
+    return getListItems().filter(item => !item.id?.startsWith('CONFIG_SLIDER_'));
   };
 
   return (
@@ -2078,7 +2111,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                {/* BUTTON 1: COMPRESS & SYNC */}
                <button 
                  onClick={() => {
-                   // Auto-select current active tab category if applicable
                    const currentCategory = activeTab;
                    const allCategories = [
                      'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
@@ -2171,9 +2203,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Main Content */}
       <main className="flex-1 ml-64 p-8">
          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">
-              {activeTab === 'dashboard' ? 'Panorama Geral' : `${t(`manage_${activeTab}`)} (${getListItems().length})`}
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">
+                {activeTab === 'dashboard' ? 'Panorama Geral' : `${getTabTitle()} (${getListItems().length})`}
+              </h1>
+              {activeTab !== 'dashboard' && <p className="text-slate-400 text-xs font-bold italic">Gestão de conteúdos e registos da plataforma</p>}
+            </div>
             
             {activeTab === 'dashboard' && (
               <button 
