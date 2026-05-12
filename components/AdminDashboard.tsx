@@ -589,6 +589,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       { data: hotels, label: 'hotels', title: 'Alojamentos' },
       { data: cars, label: 'cars', title: 'Rentcar' },
       { data: activities, label: 'activities', title: 'Atividades' },
+      { data: activities.filter(a => a.type === 'trail'), label: 'trails', title: 'Trilhos' },
       { data: services, label: 'services', title: 'Serviços' },
       { data: autoRepairs, label: 'auto_repairs', title: 'Reparação Auto' },
       { data: autoElectronics, label: 'auto_electronics', title: 'Eletrónica Auto' },
@@ -853,6 +854,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [moved] = newGallery.splice(fromIndex, 1);
     newGallery.splice(toIndex, 0, moved);
     setEditingItem({ ...editingItem, gallery: newGallery });
+    markCategoryAsModified(activeTab);
   };
 
   const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'room_main' | 'room_gallery', extraIndex?: number, roomGalleryIndex?: number) => {
@@ -1894,13 +1896,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
       });
       onUpdateActivities(updatedActivities);
+      markCategoryAsModified('trails');
+      markCategoryAsModified('activities');
       
       // Sync to cloud immediately
       try {
         await fetch(`${API_BASE_URL}/api/activities/bulk?mode=merge`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(examples)
+          body: JSON.stringify(examples.map(ex => ({ ...ex, internalId: 'INT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5) })))
         });
         alert("Trilhos injetados e sincronizados com a Cloud!");
       } catch (err) {
