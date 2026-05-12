@@ -498,7 +498,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'offices': updateLocal(offices, onUpdateOffices); break;
         case 'it_services': updateLocal(itServices, onUpdateITServices); break;
         case 'perfumes': updateLocal(perfumes, onUpdatePerfumes); break;
-        case 'activities': updateLocal(activities, onUpdateActivities); break;
+        case 'activities': 
+        case 'trails': updateLocal(activities, onUpdateActivities); break;
         case 'flights': updateLocal(flights, onUpdateFlights); break;
         case 'hotels': updateLocal(hotels, onUpdateHotels); break;
         case 'cars': updateLocal(cars, onUpdateCars); break;
@@ -1356,8 +1357,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                        <img src={img} className="w-full h-full object-cover" alt="" />
                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                           <div className="flex gap-2">
-                             <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} disabled={idx === 0} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ArrowRight size={16} className="rotate-180" /></button>
-                             <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} disabled={idx === editingItem.gallery.length - 1} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ArrowRight size={16} /></button>
+                             <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} disabled={idx === 0} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ChevronLeft size={20} /></button>
+                             <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} disabled={idx === editingItem.gallery.length - 1} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ChevronRight size={20} /></button>
                           </div>
                           <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="px-4 py-2 bg-red-500/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 flex items-center gap-2">
                             <Trash2 size={12} /> Remover
