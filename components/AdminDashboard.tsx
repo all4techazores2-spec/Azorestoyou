@@ -12,7 +12,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle
+  CheckCircle, AlertTriangle, MountainSnow
 } from 'lucide-react';
 
 import * as constants from '../constants';
