@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, Mountain
+  CheckCircle, AlertTriangle
 } from 'lucide-react';
 
 import * as constants from '../constants';
@@ -1326,7 +1326,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       case 'activities':
       case 'trails':
-        if (editingItem.type === 'config_slider') {
+        if (editingItem?.type === 'config_slider') {
           return (
             <>
               <div className="md:col-span-2">
