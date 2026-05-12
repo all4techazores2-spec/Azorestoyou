@@ -1875,6 +1875,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return getListItems().filter(item => !item.id?.startsWith('CONFIG_SLIDER_'));
   };
 
+  const injectTrailExamples = async () => {
+    const examples = [
+      { id: "trail_agriao", title: "Agrião (PR12SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Percurso linear que liga a Povoação à Ribeira Quente, oferecendo vistas deslumbrantes sobre a costa sul.", distance: "7,1 Km", duration: "3h00", difficulty: "Moderado", address: "Povoação, Ribeira Quente", gallery: [] },
+      { id: "trail_agua_retorta", title: "Água Retorta (PRC13SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Trilho circular em Água Retorta que atravessa zonas de floresta densa e paisagens rurais tradicionais.", distance: "5,1 Km", duration: "2h00", difficulty: "Moderado", address: "Povoação, Água Retorta", gallery: [] },
+      { id: "trail_atalho_vermelhos", title: "Atalho dos Vermelhos (PRC33SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Percurso circular no Pilar da Bretanha com vistas panorâmicas sobre a costa norte da ilha.", distance: "5,4 Km", duration: "2h00", difficulty: "Moderado", address: "Ponta Delgada, Pilar da Bretanha", gallery: [] },
+      { id: "trail_salto_cabrito", title: "Salto do Cabrito (PRC29SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Trilho circular que passa pelas Caldeiras da Ribeira Grande e pela deslumbrante cascata do Salto do Cabrito.", distance: "8,6 Km", duration: "3h00", difficulty: "Moderado", address: "Ribeira Grande, Matriz", gallery: [] },
+      { id: "trail_cha_gorreana", title: "Chá Gorreana (PRC28SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Percurso circular pelas plantações de chá da Gorreana, as únicas na Europa, com vistas sobre o mar.", distance: "3,3 Km", duration: "1h30", difficulty: "Fácil", address: "Ribeira Grande, Maia", gallery: [] },
+      { id: "trail_faja_mar", title: "Fajã do Mar (PRC46SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Trilho circular nas Feteiras que desce até à zona costeira, revelando a beleza das fajãs açorianas.", distance: "5 Km", duration: "2h30", difficulty: "Moderado", address: "Ponta Delgada, Feteiras", gallery: [] },
+      { id: "trail_lagoa_furnas", title: "Lagoa das Furnas (PRC06SMI)", type: "trail", island: "São Miguel", image: "https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=800", description: "Passeio circular em redor da Lagoa das Furnas, passando pelas famosas caldeiras e pela capela de N. Sra. das Vitórias.", distance: "9,4 Km", duration: "3h00", difficulty: "Fácil", address: "Povoação, Furnas", gallery: [] }
+    ];
+
+    if (window.confirm("Deseja injetar os 7 trilhos de exemplo na base de dados?")) {
+      const updatedActivities = [...activities];
+      examples.forEach(ex => {
+        if (!updatedActivities.find(a => a.id === ex.id)) {
+          updatedActivities.push(ex as any);
+        }
+      });
+      setActivities(updatedActivities);
+      
+      // Sync to cloud immediately
+      try {
+        await fetch(`${API_BASE_URL}/api/activities/bulk?mode=merge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(examples)
+        });
+        alert("Trilhos injetados e sincronizados com a Cloud!");
+      } catch (err) {
+        alert("Trilhos adicionados localmente. Clique em Sincronizar para enviar para a Cloud.");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans">
       {/* Upload Progress Overlay */}
@@ -2650,6 +2684,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     >
                       <Plus size={16} /> Lançamento Rápido (Lista)
                     </button>
+                    {activeTab === 'trails' && (
+                      <button 
+                        onClick={injectTrailExamples}
+                        className="px-6 py-4 bg-emerald-100 text-emerald-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-200 hover:bg-emerald-200 transition-all flex items-center gap-2"
+                      >
+                        <Plus size={14} /> Injetar Exemplos
+                      </button>
+                    )}
                     <button 
                       onClick={startAdd} 
                       className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center gap-2"
