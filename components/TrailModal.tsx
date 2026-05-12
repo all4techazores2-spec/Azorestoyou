@@ -37,6 +37,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
   const [showMap, setShowMap] = useState(false);
   const [isCheckingGuide, setIsCheckingGuide] = useState(false);
   const [guideError, setGuideError] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const t = (key: string) => getTranslation(language, key as any);
 
@@ -195,13 +196,54 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
           className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
         >
           {bookingStep === 'main' && (
-            <div className="relative h-64 md:h-80 shrink-0">
-              <img src={trail.image} alt={trail.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="relative h-64 md:h-80 shrink-0 group">
+              {/* Image Slider / Main Photo */}
+              <div className="w-full h-full relative overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.img 
+                    key={trail.gallery && trail.gallery.length > 0 ? currentSlide : 'main'}
+                    src={trail.gallery && trail.gallery.length > 0 ? trail.gallery[currentSlide] : trail.image} 
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-full h-full object-cover" 
+                  />
+                </AnimatePresence>
+                
+                {/* Navigation Arrows for Gallery */}
+                {trail.gallery && trail.gallery.length > 1 && (
+                  <>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev - 1 + trail.gallery!.length) % trail.gallery!.length); }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-black/50"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev + 1) % trail.gallery!.length); }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-black/50"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                    
+                    {/* Dots Indicators */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                      {trail.gallery.map((_, i) => (
+                        <div key={i} className={`h-1.5 rounded-full transition-all ${currentSlide === i ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              
               <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group">
                 <X size={20} className="group-active:scale-90 transition-transform" />
               </button>
-              <div className="absolute bottom-6 left-6 right-6">
+
+              <div className="absolute bottom-6 left-6 right-6 pointer-events-none">
                 <div className="flex items-center gap-2 text-white/90 text-sm font-medium mb-2">
                   <MapPin className="w-4 h-4" /> {trail.island}
                 </div>

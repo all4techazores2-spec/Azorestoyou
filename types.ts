@@ -305,6 +305,7 @@ export interface Activity {
   email?: string;
   phone?: string;
   address?: string;
+  gallery?: string[];
 }
 
 export interface TourGuide {

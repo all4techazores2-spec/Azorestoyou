@@ -963,12 +963,26 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       };
 
   const renderCategorySlider = (data: any[]) => {
-    if (data.length === 0) return null;
-    const featured = data.slice(0, 3); // Take top 3 for slider
+    // Check if there is a custom config slider for this category
+    const configId = `CONFIG_SLIDER_${category.toUpperCase()}`;
+    const configSlider = allActivities.find(a => a.id === configId);
+    
+    // If custom gallery exists, use it. Otherwise use the first 3 items.
+    const sliderImages = (configSlider && configSlider.gallery && configSlider.gallery.length > 0)
+      ? configSlider.gallery.map(img => ({ image: img, title: '', island: '' }))
+      : data.slice(0, 3).map(item => ({ 
+          image: item.image, 
+          title: item.name || item.title, 
+          island: item.island,
+          isPaid: item.isPaid
+        }));
+
+    if (sliderImages.length === 0) return null;
+
     return (
       <div className="mb-16 -mx-6 md:-mx-10 mt-4">
         <div className="flex overflow-x-auto pb-8 px-0 md:px-0 gap-0 scrollbar-hide snap-x">
-          {featured.map((item, idx) => (
+          {sliderImages.map((item, idx) => (
             <div 
               key={`slider-${idx}`}
               className="min-w-full h-[380px] relative shadow-2xl snap-center group"
@@ -976,7 +990,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <img 
                 src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                alt={item.name || item.title}
+                alt={item.title}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent"></div>
               
@@ -991,13 +1005,15 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               </div>
 
               <div className="absolute bottom-10 left-8 right-8">
-                <h4 className="text-4xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl">{item.name || item.title}</h4>
-                <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
-                  <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                    <MapPin size={14} className="text-blue-400" />
+                {item.title && <h4 className="text-4xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl">{item.title}</h4>}
+                {item.island && (
+                  <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
+                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                      <MapPin size={14} className="text-blue-400" />
+                    </div>
+                    {item.island}
                   </div>
-                  {item.island}
-                </div>
+                )}
               </div>
             </div>
           ))}

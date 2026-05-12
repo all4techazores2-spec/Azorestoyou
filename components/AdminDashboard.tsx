@@ -96,6 +96,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [bulkText, setBulkText] = useState('');
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, label: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [islandFilter, setIslandFilter] = useState<string>('all');
@@ -866,19 +867,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (fileArray.length === 0) return;
 
     setIsUploading(true);
+    setUploadProgress({ current: 0, total: fileArray.length, label: 'Iniciando processamento...' });
     
     try {
+      let count = 0;
       for (const file of fileArray) {
-        let finalImage: any = file;
+        count++;
+        setUploadProgress({ 
+          current: count, 
+          total: fileArray.length, 
+          label: `A processar ficheiro ${count} de ${fileArray.length}...` 
+        });
 
-        // Converter para Base64 para compressão ou se falhar o upload convencional
+        let finalImage: any = file;
+        // Converter para Base64 para compressão
         const base64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
 
-        // Sempre comprimir para garantir performance
+        // Sempre comprimir e converter para WebP
         const finalUrl = await compressImage(base64);
 
         // Atualizar estado conforme o tipo
@@ -914,12 +923,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             rooms[extraIndex] = { ...rooms[extraIndex], gallery: [...roomGallery, finalUrl] };
             return { ...prev, rooms };
           });
+        } else if (type === 'activity_gallery') {
+          setEditingItem(prev => ({ 
+            ...prev, 
+            gallery: [...(prev.gallery || []), finalUrl] 
+          }));
         }
       }
+      setUploadProgress({ current: fileArray.length, total: fileArray.length, label: 'Concluído!' });
+      setTimeout(() => setIsUploading(false), 1000);
     } catch (error) {
       console.error('Error uploading:', error);
       alert('Erro ao carregar uma ou mais imagens.');
-    } finally {
       setIsUploading(false);
     }
   };
@@ -953,6 +968,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </select>
       </div>
     );
+    // Handle Category Slider Configuration separately
+    if (editingItem.type === 'config_slider') {
+      return (
+        <div className="md:col-span-2 space-y-6">
+          <div className="bg-blue-50 p-6 rounded-3xl border border-blue-100 flex items-center justify-between">
+            <div>
+               <h4 className="text-xl font-black text-blue-900 uppercase tracking-tighter">{editingItem.title}</h4>
+               <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mt-1">Carregue as fotos que aparecerão no topo desta categoria</p>
+            </div>
+            <label className={`cursor-pointer px-8 py-3 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'}`}>
+               {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+               Adicionar Fotos
+               <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'activity_gallery')} disabled={isUploading} />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {editingItem.gallery?.map((img: string, idx: number) => (
+              <div key={idx} className="relative group aspect-video rounded-2xl overflow-hidden border-2 border-white shadow-lg">
+                <img src={img} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                   <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all"><Trash2 className="w-5 h-5" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {(!editingItem.gallery || editingItem.gallery.length === 0) && (
+            <div className="py-20 border-4 border-dashed border-slate-100 rounded-[3rem] flex flex-col items-center justify-center text-slate-300">
+               <ImageIcon size={64} className="mb-4 opacity-20" />
+               <p className="font-black uppercase tracking-widest text-sm">Nenhuma foto carregada</p>
+               <p className="text-xs mt-2">Use o botão acima para começar</p>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     switch (activeTab) {
       case 'restaurants':
@@ -1270,6 +1322,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         );
       
       case 'activities':
+      case 'trails':
         return (
           <>
             {commonInput(t('item_name'), 'title')}
@@ -1277,25 +1330,69 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div>
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('field_type')}</label>
                <select className="w-full border p-2 rounded-lg bg-white" value={editingItem.type} onChange={e => setEditingItem({...editingItem, type: e.target.value})}>
-                 <option value="trail">Trail</option>
-                 <option value="culture">Culture</option>
-                 <option value="landscape">Landscape</option>
-                 <option value="poi">POI</option>
-                 <option value="activity">Activity</option>
+                 <option value="trail">Trilho</option>
+                 <option value="culture">Cultura</option>
+                 <option value="landscape">Paisagem</option>
+                 <option value="poi">Ponto de Interesse</option>
+                 <option value="activity">Atividade</option>
                </select>
             </div>
-            {commonInput(t('item_image'), 'image', 'text')}
-            {commonInput('Google Maps Link', 'mapUrl', 'text')}
-            <div className="flex items-center gap-4 py-2">
-               <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={editingItem.isPaid} onChange={e => setEditingItem({...editingItem, isPaid: e.target.checked})} />
-                  <span className="text-sm font-bold text-slate-700">Atividade Paga</span>
-               </label>
-               {editingItem.isPaid && commonInput('Preço (€)', 'price', 'number')}
+            
+            {/* Trail Specific Details */}
+            {editingItem.type === 'trail' && (
+              <>
+                {commonInput('Distância (ex: 5.4 Km)', 'distance')}
+                {commonInput('Duração (ex: 2h 30m)', 'duration')}
+                <div>
+                   <label className="block text-sm font-bold text-slate-700 mb-1">Dificuldade</label>
+                   <select className="w-full border p-2 rounded-lg bg-white" value={editingItem.difficulty || 'Moderado'} onChange={e => setEditingItem({...editingItem, difficulty: e.target.value})}>
+                     <option value="Fácil">Fácil</option>
+                     <option value="Moderado">Moderado</option>
+                     <option value="Difícil">Difícil</option>
+                   </select>
+                </div>
+              </>
+            )}
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Foto Principal (Upload ou URL)</label>
+              <div className="flex gap-2">
+                <input type="text" className="flex-1 border p-2 rounded-lg" value={editingItem.image} onChange={e => setEditingItem({...editingItem, image: e.target.value})} placeholder="URL da imagem..." />
+                <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                   {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                   <input type="file" className="hidden" accept="image/*,.webp" disabled={isUploading} onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'main')} />
+                </label>
+              </div>
             </div>
+
             <div className="md:col-span-2">
                <label className="block text-sm font-bold text-slate-700 mb-1">{t('item_desc')}</label>
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
+            </div>
+
+            {/* Activity Gallery */}
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria do Trilho (Slider)</h4>
+                  <p className="text-[10px] text-slate-400">Fotos que aparecerão no carrossel individual deste trilho</p>
+                </div>
+                <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'}`}>
+                   {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                   Adicionar Fotos
+                   <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'activity_gallery')} disabled={isUploading} />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {editingItem.gallery?.map((img: string, idx: number) => (
+                  <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border-2 border-white shadow-sm">
+                    <img src={img} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                       <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         );
@@ -1687,6 +1784,67 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-100 flex font-sans">
+      {/* Upload Progress Overlay */}
+      <AnimatePresence>
+        {isUploading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-6"
+          >
+            <div className="bg-white rounded-[3rem] p-10 w-full max-w-md shadow-2xl border border-white/20 text-center space-y-6">
+              <div className="relative w-24 h-24 mx-auto">
+                <svg className="w-full h-full rotate-[-90deg]">
+                  <circle
+                    cx="48" cy="48" r="40"
+                    className="stroke-slate-100 fill-none"
+                    strokeWidth="8"
+                  />
+                  <motion.circle
+                    cx="48" cy="48" r="40"
+                    className="stroke-blue-600 fill-none"
+                    strokeWidth="8"
+                    strokeDasharray="251.2"
+                    initial={{ strokeDashoffset: 251.2 }}
+                    animate={{ strokeDashoffset: 251.2 - (251.2 * (uploadProgress.current / uploadProgress.total)) }}
+                    transition={{ duration: 0.5 }}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-black text-slate-800">
+                    {uploadProgress.total > 0 ? Math.round((uploadProgress.current / uploadProgress.total) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">A Otimizar Imagens</h3>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Transformando em WebP de Alta Performance</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">
+                  <span>{uploadProgress.label}</span>
+                  <span>{uploadProgress.current}/{uploadProgress.total}</span>
+                </div>
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <p className="text-[9px] text-slate-400 italic font-medium leading-relaxed">
+                Este processo reduz o tamanho dos ficheiros mantendo a qualidade máxima, garantindo que o seu site carregue instantaneamente.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-800">
@@ -2581,8 +2739,41 @@ Av. do Mar, Madalena, Pico
                 </div>
               )}
 
+              {/* Category Slider Management Section */}
+              {(activeTab === 'trails' || activeTab === 'activities') && (
+                <div className="mb-10 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 rounded-[3rem] text-white shadow-2xl shadow-green-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-white/20 transition-all duration-700"></div>
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center border border-white/30 shadow-inner">
+                      <MountainSnow className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">Slider Principal: {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}</h3>
+                      <p className="text-xs font-bold text-white/70 uppercase tracking-widest max-w-md">Personalize as fotos de grande formato que os utilizadores veem no topo desta categoria.</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      const sliderId = `CONFIG_SLIDER_${activeTab.toUpperCase()}`;
+                      const sliderItem = getListItems().find(i => i.id === sliderId) || {
+                        id: sliderId,
+                        title: `Slider Destaque ${activeTab}`,
+                        type: 'config_slider',
+                        gallery: []
+                      };
+                      startEdit(sliderItem);
+                    }}
+                    className="relative z-10 px-10 py-4 bg-white text-emerald-700 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-50 transition-all shadow-xl hover:-translate-y-1 active:scale-95"
+                  >
+                    Gerir Fotos do Slider
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {getListItems().slice(0, visibleCount).map((item: any) => (
+              {getListItems()
+                .filter(item => !item.id.startsWith('CONFIG_SLIDER_')) // Ocultar itens de configuração da lista principal
+                .slice(0, visibleCount).map((item: any) => (
                 <div key={item.id} className={`group relative bg-white rounded-[2rem] border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${selectedIds.includes(item.id) ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-100'}`}>
                    
                    {/* Selection Checkbox */}
