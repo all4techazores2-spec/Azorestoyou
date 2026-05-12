@@ -2147,7 +2147,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  onClick={() => {
                    const currentCategory = activeTab;
                    const allCategories = [
-                     'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                     'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                      'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
                      'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
                    ];
@@ -3150,7 +3150,7 @@ Av. do Mar, Madalena, Pico
                  <button 
                    onClick={() => {
                      setSyncSelection([
-                       'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                       'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                        'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
                        'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
                      ]);
@@ -3168,7 +3168,7 @@ Av. do Mar, Madalena, Pico
                     <div className="flex gap-4">
                        <button 
                          onClick={() => setSyncSelection([
-                           'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'services', 
+                           'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                            'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
                            'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
                          ])}
@@ -3191,6 +3191,7 @@ Av. do Mar, Madalena, Pico
                       { id: 'hotels', label: 'Alojamentos', icon: BedDouble },
                       { id: 'cars', label: 'Rentcar', icon: CarIcon },
                       { id: 'activities', label: 'Atividades', icon: Mountain },
+                       { id: 'trails', label: 'Trilhos', icon: MapPin },
                       { id: 'shops', label: 'Lojas', icon: ShoppingBag },
                       { id: 'beauty', label: 'Beleza', icon: Sparkles },
                       { id: 'services', label: 'Serviços', icon: Briefcase },
