@@ -607,42 +607,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setCompressionProgress({ current: 0, total: totalItems });
 
     try {
-      addLog(`📦 Sincronizando ${lists.length} categorias selecionadas...`);
+      addLog(`📦 Iniciando sincronização incremental de ${totalItems} itens...`);
       
-      for (const listObj of lists) {
-        setCompressionLabel(`A enviar ${listObj.title}...`);
-        
-        const payloadSize = (JSON.stringify(listObj.data).length / 1024 / 1024).toFixed(2);
-        addLog(`📤 Categoria: ${listObj.title} (${payloadSize}MB) - A enviar...`);
-        
-        const response = await fetch(`${API_BASE_URL}/api/${listObj.label}/bulk`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(listObj.data)
-        });
-        
-        addLog(`⏳ A aguardar confirmação do servidor para ${listObj.title}...`);
+      let processedCount = 0;
 
-        if (!response.ok) {
-           const errorText = await response.text();
-           throw new Error(`Falha em ${listObj.title}: ${errorText}`);
+      for (const listObj of lists) {
+        addLog(`📂 Categoria: ${listObj.title}...`);
+        
+        for (let i = 0; i < listObj.data.length; i++) {
+          const item = listObj.data[i];
+          const itemName = item.name || item.title || item.id;
+          
+          setCompressionLabel(`A enviar (${i+1}/${listObj.data.length}): ${itemName}`);
+          
+          // Enviar item individualmente para modo INCREMENTAL (Merge)
+          const response = await fetch(`${API_BASE_URL}/api/${listObj.label}?mode=merge`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          });
+          
+          if (!response.ok) {
+             const errorText = await response.text();
+             throw new Error(`Erro ao enviar ${itemName}: ${errorText}`);
+          }
+          
+          processedCount++;
+          setCompressionProgress({ current: processedCount, total: totalItems });
         }
         
-        setCompressionProgress(prev => ({ ...prev, current: prev.current + listObj.data.length }));
-        addLog(`✅ ${listObj.title} sincronizados com sucesso.`);
+        addLog(`✅ Categoria ${listObj.title} concluída.`);
       }
       
-      setCompressionLabel('A finalizar sincronização...');
-      addLog('📡 A refrescar frontend...');
+      setCompressionLabel('Sincronização concluída com sucesso!');
+      addLog('✨ SUCESSO: Todos os itens foram verificados e sincronizados!');
+      
       await onFullSync(); 
       setModifiedCategories(prev => {
         const next = new Set(prev);
         lists.forEach(l => next.delete(l.label));
         return next;
       });
-      addLog('✨ SUCESSO: Tudo carregado e sincronizado!');
+      
       setShowSyncSuccess(true);
-      setTimeout(() => setShowSyncSuccess(false), 8000); 
+      setTimeout(() => setShowSyncSuccess(false), 5000); 
     } catch (e: any) {
       addLog(`❌ ERRO: ${e.message}`);
       alert('❌ Erro na publicação: ' + e.message);
@@ -2941,26 +2949,36 @@ Av. do Mar, Madalena, Pico
                 </div>
 
                 <div className="space-y-4 relative z-10">
-                   <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Sincronização em Curso</h2>
-                   <p className="text-blue-400 font-bold uppercase tracking-[0.3em] text-sm">{compressionLabel}</p>
-                </div>
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Sincronização em Curso</h2>
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+                      <p className="text-blue-400 font-bold uppercase tracking-[0.3em] text-xs">{compressionLabel}</p>
+                    </div>
+                 </div>
 
-                <div className="space-y-6 relative z-10">
-                   <div className="flex justify-between text-xs font-black text-white/50 uppercase tracking-widest">
-                      <span>Progresso Geral</span>
-                      <span>{Math.round((compressionProgress.current / (compressionProgress.total || 1)) * 100)}%</span>
-                   </div>
-                   <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${compressionProgress.total > 0 ? (compressionProgress.current / compressionProgress.total) * 100 : 0}%` }}
-                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"
-                      />
-                   </div>
-                   <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                      {compressionProgress.current} de {compressionProgress.total} itens processados
-                   </p>
-                </div>
+                 <div className="space-y-6 relative z-10">
+                    <div className="flex justify-between text-[10px] font-black text-white/50 uppercase tracking-widest">
+                       <span>Estado: {compressionProgress.current === compressionProgress.total ? 'Concluído' : 'Em andamento...'}</span>
+                       <span className="text-blue-400">{Math.round((compressionProgress.current / (compressionProgress.total || 1)) * 100)}%</span>
+                    </div>
+                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 p-[2px]">
+                       <motion.div 
+                         initial={{ width: 0 }}
+                         animate={{ width: `${compressionProgress.total > 0 ? (compressionProgress.current / compressionProgress.total) * 100 : 0}%` }}
+                         className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
+                       />
+                    </div>
+                    <div className="flex justify-between items-center px-1">
+                      <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">
+                         {compressionProgress.current} de {compressionProgress.total} itens processados
+                      </p>
+                      {compressionProgress.current === compressionProgress.total && (
+                        <div className="flex items-center gap-1 text-emerald-400 text-[9px] font-black uppercase">
+                          <CheckCircle size={10} /> Sincronizado
+                        </div>
+                      )}
+                    </div>
+                 </div>
 
                 <div className="bg-black/40 border border-white/10 rounded-[2rem] p-6 h-48 overflow-y-auto text-left font-mono text-[10px] space-y-2 scrollbar-hide shadow-inner">
                    {syncLogs.map((log, i) => (

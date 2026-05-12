@@ -160,12 +160,23 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
     
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
     
+    app.post(`/api/${key}`, async (req, res) => {
+        try {
+            const mode = req.query.mode || 'merge';
+            await updateCollection(key, req.body, mode);
+            res.json({ success: true });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+    
     app.post(`/api/${key}/bulk`, async (req, res) => {
         try {
             if (!req.body || !Array.isArray(req.body)) {
                 return res.status(400).json({ error: "Missing or invalid body data" });
             }
-            await updateCollection(key, req.body);
+            const mode = req.query.mode || 'overwrite';
+            await updateCollection(key, req.body, mode);
             res.json({ success: true, count: req.body.length });
         } catch (err) {
             console.error(`❌ Bulk update for ${key} failed:`, err.message);

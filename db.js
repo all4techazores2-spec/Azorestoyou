@@ -180,46 +180,54 @@ export const writeDB = async (data) => {
     }
 };
 
-export const updateCollection = async (key, data) => {
+export const updateCollection = async (key, data, mode = 'overwrite') => {
     try {
         await connectDB();
         
+        if (mode === 'merge' && isMongoConnected) {
+            console.log(`Merge inteligente na coleção '${key}'...`);
+            const db = await readDB();
+            const existing = db[key] || [];
+            const incoming = Array.isArray(data) ? data : [data];
+            
+            // Merge logic: Update existing IDs, add new ones
+            const merged = [...existing];
+            incoming.forEach(item => {
+                const idx = merged.findIndex(m => m.id === item.id);
+                if (idx !== -1) {
+                    merged[idx] = { ...merged[idx], ...item };
+                } else {
+                    merged.push(item);
+                }
+            });
+            
+            const result = await DBModel.findOneAndUpdate(
+                { key: 'master_db' },
+                { $set: { [`data.${key}`]: merged } },
+                { upsert: true, new: true, maxTimeMS: 60000 }
+            );
+            if (result) {
+                if (memoryCache) { memoryCache[key] = merged; lastCacheTime = Date.now(); }
+                return { success: true, count: incoming.length };
+            }
+        }
+
+        // Default: Overwrite mode
         console.log(`💾 A atualizar coleção '${key}' no Atlas (${data.length} itens)...`);
-        
-        // Tentar atualização atómica ($set) para maior performance e evitar limites de tamanho de documento
         const result = await DBModel.findOneAndUpdate(
             { key: 'master_db' },
             { $set: { [`data.${key}`]: data } },
-            { 
-                upsert: true, 
-                new: true,
-                maxTimeMS: 60000 // Tempo estendido para payloads grandes
-            }
+            { upsert: true, new: true, maxTimeMS: 60000 }
         );
 
         if (result) {
             console.log(`✅ Coleção '${key}' sincronizada com sucesso.`);
-            // Atualizar cache local se existir
-            if (memoryCache) {
-                memoryCache[key] = data;
-                lastCacheTime = Date.now();
-            }
+            if (memoryCache) { memoryCache[key] = data; lastCacheTime = Date.now(); }
             return { success: true };
         }
     } catch (err) {
         console.error(`❌ Erro na sincronização de '${key}':`, err.message);
-        
-        // Fallback para gravação total se o $set falhar
-        try {
-            console.log("⚠️ A tentar fallback para gravação completa...");
-            const fullDB = await readDB();
-            fullDB[key] = data;
-            await writeDB(fullDB);
-            return { success: true, fallback: true };
-        } catch (fallbackErr) {
-            console.error("🚨 Falha crítica no fallback:", fallbackErr.message);
-            throw fallbackErr;
-        }
+        throw err;
     }
 };
 
