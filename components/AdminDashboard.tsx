@@ -20,6 +20,8 @@ import * as constants from '../constants';
 
 import { API_BASE_URL } from '../config';
 
+console.log("%c🚀 Azores4you v1.2.1 - Pro Instance Active", "color: #10b981; font-weight: bold; font-size: 14px;");
+
 interface AdminDashboardProps {
   restaurants: Restaurant[];
   shops: Business[];
