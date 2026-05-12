@@ -7,7 +7,7 @@ import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
 import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
-import { MapPin, ArrowRight, Utensils, MountainSnow, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star } from 'lucide-react';
 import { getTranslation } from '../translations';
 
 interface ExploreSectionProps {
@@ -202,7 +202,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'restaurants': return <Utensils />;
       case 'trails': return <Map />;
       case 'landscapes': return <Camera />;
-      case 'activities': return <MountainSnow />;
+      case 'activities': return <Mountain />;
       case 'buses': return <Bus />;
       case 'poi': return <MapPin />;
       case 'shops': return <ShoppingBag />;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, MountainSnow, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette } from 'lucide-react';
+import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
@@ -47,7 +47,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   }, []);
 
   const categories = [
-    { id: 'trails', label: 'Trilhos', icon: <MountainSnow className="w-4 h-4 text-green-600" /> },
+    { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-4 h-4 text-green-600" /> },
     { id: 'restaurants', label: 'Restaurantes', icon: <Utensils className="w-4 h-4 text-orange-500" /> },
     { id: 'landscapes', label: 'Praias', icon: <Camera className="w-4 h-4 text-blue-500" /> },
     { id: 'accommodation', label: 'Alojamentos', icon: <Tent className="w-4 h-4 text-purple-600" /> },
@@ -59,7 +59,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'rentcar', label: 'Rent-a-car', icon: <Car className="w-6 h-6" />, color: 'bg-emerald-500' },
     { id: 'accommodation', label: 'Alojamentos', icon: <Tent className="w-6 h-6" />, color: 'bg-purple-600' },
     { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-blue-600' },
-    { id: 'trails', label: 'Trilhos', icon: <MountainSnow className="w-6 h-6" />, color: 'bg-green-600' },
+    { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-6 h-6" />, color: 'bg-green-600' },
     { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
     { id: 'landscapes', label: 'Paisagens', icon: <Camera className="w-6 h-6" />, color: 'bg-blue-500' },
     { id: 'flights', label: 'Viagens', icon: <Plane className="w-6 h-6" />, color: 'bg-blue-600' },

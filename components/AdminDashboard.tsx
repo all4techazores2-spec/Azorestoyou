@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, MountainSnow
+  CheckCircle, AlertTriangle, Mountain
 } from 'lucide-react';
 
 import * as constants from '../constants';
@@ -2800,7 +2800,7 @@ Av. do Mar, Madalena, Pico
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-white/20 transition-all duration-700"></div>
                   <div className="flex items-center gap-6 relative z-10">
                     <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center border border-white/30 shadow-inner group-hover:rotate-12 transition-transform duration-500">
-                      <MountainSnow className="w-8 h-8 text-white" />
+                      <Mountain className="w-8 h-8 text-white" />
                     </div>
                     <div>
                       <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">Slider Principal: {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}</h3>
