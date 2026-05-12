@@ -1893,7 +1893,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           updatedActivities.push(ex as any);
         }
       });
-      setActivities(updatedActivities);
+      onUpdateActivities(updatedActivities);
       
       // Sync to cloud immediately
       try {
