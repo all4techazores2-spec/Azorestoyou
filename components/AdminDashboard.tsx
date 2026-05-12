@@ -1829,6 +1829,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return list;
   };
 
+  // Helper to get items for the main list view (excluding configs)
+  const getVisibleItems = () => {
+    return getListItems().filter(item => !item.id?.startsWith('CONFIG_SLIDER_'));
+  };
+
   const getItemName = (item: any) => {
     if (activeTab === 'flights') return `${item.airline} ${item.flightNumber} (${item.origin}->${item.destination})`;
     if (activeTab === 'buses') return `${item.company}: ${item.origin} -> ${item.destination}`;
@@ -2810,6 +2815,7 @@ Av. do Mar, Madalena, Pico
                   <button 
                     onClick={() => {
                       const sliderId = `CONFIG_SLIDER_${activeTab.toUpperCase()}`;
+                      // Use getListItems() directly here to find the config even if filtered from visible list
                       const sliderItem = getListItems().find(i => i.id === sliderId) || {
                         id: sliderId,
                         title: `Slider Destaque ${activeTab}`,
@@ -2826,8 +2832,7 @@ Av. do Mar, Madalena, Pico
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {getListItems()
-                .filter(item => !item.id.startsWith('CONFIG_SLIDER_')) // Ocultar itens de configuração da lista principal
+              {getVisibleItems()
                 .slice(0, visibleCount).map((item: any) => (
                 <div key={item.id} className={`group relative bg-white rounded-[2rem] border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${selectedIds.includes(item.id) ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-100'}`}>
                    
