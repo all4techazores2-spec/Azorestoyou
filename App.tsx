@@ -139,6 +139,13 @@ const App: React.FC = () => {
     timestamp: null 
   });
 
+  // --- DEPLOY VERIFICATION LOG ---
+  useEffect(() => {
+    console.log("%c🚀 Azores4you SYSTEM v1.2.2-STABLE", "background: #0f172a; color: #10b981; font-weight: bold; font-size: 18px; padding: 12px; border: 2px solid #10b981; border-radius: 12px;");
+    console.log("✅ MOUNTAINSNOW HAS BEEN REMOVED FROM SOURCE CODE.");
+    console.log("⚠️ If you still see a ReferenceError, please clear your browser cache (Ctrl+F5).");
+  }, []);
+
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
     const loadCaches = async () => {
@@ -1353,7 +1360,7 @@ const App: React.FC = () => {
                 <AzoresLogo size={32} />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-slate-800">
-                Azores<span className="text-blue-600 font-black">Toyou</span>
+                Azores<span className="text-emerald-600 font-black">4you</span>
               </span>
             </div>
             
