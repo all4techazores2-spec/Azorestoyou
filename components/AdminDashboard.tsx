@@ -125,7 +125,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     
     try {
         // Garantir que acedemos corretamente ao objeto DATA
-        const allData = (constants as any).DATA || (constants as any).default?.DATA || (constants as any).default;
+        const allData = (constants as any).DATA;
         if (!allData) throw new Error('Não foi possível carregar os dados das constantes.');
         
         const data = allData[lang] || allData['pt'];
@@ -1326,6 +1326,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       case 'activities':
       case 'trails':
+        if (editingItem.type === 'config_slider') {
+          return (
+            <>
+              <div className="md:col-span-2">
+                <h4 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-2">Configuração do Slider Principal</h4>
+                <p className="text-xs text-slate-500 font-medium mb-6">Estas fotos aparecem no topo da categoria {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}.</p>
+              </div>
+              {commonInput('Nome do Slider (Apenas Interno)', 'title', 'text', true)}
+              
+              <div className="md:col-span-2 border-t pt-6 mt-4">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h4 className="font-black text-xs uppercase tracking-[0.2em] text-blue-600">Galeria do Slider</h4>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Imagens de Alta Resolução (WebP)</p>
+                  </div>
+                  <label className={`cursor-pointer px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-slate-900 text-white hover:bg-blue-600 shadow-xl shadow-slate-900/10'}`}>
+                    {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {isUploading ? 'A Otimizar...' : 'Adicionar Fotos'}
+                    <input type="file" multiple className="hidden" accept="image/*,.webp" disabled={isUploading} onChange={e => e.target.files && handleImageUpload(e.target.files, 'activity_gallery')} />
+                  </label>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {editingItem.gallery?.map((img: string, idx: number) => (
+                    <div key={idx} className="relative aspect-[16/9] rounded-[1.5rem] overflow-hidden border-2 border-slate-100 group shadow-md">
+                       <img src={img} className="w-full h-full object-cover" alt="" />
+                       <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                          <div className="flex gap-2">
+                             <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} disabled={idx === 0} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ArrowRight size={16} className="rotate-180" /></button>
+                             <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} disabled={idx === editingItem.gallery.length - 1} className="p-2 bg-white/20 hover:bg-white/40 rounded-xl text-white disabled:opacity-30 transition-all"><ArrowRight size={16} /></button>
+                          </div>
+                          <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="px-4 py-2 bg-red-500/80 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 flex items-center gap-2">
+                            <Trash2 size={12} /> Remover
+                          </button>
+                       </div>
+                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[10px] font-black text-slate-800 shadow-sm">
+                         #{idx + 1}
+                       </div>
+                    </div>
+                  ))}
+                </div>
+                {(!editingItem.gallery || editingItem.gallery.length === 0) && (
+                  <div className="py-12 border-2 border-dashed border-slate-200 rounded-[2rem] text-center">
+                    <ImageIcon className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Nenhuma foto adicionada ao slider</p>
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        }
+
         return (
           <>
             {commonInput(t('item_name'), 'title')}
@@ -1852,7 +1904,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-20 overflow-y-auto">
         <div className="p-6 border-b border-slate-800">
            <h2 className="text-xl font-bold flex items-center gap-2">
-             <LayoutDashboard className="text-blue-500" /> Admin v1.2.0
+             <LayoutDashboard className="text-blue-500" /> Admin v1.2.1
            </h2>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -2747,8 +2799,8 @@ Av. do Mar, Madalena, Pico
                 <div className="mb-10 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 rounded-[3rem] text-white shadow-2xl shadow-green-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-white/20 transition-all duration-700"></div>
                   <div className="flex items-center gap-6 relative z-10">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center border border-white/30 shadow-inner">
-                      <MountainSnow className="w-8 h-8" />
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center border border-white/30 shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                      <MountainSnow className="w-8 h-8 text-white" />
                     </div>
                     <div>
                       <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">Slider Principal: {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}</h3>
