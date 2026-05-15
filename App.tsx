@@ -236,6 +236,7 @@ const App: React.FC = () => {
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
+  const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   // Function to fetch data from Backend with Retry logic for Cold Starts
   const fetchData = async (retries = 3) => {
@@ -1360,7 +1361,7 @@ const App: React.FC = () => {
                 <AzoresLogo size={32} />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-slate-800">
-                Azores<span className="text-emerald-600 font-black">4you</span>
+                Azores<span className="text-emerald-600 font-black">toyou</span>
               </span>
             </div>
             
@@ -1637,18 +1638,33 @@ const App: React.FC = () => {
                   case 'activities':
                   case 'poi':
                   case 'culture':
-                    const aType = exploreCategory === 'trails' ? 'trail' : 
-                                 exploreCategory === 'landscapes' ? 'landscape' : 
-                                 exploreCategory === 'culture' ? 'culture' :
-                                 exploreCategory === 'poi' ? 'poi' : 'activity';
-                    featuredItems = sortFeatured((allActivities || []).filter(a => a.type === aType).slice(0, 10).map(a => ({ id: a.id, title: a.title, image: a.image, rating: 5.0, location: a.island, category: 'Experiência' })));
+                    const types = exploreCategory === 'trails' ? ['trail'] : 
+                                 exploreCategory === 'landscapes' ? ['landscape'] : 
+                                 exploreCategory === 'culture' ? ['culture'] :
+                                 exploreCategory === 'poi' ? ['poi', 'landscape'] : ['activity'];
+                    featuredItems = sortFeatured((allActivities || []).filter(a => types.includes(a.type as any)).slice(0, 10).map(a => ({ 
+                      id: a.id, 
+                      title: a.title, 
+                      image: a.image, 
+                      rating: 5.0, 
+                      location: a.island, 
+                      category: a.type === 'trail' ? 'Trilho' : (a.type === 'poi' || a.type === 'landscape' ? 'Ponto/Paisagem' : 'Experiência'),
+                      buttonLabel: a.type === 'trail' ? 'Ver Trilho' : 'Ver Mais'
+                    })));
                     break;
                   default:
                     featuredItems = [];
                 }
 
                 if (featuredItems.length === 0) return null;
-                return <MostRequestedSlider items={featuredItems} />;
+                return <MostRequestedSlider 
+                  items={featuredItems} 
+                  onAction={(item) => {
+                    if (exploreCategory === 'trails' || exploreCategory === 'restaurants') {
+                      setSelectedTrailId(item.id);
+                    }
+                  }}
+                />;
               })()}
 
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
@@ -1725,6 +1741,8 @@ const App: React.FC = () => {
                     currentLanguage={language}
                     isAuthenticated={isAuthenticated}
                     onShowAuth={() => setShowAuthModal(true)}
+                    selectedItemId={selectedTrailId}
+                    onSelectedItemIdHandled={() => setSelectedTrailId(null)}
                     // PASSING DYNAMIC DATA (Filtered)
                     restaurants={filterByIsland(restaurants)}
                     activities={filterByIsland(activities)}

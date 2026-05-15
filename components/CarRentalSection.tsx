@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Car, CarRentalCompany, Language, Itinerary } from '../types';
 import { CAR_RENTAL_COMPANIES } from '../constants';
 import { MapPin, Mail, Phone, ArrowLeft, Check, X, Car as CarIcon, Info, Calendar, Ban, ArrowRight, User, Fuel, ChevronDown } from 'lucide-react';
@@ -31,6 +32,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 }) => {
   const [selectedCompany, setSelectedCompany] = useState<CarRentalCompany | null>(null);
   const [selectedCarForDetail, setSelectedCarForDetail] = useState<Car | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
@@ -109,6 +111,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 
   const handleCarClick = (car: Car) => {
     setSelectedCarForDetail(car);
+    setActiveImageIndex(0);
   };
 
   const handleCarSelect = (car: Car) => {
@@ -356,43 +359,120 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 
       {/* Car Detail Modal */}
       {selectedCarForDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-white/20">
-            <div className="relative h-48 bg-gradient-to-b from-slate-50 to-white p-6 flex items-center justify-center">
-              <img 
-                src={selectedCarForDetail.image} 
-                alt={selectedCarForDetail.model} 
-                className="w-full h-full object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-500" 
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 border border-white/10 flex flex-col max-h-[90vh]">
+            
+            {/* Top Slider */}
+            <div className="relative h-64 bg-slate-100">
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={activeImageIndex}
+                  src={(selectedCarForDetail.gallery && selectedCarForDetail.gallery.length > 0) 
+                    ? selectedCarForDetail.gallery[activeImageIndex] 
+                    : selectedCarForDetail.image} 
+                  alt={selectedCarForDetail.model} 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="w-full h-full object-contain p-4" 
+                />
+              </AnimatePresence>
+
+              {/* Slider Controls */}
+              {selectedCarForDetail.gallery && selectedCarForDetail.gallery.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(prev => (prev === 0 ? selectedCarForDetail.gallery!.length - 1 : prev - 1));
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg hover:bg-white transition-all text-slate-800"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(prev => (prev === selectedCarForDetail.gallery!.length - 1 ? 0 : prev + 1));
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md p-2 rounded-full shadow-lg hover:bg-white transition-all text-slate-800"
+                  >
+                    <ArrowRight size={20} />
+                  </button>
+                  
+                  {/* Dots */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/10 backdrop-blur-md p-2 rounded-full">
+                    {selectedCarForDetail.gallery.map((_, idx) => (
+                      <div 
+                        key={idx}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-white w-4' : 'bg-white/40'}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
               <button 
                 onClick={() => setSelectedCarForDetail(null)}
-                className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                className="absolute top-4 right-4 z-50 p-2.5 bg-white/90 backdrop-blur-md text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-lg border border-white/20"
               >
-                <X size={20} className="group-active:scale-90 transition-transform" />
+                <X size={18} />
               </button>
-              <div className="absolute top-6 left-6">
-                 <span className="bg-blue-600/10 text-blue-600 text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full uppercase backdrop-blur-sm">
+
+              <div className="absolute top-4 left-4">
+                 <span className="bg-slate-900/80 backdrop-blur-md text-white text-[9px] font-black tracking-widest px-3 py-1.5 rounded-full uppercase">
                     {getCarTypeTranslation(selectedCarForDetail.type)}
                  </span>
               </div>
             </div>
             
-            <div className="px-8 pb-8 pt-2 space-y-6">
-              <div className="text-center">
-                <h3 className="text-2xl font-black text-slate-900 mb-1">{selectedCarForDetail.model}</h3>
-                <div className="flex items-center justify-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-tighter">
-                   <span>{selectedCarForDetail.seats} {getTranslation(language, 'seats')}</span>
-                   <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                   <span className="flex items-center gap-1">{getFuelIcon(selectedCarForDetail.fuelType)} {getTranslation(language, ('fuel_' + selectedCarForDetail.fuelType) as any)}</span>
+            <div className="px-8 pb-8 pt-6 space-y-6 overflow-y-auto scrollbar-hide">
+              {/* Main Info */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedCarForDetail.model}</h3>
+                  <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-tighter mt-1">
+                     <span className="flex items-center gap-1"><User className="w-3 h-3" /> {selectedCarForDetail.seats} {getTranslation(language, 'seats')}</span>
+                     <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                     <span className="flex items-center gap-1">{getFuelIcon(selectedCarForDetail.fuelType)} {getTranslation(language, ('fuel_' + selectedCarForDetail.fuelType) as any)}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{getTranslation(language, 'daily_rate')}</p>
+                   <p className="text-2xl font-black text-slate-900">€{selectedCarForDetail.pricePerDay}</p>
                 </div>
               </div>
 
-              <div className="bg-slate-50/50 rounded-3xl p-5 border border-slate-100">
-                <p className="text-slate-600 text-sm leading-relaxed text-center font-medium">
-                  "{getTranslation(language, selectedCarForDetail.description as any)}"
-                </p>
+              {/* Rental Dates Summary - MOVED HERE */}
+              <div className="bg-green-50/50 rounded-3xl p-5 border border-green-100/50 grid grid-cols-3 gap-4">
+                <div className="text-center border-r border-green-100/50">
+                  <p className="text-[10px] font-black text-green-600/60 uppercase tracking-tighter mb-1">{getTranslation(language, 'pickup_date')}</p>
+                  <p className="text-sm font-black text-slate-800">{formatDate(currentItinerary?.carStartDate)}</p>
+                </div>
+                <div className="text-center border-r border-green-100/50">
+                  <p className="text-[10px] font-black text-green-600/60 uppercase tracking-tighter mb-1">{getTranslation(language, 'return_date')}</p>
+                  <p className="text-sm font-black text-slate-800">{formatDate(currentItinerary?.carEndDate)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-green-600/60 uppercase tracking-tighter mb-1">{getTranslation(language, 'days')}</p>
+                  <p className="text-sm font-black text-green-600">{carDays}</p>
+                </div>
               </div>
 
+              {/* New Information Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                   <div className="w-1 h-4 bg-green-600 rounded-full" />
+                   <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">{getTranslation(language, 'car_info' as any)}</h4>
+                </div>
+                <div className="bg-slate-50/80 rounded-3xl p-5 border border-slate-100">
+                  <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                    {selectedCarForDetail.description || "Sem informações detalhadas disponíveis para este veículo no momento."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Features Grid */}
               <div className="grid grid-cols-2 gap-2">
                 {(selectedCarForDetail.features || []).slice(0, 4).map((feature, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-[11px] font-bold text-slate-700 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
@@ -404,22 +484,17 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getTranslation(language, 'daily_rate')}</p>
-                   <p className="text-2xl font-black text-slate-900">€{selectedCarForDetail.pricePerDay}</p>
+              {/* Total and Action */}
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <div className="flex items-center justify-between">
+                   <p className="text-sm font-bold text-slate-500">{getTranslation(language, 'total')}</p>
+                   <p className="text-3xl font-black text-green-600">€{selectedCarForDetail.pricePerDay * carDays}</p>
                 </div>
-                <div className="text-right">
-                   <p className="text-[10px] font-black text-green-500 uppercase tracking-widest">{getTranslation(language, 'total')} ({carDays} {getTranslation(language, 'days')})</p>
-                   <p className="text-2xl font-black text-green-600">€{selectedCarForDetail.pricePerDay * carDays}</p>
-                </div>
-              </div>
 
-              <div className="pt-2">
                 {selectedCarForDetail.isAvailable ? (
                   <button 
                     onClick={() => handleCarSelect(selectedCarForDetail)}
-                    className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-[1.5rem] font-black shadow-xl shadow-slate-200 transition-all active:scale-95 flex items-center justify-center gap-3 group"
+                    className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-[1.5rem] font-black shadow-xl shadow-green-100 transition-all active:scale-95 flex items-center justify-center gap-3 group"
                   >
                     {currentItinerary.car?.id === selectedCarForDetail.id ? 'Veículo Selecionado' : 'Reservar Agora'}
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

@@ -51,7 +51,6 @@ export const getNavigationCategories = (lang: Language = 'pt'): CategoryItem[] =
     { id: 'restaurants', label: t.nav_restaurants, icon: <Utensils className="w-6 h-6" />, color: '#E44D26' },
     { id: 'trails', label: t.nav_trails, icon: <Map className="w-6 h-6" />, color: '#2C7A2E' },
     { id: 'rentcar', label: t.nav_cars, icon: <Car className="w-6 h-6" />, color: '#4CAF50' },
-    { id: 'landscapes', label: t.nav_landscapes, icon: <ImageIcon className="w-6 h-6" />, color: '#00BCD4' },
     { id: 'accommodation', label: t.nav_accommodation, icon: <BedDouble className="w-6 h-6" />, color: '#673AB7' },
     { id: 'activities', label: t.nav_activities, icon: <Mountain className="w-6 h-6" />, color: '#FF9800' },
     { id: 'buses', label: t.nav_buses, icon: <Bus className="w-6 h-6" />, color: '#E91E63' },

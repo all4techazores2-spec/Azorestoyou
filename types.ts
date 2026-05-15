@@ -73,6 +73,7 @@ export interface Car {
   isAvailable: boolean;
   description: string;
   features: string[];
+  gallery?: string[];
 }
 
 export interface CarRentalCompany {

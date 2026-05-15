@@ -16,9 +16,10 @@ interface SliderItem {
 
 interface MostRequestedSliderProps {
   items: SliderItem[];
+  onAction?: (item: SliderItem) => void;
 }
 
-const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items }) => {
+const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onAction }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -79,7 +80,10 @@ const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items }) => {
                   <Phone size={16} /> {items[currentIndex].buttonLabel || 'Ligue Já'}
                 </a>
               ) : (
-                <button className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl">
+                <button 
+                  onClick={() => onAction && onAction(items[currentIndex])}
+                  className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl"
+                >
                   {items[currentIndex].buttonLabel || 'Reservar Agora'}
                 </button>
               )}

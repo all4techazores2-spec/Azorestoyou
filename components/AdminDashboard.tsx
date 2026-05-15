@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle
+  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 import * as constants from '../constants';
@@ -69,7 +69,7 @@ interface AdminDashboardProps {
   language?: Language;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
@@ -499,7 +499,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'it_services': updateLocal(itServices, onUpdateITServices); break;
         case 'perfumes': updateLocal(perfumes, onUpdatePerfumes); break;
         case 'activities': 
-        case 'trails': updateLocal(activities, onUpdateActivities); break;
+        case 'trails':
+        case 'poi': updateLocal(activities, onUpdateActivities); break;
         case 'flights': updateLocal(flights, onUpdateFlights); break;
         case 'hotels': updateLocal(hotels, onUpdateHotels); break;
         case 'cars': updateLocal(cars, onUpdateCars); break;
@@ -598,6 +599,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       { data: animals, label: 'animals', title: 'Animais' },
       { data: realEstate, label: 'real_estate', title: 'Imobiliária' },
       { data: gyms, label: 'gyms', title: 'Ginásios' },
+      { data: activities.filter(a => a.type === 'poi' || a.type === 'landscape'), label: 'poi', title: 'Pontos Turísticos' },
       { data: stands, label: 'stands', title: 'Stands' },
       { data: offices, label: 'offices', title: 'Escritórios' },
       { data: itServices, label: 'it_services', title: 'Informática' },
@@ -709,7 +711,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         };
         break;
       case 'activities':
-        newItem = { id: `ACT${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, mapUrl: '' };
+        newItem = { id: `ACT${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
         break;
       case 'flights':
         newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
@@ -858,7 +860,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     markCategoryAsModified(activeTab);
   };
 
-  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'room_main' | 'room_gallery', extraIndex?: number, roomGalleryIndex?: number) => {
+  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'car_gallery' | 'room_main' | 'room_gallery' | 'activity_gallery', extraIndex?: number, roomGalleryIndex?: number) => {
     if (!editingItem) return;
     
     let fileArray: File[] = [];
@@ -928,6 +930,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             const roomGallery = [...(rooms[extraIndex].gallery || [])];
             rooms[extraIndex] = { ...rooms[extraIndex], gallery: [...roomGallery, finalUrl] };
             return { ...prev, rooms };
+          });
+        } else if (type === 'car_gallery' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const cars = [...(prev.cars || [])];
+            const carGallery = [...(cars[extraIndex].gallery || [])];
+            cars[extraIndex] = { ...cars[extraIndex], gallery: [...carGallery, finalUrl] };
+            return { ...prev, cars };
           });
         } else if (type === 'activity_gallery') {
           setEditingItem(prev => ({ 
@@ -1396,11 +1405,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                </select>
             </div>
             
-            {/* Trail Specific Details */}
-            {editingItem.type === 'trail' && (
+            {/* Trail / POI / Landscape Details */}
+            {(editingItem.type === 'trail' || editingItem.type === 'poi' || editingItem.type === 'landscape') && (
               <>
-                {commonInput('Distância (ex: 5.4 Km)', 'distance')}
-                {commonInput('Duração (ex: 2h 30m)', 'duration')}
+                {editingItem.type === 'trail' && (
+                  <>
+                    {commonInput('Distância (ex: 5.4 Km)', 'distance')}
+                    {commonInput('Duração (ex: 2h 30m)', 'duration')}
+                  </>
+                )}
                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-1">Dificuldade</label>
                    <select className="w-full border p-2 rounded-lg bg-white" value={editingItem.difficulty || 'Moderado'} onChange={e => setEditingItem({...editingItem, difficulty: e.target.value})}>
@@ -1428,29 +1441,87 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                <textarea className="w-full border p-2 rounded-lg h-24" value={editingItem.description} onChange={e => setEditingItem({...editingItem, description: e.target.value})} />
             </div>
 
-            {/* Activity Gallery */}
-            <div className="md:col-span-2 border-t pt-4 mt-2">
-              <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-4 py-3 border-y border-slate-100 my-2">
+               <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={editingItem.isPaid} onChange={e => setEditingItem({...editingItem, isPaid: e.target.checked})} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm font-bold text-slate-700">Atividade Paga (Reserva)</span>
+               </label>
+               {editingItem.isPaid && (
+                 <div className="flex items-center gap-2">
+                   <span className="text-[10px] font-black uppercase text-slate-400">Preço (€):</span>
+                   <input type="number" className="w-20 border p-1 rounded-lg font-bold text-blue-600" value={editingItem.price} onChange={e => setEditingItem({...editingItem, price: Number(e.target.value)})} />
+                 </div>
+               )}
+            </div>
+
+            {editingItem.isPaid && (
+              <div className="md:col-span-2">
+                <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Política de Reserva</label>
+                <textarea className="w-full border p-2 rounded-lg h-16 text-xs" value={editingItem.bookingPolicy} onChange={e => setEditingItem({...editingItem, bookingPolicy: e.target.value})} placeholder="Ex: Reserva obrigatória com 24h de antecedência..." />
+              </div>
+            )}
+
+            {commonInput('Email de Contacto', 'email')}
+            {commonInput('Telefone/WhatsApp', 'phone')}
+            {commonInput('Morada / Ponto de Encontro', 'address')}
+            {commonInput('Google Maps URL', 'mapUrl', 'text', true)}
+
+            {/* Activity Gallery Section */}
+            <div className="md:col-span-2 border-t pt-6 mt-4">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria do Trilho (Slider)</h4>
-                  <p className="text-[10px] text-slate-400">Fotos que aparecerão no carrossel individual deste trilho</p>
+                  <h4 className="font-black text-xs uppercase tracking-[0.2em] text-blue-600">Galeria de Fotos do Trilho/Atividade</h4>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Estas fotos aparecerão no slider de topo (Efeito FadeIn/FadeOut)</p>
                 </div>
-                <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'}`}>
-                   {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                   Adicionar Fotos
-                   <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'activity_gallery')} disabled={isUploading} />
+                <label className={`cursor-pointer px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100' : 'bg-slate-900 text-white hover:bg-blue-600 shadow-xl shadow-slate-900/10'}`}>
+                  {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {isUploading ? 'A Otimizar...' : 'Adicionar Fotos'}
+                  <input type="file" multiple className="hidden" accept="image/*,.webp" disabled={isUploading} onChange={e => e.target.files && handleImageUpload(e.target.files, 'activity_gallery')} />
                 </label>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {editingItem.gallery?.map((img: string, idx: number) => (
-                  <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border-2 border-white shadow-sm">
-                    <img src={img} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                       <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"><Trash2 className="w-4 h-4" /></button>
-                    </div>
+                  <div key={idx} className="relative aspect-video rounded-2xl overflow-hidden border-2 border-slate-100 group shadow-md hover:border-blue-200 transition-all">
+                     <img src={img} className="w-full h-full object-cover" alt="" />
+                     
+                     {/* Hover Controls */}
+                     <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="flex gap-1">
+                           <button type="button" onClick={() => moveGalleryImage(idx, idx - 1)} disabled={idx === 0} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white disabled:opacity-30 transition-all"><ArrowRight size={14} className="rotate-180" /></button>
+                           <button type="button" onClick={() => moveGalleryImage(idx, idx + 1)} disabled={idx === (editingItem.gallery?.length || 0) - 1} className="p-1.5 bg-white/20 hover:bg-white/40 rounded-lg text-white disabled:opacity-30 transition-all"><ArrowRight size={14} /></button>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                             type="button" 
+                             onClick={() => {
+                               const newGallery = editingItem.gallery.filter((_:any, i:number) => i !== idx);
+                               setEditingItem({ ...editingItem, image: img, gallery: newGallery });
+                             }} 
+                             className="px-3 py-1 bg-blue-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600"
+                           >
+                             Capa
+                           </button>
+                           <button type="button" onClick={() => setEditingItem({...editingItem, gallery: editingItem.gallery.filter((_:any, i:number) => i !== idx)})} className="p-1.5 bg-red-500/80 text-white rounded-lg hover:bg-red-600 transition-all"><Trash2 size={14} /></button>
+                        </div>
+                     </div>
+                     
+                     {/* Index Badge */}
+                     <div className="absolute top-2 left-2 bg-black/50 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-md shadow-sm">
+                        {idx + 1}
+                     </div>
                   </div>
                 ))}
               </div>
+              
+              {(!editingItem.gallery || editingItem.gallery.length === 0) && (
+                <div className="py-12 border-2 border-dashed border-slate-200 rounded-[2rem] text-center flex flex-col items-center justify-center">
+                  <ImageIcon className="w-12 h-12 text-slate-200 mb-3 opacity-50" />
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Nenhuma foto na galeria individual</p>
+                  <p className="text-[10px] text-slate-300 font-bold uppercase mt-1">Carregue fotos para criar um slider no topo do trilho</p>
+                </div>
+              )}
             </div>
           </>
         );
@@ -1774,6 +1845,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </label>
                         </div>
                       </div>
+
+                      <div className="md:col-span-3">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-1">Descrição/Informações do Veículo</label>
+                        <textarea 
+                          className="w-full border-2 border-white p-3 rounded-xl font-bold text-sm shadow-sm h-24" 
+                          placeholder="Detalhes sobre o carro..." 
+                          value={car.description} 
+                          onChange={e => updateCar(idx, 'description', e.target.value)} 
+                        />
+                      </div>
+
+                      {/* Car Gallery */}
+                      <div className="md:col-span-3">
+                        <div className="flex justify-between items-center mb-2">
+                           <label className="block text-[10px] font-black uppercase text-slate-400 ml-1">Galeria de Fotos do Veículo</label>
+                           <label className={`cursor-pointer px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-md'}`}>
+                              {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                              Fotos
+                              <input type="file" className="hidden" multiple accept="image/*,.webp" onChange={e => e.target.files && handleImageUpload(e.target.files, 'car_gallery', idx)} disabled={isUploading} />
+                           </label>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto py-2">
+                          {car.gallery?.map((img, iIdx) => (
+                            <div key={iIdx} className="relative w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 group border-2 border-white shadow-sm">
+                              <img src={img} className="w-full h-full object-cover" />
+                              <button type="button" onClick={() => {
+                                const newGal = car.gallery?.filter((_, i) => i !== iIdx);
+                                updateCar(idx, 'gallery', newGal);
+                              }} className="absolute inset-0 bg-red-500/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          {(!car.gallery || car.gallery.length === 0) && (
+                            <div className="flex-1 py-4 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                               Sem Fotos na Galeria
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1819,6 +1930,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'perfumes': list = perfumes; break;
       case 'activities': list = activities; break;
       case 'trails': list = activities.filter(a => a.type === 'trail'); break;
+      case 'poi': list = activities.filter(a => a.type === 'poi' || a.type === 'landscape'); break;
       case 'flights': list = flights; break;
       case 'hotels': list = hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter); break;
       case 'cars': list = cars; break;
@@ -1837,6 +1949,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (activeTab === 'buses') return `${item.company}: ${item.origin} -> ${item.destination}`;
     if (activeTab === 'itineraries') return `Roteiro: ${item.id}`;
     if (activeTab === 'trails') return item.title || 'Trilho sem nome';
+    if (activeTab === 'poi') return item.title || 'Ponto Turístico sem nome';
     if (activeTab === 'cars') return item.name || 'Companhia Rent-a-car';
     return item.name || item.title || item.model || 'Sem Nome';
   };
@@ -1848,6 +1961,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'rentcar': 'Rent-a-car',
       'activities': 'Atividades',
       'trails': 'Trilhos',
+      'poi': 'Pontos Turísticos',
       'flights': 'Voos',
       'buses': 'Autocarros',
       'shops': 'Lojas',
@@ -2019,6 +2133,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button onClick={() => { setActiveTab('trails'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'trails' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
             <MapPin className="w-5 h-5" /> Trilhos
+          </button>
+          
+          <button onClick={() => { setActiveTab('poi'); setEditingItem(null); setShowOtherTabs(false); }} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all ${activeTab === 'poi' ? 'bg-blue-600 shadow-lg text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            <ImageIcon className="w-5 h-5" /> Pontos Turísticos
           </button>
 
           {/* OUTROS BUTTON */}
@@ -2944,10 +3062,11 @@ Av. do Mar, Madalena, Pico
 
                    {/* Badges */}
                    <div className="absolute bottom-2 left-2 flex gap-1">
-                     {item.island && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island}</span>}
-                     {item.status && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
-                     {item.price && <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">€{item.price}</span>}
-                  </div>
+                      {item.island && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island}</span>}
+                      {item.status && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
+                      {(item.price > 0 || item.isPaid) && <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">€{item.price}</span>}
+                      {activeTab === 'activities' && !item.isPaid && item.type !== 'trail' && <span className="bg-emerald-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-widest text-[8px]">Grátis</span>}
+                   </div>
                 </div>
 
                 <div className="p-4 flex-1">

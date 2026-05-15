@@ -125,7 +125,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
             <AzoresLogo size={60} />
           </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white lg:text-slate-900 tracking-tight drop-shadow-lg lg:drop-shadow-none">
-            Azores<span className="text-green-400 lg:text-green-600">Toyou</span>
+            Azores<span className="text-green-400 lg:text-green-600">toyou</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-100 lg:text-slate-600 mt-2 font-medium tracking-wide drop-shadow-md lg:drop-shadow-none">
             {t.subtitle}

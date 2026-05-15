@@ -337,12 +337,14 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Info className="w-5 h-5 text-blue-500" /> Informações</h3>
                       <p className="text-slate-600 leading-relaxed">{trail.description}</p>
-                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
-                        <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Custo de Entrada:</span>
-                        <span className={trail.isPaid ? "text-blue-600 font-bold" : "text-green-600 font-bold"}>
-                          {trail.isPaid ? `${trail.price}€ por pessoa` : 'Grátis'}
-                        </span>
-                      </div>
+                      {trail.type !== 'trail' && (
+                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+                          <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Custo de Entrada:</span>
+                          <span className={trail.isPaid ? "text-blue-600 font-bold" : "text-green-600 font-bold"}>
+                            {trail.isPaid ? `${trail.price}€ por pessoa` : 'Grátis'}
+                          </span>
+                        </div>
+                      )}
                       
                       <div className="mt-4 flex flex-col gap-2">
                          {trail.phone && (
@@ -366,7 +368,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       </div>
                     </div>
                     <div className="mt-8 flex flex-col gap-3">
-                      {trail.isPaid && (
+                      {trail.type !== 'trail' && trail.isPaid && (
                         <button onClick={handleStartBooking} className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-100 transition-all">
                           <Check className="w-5 h-5" /> Fazer Reserva
                         </button>
@@ -384,7 +386,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                             handleDirectionsClick();
                           }
                         }} 
-                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${trail.isPaid ? 'bg-slate-800 text-white hover:bg-slate-900' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                        className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${(trail.type !== 'trail' && trail.isPaid) ? 'bg-slate-800 text-white hover:bg-slate-900' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
                       >
                         <Navigation className="w-5 h-5" /> Obter Direções
                       </button>

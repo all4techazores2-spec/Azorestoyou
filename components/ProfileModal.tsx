@@ -178,7 +178,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                     <div className="p-3 rounded-2xl bg-rose-500 text-white shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform">
                       <Users size={20} />
                     </div>
-                    <span className="font-bold text-slate-700">Comunidade AzoresToYou</span>
+                    <span className="font-bold text-slate-700">Comunidade Azorestoyou</span>
                   </button>
 
                   {/* SOS Button inside Profile */}

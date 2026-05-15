@@ -61,7 +61,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-blue-600' },
     { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-6 h-6" />, color: 'bg-green-600' },
     { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
-    { id: 'landscapes', label: 'Paisagens', icon: <Camera className="w-6 h-6" />, color: 'bg-blue-500' },
     { id: 'flights', label: 'Viagens', icon: <Plane className="w-6 h-6" />, color: 'bg-blue-600' },
     { id: 'shops', label: 'Lojas', icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-pink-500' },
     { id: 'beauty', label: 'Beleza', icon: <Sparkles className="w-6 h-6" />, color: 'bg-rose-400' },
@@ -89,7 +88,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   }));
 
   const mainCategories = [
-    { id: 'landscapes', title: 'Explorar ilha', subtitle: 'Trilhos, miradouros e muito mais', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop' },
+    { id: 'poi', title: 'Pontos Turísticos', subtitle: 'Trilhos, miradouros e muito mais', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop' },
     { id: 'restaurants', title: 'Comer & Beber', subtitle: 'Restaurantes, cafés e sabores locais', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' },
     { id: 'accommodation', title: 'Alojamentos', subtitle: 'Hotéis, casas e alojamento local', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop' },
     { id: 'flights', title: 'Planear viagem', subtitle: 'Voos, pacotes e dicas úteis', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?q=80&w=2070&auto=format&fit=crop' },

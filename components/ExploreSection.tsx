@@ -41,6 +41,8 @@ interface ExploreSectionProps {
   userProfile?: { email: string; name: string; phone: string };
   onClose?: () => void;
   onShowMap?: (url: string) => void;
+  selectedItemId?: string | null;
+  onSelectedItemIdHandled?: () => void;
 }
 
 const ExploreSection: React.FC<ExploreSectionProps> = ({ 
@@ -72,7 +74,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onReserveSuccess,
   userProfile,
   onClose,
-  onShowMap
+  onShowMap,
+  selectedItemId,
+  onSelectedItemIdHandled
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -120,6 +124,26 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
   const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
+  
+  // Handle external item selection (e.g. from slider)
+  React.useEffect(() => {
+    if (selectedItemId) {
+      if (category === 'trails') {
+        const item = activities.find(a => a.id === selectedItemId);
+        if (item) {
+          setSelectedTrail(item);
+          if (onSelectedItemIdHandled) onSelectedItemIdHandled();
+        }
+      } else if (category === 'restaurants') {
+        const item = restaurants.find(r => r.id === selectedItemId);
+        if (item) {
+          setSelectedRestaurant(item as any);
+          if (onSelectedItemIdHandled) onSelectedItemIdHandled();
+        }
+      }
+      // Add other categories as needed
+    }
+  }, [selectedItemId, category, activities, restaurants, onSelectedItemIdHandled]);
 
   
   const isNearby = destinationIsland?.startsWith('nearby:');
@@ -161,9 +185,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   
   // Mapping for the expanded categories
-  const getActivitiesByType = (type: string) => {
+  const getActivitiesByType = (types: string | string[]) => {
     const filtered = allActivities.filter(a => {
-      const matchesType = a.type === type;
+      const matchesType = Array.isArray(types) ? types.includes(a.type as string) : a.type === types;
       const matchesIsland = isAllIslands || a.island === targetIsland;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' ? !a.isPaid : a.isPaid);
       return matchesType && matchesIsland && matchesPrice;
@@ -459,7 +483,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
 
-  const renderActivities = (type?: string) => {
+  const renderActivities = (type?: string | string[]) => {
     const data = sortItems(type ? getActivitiesByType(type) : allActivities);
     
     return (
@@ -480,13 +504,15 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           >
             Grátis
           </button>
-          <button 
-            onClick={() => setPriceFilter('paid')}
-            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
-              ${priceFilter === 'paid' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-          >
-            Pago
-          </button>
+          {type !== 'trail' && (
+            <button 
+              onClick={() => setPriceFilter('paid')}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
+                ${priceFilter === 'paid' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+            >
+              Pago
+            </button>
+          )}
         </div>
 
         {data.length === 0 ? renderEmptyState() : (
@@ -508,11 +534,18 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                    />
                    <div className="absolute top-1 right-1">
-                      {a.isPaid ? (
-                        <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
-                          {a.price}€
-                        </span>
-                      ) : (
+                      {type !== 'trail' && (
+                        a.isPaid ? (
+                          <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                            {a.price}€
+                          </span>
+                        ) : (
+                          <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                            Grátis
+                          </span>
+                        )
+                      )}
+                      {type === 'trail' && (
                         <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
                           Grátis
                         </span>
@@ -969,12 +1002,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     
     // If custom gallery exists, use it. Otherwise use the first 3 items.
     const sliderImages = (configSlider && configSlider.gallery && configSlider.gallery.length > 0)
-      ? configSlider.gallery.map(img => ({ image: img, title: '', island: '' }))
+      ? configSlider.gallery.map(img => ({ id: null, image: img, title: '', island: '' }))
       : data.slice(0, 3).map(item => ({ 
+          id: item.id,
           image: item.image, 
           title: item.name || item.title, 
           island: item.island,
-          isPaid: item.isPaid
+          isPaid: item.isPaid,
+          type: item.type
         }));
 
     if (sliderImages.length === 0) return null;
@@ -985,34 +1020,54 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           {sliderImages.map((item, idx) => (
             <div 
               key={`slider-${idx}`}
-              className="min-w-full h-[380px] relative shadow-2xl snap-center group"
+              className="min-w-full h-[450px] relative shadow-2xl snap-center group"
             >
               <img 
                 src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
                 alt={item.title}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent"></div>
               
               {/* Top Badges */}
               <div className="absolute top-8 left-8 flex items-center gap-2">
                  <span className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl">Destaque Premium</span>
                  {item.isPaid !== undefined && (
                    <span className={`px-4 py-1.5 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl`}>
-                     {item.isPaid ? 'Verificado' : 'Acesso Grátis'}
+                     {item.isPaid ? 'Reserva Disponível' : 'Acesso Grátis'}
                    </span>
                  )}
               </div>
 
-              <div className="absolute bottom-10 left-8 right-8">
-                {item.title && <h4 className="text-4xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl">{item.title}</h4>}
-                {item.island && (
-                  <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
-                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                      <MapPin size={14} className="text-blue-400" />
+              <div className="absolute bottom-10 left-8 right-8 flex flex-col md:flex-row items-end justify-between gap-6">
+                <div>
+                  {item.title && <h4 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl max-w-2xl">{item.title}</h4>}
+                  {item.island && (
+                    <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
+                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                        <MapPin size={14} className="text-blue-400" />
+                      </div>
+                      {item.island}
                     </div>
-                    {item.island}
-                  </div>
+                  )}
+                </div>
+
+                {item.id && (
+                  <button 
+                    onClick={() => {
+                      const found = data.find(d => d.id === item.id);
+                      if (found) {
+                        if (category === 'trails' || category === 'poi' || category === 'landscapes' || category === 'activities') {
+                          setSelectedTrail(found);
+                        } else if (category === 'restaurants') {
+                          setSelectedRestaurant(found);
+                        }
+                      }
+                    }}
+                    className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl active:scale-95 whitespace-nowrap"
+                  >
+                    {category === 'trails' ? 'Ver Trilho' : 'Ver Detalhes'}
+                  </button>
                 )}
               </div>
             </div>
@@ -1028,7 +1083,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'trails': return renderActivities('trail');
       case 'landscapes': return renderActivities('landscape');
       case 'culture': return renderActivities('culture');
-      case 'poi': return renderActivities('poi');
+      case 'poi': return renderActivities(['poi', 'landscape']);
       case 'buses': return renderBusPlanner();
       case 'activities': return renderActivities('activity');
       case 'shops': return renderShops();
@@ -1493,8 +1548,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           category === 'restaurants' ? filteredRestaurants :
           category === 'shops' ? allShops :
           category === 'trails' ? getActivitiesByType('trail') :
-          category === 'landscapes' ? getActivitiesByType('landscape') :
-          category === 'poi' ? getActivitiesByType('poi') :
+          category === 'landscapes' ? getActivitiesByType(['poi', 'landscape']) :
+          category === 'poi' ? getActivitiesByType(['poi', 'landscape']) :
           category === 'beauty' ? allBeauty :
           category === 'services' ? allServices :
           category === 'auto_repair' ? allAutoRepairs :
