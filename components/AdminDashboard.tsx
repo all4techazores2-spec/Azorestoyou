@@ -1342,12 +1342,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       case 'activities':
       case 'trails':
+      case 'poi':
         if (editingItem?.type === 'config_slider') {
           return (
             <>
               <div className="md:col-span-2">
                 <h4 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-2">Configuração do Slider Principal</h4>
-                <p className="text-xs text-slate-500 font-medium mb-6">Estas fotos aparecem no topo da categoria {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}.</p>
+                <p className="text-xs text-slate-500 font-medium mb-6">Estas fotos aparecem no topo da categoria {activeTab === 'trails' ? 'Trilhos' : activeTab === 'poi' ? 'Pontos Turísticos' : 'Atividades'}.</p>
               </div>
               {commonInput('Nome do Slider (Apenas Interno)', 'title', 'text', true)}
               
@@ -3004,7 +3005,7 @@ Av. do Mar, Madalena, Pico
               )}
 
               {/* Category Slider Management Section */}
-              {(activeTab === 'trails' || activeTab === 'activities') && (
+              {(activeTab === 'trails' || activeTab === 'activities' || activeTab === 'poi') && (
                 <div className="mb-10 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 p-8 rounded-[3rem] text-white shadow-2xl shadow-green-900/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-white/20 transition-all duration-700"></div>
                   <div className="flex items-center gap-6 relative z-10">
@@ -3012,7 +3013,7 @@ Av. do Mar, Madalena, Pico
                       <Mountain className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">Slider Principal: {activeTab === 'trails' ? 'Trilhos' : 'Atividades'}</h3>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">Slider Principal: {activeTab === 'trails' ? 'Trilhos' : activeTab === 'poi' ? 'Pontos Turísticos' : 'Atividades'}</h3>
                       <p className="text-xs font-bold text-white/70 uppercase tracking-widest max-w-md">Personalize as fotos de grande formato que os utilizadores veem no topo desta categoria.</p>
                     </div>
                   </div>
