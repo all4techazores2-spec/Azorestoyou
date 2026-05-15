@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, Language, TourGuide } from '../types';
 import { getTranslation } from '../translations';
 import { TOUR_GUIDES } from '../constants';
@@ -38,6 +38,17 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
   const [isCheckingGuide, setIsCheckingGuide] = useState(false);
   const [guideError, setGuideError] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Auto-slide for gallery
+  useEffect(() => {
+    if (!trail.gallery || trail.gallery.length <= 1 || bookingStep !== 'main') return;
+    
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % trail.gallery!.length);
+    }, 4000);
+    
+    return () => clearInterval(timer);
+  }, [trail.gallery, bookingStep]);
 
   const t = (key: string) => getTranslation(language, key as any);
 
@@ -347,18 +358,6 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       )}
                       
                       <div className="mt-4 flex flex-col gap-2">
-                         {trail.phone && (
-                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400"/></div>
-                               <span className="text-xs font-bold">{trail.phone}</span>
-                            </div>
-                         )}
-                         {trail.email && (
-                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400"/></div>
-                               <span className="text-xs font-bold">{trail.email}</span>
-                            </div>
-                         )}
                          {trail.address && (
                             <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400"/></div>

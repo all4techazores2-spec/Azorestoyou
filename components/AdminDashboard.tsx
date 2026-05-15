@@ -219,7 +219,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': onUpdateOffices(filterList(offices)); break;
       case 'it_services': onUpdateITServices(filterList(itServices)); break;
       case 'perfumes': onUpdatePerfumes(filterList(perfumes)); break;
-      case 'activities': onUpdateActivities(filterList(activities)); break;
+      case 'activities': 
+      case 'trails':
+      case 'poi': onUpdateActivities(filterList(activities)); break;
       case 'flights': onUpdateFlights(filterList(flights)); break;
       case 'hotels': onUpdateHotels(filterList(hotels)); break;
       case 'cars': onUpdateCars(filterList(cars)); break;
@@ -324,7 +326,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': onUpdateOffices(offices.filter(o => o.id !== id)); break;
       case 'it_services': onUpdateITServices(itServices.filter(i => i.id !== id)); break;
       case 'perfumes': onUpdatePerfumes(perfumes.filter(p => p.id !== id)); break;
-      case 'activities': onUpdateActivities(activities.filter(a => a.id !== id)); break;
+      case 'activities':
+      case 'trails':
+      case 'poi': onUpdateActivities(activities.filter(a => a.id !== id)); break;
       case 'flights': onUpdateFlights(flights.filter(f => f.id !== id)); break;
       case 'hotels': onUpdateHotels(hotels.filter(h => h.id !== id)); break;
       case 'cars': onUpdateCars(cars.filter(c => c.id !== id)); break;
