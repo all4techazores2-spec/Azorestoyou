@@ -75,7 +75,7 @@ const ALL_BUSINESS_COLLECTIONS = [
     'restaurants', 'beauty', 'shops', 'services', 'offices', 
     'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
     'real_estate', 'gyms', 'stands', 'auto_repairs', 
-    'auto_electronics', 'used_market'
+    'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules'
 ];
 
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
@@ -185,11 +185,10 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
     });
 });
 
-// Register other keys
+// Register other keys (non-business specific)
 ALL_KEYS.forEach(key => {
-    const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
-    
     if (!ALL_BUSINESS_COLLECTIONS.includes(key)) {
+        const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
         app.get(`/api/${key}`, async (req, res) => {
             try {
                 const db = await readDB();
@@ -199,16 +198,6 @@ ALL_KEYS.forEach(key => {
             }
         });
     }
-
-    app.post(`/api/${key}/bulk`, async (req, res) => {
-        try {
-            await updateCollection(dbKey, req.body);
-            res.json({ success: true, count: req.body.length });
-        } catch (err) {
-            console.error(`❌ Bulk update for ${key} failed:`, err.message);
-            res.status(500).json({ error: err.message });
-        }
-    });
 });
 
 // --- STATIC FILES AFTER API ---
