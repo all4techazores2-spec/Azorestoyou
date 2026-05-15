@@ -416,7 +416,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       switch (activeTab) {
         case 'activities':
-          return { id, title: name, type: bulkSubcategory || 'trail', island: bulkIsland, image: '', description: address || '', isPaid: false, price: 0, mapUrl: '' };
+          const defaultType = activeTab === 'trails' ? 'trail' : activeTab === 'poi' ? 'poi' : 'activity';
+          return { id, title: name, type: bulkSubcategory || defaultType, island: bulkIsland, image: '', description: address || '', isPaid: false, price: 0, mapUrl: '' };
         case 'flights':
           return { id, airline: name, flightNumber: '---', origin: 'LIS', destination: bulkIsland, departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
         case 'hotels':
@@ -715,7 +716,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         };
         break;
       case 'activities':
-        newItem = { id: `ACT${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        newItem = { id: `ACT${timestamp}`, title: '', type: 'activity', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        break;
+      case 'trails':
+        newItem = { id: `TRL${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        break;
+      case 'poi':
+        newItem = { id: `POI${timestamp}`, title: '', type: 'poi', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
         break;
       case 'flights':
         newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
@@ -1933,7 +1940,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': list = offices; break;
       case 'it_services': list = itServices; break;
       case 'perfumes': list = perfumes; break;
-      case 'activities': list = activities; break;
+      case 'activities': list = activities.filter(a => a.type === 'activity' || a.type === 'culture'); break;
       case 'trails': list = activities.filter(a => a.type === 'trail'); break;
       case 'poi': list = activities.filter(a => a.type === 'poi' || a.type === 'landscape'); break;
       case 'flights': list = flights; break;
