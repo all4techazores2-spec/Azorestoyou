@@ -720,13 +720,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         };
         break;
       case 'activities':
-        newItem = { id: `ACT${timestamp}`, title: '', type: 'activity', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: true, price: 10, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        newItem = { id: `ACT${timestamp}`, title: '', type: 'activity', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: true, price: 10, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
         break;
       case 'trails':
-        newItem = { id: `TRL${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        newItem = { id: `TRL${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
         break;
       case 'poi':
-        newItem = { id: `POI${timestamp}`, title: '', type: 'poi', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '' };
+        newItem = { id: `POI${timestamp}`, title: '', type: 'poi', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
         break;
       case 'flights':
         newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
@@ -1477,8 +1477,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             )}
 
-            {commonInput('Email de Contacto', 'email')}
-            {commonInput('Telefone/WhatsApp', 'phone')}
+            {commonInput('Email de Contacto Público', 'email')}
+            {commonInput('Telefone de Contacto Público', 'phone')}
+            {commonInput('Email Admin (Dashboard)', 'adminEmail')}
+            {commonInput('Password Admin', 'adminPassword')}
             {commonInput('Morada / Ponto de Encontro', 'address')}
             {commonInput('Google Maps URL', 'mapUrl', 'text', true)}
 
@@ -3104,7 +3106,7 @@ Av. do Mar, Madalena, Pico
                   )}
                   
                   {/* Credentials Preview for Businesses */}
-                  {['restaurants', 'shops', 'beauty'].includes(activeTab) && (
+                  {['restaurants', 'shops', 'beauty', 'activities', 'trails', 'poi'].includes(activeTab) && (
                     <div className="mt-3 pt-3 border-t border-slate-100 space-y-1">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                         <Mail size={12} className="text-blue-500" /> {item.adminEmail || 'Sem email'}
