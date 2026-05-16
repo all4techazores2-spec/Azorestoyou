@@ -116,6 +116,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [showBusOptionsModal, setShowBusOptionsModal] = useState(false);
   const [busModalStep, setBusModalStep] = useState<'options' | 'schedules' | 'payment'>('options');
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null);
+  const [selectedDayType, setSelectedDayType] = useState<'weekdays' | 'saturdays' | 'sundays'>(() => {
+    const day = new Date().getDay();
+    if (day === 0) return 'sundays';
+    if (day === 6) return 'saturdays';
+    return 'weekdays';
+  });
   const [beautyFilter, setBeautyFilter] = useState<string | null>(null);
   const [shopsFilter, setShopsFilter] = useState<string | null>(null);
   const [servicesFilter, setServicesFilter] = useState<string | null>(null);
@@ -1664,31 +1670,67 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                  )}
 
                  {busModalStep === 'schedules' && (
-                    <div className="space-y-4">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Horários Disponíveis (Próximas 2 horas)</p>
-                       {[
-                         { time: '14:20', company: 'Varela', platform: 'A2' },
-                         { time: '14:45', company: 'CRP', platform: 'B1' },
-                         { time: '15:10', company: 'Varela', platform: 'A2' }
-                       ].map((s, idx) => (
-                         <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-4">
-                               <div className="p-3 bg-white rounded-xl shadow-sm"><Clock className="text-blue-600 w-5 h-5" /></div>
-                               <div>
-                                  <span className="text-xl font-black text-slate-800 leading-none">{s.time}</span>
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.company} • Cais {s.platform}</p>
-                               </div>
-                            </div>
-                            <button 
-                              onClick={() => setBusModalStep('payment')}
-                              className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95"
+                    <div className="space-y-6">
+                       {/* Day Selection Tabs */}
+                       <div className="flex bg-slate-100 p-1 rounded-2xl">
+                          {(['weekdays', 'saturdays', 'sundays'] as const).map(day => (
+                            <button
+                              key={day}
+                              onClick={() => setSelectedDayType(day)}
+                              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all
+                                ${selectedDayType === day ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
-                               Selecionar
+                              {day === 'weekdays' ? 'Dias Úteis' : day === 'saturdays' ? 'Sábados' : 'Domingos'}
                             </button>
-                         </div>
-                       ))}
+                          ))}
+                       </div>
+
+                       <div className="space-y-3">
+                          {(() => {
+                            const currentIsland = targetIsland || 'PDL';
+                            const matches = busSchedules.filter(s => {
+                               if (s.island !== currentIsland) return false;
+                               if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
+                               const sOrigin = s.origin.toLowerCase();
+                               const sDest = s.destination.toLowerCase();
+                               const bOrigin = busOrigin.toLowerCase();
+                               const bDest = busDestination.toLowerCase();
+                               return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && 
+                                      (sDest.includes(bDest) || bDest.includes(sDest));
+                            });
+
+                            if (matches.length === 0) {
+                              return <p className="text-center py-8 text-slate-400 text-xs">Nenhum horário encontrado para esta rota.</p>;
+                            }
+
+                            return matches.flatMap(s => {
+                               const times = s.schedule?.[selectedDayType] || (selectedDayType === 'weekdays' ? s.times : []);
+                               return times.map((time, tIdx) => ({
+                                 time,
+                                 company: s.company,
+                                 id: `${s.id}-${tIdx}`
+                               }));
+                            }).sort((a, b) => a.time.localeCompare(b.time)).map((s, idx) => (
+                              <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all">
+                                 <div className="flex items-center gap-4">
+                                    <div className="p-2 bg-white rounded-lg shadow-sm"><Clock className="text-blue-600 w-4 h-4" /></div>
+                                    <div>
+                                       <span className="text-lg font-black text-slate-800 leading-none">{s.time}</span>
+                                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.company}</p>
+                                    </div>
+                                 </div>
+                                 <button 
+                                   onClick={() => setBusModalStep('payment')}
+                                   className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+                                 >
+                                    Selecionar
+                                 </button>
+                              </div>
+                            ));
+                          })()}
+                       </div>
                     </div>
-                 )}
+                  )}
 
                  {busModalStep === 'payment' && (
                     <div className="text-center space-y-8 py-6">

@@ -331,6 +331,12 @@ export interface BusSchedule {
   origin: string;
   destination: string;
   times: string[];
+  schedule?: {
+    weekdays?: string[];
+    saturdays?: string[];
+    sundays?: string[];
+    specificDays?: { days: string[], times: string[] }[];
+  };
   price: number;
   duration: string;
 }
