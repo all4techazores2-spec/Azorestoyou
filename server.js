@@ -68,7 +68,7 @@ const ALL_BUSINESS_COLLECTIONS = [
     'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules'
 ];
 
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts'];
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts', 'marketplace_ads'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
 app.get('/api/health', (req, res) => {

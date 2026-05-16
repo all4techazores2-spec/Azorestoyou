@@ -367,6 +367,7 @@ export type ExploreCategory =
   | 'it_services'
   | 'perfumes'
   | 'community'
+  | 'marketplace'
   | null;
 
 export type BeautySubCategory = 'beauty_salon' | 'hairdresser' | 'barber' | 'manicure' | 'massage';

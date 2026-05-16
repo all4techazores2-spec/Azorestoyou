@@ -35,6 +35,7 @@ import { API_BASE_URL, BUSINESS_TYPE_TO_ENDPOINT, OFFICIAL_DOMAIN, RENDER_BACKEN
 import { EcraMapa } from './components/EcraMapa';
 import { trilhosAcoresDados } from './data/dadosTrilhos';
 import DesktopView, { DesktopHeader, DesktopFooter } from './components/DesktopView';
+import MarketplaceSection from './components/MarketplaceSection';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -134,6 +135,7 @@ const App: React.FC = () => {
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
+  const [marketplaceAds, setMarketplaceAds] = useState<any[]>(() => loadFromCache('marketplace_ads', []));
   const [users, setUsers] = useState<any[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -174,6 +176,7 @@ const App: React.FC = () => {
         { key: 'it_services', setter: setItServices },
         { key: 'perfumes', setter: setPerfumes },
         { key: 'activities', setter: setActivities as Function },
+        { key: 'marketplace_ads', setter: setMarketplaceAds },
         { key: 'bus-schedules', setter: setBusSchedules as Function },
         { key: 'flights', setter: setFlights as Function }
       ];
@@ -1153,6 +1156,7 @@ const App: React.FC = () => {
         hotels={hotels}
         cars={cars}
         busSchedules={busSchedules}
+        marketplaceAds={marketplaceAds}
         // Updaters - AUTO-SYNC: save to MongoDB immediately
         onUpdateRestaurants={async (list) => { setRestaurants(list); await fetch(`${API_BASE_URL}/api/restaurants/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateShops={async (list) => { setShops(list); await fetch(`${API_BASE_URL}/api/shops/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
@@ -1173,6 +1177,7 @@ const App: React.FC = () => {
         onUpdateHotels={async (list) => { setHotels(list); await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateCars={async (list) => { setCars(list); await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateBusSchedules={async (list) => { setBusSchedules(list); await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateMarketplaceAds={async (list) => { setMarketplaceAds(list); await fetch(`${API_BASE_URL}/api/marketplace_ads/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         
         // Status & Logic
         dbStatus={dbStatus}
@@ -1185,7 +1190,7 @@ const App: React.FC = () => {
               body: JSON.stringify({
                 restaurants, shops, beauty, services, autoRepairs, autoElectronics, usedMarket, animals,
                 realEstate, gyms, stands, offices, itServices, perfumes,
-                activities, flights, hotels, cars, busSchedules, posts, users
+                activities, flights, hotels, cars, busSchedules, posts, users, marketplaceAds
               }),
             });
             if (res.ok) alert('✅ Sincronização TOTAL concluída com sucesso!');
@@ -1833,7 +1838,15 @@ const App: React.FC = () => {
                     onClose={() => setExploreCategory(null)}
                   />
                 )}
-                {!['flights', 'accommodation', 'rentcar', 'community'].includes(exploreCategory as string) && (
+                {exploreCategory === 'marketplace' && (
+                  <MarketplaceSection 
+                    isAuthenticated={isAuthenticated}
+                    userProfile={userProfile}
+                    onShowAuth={() => setShowAuthModal(true)}
+                    onClose={() => setExploreCategory(null)}
+                  />
+                )}
+                {!['flights', 'accommodation', 'rentcar', 'community', 'marketplace'].includes(exploreCategory as string) && (
                   <ExploreSection 
                     category={exploreCategory} 
                     destinationIsland={destinationIsland} 
@@ -2045,7 +2058,7 @@ const App: React.FC = () => {
       <div className="lg:hidden">
         <BottomNav 
           onHome={goHome} 
-          onMarketplace={() => setExploreCategory('used_market')} 
+          onMarketplace={() => setExploreCategory('marketplace')} 
           onShowAuth={() => setShowAuthModal(true)}
           onShowFavorites={() => setShowFavoritesModal(true)}
           onShowProfile={() => setShowProfileModal(true)}

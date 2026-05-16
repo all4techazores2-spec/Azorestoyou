@@ -42,6 +42,7 @@ interface AdminDashboardProps {
   hotels: Hotel[];
   cars: Car[];
   busSchedules: BusSchedule[];
+  marketplaceAds: any[];
   
   onUpdateRestaurants: (newRestaurants: Restaurant[]) => void;
   onUpdateShops: (newShops: Business[]) => void;
@@ -62,6 +63,7 @@ interface AdminDashboardProps {
   onUpdateHotels: (list: Hotel[]) => void;
   onUpdateCars: (list: Car[]) => void;
   onUpdateBusSchedules: (list: BusSchedule[]) => void;
+  onUpdateMarketplaceAds: (list: any[]) => void;
 
   onLogout: () => void;
   onFullSync?: () => void;
@@ -71,11 +73,11 @@ interface AdminDashboardProps {
   onUpdateUsers?: (users: any[]) => void;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [],
-  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers,
+  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [],
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers, onUpdateMarketplaceAds,
   onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
@@ -2256,6 +2258,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars': list = cars; break;
       case 'buses': list = busSchedules; break;
       case 'customers': list = users; break;
+      case 'marketplace': list = marketplaceAds; break;
       default: list = [];
     }
 
@@ -2298,7 +2301,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'offices': 'Escritórios & Cowork',
       'it_services': 'Serviços IT',
       'perfumes': 'Perfumes & Fragrâncias',
-      'customers': 'CUSTOMERS'
+      'marketplace': 'Classificados (Marketplace)',
+      'customers': 'Gestão de Clientes'
     };
     return titles[activeTab as string] || activeTab?.toUpperCase() || 'Painel';
   };
@@ -2436,6 +2440,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <Users className={`w-6 h-6 ${activeTab === 'customers' ? 'text-white' : 'text-emerald-500'}`} /> 
             <span className="font-black uppercase tracking-widest text-xs">Clientes</span>
+          </button>
+
+          <button 
+            onClick={() => { setActiveTab('marketplace'); setEditingItem(null); setShowOtherTabs(false); }} 
+            className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all mt-2 ${activeTab === 'marketplace' ? 'bg-gradient-to-r from-orange-600 to-amber-600 shadow-xl shadow-orange-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <ShoppingCart className={`w-6 h-6 ${activeTab === 'marketplace' ? 'text-white' : 'text-orange-500'}`} /> 
+            <span className="font-black uppercase tracking-widest text-xs">Marketplace</span>
           </button>
           
           <div className="h-px bg-slate-800/50 my-4 mx-2"></div>
@@ -2605,7 +2617,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                      const allCategories = [
                        'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                        'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
-                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules', 'marketplace'
                      ];
                      if (allCategories.includes(currentCategory)) {
                        setSyncSelection([currentCategory]);
@@ -3817,7 +3829,7 @@ Av. do Mar, Madalena, Pico
                      setSyncSelection([
                        'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                        'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
-                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules', 'marketplace'
                      ]);
                      setTimeout(handleSyncAndCompress, 100);
                    }}
@@ -3835,7 +3847,7 @@ Av. do Mar, Madalena, Pico
                          onClick={() => setSyncSelection([
                            'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
                            'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
-                           'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                           'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules', 'marketplace'
                          ])}
                          className="text-[10px] font-black text-blue-600 uppercase hover:underline"
                        >

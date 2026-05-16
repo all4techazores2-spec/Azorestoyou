@@ -82,7 +82,8 @@ const DEFAULT_DB = {
     shops: [], beauty: [], services: [], offices: [], 
     animals: [], real_estate: [], gyms: [], stands: [],
     auto_repairs: [], auto_electronics: [], used_market: [],
-    it_services: [], perfumes: [], users: [], posts: [] 
+    it_services: [], perfumes: [], users: [], posts: [],
+    marketplace_ads: [] 
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests
