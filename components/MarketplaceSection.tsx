@@ -184,26 +184,30 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       </div>
 
       {/* Modern Categories Bar */}
-      <div className="max-w-7xl mx-auto w-full">
+      <div className="max-w-7xl mx-auto w-full mb-4">
         <div className="flex overflow-x-auto gap-4 px-4 py-8 no-scrollbar scroll-smooth">
           {MARKET_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex flex-col items-center gap-3 min-w-[95px] p-5 rounded-[2.5rem] transition-all duration-500 ${
+              className={`flex flex-col items-center gap-3 min-w-[100px] p-5 rounded-[2.5rem] transition-all duration-500 border-2 ${
                 activeCategory === cat.id 
-                  ? 'bg-white text-orange-600 shadow-2xl shadow-orange-500/10 border border-orange-100 scale-105' 
-                  : 'bg-white/40 text-slate-500 hover:bg-white hover:text-slate-800 border border-transparent'
+                  ? 'bg-orange-600 text-white shadow-2xl shadow-orange-600/30 border-orange-600 scale-105' 
+                  : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-slate-100/60 shadow-sm'
               }`}
             >
               <div className={`p-3.5 rounded-[1.5rem] transition-all duration-500 ${
                 activeCategory === cat.id 
-                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30 rotate-6' 
-                  : 'bg-slate-100 text-slate-400'
+                  ? 'bg-white text-orange-600 shadow-inner' 
+                  : 'bg-slate-50 text-slate-400 group-hover:bg-white'
               }`}>
                 {cat.icon}
               </div>
-              <span className={`text-[10px] font-[900] uppercase tracking-tight text-center whitespace-nowrap ${activeCategory === cat.id ? 'opacity-100' : 'opacity-60'}`}>{cat.label}</span>
+              <span className={`text-[10px] font-[1000] uppercase tracking-wider text-center whitespace-nowrap ${
+                activeCategory === cat.id ? 'text-white' : 'text-slate-600'
+              }`}>
+                {cat.label}
+              </span>
             </button>
           ))}
         </div>
