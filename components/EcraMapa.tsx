@@ -191,8 +191,22 @@ export const EcraMapa: React.FC<EcraMapaProps> = ({ dadosTrilho, aoVoltar }) => 
       {poiAtivo && (
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
            <div style={{ backgroundColor: '#fff', borderRadius: '32px', overflow: 'hidden', width: '100%', maxWidth: '380px', margin: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
-              <div style={{ height: '240px', width: '100%', position: 'relative' }}>
-                <img src={poiAtivo.foto} alt={poiAtivo.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ height: '240px', width: '100%', position: 'relative', backgroundColor: '#f8fafc' }}>
+                {poiAtivo.foto ? (
+                  <img 
+                    src={poiAtivo.foto} 
+                    alt={poiAtivo.nome} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80'; // Fallback nature photo
+                    }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                    <ImageIcon size={64} />
+                    <p style={{ margin: '10px 0 0 0', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sem foto disponível</p>
+                  </div>
+                )}
                 <div style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: 'rgba(255,255,255,0.95)', padding: '6px 14px', borderRadius: '12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#1e293b', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>Ponto de Interesse</div>
               </div>
               <div style={{ padding: '28px' }}>
