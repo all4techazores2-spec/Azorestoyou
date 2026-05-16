@@ -166,16 +166,17 @@ export const DesktopFooter: React.FC = () => {
   );
 };
 
-const DesktopView: React.FC<DesktopViewProps> = ({
-  language,
-  onNavigate,
-  onShowAuth,
-  onShowFavorites,
-  onShowProfile,
-  onOpenIslandSelection,
-  isAuthenticated,
-  userProfile
-}) => {
+const DesktopView: React.FC<DesktopViewProps> = (props) => {
+  const {
+    language,
+    onNavigate,
+    onShowAuth,
+    onShowFavorites,
+    onShowProfile,
+    onOpenIslandSelection,
+    isAuthenticated,
+    userProfile
+  } = props;
   const [heroIndex, setHeroIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
