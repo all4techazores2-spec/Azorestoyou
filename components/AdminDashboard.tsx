@@ -590,9 +590,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     console.log(msg);
   };
 
-  const handleSyncAndCompress = async () => {
+  const handleSyncAndCompress = async (forceSelectedOnly: boolean = false) => {
     if (!onFullSync) return;
-    if (syncSelection.length === 0) {
+    
+    // Se não for modo forçado e não houver categorias selecionadas, avisar
+    if (!forceSelectedOnly && syncSelection.length === 0) {
       alert('Por favor, selecione pelo menos uma categoria para publicar.');
       return;
     }
@@ -600,7 +602,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsCompressing(true);
     setShowSyncSelector(false); // Close selector when starting
     setSyncLogs([]);
-    addLog('🚀 A iniciar processo de sincronização seletiva...');
+    addLog(forceSelectedOnly ? '🎯 A iniciar sincronização CIRÚRGICA (apenas selecionados)...' : '🚀 A iniciar processo de sincronização seletiva...');
     
     const allLists = [
       { data: restaurants, label: 'restaurants', id: 'restaurants', title: 'Restaurantes' },
@@ -626,8 +628,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       { data: busSchedules, label: 'bus-schedules', id: 'bus-schedules', title: 'Autocarros' }
     ];
 
-    // Filter based on user selection using the new 'id' field
-    const lists = allLists.filter(l => syncSelection.includes(l.id));
+    // Filter based on user selection or force selective items
+    let lists = [];
+    if (forceSelectedOnly && selectedIds.length > 0) {
+      allLists.forEach(l => {
+        const itemsInSelection = l.data.filter(item => selectedIds.includes(item.id));
+        if (itemsInSelection.length > 0) {
+          lists.push({ ...l, data: itemsInSelection });
+        }
+      });
+    } else {
+      lists = allLists.filter(l => syncSelection.includes(l.id));
+    }
 
     const totalItems = lists.reduce((sum, l) => sum + l.data.length, 0);
     setCompressionProgress({ current: 0, total: totalItems });
@@ -671,10 +683,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await onFullSync(); 
       setModifiedCategories(prev => {
         const next = new Set(prev);
-        lists.forEach(l => next.delete(l.label));
+        if (forceSelectedOnly) {
+          // No modo cirúrgico, mantemos as categorias pendentes mas limpamos a seleção de IDs
+          setSelectedIds([]);
+        } else {
+          lists.forEach(l => next.delete(l.id));
+        }
         return next;
       });
       
+      if (forceSelectedOnly) setSelectedIds([]);
+
       setShowSyncSuccess(true);
       setTimeout(() => setShowSyncSuccess(false), 5000); 
     } catch (e: any) {
@@ -2316,26 +2335,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                {/* BUTTON 1: COMPRESS & SYNC */}
                <button 
                  onClick={() => {
-                   const currentCategory = activeTab;
-                   const allCategories = [
-                     'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
-                     'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
-                     'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
-                   ];
-                   if (allCategories.includes(currentCategory)) {
-                     setSyncSelection([currentCategory]);
+                   if (selectedIds.length > 0) {
+                     handleSyncAndCompress(true);
                    } else {
-                     setSyncSelection([]);
+                     const currentCategory = activeTab;
+                     const allCategories = [
+                       'restaurants', 'shops', 'beauty', 'hotels', 'cars', 'activities', 'trails', 'services', 
+                       'auto_repairs', 'auto_electronics', 'used_market', 'animals', 'real_estate', 
+                       'gyms', 'stands', 'offices', 'it_services', 'perfumes', 'flights', 'bus-schedules'
+                     ];
+                     if (allCategories.includes(currentCategory)) {
+                       setSyncSelection([currentCategory]);
+                     } else {
+                       setSyncSelection([]);
+                     }
+                     setShowSyncSelector(true);
                    }
-                   setShowSyncSelector(true);
                  }} 
                  disabled={isSyncing || isCompressing}
                  className={`w-full flex flex-col items-center gap-1 p-4 rounded-2xl transition-all border shadow-lg relative ${isCompressing ? 'bg-amber-600/40 text-white border-amber-500' : 'bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-400'}`}
                >
                  <div className="flex items-center gap-3 w-full justify-center">
                     {isCompressing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
-                    <span className="font-black uppercase tracking-tighter text-sm">{isCompressing ? 'A Publicar...' : 'Publicar no Frontend'}</span>
-                    {modifiedCategories.size > 0 && !isCompressing && (
+                    <span className="font-black uppercase tracking-tighter text-sm">
+                      {isCompressing ? 'A Publicar...' : selectedIds.length > 0 ? `Publicar Seleção (${selectedIds.length})` : 'Publicar no Frontend'}
+                    </span>
+                    {modifiedCategories.size > 0 && !isCompressing && selectedIds.length === 0 && (
                        <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-2 py-1 rounded-full animate-bounce shadow-lg border-2 border-slate-900">
                          {modifiedCategories.size}
                        </span>
