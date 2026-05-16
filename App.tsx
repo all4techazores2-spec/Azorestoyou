@@ -1842,6 +1842,21 @@ const App: React.FC = () => {
                   <MarketplaceSection 
                     isAuthenticated={isAuthenticated}
                     userProfile={userProfile}
+                    ads={marketplaceAds}
+                    onUpdateAds={async (updated) => {
+                       setMarketplaceAds(updated);
+                       try {
+                         await fetch(`${API_BASE_URL}/api/marketplace_ads/bulk`, {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json' },
+                           body: JSON.stringify(updated)
+                         });
+                         console.log("✅ Marketplace ads synchronized");
+                       } catch (e) {
+                         console.error("Failed to sync marketplace ads:", e);
+                         throw e;
+                       }
+                    }}
                     onShowAuth={() => setShowAuthModal(true)}
                     onClose={() => setExploreCategory(null)}
                   />

@@ -221,17 +221,27 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
             }
         }
 
-        // Default: Overwrite mode
-        const normalizedData = Array.isArray(data) ? data.map(normalizeTrailData) : data;
+        if (isMongoConnected) {
+            const normalizedData = Array.isArray(data) ? data.map(normalizeTrailData) : data;
             const result = await DBModel.findOneAndUpdate(
                 { key: 'master_db' },
                 { $set: { [`data.${key}`]: normalizedData } },
                 { upsert: true, new: true, maxTimeMS: 120000 }
             );
 
-        if (result) {
-            console.log(`✅ Coleção '${key}' sincronizada com sucesso.`);
-            if (memoryCache) { memoryCache[key] = data; lastCacheTime = Date.now(); }
+            if (result) {
+                console.log(`✅ Coleção '${key}' sincronizada com MongoDB.`);
+                if (memoryCache) { memoryCache[key] = data; lastCacheTime = Date.now(); }
+                return { success: true };
+            }
+        } else {
+            // Local persistence fallback
+            const db = await readDB();
+            db[key] = data;
+            fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+            memoryCache = db;
+            lastCacheTime = Date.now();
+            console.log(`📂 Coleção '${key}' gravada localmente (db.json).`);
             return { success: true };
         }
     } catch (err) {

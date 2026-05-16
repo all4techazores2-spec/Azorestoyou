@@ -65,10 +65,10 @@ const ALL_BUSINESS_COLLECTIONS = [
     'restaurants', 'beauty', 'shops', 'services', 'offices', 
     'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
     'real_estate', 'gyms', 'stands', 'auto_repairs', 
-    'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules'
+    'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules', 'marketplace_ads'
 ];
 
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'flights', 'bus-schedules', 'activities', 'users', 'posts', 'marketplace_ads'];
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
 app.get('/api/health', (req, res) => {

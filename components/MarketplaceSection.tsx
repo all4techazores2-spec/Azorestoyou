@@ -28,6 +28,8 @@ interface Ad {
 interface MarketplaceSectionProps {
   isAuthenticated: boolean;
   userProfile?: any;
+  ads: Ad[];
+  onUpdateAds: (ads: Ad[]) => Promise<void>;
   onShowAuth: () => void;
   onClose: () => void;
 }
@@ -40,16 +42,18 @@ const MARKET_CATEGORIES = [
   { id: 'home', label: 'Casa e Móveis', icon: <ShoppingBag size={20} /> },
   { id: 'fashion', label: 'Moda e Acessórios', icon: <Tag size={20} /> },
   { id: 'services', label: 'Serviços', icon: <Briefcase size={20} /> },
+  { id: 'fashion_beauty', label: 'Beleza e Barbearia', icon: <Smartphone size={20} /> },
 ];
 
 const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   isAuthenticated,
   userProfile,
+  ads,
+  onUpdateAds,
   onShowAuth,
   onClose
 }) => {
-  const [ads, setAds] = useState<Ad[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -66,87 +70,6 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     images: [] as string[]
   });
 
-  useEffect(() => {
-    fetchAds();
-  }, []);
-
-  const fetchAds = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/marketplace_ads?t=${Date.now()}`);
-      const data = await res.json();
-      
-      // If empty, add some mock data for the user to see examples
-      if (!data || data.length === 0) {
-        const mockData: Ad[] = [
-          {
-            id: 'm1',
-            title: 'iPhone 15 Pro Max 256GB - Como Novo',
-            description: 'Vendo iPhone 15 Pro Max em estado impecável. Sempre usado com capa e película. Bateria a 100%. Factura e garantia.',
-            price: 1150,
-            category: 'electronics',
-            location: 'Ponta Delgada',
-            images: ['https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=2070&auto=format&fit=crop'],
-            userEmail: 'vendedor@exemplo.pt',
-            userName: 'João Silva',
-            userPhone: '912345678',
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          },
-          {
-            id: 'm2',
-            title: 'BMW Série 1 116d - 2021',
-            description: 'Viatura Nacional, 1 dono, revisões na marca. GPS, Sensores de estacionamento, Ar Condicionado Automático.',
-            price: 24500,
-            category: 'vehicles',
-            location: 'Ribeira Grande',
-            images: ['https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=2070&auto=format&fit=crop'],
-            userEmail: 'auto@exemplo.pt',
-            userName: 'Carlos Ferreira',
-            userPhone: '919887766',
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          },
-          {
-            id: 'm3',
-            title: 'T2 no Centro de Ponta Delgada',
-            description: 'Apartamento renovado no centro histórico. Cozinha equipada, varanda com vista cidade. Pronto a habitar.',
-            price: 185000,
-            category: 'real_estate',
-            location: 'Ponta Delgada',
-            images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'],
-            userEmail: 'imoveis@exemplo.pt',
-            userName: 'Imobiliária Açores',
-            userPhone: '296123456',
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          }
-        ];
-        setAds(mockData);
-        // Persist mocks if allowed
-        saveAds(mockData);
-      } else {
-        setAds(data);
-      }
-    } catch (err) {
-      console.error("Error fetching ads:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveAds = async (updatedAds: Ad[]) => {
-    try {
-      await fetch(`${API_BASE_URL}/api/marketplace_ads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAds)
-      });
-    } catch (err) {
-      console.error("Error saving ads:", err);
-    }
-  };
-
   const handlePostAd = async () => {
     if (!isAuthenticated) {
       onShowAuth();
@@ -158,26 +81,33 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       return;
     }
 
-    const ad: Ad = {
-      id: `ad_${Date.now()}`,
-      title: newAd.title,
-      description: newAd.description,
-      price: parseFloat(newAd.price),
-      category: newAd.category,
-      location: newAd.location,
-      images: newAd.images.length > 0 ? newAd.images : ['https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop'],
-      userEmail: userProfile.email,
-      userName: userProfile.name,
-      userPhone: userProfile.phone || '',
-      createdAt: new Date().toISOString(),
-      status: 'active'
-    };
+    setLoading(true);
+    try {
+      const ad: Ad = {
+        id: `ad_${Date.now()}`,
+        title: newAd.title,
+        description: newAd.description,
+        price: parseFloat(newAd.price),
+        category: newAd.category,
+        location: newAd.location,
+        images: newAd.images.length > 0 ? newAd.images : ['https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop'],
+        userEmail: userProfile.email,
+        userName: userProfile.name,
+        userPhone: userProfile.phone || '',
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
 
-    const updatedAds = [ad, ...ads];
-    setAds(updatedAds);
-    await saveAds(updatedAds);
-    setShowPostModal(false);
-    setNewAd({ title: '', description: '', price: '', category: 'electronics', location: 'São Miguel', images: [] });
+      const updatedAds = [ad, ...ads];
+      await onUpdateAds(updatedAds);
+      
+      setShowPostModal(false);
+      setNewAd({ title: '', description: '', price: '', category: 'electronics', location: 'São Miguel', images: [] });
+    } catch (err) {
+      alert("Erro ao publicar anúncio. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,113 +132,154 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 animate-in fade-in duration-500 pb-32">
-      {/* Header Estilo OLX */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-4 md:px-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors lg:hidden">
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase">Marketplace</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Classificados dos Açores</p>
+    <div className="fixed inset-0 z-[150] bg-[#f8fafc] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-500 overflow-hidden">
+      {/* Premium Glassmorphic Header */}
+      <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 z-[100] px-4 py-4 md:px-8 transition-all duration-300 shadow-sm pt-safe">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <button onClick={onClose} className="p-2.5 hover:bg-slate-100/80 text-slate-600 rounded-2xl transition-all active:scale-90 lg:hidden">
+                <ArrowLeft size={22} />
+              </button>
+              <div>
+                <h1 className="text-2xl font-[900] text-slate-900 tracking-tighter uppercase leading-none">Marketplace</h1>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Classificados Açores</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <button 
-            onClick={() => setShowPostModal(true)}
-            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-600/20 transition-all active:scale-95"
-          >
-            <Plus size={18} />
-            Publicar
-          </button>
-        </div>
-
-        {/* Search & Filters */}
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="O que procura?" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-12 bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all shadow-sm"
-            />
-          </div>
-          <button className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 shadow-sm transition-all active:scale-90">
-            <Filter size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* Categories Bar */}
-      <div className="flex overflow-x-auto gap-3 px-4 py-6 no-scrollbar scroll-smooth">
-        {MARKET_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-3xl transition-all duration-300 ${
-              activeCategory === cat.id 
-                ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20 scale-105' 
-                : 'bg-white text-slate-600 hover:bg-white/80 shadow-sm'
-            }`}
-          >
-            <div className={`p-2 rounded-2xl ${activeCategory === cat.id ? 'bg-white/20' : 'bg-slate-50'}`}>
-              {cat.icon}
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-tighter text-center whitespace-nowrap">{cat.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* View Toggle (Desktop Only) */}
-      <div className="hidden lg:flex px-8 mb-4 items-center justify-between">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{filteredAds.length} anúncios encontrados</p>
-        <div className="flex gap-2 p-1 bg-white border border-slate-200 rounded-xl">
-          <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-orange-50 text-orange-600' : 'text-slate-400'}`}><LayoutGrid size={18} /></button>
-          <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-orange-50 text-orange-600' : 'text-slate-400'}`}><List size={18} /></button>
-        </div>
-      </div>
-
-      {/* Ads List */}
-      <div className={`px-4 md:px-8 grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'} gap-4`}>
-        <AnimatePresence mode="popLayout">
-          {filteredAds.map((ad) => (
-            <motion.div
-              layout
-              key={ad.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              onClick={() => setSelectedAd(ad)}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+            
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowPostModal(true)}
+              className="group flex items-center gap-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-orange-600/20 transition-all border border-orange-400/20"
             >
-              <div className="relative aspect-square overflow-hidden">
-                <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black text-slate-900 uppercase tracking-tighter">
-                  {ad.category}
-                </div>
-                <button className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-red-500 rounded-full transition-all active:scale-90">
-                  <Heart size={16} />
-                </button>
+              <div className="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
+                <Plus size={16} />
               </div>
-              <div className="p-4">
-                <h3 className="text-sm font-black text-slate-900 line-clamp-2 mb-2 group-hover:text-orange-600 transition-colors">{ad.title}</h3>
-                <p className="text-lg font-black text-orange-600 mb-3">{ad.price.toLocaleString('pt-PT')} €</p>
-                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <MapPin size={12} />
-                    {ad.location}
-                  </div>
-                  <div className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                    {new Date(ad.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
+              Publicar
+            </motion.button>
+          </div>
+
+          {/* Luxury Search & Filters */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative group">
+              <div className="absolute inset-0 bg-orange-500/5 rounded-[1.25rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
+              <input 
+                type="text" 
+                placeholder="O que procura hoje?" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-14 bg-slate-50 border border-slate-200/60 rounded-[1.25rem] pl-14 pr-4 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:bg-white focus:border-orange-500/30 transition-all shadow-inner"
+              />
+            </div>
+            <button className="p-4 bg-white border border-slate-200/60 rounded-[1.25rem] text-slate-600 hover:text-orange-600 hover:border-orange-500/30 shadow-sm transition-all active:scale-95 group">
+              <Filter size={22} className="group-hover:rotate-180 transition-transform duration-500" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modern Categories Bar */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex overflow-x-auto gap-4 px-4 py-8 no-scrollbar scroll-smooth">
+          {MARKET_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex flex-col items-center gap-3 min-w-[95px] p-5 rounded-[2.5rem] transition-all duration-500 ${
+                activeCategory === cat.id 
+                  ? 'bg-white text-orange-600 shadow-2xl shadow-orange-500/10 border border-orange-100 scale-105' 
+                  : 'bg-white/40 text-slate-500 hover:bg-white hover:text-slate-800 border border-transparent'
+              }`}
+            >
+              <div className={`p-3.5 rounded-[1.5rem] transition-all duration-500 ${
+                activeCategory === cat.id 
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30 rotate-6' 
+                  : 'bg-slate-100 text-slate-400'
+              }`}>
+                {cat.icon}
               </div>
-            </motion.div>
+              <span className={`text-[10px] font-[900] uppercase tracking-tight text-center whitespace-nowrap ${activeCategory === cat.id ? 'opacity-100' : 'opacity-60'}`}>{cat.label}</span>
+            </button>
           ))}
-        </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Premium Ad Grid */}
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-8">
+        <div className="flex items-center justify-between mb-8 px-2">
+          <div className="flex items-center gap-3">
+             <div className="w-1 h-6 bg-orange-600 rounded-full"></div>
+             <p className="text-xs font-black text-slate-900 uppercase tracking-[0.15em]">{filteredAds.length} Anúncios em destaque</p>
+          </div>
+          <div className="hidden lg:flex gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/50">
+            <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={18} /></button>
+            <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}><List size={18} /></button>
+          </div>
+        </div>
+
+        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : 'grid-cols-1'} gap-6`}>
+          <AnimatePresence mode="popLayout">
+            {filteredAds.map((ad, idx) => (
+              <motion.div
+                layout
+                key={ad.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                onClick={() => setSelectedAd(ad)}
+                className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(249,115,22,0.1)] border border-slate-100 transition-all duration-500 cursor-pointer group"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden m-2 rounded-[2rem]">
+                  <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-[900] text-slate-900 uppercase tracking-wider shadow-sm">
+                      {ad.category}
+                    </span>
+                  </div>
+                  
+                  <button className="absolute top-4 right-4 p-2.5 bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-red-500 rounded-2xl transition-all active:scale-90 border border-white/10">
+                    <Heart size={16} />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-[13px] font-[900] text-slate-800 line-clamp-2 mb-3 group-hover:text-orange-600 transition-colors leading-[1.3] uppercase tracking-tight">{ad.title}</h3>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col">
+                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Preço</span>
+                       <p className="text-2xl font-[1000] text-slate-900 tracking-tighter">
+                         {ad.price.toLocaleString('pt-PT')} <span className="text-xs text-orange-500 font-black ml-0.5">€</span>
+                       </p>
+                    </div>
+                    <div className="bg-slate-50 p-2 rounded-xl group-hover:bg-orange-50 transition-colors">
+                       <ChevronRight size={16} className="text-slate-300 group-hover:text-orange-500 transition-all group-hover:translate-x-1" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100/60">
+                    <div className="flex items-center gap-1.5 text-[9px] font-[900] text-slate-500 uppercase tracking-widest">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      {ad.location}
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">
+                      {new Date(ad.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+        </div>
       </div>
 
       {/* Post Ad Modal */}
