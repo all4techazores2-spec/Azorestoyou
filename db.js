@@ -30,11 +30,11 @@ export const connectDB = async () => {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(uri, {
-                maxPoolSize: 20, // Aumentado para lidar com mais tráfego
+                maxPoolSize: 50, // Aumentado para lidar com mais tráfego
                 minPoolSize: 5,
-                connectTimeoutMS: 60000, // 60 segundos
-                socketTimeoutMS: 60000,
-                serverSelectionTimeoutMS: 60000,
+                connectTimeoutMS: 120000, // 120 segundos (aguentar fotos grandes)
+                socketTimeoutMS: 120000,
+                serverSelectionTimeoutMS: 120000,
                 heartbeatFrequencyMS: 10000,
             });
             isMongoConnected = true;
@@ -102,18 +102,25 @@ export const readDB = async () => {
             }
             
             // If a fetch is already in progress, wait for it instead of firing another massive DB query
-            if (activeFetchPromise) {
-                return await activeFetchPromise;
-            }
-            
-            // Start a new fetch and lock it
+            // Start a new fetch and lock it with retry logic
             activeFetchPromise = (async () => {
-                // .lean() returns plain JS object - much lighter on memory than Mongoose documents
-                const doc = await DBModel.findOne({ key: 'master_db' }).lean();
-                const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
-                memoryCache = data;
-                lastCacheTime = Date.now();
-                return data;
+                let retries = 3;
+                while (retries > 0) {
+                    try {
+                        // .lean() returns plain JS object - much lighter on memory than Mongoose documents
+                        const doc = await DBModel.findOne({ key: 'master_db' }).lean().maxTimeMS(60000);
+                        const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
+                        memoryCache = data;
+                        lastCacheTime = Date.now();
+                        return data;
+                    } catch (err) {
+                        retries--;
+                        console.error(`⚠️ ReadDB Retry (${3-retries}/3):`, err.message);
+                        if (retries === 0) throw err;
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+                return DEFAULT_DB;
             })();
             
             const result = await activeFetchPromise;
@@ -121,7 +128,7 @@ export const readDB = async () => {
             return result;
         } catch (err) {
             activeFetchPromise = null; // Clear lock on error
-            console.error("Error reading from MongoDB:", err.message);
+            console.error("❌ CRITICAL DATABASE READ ERROR:", err.message);
             // Return cache if available, otherwise empty default
             return memoryCache || DEFAULT_DB;
         }
@@ -214,11 +221,11 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
 
         // Default: Overwrite mode
         console.log(`💾 A atualizar coleção '${key}' no Atlas (${data.length} itens)...`);
-        const result = await DBModel.findOneAndUpdate(
-            { key: 'master_db' },
-            { $set: { [`data.${key}`]: data } },
-            { upsert: true, new: true, maxTimeMS: 60000 }
-        );
+            const result = await DBModel.findOneAndUpdate(
+                { key: 'master_db' },
+                { $set: { [`data.${key}`]: data } },
+                { upsert: true, new: true, maxTimeMS: 120000 }
+            );
 
         if (result) {
             console.log(`✅ Coleção '${key}' sincronizada com sucesso.`);
