@@ -132,9 +132,9 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-[150] bg-[#f8fafc] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-500 overflow-hidden">
-      {/* Premium Glassmorphic Header */}
-      <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 z-[100] px-4 py-4 md:px-8 transition-all duration-300 shadow-sm pt-safe">
+    <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-700 pb-32">
+      {/* Premium Sub-Header */}
+      <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 sticky top-[80px] lg:top-[96px] z-[80] px-4 py-4 md:px-8 transition-all duration-300 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -184,9 +184,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       </div>
 
       {/* Modern Categories Bar */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="flex overflow-x-auto gap-4 px-4 py-8 no-scrollbar scroll-smooth">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex overflow-x-auto gap-4 px-4 py-8 no-scrollbar scroll-smooth">
           {MARKET_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -278,7 +277,6 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
         </div>
       </div>
 
