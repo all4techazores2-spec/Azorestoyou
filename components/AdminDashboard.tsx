@@ -536,14 +536,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const compressImage = (base64Str: string, maxWidth = 1000, quality = 0.5): Promise<string> => {
+  const compressImage = (base64Str: string, maxWidth = 800, quality = 0.4): Promise<string> => {
     return new Promise((resolve) => {
       if (!base64Str || !base64Str.startsWith('data:image')) {
         resolve(base64Str);
         return;
       }
       
-      const timeout = setTimeout(() => resolve(base64Str), 5000);
+      const timeout = setTimeout(() => resolve(base64Str), 10000);
 
       const img = new Image();
       img.src = base64Str;
@@ -560,7 +560,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        // Optimized for WebP as requested by user
+        // Optimized for WebP and higher compression for faster sync
         resolve(canvas.toDataURL('image/webp', quality));
       };
       img.onerror = () => {
@@ -656,19 +656,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           const item = listObj.data[i];
           const itemName = item.name || item.title || item.id;
           
-          setCompressionLabel(`A enviar (${i+1}/${listObj.data.length}): ${itemName}`);
+          addLog(`📤 A enviar item ${i+1}/${listObj.data.length}: ${itemName}...`);
           
-          // Enviar item individualmente para modo INCREMENTAL (Merge)
-          const response = await fetch(`${API_BASE_URL}/api/${listObj.label}?mode=merge`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
+          // Usar XMLHttpRequest para monitorizar o progresso real do upload
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${API_BASE_URL}/api/${listObj.label}?mode=merge`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                setCompressionLabel(`A enviar (${i+1}/${listObj.data.length}): ${itemName} - ${percentComplete}%`);
+                setCompressionProgress({ 
+                  current: processedCount + (event.loaded / event.total), 
+                  total: totalItems 
+                });
+              }
+            };
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+              } else {
+                reject(new Error(`Erro do servidor (${xhr.status}): ${xhr.responseText}`));
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error('Erro de rede ou ligação perdida.'));
+            xhr.ontimeout = () => reject(new Error('O tempo de resposta do servidor esgotou.'));
+            
+            xhr.send(JSON.stringify(item));
           });
-          
-          if (!response.ok) {
-             const errorText = await response.text();
-             throw new Error(`Erro ao enviar ${itemName}: ${errorText}`);
-          }
           
           processedCount++;
           setCompressionProgress({ current: processedCount, total: totalItems });
