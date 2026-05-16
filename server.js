@@ -40,18 +40,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-    origin: function(origin, callback) {
-        // Permitir requests sem origin (como apps mobile ou curl)
-        if (!origin) return callback(null, true);
-        
-        // Em produção, ser o mais permissivo possível com o domínio oficial e subdomínios Render
-        if (origin.includes('azorestoyou.pt') || origin.endsWith('.onrender.com') || origin.includes('localhost')) {
-            callback(null, true);
-        } else {
-            // Fallback permissivo para evitar bloqueios em cenários de rede instáveis
-            callback(null, true);
-        }
-    },
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
