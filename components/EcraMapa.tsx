@@ -156,7 +156,18 @@ export const EcraMapa: React.FC<EcraMapaProps> = ({ dadosTrilho, aoVoltar }) => 
     setSimulacaoAtiva(true);
   };
 
-  const maxAltitude = Math.max(...rota.map(p => p.altitude), 1);
+  if (!rota || rota.length === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f8fafc', flexDirection: 'column', gap: '20px', textAlign: 'center', padding: '40px' }}>
+         <div style={{ fontSize: '64px' }}>⚠️</div>
+         <h2 style={{ fontWeight: 900, color: '#1e293b', margin: 0 }}>ERRO DE CARREGAMENTO</h2>
+         <p style={{ color: '#64748b', maxWidth: '300px', lineHeight: '1.5' }}>Não foi possível encontrar as coordenadas desta rota na base de dados.</p>
+         <button onClick={aoVoltar} style={{ padding: '16px 32px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '16px', fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}>VOLTAR AO TRILHO</button>
+      </div>
+    );
+  }
+
+  const maxAltitude = Math.max(...rota.map(p => p.altitude || 0), 1);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', fontFamily: 'sans-serif', backgroundColor: '#f0f2f5', overflow: 'hidden' }}>
@@ -182,7 +193,7 @@ export const EcraMapa: React.FC<EcraMapaProps> = ({ dadosTrilho, aoVoltar }) => 
           <span style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '15px' }}>{instrucao}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '5px', borderTop: '1px solid #e2e8f0', paddingTop: '8px', color: '#4a5568' }}>
-          <span>📈 Altitude: <strong>{posicaoCaminhante.altitude}m</strong></span>
+          <span>📈 Altitude: <strong>{posicaoCaminhante?.altitude || 0}m</strong></span>
           <span>Progresso: <strong>{((indexAtual / rota.length) * 100).toFixed(0)}%</strong></span>
         </div>
       </div>

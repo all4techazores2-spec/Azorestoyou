@@ -1861,21 +1861,7 @@ const App: React.FC = () => {
                     onClose={() => setExploreCategory(null)}
                     onShowMap={(url: string) => setShowMapUrl(url)}
                     onShowInteractiveMap={(trailId: string) => {
-                      // 1. Procurar primeiro nos dados REAIS da Base de Dados (atividades)
-                      const realTrail = activities.find(a => a.id === trailId || a.title === trailId);
-                      
-                      if (realTrail && realTrail.pontosInteresse && realTrail.pontosInteresse.length > 0) {
-                        // Se temos dados ricos na DB, usamos esses!
-                        setSelectedTrailData({
-                          climaSimulado: realTrail.climaSimulado || { condicao: 'Céu Limpo', temperatura: 20 },
-                          rota: realTrail.rota || [],
-                          pontosInteresse: realTrail.pontosInteresse
-                        });
-                        setShowInteractiveMap(true);
-                        return;
-                      }
-
-                      // 2. Fallback para os dados estáticos (apenas se a DB estiver vazia para este trilho)
+                      // 1. Procurar chave de fallback estático
                       const idLower = trailId.toLowerCase().replace(/[^a-z0-9]/g, '_');
                       const keys = Object.keys(trilhosAcoresDados);
                       
@@ -1893,13 +1879,25 @@ const App: React.FC = () => {
                         else if (name.includes('gorreana')) trailKey = keys.find(k => k.includes('gorreana'));
                       }
 
-                      if (trailKey && trilhosAcoresDados[trailKey]) {
-                        setSelectedTrailData(trilhosAcoresDados[trailKey]);
+                      // 2. Procurar dados na Base de Dados
+                      const realTrail = activities.find(a => a.id === trailId || a.title === trailId);
+                      const staticTrail = trailKey ? trilhosAcoresDados[trailKey] : null;
+
+                      // 3. Unir o melhor de dois mundos: Fotos/POI da DB + Rota/Geral do estático
+                      if (realTrail || staticTrail) {
+                        setSelectedTrailData({
+                          climaSimulado: realTrail?.climaSimulado || staticTrail?.climaSimulado || { condicao: 'Céu Limpo', temperatura: 20 },
+                          // Se a rota na DB estiver vazia, usamos a estática
+                          rota: (realTrail?.rota && realTrail.rota.length > 0) ? realTrail.rota : (staticTrail?.rota || []),
+                          // Se os POIs na DB estiverem vazios, usamos os estáticos
+                          pontosInteresse: (realTrail?.pontosInteresse && realTrail.pontosInteresse.length > 0) ? realTrail.pontosInteresse : (staticTrail?.pontosInteresse || [])
+                        });
                         setShowInteractiveMap(true);
-                      } else {
-                        const query = `Trail ${trailId}, Azores`;
-                        setShowMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`);
+                        return;
                       }
+
+                      const query = `Trail ${trailId}, Azores`;
+                      setShowMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`);
                     }}
                   />
                 )}
