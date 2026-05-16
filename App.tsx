@@ -34,7 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL, BUSINESS_TYPE_TO_ENDPOINT, OFFICIAL_DOMAIN, RENDER_BACKEND, FRONTEND_URL, isLocal, getGoogleMapsEmbedUrl } from './config';
 import { EcraMapa } from './components/EcraMapa';
 import { trilhosAcoresDados } from './data/dadosTrilhos';
-import DesktopView from './components/DesktopView';
+import DesktopView, { DesktopHeader, DesktopFooter } from './components/DesktopView';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
