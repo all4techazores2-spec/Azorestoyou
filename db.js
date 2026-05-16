@@ -200,11 +200,12 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
             // Merge logic: Update existing IDs, add new ones
             const merged = [...existing];
             incoming.forEach(item => {
-                const idx = merged.findIndex(m => m.id === item.id);
+                const normalizedItem = normalizeTrailData(item);
+                const idx = merged.findIndex(m => m.id === normalizedItem.id);
                 if (idx !== -1) {
-                    merged[idx] = { ...merged[idx], ...item };
+                    merged[idx] = { ...merged[idx], ...normalizedItem };
                 } else {
-                    merged.push(item);
+                    merged.push(normalizedItem);
                 }
             });
             
@@ -220,10 +221,10 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
         }
 
         // Default: Overwrite mode
-        console.log(`💾 A atualizar coleção '${key}' no Atlas (${data.length} itens)...`);
+        const normalizedData = Array.isArray(data) ? data.map(normalizeTrailData) : data;
             const result = await DBModel.findOneAndUpdate(
                 { key: 'master_db' },
-                { $set: { [`data.${key}`]: data } },
+                { $set: { [`data.${key}`]: normalizedData } },
                 { upsert: true, new: true, maxTimeMS: 120000 }
             );
 
@@ -251,4 +252,20 @@ export const resetDB = async () => {
     memoryCache = DEFAULT_DB;
     lastCacheTime = Date.now();
     console.log("🧨 Database RESET executed.");
+};
+
+// --- DATA NORMALIZATION HELPERS ---
+/**
+ * Ensures advanced trail fields are preserved and correctly structured.
+ * Specifically handles 'climaSimulado' and 'pontosInteresse' for trails and POIs.
+ */
+export const normalizeTrailData = (item) => {
+    if (item.type === 'trail' || item.type === 'poi') {
+        return {
+            ...item,
+            climaSimulado: item.climaSimulado || { condicao: "Céu Limpo", temperatura: 20 },
+            pontosInteresse: Array.isArray(item.pontosInteresse) ? item.pontosInteresse : []
+        };
+    }
+    return item;
 };

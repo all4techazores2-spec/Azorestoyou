@@ -402,7 +402,7 @@ const App: React.FC = () => {
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
-  const [selectedTrailData, setSelectedTrailData] = useState<any[]>([]);
+  const [selectedTrailData, setSelectedTrailData] = useState<any>(null);
 
   // Helper to filter data by island
   const filterByIsland = <T extends { island?: string }>(items: T[]) => {
@@ -1948,10 +1948,12 @@ const App: React.FC = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed inset-0 z-[1000] bg-white"
           >
-            <EcraMapa 
-              rota={selectedTrailData} 
-              aoVoltar={() => setShowInteractiveMap(false)} 
-            />
+            {selectedTrailData && (
+              <EcraMapa 
+                dadosTrilho={selectedTrailData} 
+                aoVoltar={() => setShowInteractiveMap(false)} 
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

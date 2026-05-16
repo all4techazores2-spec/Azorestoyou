@@ -922,7 +922,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     markCategoryAsModified(activeTab);
   };
 
-  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'car_gallery' | 'room_main' | 'room_gallery' | 'activity_gallery', extraIndex?: number, roomGalleryIndex?: number) => {
+  const handleImageUpload = async (files: FileList | File[] | File, type: 'main' | 'gallery' | 'dish' | 'car' | 'car_gallery' | 'room_main' | 'room_gallery' | 'activity_gallery' | 'poi', extraIndex?: number, roomGalleryIndex?: number) => {
     if (!editingItem) return;
     
     let fileArray: File[] = [];
@@ -1005,6 +1005,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ...prev, 
             gallery: [...(prev.gallery || []), finalUrl] 
           }));
+        } else if (type === 'poi' && extraIndex !== undefined) {
+          setEditingItem(prev => {
+            const pois = [...(prev.pontosInteresse || [])];
+            if (pois[extraIndex]) {
+              pois[extraIndex] = { ...pois[extraIndex], foto: finalUrl };
+            }
+            return { ...prev, pontosInteresse: pois };
+          });
         }
       }
       setUploadProgress({ current: fileArray.length, total: fileArray.length, label: 'Concluído!' });
@@ -1542,6 +1550,144 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {commonInput('Morada / Ponto de Encontro', 'address')}
                 {commonInput('Google Maps URL', 'mapUrl', 'text', true)}
               </>
+            )}
+
+            {/* Advanced Trail Features (Climate & POIs) */}
+            {isTrail && (
+              <div className="md:col-span-2 border-t pt-8 mt-6 space-y-8">
+                <div className="bg-slate-900/5 p-6 rounded-[2.5rem] border border-slate-200 shadow-inner">
+                   <div className="flex items-center gap-3 mb-6">
+                     <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                        <RefreshCw size={20} className={isUploading ? 'animate-spin' : ''} />
+                     </div>
+                     <div>
+                        <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Gerir Pontos de Interesse (POIs)</h4>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Configuração de Clima e Marcadores de Mapa</p>
+                     </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Condição Climática</label>
+                        <input className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" value={editingItem.climaSimulado?.condicao || ''} onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), condicao: e.target.value}})} placeholder="Ex: Céu Limpo" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Temperatura (ºC)</label>
+                        <input type="number" className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm font-black focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" value={editingItem.climaSimulado?.temperatura || 0} onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), temperatura: Number(e.target.value)}})} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Alerta de Segurança</label>
+                        <input className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm text-red-600 font-bold focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none" value={editingItem.climaSimulado?.alerta || ''} onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), alerta: e.target.value}})} placeholder="Opcional: Aviso sonoro..." />
+                      </div>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div className="flex justify-between items-center px-2">
+                        <h5 className="text-[11px] font-black uppercase text-slate-700 tracking-[0.2em]">Marcadores de Interesse</h5>
+                        <button 
+                          type="button" 
+                          onClick={() => setEditingItem({...editingItem, pontosInteresse: [...(editingItem.pontosInteresse || []), { id: `POI_${Date.now()}`, nome: '', tipo: 'miradouro', descricao: '', lat: 0, lng: 0, foto: '' }]})}
+                          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-blue-600/20"
+                        >
+                          <Plus size={14} /> Adicionar Ponto
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        {editingItem.pontosInteresse?.map((poi: any, pIdx: number) => (
+                          <div key={pIdx} className="bg-white border-2 border-slate-100 p-6 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-blue-100 transition-all space-y-4 group">
+                            <div className="flex flex-col md:flex-row gap-4">
+                              {/* POI Photo Upload */}
+                              <div className="w-full md:w-32 h-32 rounded-3xl overflow-hidden bg-slate-100 relative group/photo flex-shrink-0 border-2 border-slate-50">
+                                {poi.foto ? (
+                                  <img src={poi.foto} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                    <ImageIcon size={24} />
+                                    <span className="text-[8px] font-black uppercase mt-1">Sem Foto</span>
+                                  </div>
+                                )}
+                                <label className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                   <input type="file" className="hidden" accept="image/*,.webp" onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'poi', pIdx)} disabled={isUploading} />
+                                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-900 shadow-lg">
+                                      {isUploading ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
+                                   </div>
+                                </label>
+                              </div>
+
+                              <div className="flex-1 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Nome do Local</label>
+                                    <input className="w-full border-2 border-slate-100 p-2.5 rounded-xl text-xs font-black focus:border-blue-300 outline-none transition-all" placeholder="Ex: Cascata do Salto" value={poi.nome} onChange={e => {
+                                      const newPois = [...(editingItem.pontosInteresse || [])];
+                                      newPois[pIdx].nome = e.target.value;
+                                      setEditingItem({...editingItem, pontosInteresse: newPois});
+                                    }} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Tipo de Ponto</label>
+                                    <select className="w-full border-2 border-slate-100 p-2.5 rounded-xl text-xs font-bold focus:border-blue-300 outline-none transition-all bg-white" value={poi.tipo} onChange={e => {
+                                      const newPois = [...(editingItem.pontosInteresse || [])];
+                                      newPois[pIdx].tipo = e.target.value;
+                                      setEditingItem({...editingItem, pontosInteresse: newPois});
+                                    }}>
+                                      <option value="miradouro">Miradouro</option>
+                                      <option value="cascata">Cascata</option>
+                                      <option value="monumento">Monumento</option>
+                                      <option value="perigo">Perigo</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                   <div className="space-y-1">
+                                      <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Latitude</label>
+                                      <input type="number" step="0.000001" className="w-full border-2 border-slate-100 p-2.5 rounded-xl text-xs font-bold focus:border-blue-300 outline-none" value={poi.lat} onChange={e => {
+                                        const newPois = [...(editingItem.pontosInteresse || [])];
+                                        newPois[pIdx].lat = Number(e.target.value);
+                                        setEditingItem({...editingItem, pontosInteresse: newPois});
+                                      }} />
+                                   </div>
+                                   <div className="space-y-1">
+                                      <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Longitude</label>
+                                      <input type="number" step="0.000001" className="w-full border-2 border-slate-100 p-2.5 rounded-xl text-xs font-bold focus:border-blue-300 outline-none" value={poi.lng} onChange={e => {
+                                        const newPois = [...(editingItem.pontosInteresse || [])];
+                                        newPois[pIdx].lng = Number(e.target.value);
+                                        setEditingItem({...editingItem, pontosInteresse: newPois});
+                                      }} />
+                                   </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                               <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Descrição Informativa (Voz Guia)</label>
+                               <textarea className="w-full border-2 border-slate-100 p-3 rounded-2xl text-xs h-20 focus:border-blue-300 outline-none transition-all" placeholder="Descreve o local para o turista ouvir ao aproximar-se..." value={poi.descricao} onChange={e => {
+                                 const newPois = [...(editingItem.pontosInteresse || [])];
+                                 newPois[pIdx].descricao = e.target.value;
+                                 setEditingItem({...editingItem, pontosInteresse: newPois});
+                               }} />
+                            </div>
+
+                            <div className="flex justify-end pt-2 border-t border-slate-50">
+                               <button type="button" onClick={() => setEditingItem({...editingItem, pontosInteresse: (editingItem.pontosInteresse || []).filter((_:any, i:number) => i !== pIdx)})} className="flex items-center gap-2 text-red-500 hover:text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-50 transition-all text-[10px] font-black uppercase tracking-widest">
+                                 <Trash2 size={14} /> Eliminar Ponto
+                               </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {(!editingItem.pontosInteresse || editingItem.pontosInteresse.length === 0) && (
+                        <div className="py-12 border-4 border-dashed border-slate-100 rounded-[3rem] text-center text-slate-300">
+                           <MapPin size={48} className="mx-auto mb-3 opacity-20" />
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum Ponto de Interesse Adicionado</p>
+                        </div>
+                      )}
+                   </div>
+                </div>
+              </div>
             )}
 
             {/* Activity Gallery Section */}
