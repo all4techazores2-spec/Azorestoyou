@@ -560,7 +560,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        // Optimized for WebP and higher compression for faster sync
+        // FORCE WEBP FORMAT FOR MAXIMUM PERFORMANCE
         resolve(canvas.toDataURL('image/webp', quality));
       };
       img.onerror = () => {
