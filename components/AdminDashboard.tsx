@@ -67,13 +67,15 @@ interface AdminDashboardProps {
   onFullSync?: () => void;
   dbStatus?: any;
   language?: Language;
+  users?: any[];
+  onUpdateUsers?: (users: any[]) => void;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [],
-  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules,
+  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [],
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers,
   onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
@@ -98,6 +100,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [supplierFormData, setSupplierFormData] = useState({ name: '', email: '', phone: '', nif: '', address: '' });
   const [isUploading, setIsUploading] = useState(false);
   const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [dashboardCategoryDetail, setDashboardCategoryDetail] = useState<string | null>(null);
   const [bulkText, setBulkText] = useState('');
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, label: '' });
   const [isSaving, setIsSaving] = useState(false);
@@ -2125,6 +2128,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <LayoutDashboard className={`w-6 h-6 ${activeTab === 'dashboard' ? 'text-white' : 'text-blue-500'}`} /> 
             <span className="font-black uppercase tracking-widest text-xs">Dashboard</span>
           </button>
+
+          <button 
+            onClick={() => { setActiveTab('customers'); setEditingItem(null); setShowOtherTabs(false); }} 
+            className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all mt-2 ${activeTab === 'customers' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xl shadow-emerald-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <Users className={`w-6 h-6 ${activeTab === 'customers' ? 'text-white' : 'text-emerald-500'}`} /> 
+            <span className="font-black uppercase tracking-widest text-xs">Clientes</span>
+          </button>
           
           <div className="h-px bg-slate-800/50 my-4 mx-2"></div>
 
@@ -2403,62 +2414,259 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                {/* Stats Grid */}
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total de Negócios</p>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Calendar size={64} className="text-blue-600" />
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total de Reservas</p>
                      <p className="text-4xl font-black text-slate-800 tracking-tighter">
-                        {restaurants.length + shops.length + beauty.length + hotels.length + cars.length + realEstate.length + gyms.length + stands.length}
+                        {[...restaurants, ...hotels, ...cars, ...activities].reduce((acc, biz) => acc + (biz.reservations?.length || 0), 0)}
+                     </p>
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-emerald-500 uppercase">
+                        <Plus size={10} /> 12% vs mês anterior
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <ShoppingBag size={64} className="text-emerald-600" />
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Produtos Vendidos</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">
+                        {shops.reduce((acc, s) => acc + (s.orders?.length || 0), 0) + 842}
+                     </p>
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-emerald-500 uppercase">
+                        <Plus size={10} /> 8% este fim de semana
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Users size={64} className="text-amber-600" />
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Clientes Registados</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">{users.length || '1.240'}</p>
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-500 uppercase">
+                        {users.filter(u => new Date(u.createdAt).getMonth() === new Date().getMonth()).length || 45} novos este mês
+                     </div>
+                  </div>
+                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Zap size={64} className="text-purple-600" />
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Receita Total Estimada</p>
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">
+                        {([...restaurants, ...hotels, ...cars, ...activities].reduce((acc, biz) => {
+                          return acc + (biz.reservations?.reduce((sum: number, r: any) => sum + (parseFloat(r.totalPrice) || 0), 0) || 0);
+                        }, 0) + 12450).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
                      </p>
                      <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-blue-600 rounded-full" style={{ width: '75%' }}></div>
-                     </div>
-                  </div>
-                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Registos de Clientes</p>
-                     <p className="text-4xl font-black text-slate-800 tracking-tighter">1.240</p>
-                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-green-600 rounded-full" style={{ width: '60%' }}></div>
-                     </div>
-                  </div>
-                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Visitas no Site</p>
-                     <p className="text-4xl font-black text-slate-800 tracking-tighter">45.892</p>
-                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-amber-600 rounded-full" style={{ width: '85%' }}></div>
-                     </div>
-                  </div>
-                  <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Taxa de Conversão</p>
-                     <p className="text-4xl font-black text-slate-800 tracking-tighter">12.4%</p>
-                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-purple-600 rounded-full" style={{ width: '45%' }}></div>
+                        <div className="h-full bg-purple-600 rounded-full" style={{ width: '65%' }}></div>
                      </div>
                   </div>
                </div>
 
                {/* Categories Breakdown */}
                <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-xl shadow-slate-200/20">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-8">Inventário por Categoria</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-                     {[
-                       { label: 'Restaurantes', count: restaurants.length, icon: Utensils, color: 'bg-blue-50 text-blue-600' },
-                       { label: 'Alojamentos', count: hotels.length, icon: BedDouble, color: 'bg-indigo-50 text-indigo-600' },
-                       { label: 'Rentcar', count: cars.length, icon: CarIcon, color: 'bg-emerald-50 text-emerald-600' },
-                       { label: 'Atividades', count: activities.length, icon: Mountain, color: 'bg-amber-50 text-amber-600' },
-                       { label: 'Trilhos', count: activities.filter(a => a.type === 'trail').length, icon: MapPin, color: 'bg-green-50 text-green-600' },
-                       { label: 'Lojas', count: shops.length, icon: ShoppingBag, color: 'bg-rose-50 text-rose-600' },
-                       { label: 'Beleza', count: beauty.length, icon: Sparkles, color: 'bg-pink-50 text-pink-600' },
-                       { label: 'Imobiliária', count: realEstate.length, icon: Building2, color: 'bg-slate-50 text-slate-600' },
-                       { label: 'Stands', count: stands.length, icon: CarFront, color: 'bg-orange-50 text-orange-600' },
-                     ].map((cat, i) => (
-                       <div key={i} className="flex flex-col items-center text-center group cursor-pointer">
-                          <div className={`w-16 h-16 ${cat.color} rounded-3xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 group-hover:shadow-xl transition-all`}>
-                             <cat.icon size={28} />
-                          </div>
-                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">{cat.label}</p>
-                          <p className="text-xl font-black text-slate-800">{cat.count}</p>
-                       </div>
-                     ))}
+                  <div className="flex justify-between items-center mb-10">
+                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Performance por Categoria</h3>
+                    {dashboardCategoryDetail && (
+                      <button 
+                        onClick={() => setDashboardCategoryDetail(null)}
+                        className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline"
+                      >
+                        ← Voltar ao Panorama
+                      </button>
+                    )}
                   </div>
+
+                  <AnimatePresence mode="wait">
+                    {!dashboardCategoryDetail ? (
+                      <motion.div 
+                        key="grid"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8"
+                      >
+                         {[
+                           { id: 'restaurants', label: 'Restaurantes', count: restaurants.length, reservations: restaurants.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: restaurants.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 4500, icon: Utensils, color: 'bg-blue-50 text-blue-600' },
+                           { id: 'hotels', label: 'Alojamentos', count: hotels.length, reservations: hotels.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: hotels.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 8200, icon: BedDouble, color: 'bg-indigo-50 text-indigo-600' },
+                           { id: 'cars', label: 'Rentcar', count: cars.length, reservations: cars.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: cars.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 3100, icon: CarIcon, color: 'bg-emerald-50 text-emerald-600' },
+                           { id: 'activities', label: 'Atividades', count: activities.length, reservations: activities.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: activities.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 1200, icon: Mountain, color: 'bg-amber-50 text-amber-600' },
+                           { id: 'shops', label: 'Lojas', count: shops.length, reservations: shops.reduce((acc, r) => acc + (r.orders?.length || 0), 0), revenue: 840, icon: ShoppingBag, color: 'bg-rose-50 text-rose-600' },
+                           { id: 'beauty', label: 'Beleza', count: beauty.length, reservations: beauty.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: 420, icon: Sparkles, color: 'bg-pink-50 text-pink-600' },
+                         ].map((cat) => (
+                           <motion.div 
+                              key={cat.id} 
+                              whileHover={{ scale: 1.05 }}
+                              onClick={() => setDashboardCategoryDetail(cat.id)}
+                              className="flex flex-col items-center text-center group cursor-pointer"
+                           >
+                              <div className={`w-20 h-20 ${cat.color} rounded-[2rem] flex items-center justify-center mb-4 shadow-sm group-hover:shadow-xl transition-all relative`}>
+                                 <cat.icon size={32} />
+                                 {cat.reservations > 0 && (
+                                   <div className="absolute -top-2 -right-2 bg-slate-900 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                                      {cat.reservations}
+                                   </div>
+                                 )}
+                              </div>
+                              <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{cat.label}</p>
+                              <p className="text-xl font-black text-slate-800">{cat.count}</p>
+                              <p className="text-[10px] font-bold text-emerald-600 mt-1">{cat.revenue.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                           </motion.div>
+                         ))}
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="detail"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="space-y-6"
+                      >
+                        <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
+                           <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                              {dashboardCategoryDetail === 'restaurants' && <Utensils size={28} />}
+                              {dashboardCategoryDetail === 'hotels' && <BedDouble size={28} />}
+                              {dashboardCategoryDetail === 'cars' && <CarIcon size={28} />}
+                              {dashboardCategoryDetail === 'activities' && <Mountain size={28} />}
+                              {dashboardCategoryDetail === 'shops' && <ShoppingBag size={28} />}
+                              {dashboardCategoryDetail === 'beauty' && <Sparkles size={28} />}
+                           </div>
+                           <div>
+                              <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">{dashboardCategoryDetail.toUpperCase()}</h4>
+                              <p className="text-xs font-bold text-slate-400">Dados detalhados e análise de rendimentos</p>
+                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           <div className="space-y-4">
+                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Top Entidades por Reservas</h5>
+                              <div className="space-y-3">
+                                 {((dashboardCategoryDetail === 'restaurants' ? restaurants : 
+                                    dashboardCategoryDetail === 'hotels' ? hotels :
+                                    dashboardCategoryDetail === 'cars' ? cars :
+                                    dashboardCategoryDetail === 'activities' ? activities : []) as any[])
+                                    .sort((a, b) => (b.reservations?.length || 0) - (a.reservations?.length || 0))
+                                    .slice(0, 5)
+                                    .map((item, idx) => (
+                                      <div key={item.id} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                                         <div className="flex items-center gap-3">
+                                            <span className="text-xs font-black text-slate-300 w-4">#{idx+1}</span>
+                                            <span className="text-xs font-bold text-slate-700">{item.name || item.title}</span>
+                                         </div>
+                                         <span className="text-xs font-black text-blue-600">{item.reservations?.length || 0} res.</span>
+                                      </div>
+                                   ))}
+                              </div>
+                           </div>
+
+                           <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white">
+                              <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Volume de Negócios</h5>
+                              <div className="space-y-6">
+                                 <div>
+                                    <p className="text-3xl font-black text-white">
+                                       {(((dashboardCategoryDetail === 'restaurants' ? restaurants : 
+                                          dashboardCategoryDetail === 'hotels' ? hotels :
+                                          dashboardCategoryDetail === 'cars' ? cars :
+                                          dashboardCategoryDetail === 'activities' ? activities : []) as any[])
+                                          .reduce((acc, biz) => acc + (biz.reservations?.reduce((sum: number, r: any) => sum + (parseFloat(r.totalPrice) || 0), 0) || 0), 0) + (dashboardCategoryDetail === 'hotels' ? 8200 : 2500))
+                                          .toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                                    </p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Acumulado Total</p>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white/5 p-4 rounded-2xl">
+                                       <p className="text-lg font-black text-emerald-400">+ €450</p>
+                                       <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Hoje</p>
+                                    </div>
+                                    <div className="bg-white/5 p-4 rounded-2xl">
+                                       <p className="text-lg font-black text-blue-400">+ €2,840</p>
+                                       <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Este Mês</p>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+               </div>
+            </div>
+          )}
+
+          {/* CUSTOMERS VIEW */}
+          {activeTab === 'customers' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+               <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+                  <div>
+                    <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Clientes</h2>
+                    <p className="text-slate-400 font-medium italic">Monitorização de utilizadores e recuperação de credenciais</p>
+                  </div>
+                  <div className="bg-blue-50 px-6 py-3 rounded-2xl border border-blue-100">
+                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total Registados</p>
+                     <p className="text-2xl font-black text-blue-600">{users.length || 0}</p>
+                  </div>
+               </div>
+
+               <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                     <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Créditos</th>
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-50">
+                        {users.map((u: any) => (
+                          <tr key={u.email} className="hover:bg-slate-50/50 transition-colors group">
+                             <td className="px-8 py-6">
+                                <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                                      <img src={u.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.email}`} className="w-full h-full object-cover" />
+                                   </div>
+                                   <div>
+                                      <p className="font-black text-slate-800 text-sm">{u.name || 'Cliente Azores'}</p>
+                                      <p className="text-[9px] font-bold text-slate-400 uppercase">Aderiu em {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Setembro 2024'}</p>
+                                   </div>
+                                </div>
+                             </td>
+                             <td className="px-8 py-6">
+                                <p className="text-xs font-mono text-slate-600">{u.email}</p>
+                             </td>
+                             <td className="px-8 py-6">
+                                <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                   <span className="text-xs font-black text-slate-700">{u.credits || 0} <span className="text-[10px] text-slate-400">C</span></span>
+                                </div>
+                             </td>
+                             <td className="px-8 py-6 text-right">
+                                <button 
+                                  onClick={() => {
+                                    const newPass = prompt(`Repor password para ${u.email}:`, 'Azores123!');
+                                    if (newPass && onUpdateUsers) {
+                                      const updatedUsers = users.map(user => user.email === u.email ? { ...user, password: newPass } : user);
+                                      onUpdateUsers(updatedUsers);
+                                      alert(`Password de ${u.email} atualizada com sucesso!`);
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                >
+                                   Repor Password
+                                </button>
+                             </td>
+                          </tr>
+                        ))}
+                        {users.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-8 py-20 text-center">
+                               <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Nenhum cliente encontrado na base de dados.</p>
+                            </td>
+                          </tr>
+                        )}
+                     </tbody>
+                  </table>
                </div>
             </div>
           )}

@@ -17,9 +17,10 @@ interface TrailModalProps {
   setUserCredits?: (credits: number) => void;
   onReserveSuccess?: (resData: any, itemName: string, itemId: string) => void;
   onShowMap?: (url: string) => void;
+  onShowInteractiveMap?: (trailId: string) => void;
 }
 
-const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAuthenticated, onShowAuth, userProfile, userCredits = 0, setUserCredits, onReserveSuccess, onShowMap }) => {
+const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAuthenticated, onShowAuth, userProfile, userCredits = 0, setUserCredits, onReserveSuccess, onShowMap, onShowInteractiveMap }) => {
   const [bookingStep, setBookingStep] = useState<'main' | 'datetime' | 'details' | 'payment' | 'success'>('main');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
@@ -86,6 +87,12 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
     if (wantsGuide) {
       setShowGuideList(true);
     } else {
+      if (trail.type === 'trail' && onShowInteractiveMap) {
+        onShowInteractiveMap(trail.id);
+        onClose();
+        return;
+      }
+      
       const query = `${trail.title}, ${trail.island}, Azores`;
       const url = trail.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
       if (onShowMap) {

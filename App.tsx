@@ -32,6 +32,8 @@ import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL, BUSINESS_TYPE_TO_ENDPOINT, OFFICIAL_DOMAIN, RENDER_BACKEND, FRONTEND_URL, isLocal, getGoogleMapsEmbedUrl } from './config';
+import { EcraMapa } from './components/EcraMapa';
+import { trilhosAcoresDados } from './data/dadosTrilhos';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -131,6 +133,7 @@ const App: React.FC = () => {
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
+  const [users, setUsers] = useState<any[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [dbStatus, setDbStatus] = useState<any>({ 
     storage: 'A ligar...', 
@@ -332,8 +335,15 @@ const App: React.FC = () => {
           const statusData = await sResp.json();
           console.log("✅ Diagnóstico recebido:", statusData);
           setDbStatus(statusData);
-        } else {
-          console.error("❌ Falha no diagnóstico:", sResp.status, sResp.statusText);
+        }
+
+        // 4. Se for Admin, carregar todos os utilizadores
+        if (isAdmin || userProfile.email === 'adminadmin@gmail.com') {
+          const uResp = await fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`);
+          if (uResp.ok) {
+            const allUsers = await uResp.json();
+            setUsers(allUsers || []);
+          }
         }
       } catch (e) {
         console.error("❌ Erro de rede ao contactar servidor:", e);
@@ -391,6 +401,8 @@ const App: React.FC = () => {
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
+  const [showInteractiveMap, setShowInteractiveMap] = useState(false);
+  const [selectedTrailData, setSelectedTrailData] = useState<any[]>([]);
 
   // Helper to filter data by island
   const filterByIsland = <T extends { island?: string }>(items: T[]) => {
@@ -1127,7 +1139,7 @@ const App: React.FC = () => {
               body: JSON.stringify({
                 restaurants, shops, beauty, services, autoRepairs, autoElectronics, usedMarket, animals,
                 realEstate, gyms, stands, offices, itServices, perfumes,
-                activities, flights, hotels, cars, busSchedules, posts
+                activities, flights, hotels, cars, busSchedules, posts, users
               }),
             });
             if (res.ok) alert('✅ Sincronização TOTAL concluída com sucesso!');
@@ -1137,6 +1149,17 @@ const App: React.FC = () => {
           }
         }}
         language={language}
+        users={users}
+        onUpdateUsers={async (updatedUsers) => {
+           setUsers(updatedUsers);
+           try {
+             await fetch(`${API_BASE_URL}/api/users/bulk`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify(updatedUsers)
+             });
+           } catch(e) {}
+        }}
       />
     );
   }
@@ -1834,6 +1857,35 @@ const App: React.FC = () => {
                     }}
                     onClose={() => setExploreCategory(null)}
                     onShowMap={(url: string) => setShowMapUrl(url)}
+                    onShowInteractiveMap={(trailId: string) => {
+                      const idLower = trailId.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                      const keys = Object.keys(trilhosAcoresDados);
+                      
+                      // 1. Exact or partial key match
+                      let trailKey = keys.find(k => 
+                        idLower.includes(k.toLowerCase()) || 
+                        k.toLowerCase().includes(idLower) ||
+                        // Check for trail code like PR01SMI
+                        (k.split('_')[0] && trailId.toUpperCase().includes(k.split('_')[0]))
+                      );
+
+                      // 2. Fallback fuzzy match for common names
+                      if (!trailKey) {
+                        const name = trailId.toLowerCase();
+                        if (name.includes('furnas')) trailKey = keys.find(k => k.includes('furnas'));
+                        else if (name.includes('fogo')) trailKey = keys.find(k => k.includes('fogo'));
+                        else if (name.includes('sete cidades')) trailKey = keys.find(k => k.includes('sete_cidades'));
+                        else if (name.includes('gorreana')) trailKey = keys.find(k => k.includes('gorreana'));
+                      }
+
+                      if (trailKey && trilhosAcoresDados[trailKey]) {
+                        setSelectedTrailData(trilhosAcoresDados[trailKey]);
+                        setShowInteractiveMap(true);
+                      } else {
+                        const query = `Trail ${trailId}, Azores`;
+                        setShowMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`);
+                      }
+                    }}
                   />
                 )}
               </div>
@@ -1880,6 +1932,23 @@ const App: React.FC = () => {
                 ></iframe>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Trail Map Overlay */}
+      <AnimatePresence>
+        {showInteractiveMap && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-[1000] bg-white"
+          >
+            <EcraMapa 
+              rota={selectedTrailData} 
+              aoVoltar={() => setShowInteractiveMap(false)} 
+            />
           </motion.div>
         )}
       </AnimatePresence>

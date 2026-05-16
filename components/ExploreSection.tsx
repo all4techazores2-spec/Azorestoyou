@@ -43,6 +43,7 @@ interface ExploreSectionProps {
   onShowMap?: (url: string) => void;
   selectedItemId?: string | null;
   onSelectedItemIdHandled?: () => void;
+  onShowInteractiveMap?: (trailId: string) => void;
 }
 
 const ExploreSection: React.FC<ExploreSectionProps> = ({ 
@@ -76,7 +77,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onClose,
   onShowMap,
   selectedItemId,
-  onSelectedItemIdHandled
+  onSelectedItemIdHandled,
+  onShowInteractiveMap
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -124,6 +126,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
   const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
+  const [trailZoneFilter, setTrailZoneFilter] = useState<'Todos' | 'Oeste' | 'Centro' | 'Leste'>('Todos');
   
   // Handle external item selection (e.g. from slider)
   React.useEffect(() => {
@@ -484,84 +487,160 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
 
   const renderActivities = (type?: string | string[]) => {
-    const data = sortItems(type ? getActivitiesByType(type) : allActivities);
+    const isTrail = type === 'trail' || category === 'trails';
+    
+    // Lista mapeada com os novos IDs oficiais para sincronização total (Opção 1)
+    const listaTrilhosSaoMiguel = [
+      { id: "PR03SMI_vista_rei_sete_cidades", nome: "Vista do Rei - Sete Cidades", codigo: "PR03SMI", zona: "Oeste", distancia: "7.7 km", duracao: "2h00m", imagemUrl: "/imagens/sete_cidades.jpg" },
+      { id: "PR06SMI_lagoa_furnas", nome: "Lagoa das Furnas", codigo: "PR06SMI", zona: "Leste", distancia: "9.5 km", duracao: "3h00m", imagemUrl: "/imagens/furnas.jpg" },
+      { id: "PR42SMI_lagoa_fogo_praia", nome: "Lagoa do Fogo (Praia)", codigo: "PR42SMI", zona: "Centro", distancia: "4.4 km", duracao: "2h00m", imagemUrl: "/imagens/fogo.jpg" },
+      { id: "PR28SMI_cha_gorreana", nome: "Trilho do Chá Gorreana", codigo: "PR28SMI", zona: "Leste", distancia: "3.4 km", duracao: "1h30m", imagemUrl: "/imagens/gorreana.jpg" },
+      { id: "PRC05SMI_serra_devassa", nome: "Serra Devassa", codigo: "PRC05SMI", zona: "Oeste", distancia: "4.9 km", duracao: "2h15m", imagemUrl: "/imagens/devassa.jpg" },
+      { id: "PR36SMI_rocha_relva", nome: "Rocha da Relva", codigo: "PR36SMI", zona: "Oeste", distancia: "5.5 km", duracao: "3h00m", imagemUrl: "/imagens/rocha_relva.jpg" },
+      { id: "PR39SMI_salto_cabrito", nome: "Salto do Cabrito", codigo: "PR39SMI", zona: "Centro", distancia: "7.5 km", duracao: "2h30m", imagemUrl: "/imagens/salto_cabrito.jpg" },
+      { id: "PRC43SMI_salto_prego_sanguinho", nome: "Salto do Prego / Sanguinho", codigo: "PRC43SMI", zona: "Leste", distancia: "4.5 km", duracao: "2h00m", imagemUrl: "/imagens/sanguinho.jpg" },
+    ];
+
+    let data = sortItems(type ? getActivitiesByType(type) : allActivities);
+
+    if (isTrail) {
+      // 1. Mapear os dados para garantir que os IDs batem certo com o dadosTrilhos.ts
+      data = data.map(a => {
+        const mapped = listaTrilhosSaoMiguel.find(t => 
+          a.id === t.id || 
+          a.title.toLowerCase().includes(t.nome.toLowerCase()) || 
+          a.id.includes(t.codigo)
+        );
+        if (mapped) {
+          return {
+            ...a,
+            id: mapped.id, // Sincronizar ID
+            title: mapped.nome,
+            distance: mapped.distancia,
+            duration: mapped.duracao,
+            // Guardar código e zona para filtros
+            trailCode: mapped.codigo,
+            trailZone: mapped.zona
+          };
+        }
+        return a;
+      });
+
+      // 2. Filtrar por zona se estivermos em trilhos
+      data = data.filter(a => {
+        if (trailZoneFilter === 'Todos') return true;
+        return (a as any).trailZone === trailZoneFilter;
+      });
+    }
     
     return (
       <div className="space-y-6">
-        {/* Price Filter Buttons */}
-        <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          <button 
-            onClick={() => setPriceFilter('all')}
-            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
-              ${priceFilter === 'all' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-          >
-            Todos
-          </button>
-          <button 
-            onClick={() => setPriceFilter('free')}
-            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
-              ${priceFilter === 'free' ? 'bg-emerald-500 text-white border-transparent shadow-emerald-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
-          >
-            Grátis
-          </button>
-          {type !== 'trail' && (
+        {isTrail ? (
+          <div className="space-y-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {['Todos', 'Oeste', 'Centro', 'Leste'].map((zona) => (
+                <button
+                  key={zona}
+                  onClick={() => setTrailZoneFilter(zona as any)}
+                  className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
+                    ${trailZoneFilter === zona ? 'bg-emerald-600 text-white border-transparent' : 'bg-white text-slate-500 border-slate-100 hover:border-emerald-200'}`}
+                >
+                  {zona === 'Todos' ? '🌍 Todos' : zona}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">
+              Explora a natureza açoriana de forma guiada
+            </p>
+          </div>
+        ) : (
+          <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             <button 
-              onClick={() => setPriceFilter('paid')}
+              onClick={() => setPriceFilter('all')}
               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
-                ${priceFilter === 'paid' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+                ${priceFilter === 'all' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
             >
-              Pago
+              Todos
             </button>
-          )}
-        </div>
+            <button 
+              onClick={() => setPriceFilter('free')}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
+                ${priceFilter === 'free' ? 'bg-emerald-500 text-white border-transparent shadow-emerald-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+            >
+              Grátis
+            </button>
+            {type !== 'trail' && (
+              <button 
+                onClick={() => setPriceFilter('paid')}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
+                  ${priceFilter === 'paid' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
+              >
+                Pago
+              </button>
+            )}
+          </div>
+        )}
 
         {data.length === 0 ? renderEmptyState() : (
           <div className="space-y-4">
-            {data.map(a => (
-              <div 
-                key={a.id} 
-                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
-                onClick={() => {
-                  if (a.type === 'trail' || a.type === 'landscape' || a.type === 'culture' || a.type === 'poi' || a.type === 'activity') {
-                    setSelectedTrail(a);
-                  }
-                }}
-              >
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
-                   <img 
-                     src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
-                     alt={a.title} 
-                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                   />
-                   <div className="absolute top-1 right-1">
-                      {type !== 'trail' && (
-                        a.isPaid ? (
-                          <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
-                            {a.price}€
+            {data.map(a => {
+              const trail = a as any;
+              
+              return (
+                <div 
+                  key={a.id} 
+                  className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
+                  onClick={() => {
+                    if (a.type === 'trail' || a.type === 'landscape' || a.type === 'culture' || a.type === 'poi' || a.type === 'activity') {
+                      setSelectedTrail(a);
+                    }
+                  }}
+                >
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
+                     <img 
+                       src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
+                       alt={a.title} 
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                     />
+                     <div className="absolute top-1 right-1">
+                        {isTrail ? (
+                          <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                            {trail.trailCode || 'PR'}
                           </span>
                         ) : (
-                          <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
-                            Grátis
-                          </span>
-                        )
+                          a.isPaid ? (
+                            <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                              {a.price}€
+                            </span>
+                          ) : (
+                            <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                              Grátis
+                            </span>
+                          )
+                        )}
+                     </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{a.title}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-blue-500" /> {a.island}
+                      </p>
+                      {trail.trailZone && (
+                        <>
+                          <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{trail.trailZone}</span>
+                        </>
                       )}
-                      {type === 'trail' && (
-                        <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
-                          Grátis
-                        </span>
-                      )}
-                   </div>
+                    </div>
+                    <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">
+                      {isTrail && trail.duration ? `⏱ ${trail.duration} | 🏁 ${trail.distance}` : a.description}
+                    </p>
+                  </div>
+                  <ArrowRight size={20} className="text-slate-200 group-hover:text-emerald-600 transition-colors mr-2" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{a.title}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-2">
-                    <MapPin className="w-3 h-3 text-blue-500" /> {a.island}
-                  </p>
-                  <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">{a.description}</p>
-                </div>
-                <ArrowRight size={20} className="text-slate-200 group-hover:text-blue-600 transition-colors mr-2" />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1596,6 +1675,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           userProfile={userProfile}
           onReserveSuccess={onReserveSuccess}
           onShowMap={onShowMap}
+          onShowInteractiveMap={onShowInteractiveMap}
         />
       )}
 
@@ -1606,6 +1686,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           trail={selectedTrail}
           language={lang}
           onShowMap={onShowMap}
+          onShowInteractiveMap={onShowInteractiveMap}
         />
       )}
 

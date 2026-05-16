@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+let IconePadrao = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = IconePadrao;
+
+interface PontoRota {
+  lat: number;
+  lng: number;
+  altitude: number;
+  indicacao?: string;
+}
+
+interface EcraMapaProps {
+  rota: PontoRota[];
+  aoVoltar: () => void;
+}
+
+const CentrarMapa: React.FC<{ posicao: [number, number] }> = ({ posicao }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(posicao, map.getZoom());
+  }, [posicao, map]);
+  return null;
+};
+
+export const EcraMapa: React.FC<EcraMapaProps> = ({ rota, aoVoltar }) => {
+  const [pontosPercorridos, setPontosPercorridos] = useState<PontoRota[]>([]);
+  const [indexAtual, setIndexAtual] = useState<number>(0);
+  const [simulacaoAtiva, setSimulacaoAtiva] = useState<boolean>(false);
+  const [instrucao, setInstrucao] = useState<string>("Clica em START para iniciar o trilho");
+
+  // Função para a App FALAR com o utilizador (Opção 2)
+  const falarInstrucao = (texto: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Para o que estiver a falar antes
+      const mensagem = new SpeechSynthesisUtterance(texto);
+      mensagem.lang = 'pt-PT'; // Voz em Português de Portugal
+      mensagem.rate = 1.0;
+      window.speechSynthesis.speak(mensagem);
+    }
+  };
+
+  useEffect(() => {
+    if (!simulacaoAtiva || rota.length === 0) return;
+
+    const temporizador = setInterval(() => {
+      if (indexAtual < rota.length) {
+        const proximoPonto = rota[indexAtual];
+        setPontosPercorridos((prev) => [...prev, proximoPonto]);
+        
+        if (proximoPonto.indicacao) {
+          setInstrucao(proximoPonto.indicacao);
+          falarInstrucao(proximoPonto.indicacao); // Fala a direção dinamicamente
+        }
+        
+        setIndexAtual((prev) => prev + 1);
+      } else {
+        clearInterval(temporizador);
+        setSimulacaoAtiva(false);
+        const fimFesta = "Trilho Concluído com sucesso! Parabéns!";
+        setInstrucao(fimFesta);
+        falarInstrucao(fimFesta);
+      }
+    }, 1200);
+
+    return () => clearInterval(temporizador);
+  }, [simulacaoAtiva, indexAtual, rota]);
+
+  const posicaoCaminhante = pontosPercorridos[pontosPercorridos.length - 1] || rota[0];
+
+  const iniciarTrilho = () => {
+    setPontosPercorridos([]);
+    setIndexAtual(0);
+    const textoInicio = rota[0].indicacao || "Trilho Iniciado! Siga o caminho desenhado.";
+    setInstrucao(textoInicio);
+    falarInstrucao(textoInicio);
+    setSimulacaoAtiva(true);
+  };
+
+  // Encontrar a altitude máxima para desenhar o gráfico proporcionalmente
+  const maxAltitude = Math.max(...rota.map(p => p.altitude), 1);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100vh', fontFamily: 'sans-serif', backgroundColor: '#f0f2f5', overflow: 'hidden' }}>
+      
+      {/* BOTÃO VOLTAR */}
+      <button onClick={aoVoltar} style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1100, background: '#fff', border: 'none', borderRadius: '50%', width: '45px', height: '45px', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', cursor: 'pointer', fontSize: '20px', fontWeight: 'bold' }}>
+        ←
+      </button>
+
+      {/* PAINEL GPS SUPERIOR */}
+      <div style={{ position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', width: '85%', maxWidth: '400px', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '15px', borderRadius: '16px', boxShadow: '0px 4px 12px rgba(0,0,0,0.15)', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '24px' }}>🔊</span>
+          <span style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '15px' }}>{instrucao}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '5px', borderTop: '1px solid #e2e8f0', paddingTop: '8px', color: '#4a5568' }}>
+          <span>📈 Altitude: <strong>{posicaoCaminhante.altitude}m</strong></span>
+          <span>Progresso: <strong>{((indexAtual / rota.length) * 100).toFixed(0)}%</strong></span>
+        </div>
+
+        {/* MINI GRÁFICO DE ELEVAÇÃO (Opção 1) */}
+        <div style={{ marginTop: '10px', paddingTop: '5px', borderTop: '1px solid #e2e8f0' }}>
+          <p style={{ margin: '0 0 5px 0', fontSize: '11px', color: '#718096', fontWeight: 'bold' }}>Perfil de Elevação:</p>
+          <div style={{ display: 'flex', alignItems: 'end', height: '40px', gap: '2px', backgroundColor: '#edf2f7', padding: '4px', borderRadius: '6px' }}>
+            {rota.map((ponto, i) => {
+              const alturaBarra = (ponto.altitude / maxAltitude) * 100;
+              const isPassed = i < indexAtual;
+              return (
+                <div 
+                  key={i} 
+                  style={{ 
+                    flex: 1, 
+                    height: `${alturaBarra}%`, 
+                    backgroundColor: isPassed ? '#48bb78' : '#cbd5e0',
+                    transition: 'background-color 0.3s',
+                    borderRadius: '2px'
+                  }} 
+                  title={`Alt: ${ponto.altitude}m`}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* MAPA */}
+      <MapContainer center={[rota[0].lat, rota[0].lng]} zoom={15} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+        {simulacaoAtiva && <CentrarMapa posicao={[posicaoCaminhante.lat, posicaoCaminhante.lng]} />}
+        <Polyline positions={rota.map(p => [p.lat, p.lng])} color="#718096" weight={4} opacity={0.4} />
+        {pontosPercorridos.length > 1 && <Polyline positions={pontosPercorridos.map(p => [p.lat, p.lng])} color="#48bb78" weight={6} />}
+        <Marker position={[posicaoCaminhante.lat, posicaoCaminhante.lng]} />
+      </MapContainer>
+
+      {/* BOTÃO START */}
+      <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000 }}>
+        {!simulacaoAtiva && indexAtual === 0 ? (
+          <button onClick={iniciarTrilho} style={{ padding: '16px 45px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px', color: '#fff', backgroundColor: '#48bb78', border: 'none', borderRadius: '30px', boxShadow: '0 6px 20px rgba(72,187,120,0.4)', cursor: 'pointer' }}>
+            🚀 START
+          </button>
+        ) : (
+          <button onClick={() => setSimulacaoAtiva(!simulacaoAtiva)} style={{ padding: '14px 35px', fontSize: '16px', fontWeight: 'bold', color: '#fff', backgroundColor: simulacaoAtiva ? '#ecc94b' : '#48bb78', border: 'none', borderRadius: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', cursor: 'pointer' }}>
+            {simulacaoAtiva ? '⏸ Pausar' : '▶ Continuar'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
