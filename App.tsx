@@ -583,10 +583,34 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAuthSuccess = (isAdminUser: boolean = false, businessId?: string, email?: string, role?: string, name?: string) => {
+  const handleAuthSuccess = async (isAdminUser: boolean = false, businessId?: string, email?: string, role?: string, name?: string, phone?: string, password?: string) => {
     setIsAuthenticated(true);
     setShowAuthModal(false);
     setMobileMenuOpen(false);
+
+    // Sync with DB to save password and phone for Admin access
+    if (email && (password || phone)) {
+      try {
+        fetch(`${API_BASE_URL}/api/users/${email}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            phone,
+            role: role || 'cliente',
+            profile: { 
+              name: name || email.split('@')[0],
+              avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+            }
+          })
+        }).then(() => {
+           if (isAdminUser || email === 'adminadmin@gmail.com') {
+             fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`).then(r => r.json()).then(allUsers => setUsers(allUsers || []));
+           }
+        });
+      } catch (e) {}
+    }
     
     // 1. Super Admin
     if (isAdminUser || email === 'adminadmin@gmail.com') {
@@ -1985,7 +2009,7 @@ const App: React.FC = () => {
       />
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name) => handleAuthSuccess(isAdmin, bizId, email, role, name)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 

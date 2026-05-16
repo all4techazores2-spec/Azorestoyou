@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import AzoresLogo from './AzoresLogo';
-import { Mail, Lock, User, X, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, X, ArrowRight, Loader2, Phone } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (isAdmin?: boolean, businessId?: string, email?: string, role?: string) => void;
+  onSuccess: (isAdmin?: boolean, businessId?: string, email?: string, role?: string, name?: string, phone?: string, password?: string) => void;
   onGuest?: () => void; // Optional: Only used in Landing Page
   language?: Language;
   restaurants?: Restaurant[];
@@ -28,6 +28,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
 
   const [error, setError] = useState<string | null>(null);
 
@@ -111,7 +112,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     } else {
       // Registo de novo utilizador
       setIsLoading(false);
-      onSuccess(false, undefined, normalizedEmail, 'cliente', name);
+      onSuccess(false, undefined, normalizedEmail, 'cliente', name, phone, normalizedPassword);
     }
   };
 
@@ -150,7 +151,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
 
             <form onSubmit={handleAuthSubmit} className="space-y-4">
               {authMode === 'register' && (
-                <div className="space-y-1">
+                <div className="space-y-4">
                   <div className="relative">
                     <User className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
                     <input 
@@ -159,6 +160,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
+                    <input 
+                      type="tel" 
+                      placeholder="Telemóvel / WhatsApp"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     />
                   </div>

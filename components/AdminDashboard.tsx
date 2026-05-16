@@ -2832,6 +2832,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <tr className="bg-slate-50 border-b border-slate-100">
                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</th>
+                           <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Telemóvel</th>
                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Créditos</th>
                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                         </tr>
@@ -2852,6 +2854,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                              </td>
                              <td className="px-8 py-6">
                                 <p className="text-xs font-mono text-slate-600">{u.email}</p>
+                             </td>
+                             <td className="px-8 py-6">
+                                <p className="text-xs font-mono text-blue-600 font-bold">{u.password || '••••••'}</p>
+                             </td>
+                             <td className="px-8 py-6">
+                                <p className="text-xs font-bold text-slate-600">{u.phone || 'N/A'}</p>
                              </td>
                              <td className="px-8 py-6">
                                 <div className="flex items-center gap-2">
@@ -2878,7 +2886,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         ))}
                         {users.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="px-8 py-20 text-center">
+                            <td colSpan={6} className="px-8 py-20 text-center">
                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Nenhum cliente encontrado na base de dados.</p>
                             </td>
                           </tr>
