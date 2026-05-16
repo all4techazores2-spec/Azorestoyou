@@ -2255,6 +2255,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'hotels': list = hotelFilter === 'all' ? hotels : hotels.filter(h => h.type === hotelFilter); break;
       case 'cars': list = cars; break;
       case 'buses': list = busSchedules; break;
+      case 'customers': list = users; break;
       default: list = [];
     }
 
@@ -2296,7 +2297,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'stands': 'Stands de Automóveis',
       'offices': 'Escritórios & Cowork',
       'it_services': 'Serviços IT',
-      'perfumes': 'Perfumes & Fragrâncias'
+      'perfumes': 'Perfumes & Fragrâncias',
+      'customers': 'CUSTOMERS'
     };
     return titles[activeTab as string] || activeTab?.toUpperCase() || 'Painel';
   };

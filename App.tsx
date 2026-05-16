@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL, BUSINESS_TYPE_TO_ENDPOINT, OFFICIAL_DOMAIN, RENDER_BACKEND, FRONTEND_URL, isLocal, getGoogleMapsEmbedUrl } from './config';
 import { EcraMapa } from './components/EcraMapa';
 import { trilhosAcoresDados } from './data/dadosTrilhos';
+import DesktopView from './components/DesktopView';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -134,6 +135,7 @@ const App: React.FC = () => {
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [users, setUsers] = useState<any[]>([]);
+  const [scrolled, setScrolled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [dbStatus, setDbStatus] = useState<any>({ 
     storage: 'A ligar...', 
@@ -145,8 +147,10 @@ const App: React.FC = () => {
   // --- DEPLOY VERIFICATION LOG ---
   useEffect(() => {
     console.log("%c🚀 Azores4you SYSTEM v1.2.2-STABLE", "background: #0f172a; color: #10b981; font-weight: bold; font-size: 18px; padding: 12px; border: 2px solid #10b981; border-radius: 12px;");
-    console.log("✅ MOUNTAINSNOW HAS BEEN REMOVED FROM SOURCE CODE.");
-    console.log("⚠️ If you still see a ReferenceError, please clear your browser cache (Ctrl+F5).");
+    
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Load from IndexedDB on initial mount for massive storage capacity
@@ -186,6 +190,21 @@ const App: React.FC = () => {
   // Auth & User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Sync users list for Admin Dashboard
+  useEffect(() => {
+    if (isAdmin) {
+      const fetchUsers = () => {
+        fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`)
+          .then(r => r.json())
+          .then(allUsers => setUsers(allUsers || []))
+          .catch(err => console.error("Error fetching users:", err));
+      };
+      fetchUsers();
+      const interval = setInterval(fetchUsers, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin]);
   const [isBusiness, setIsBusiness] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isSupplier, setIsSupplier] = useState(false);
@@ -1401,9 +1420,26 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
+      
+      {/* Desktop Global Header */}
+      <div className="hidden lg:block">
+        {!isAdmin && !isBusiness && !isStaff && !isSupplier && (
+          <DesktopHeader 
+            language={language}
+            onNavigate={handleNavClick}
+            onShowAuth={() => setShowAuthModal(true)}
+            onShowFavorites={() => setShowFavoritesModal(true)}
+            onShowProfile={() => setShowProfileModal(true)}
+            onOpenIslandSelection={() => setShowIslandSelection(true)}
+            isAuthenticated={isAuthenticated}
+            userProfile={userProfile}
+            scrolled={scrolled}
+          />
+        )}
+      </div>
       {/* Navigation - CABEÇALHO FIXO PREMIUM */}
       {exploreCategory !== 'community' && (
-        <nav className={`bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
+        <nav className={`lg:hidden bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center cursor-pointer" onClick={goHome}>
@@ -1573,7 +1609,7 @@ const App: React.FC = () => {
       </nav>
       )}
 
-      <main className={`pb-32 pt-20 md:pt-24 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
+      <main className={`pb-32 lg:pb-0 pt-20 md:pt-24 pt-safe ${showAuthModal || showPackageModal || showBusIslandModal ? 'blur-sm pointer-events-none' : ''}`}>
         <AnimatePresence mode="wait">
         {exploreCategory === null ? (
           <motion.div 
@@ -1582,16 +1618,29 @@ const App: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="max-w-4xl mx-auto"
+            className="w-full"
           >
-            <HomeSection 
+            <div className="lg:hidden max-w-4xl mx-auto">
+              <HomeSection 
+                language={language}
+                restaurants={filterByIsland(restaurants)}
+                onNavigate={handleNavClick}
+                onOpenMenu={() => setMobileMenuOpen(true)}
+                onShowNotifications={() => setShowNotificationsModal(true)}
+                featuredIsland={selectedIslandName || "Todas as Ilhas"}
+                onOpenIslandSelection={() => setShowIslandSelection(true)}
+              />
+            </div>
+            
+            <DesktopView 
               language={language}
-              restaurants={filterByIsland(restaurants)}
               onNavigate={handleNavClick}
-              onOpenMenu={() => setMobileMenuOpen(true)}
-              onShowNotifications={() => setShowNotificationsModal(true)}
-              featuredIsland={selectedIslandName || "Todas as Ilhas"}
+              onShowAuth={() => setShowAuthModal(true)}
+              onShowFavorites={() => setShowFavoritesModal(true)}
+              onShowProfile={() => setShowProfileModal(true)}
               onOpenIslandSelection={() => setShowIslandSelection(true)}
+              isAuthenticated={isAuthenticated}
+              userProfile={userProfile}
             />
           </motion.div>
         ) : (
@@ -1993,20 +2042,22 @@ const App: React.FC = () => {
       </AnimatePresence>
 
       {/* Persistent Trip Button (Mobile) */}
-      <BottomNav 
-        onHome={goHome} 
-        onMarketplace={() => setExploreCategory('used_market')} 
-        onShowAuth={() => setShowAuthModal(true)}
-        onShowFavorites={() => setShowFavoritesModal(true)}
-        onShowProfile={() => setShowProfileModal(true)}
-        onShowReservations={() => setShowMyReservationsModal(true)}
-        onShowNotifications={() => setShowNotificationsModal(true)}
-        notificationCount={notifications.filter(n => !n.read).length}
-        itemCount={itineraryItemCount} 
-        language={language} 
-        isAuthenticated={isAuthenticated}
-        isCommunity={exploreCategory === 'community'}
-      />
+      <div className="lg:hidden">
+        <BottomNav 
+          onHome={goHome} 
+          onMarketplace={() => setExploreCategory('used_market')} 
+          onShowAuth={() => setShowAuthModal(true)}
+          onShowFavorites={() => setShowFavoritesModal(true)}
+          onShowProfile={() => setShowProfileModal(true)}
+          onShowReservations={() => setShowMyReservationsModal(true)}
+          onShowNotifications={() => setShowNotificationsModal(true)}
+          notificationCount={notifications.filter(n => !n.read).length}
+          itemCount={itineraryItemCount} 
+          language={language} 
+          isAuthenticated={isAuthenticated}
+          isCommunity={exploreCategory === 'community'}
+        />
+      </div>
 
       {/* Modals */}
       <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
@@ -2116,6 +2167,11 @@ const App: React.FC = () => {
         language={language} 
         onShowMap={(url: string) => setShowMapUrl(url)}
       />
+
+      {/* Desktop Global Footer */}
+      <div className="hidden lg:block">
+        {!isAdmin && !isBusiness && !isStaff && !isSupplier && <DesktopFooter />}
+      </div>
     </div>
   );
 };

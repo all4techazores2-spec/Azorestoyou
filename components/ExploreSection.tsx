@@ -268,125 +268,195 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const renderBusPlanner = () => {
     const currentIsland = targetIsland || 'PDL';
     
-    // Available companies based on data
-    const companies = ['CRP', 'Varela', 'Auto Viação Micaelense'];
+    // Companies list for cards
+    const busCompanies = [
+      { id: 'CRP', name: 'CRP', desc: 'Caetano, Raposo & Pereiras', color: 'from-blue-600 to-indigo-600' },
+      { id: 'Varela', name: 'Varela', desc: 'Auto Viação Varela', color: 'from-pink-600 to-rose-600' },
+      { id: 'Auto Viação Micaelense', name: 'AVM', desc: 'Auto Viação Micaelense', color: 'from-emerald-600 to-teal-600' }
+    ];
     
-    // Filter logic for bus results using PROPS and Company
-    const filteredSchedules = busSchedules.filter(s => {
-       if (s.island !== currentIsland) return false;
-       if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
-       if (!busOrigin || !busDestination) return false;
-       
-       // Flexible matching logic (partial match, case-insensitive)
-       const sOrigin = s.origin.toLowerCase();
-       const sDest = s.destination.toLowerCase();
-       const bOrigin = busOrigin.toLowerCase();
-       const bDest = busDestination.toLowerCase();
+    // Derive locations ONLY from actual schedules for this island
+    const availableLocations = Array.from(new Set(
+      busSchedules
+        .filter(s => s.island === currentIsland)
+        .flatMap(s => [s.origin, s.destination])
+    )).sort();
 
-       const matchOrigin = sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin);
-       const matchDest = sDest.includes(bDest) || bDest.includes(sDest);
-       
-       return matchOrigin && matchDest;
+    // Find companies that match the selected route
+    const matchingSchedules = busSchedules.filter(s => {
+      if (s.island !== currentIsland) return false;
+      if (!busOrigin || !busDestination) return false;
+      const sOrigin = s.origin.toLowerCase();
+      const sDest = s.destination.toLowerCase();
+      const bOrigin = busOrigin.toLowerCase();
+      const bDest = busDestination.toLowerCase();
+      return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && 
+             (sDest.includes(bDest) || bDest.includes(sDest));
     });
 
-    // Dynamic locations based on company
-    const baseLocations = ISLAND_LOCALITIES[currentIsland] || [];
-    const locations = busCompany === 'all' 
-      ? baseLocations 
-      : Array.from(new Set(
-          busSchedules
-            .filter(s => s.island === currentIsland && s.company.toLowerCase().includes(busCompany.toLowerCase()))
-            .flatMap(s => [s.origin, s.destination])
-        )).sort();
-
     return (
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Company Filter & Selection Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-             <div>
-               <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                 <Bus className="w-5 h-5 text-pink-500" /> {getTranslation(lang, 'plan_trip')}
-               </h3>
-               <p className="text-xs text-slate-500 mt-1">{getTranslation(lang, 'plan_trip_subtitle')}</p>
+      <div className="space-y-12 animate-in fade-in duration-500">
+        {/* Company Cards Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+             <div className="w-1.5 h-6 bg-pink-600 rounded-full"></div>
+             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Selecione uma Companhia</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {busCompanies.map(c => (
+              <button 
+                key={c.id}
+                onClick={() => {
+                  setBusCompany(c.id);
+                  setBusOrigin('');
+                  setBusDestination('');
+                }}
+                className={`relative overflow-hidden rounded-[2.5rem] p-8 text-left transition-all duration-500 group
+                  ${busCompany === c.id ? 'ring-4 ring-pink-500 ring-offset-4 scale-[1.02]' : 'hover:scale-[1.02] active:scale-95'}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${c.color} opacity-90 group-hover:opacity-100 transition-opacity`}></div>
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                   <Bus size={100} className="text-white" />
+                </div>
+                
+                <div className="relative z-10 space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+                     <Bus size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{c.name}</h4>
+                    <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mt-1">{c.desc}</p>
+                  </div>
+                  <div className="pt-4">
+                     <span className="px-4 py-2 bg-white/20 text-white text-[9px] font-black rounded-full uppercase tracking-widest border border-white/20 backdrop-blur-sm">
+                        Ver Rotas & Horários
+                     </span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Route Planner Card */}
+        <div className="bg-white rounded-[3rem] shadow-xl border border-slate-100 overflow-hidden">
+          <div className="bg-slate-900 px-10 py-8 text-white relative">
+             <div className="absolute top-0 right-0 p-10 opacity-5">
+                <Map size={140} />
+             </div>
+             <div className="relative z-10">
+                <h3 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+                  <LandPlot className="text-pink-500" /> Planeie a sua Viagem
+                </h3>
+                <p className="text-slate-400 text-sm font-medium mt-2">Escolha o ponto de partida e chegada para descobrir horários</p>
              </div>
           </div>
 
-          <div className="p-6 space-y-6">
-             {/* Company Selection */}
-             <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400">Escolha a Companhia</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                   <button 
-                     onClick={() => { setBusCompany('all'); setBusOrigin(''); setBusDestination(''); }}
-                     className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all border ${busCompany === 'all' ? 'bg-pink-600 text-white border-transparent shadow-lg shadow-pink-200' : 'bg-white text-slate-500 border-slate-100 hover:border-pink-200'}`}
-                   >
-                     Todas
-                   </button>
-                   {companies.map(c => (
-                     <button 
-                       key={c}
-                       onClick={() => { setBusCompany(c); setBusOrigin(''); setBusDestination(''); }}
-                       className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all border ${busCompany === c ? 'bg-pink-600 text-white border-transparent shadow-lg shadow-pink-200' : 'bg-white text-slate-500 border-slate-100 hover:border-pink-200'}`}
-                     >
-                       {c}
-                     </button>
-                   ))}
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 block">{getTranslation(lang, 'bus_origin')}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
+          <div className="p-10 space-y-8">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">De onde? (Localidade)</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
                     <select 
                       value={busOrigin}
-                      onChange={(e) => { setBusOrigin(e.target.value); setShowBusResults(false); }}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all font-medium text-slate-700 appearance-none"
+                      onChange={(e) => { 
+                        const val = e.target.value;
+                        setBusOrigin(val); 
+                        setShowBusResults(false);
+                      }}
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
                     >
-                      <option value="">{getTranslation(lang, 'select')}</option>
-                      {locations.map(loc => (
+                      <option value="">Selecione o local de partida...</option>
+                      {availableLocations.map(loc => (
                         <option key={loc} value={loc}>{loc}</option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 block">{getTranslation(lang, 'bus_destination')}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3.5 text-slate-400 w-5 h-5" />
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">Para onde? (Localidade)</label>
+                  <div className="relative group">
+                    <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
                     <select 
                       value={busDestination}
-                      onChange={(e) => { setBusDestination(e.target.value); setShowBusResults(false); }}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all font-medium text-slate-700 appearance-none"
+                      onChange={(e) => { 
+                        const val = e.target.value;
+                        setBusDestination(val); 
+                        setShowBusResults(false);
+                      }}
+                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
                     >
-                      <option value="">{getTranslation(lang, 'select')}</option>
-                      {locations.filter(l => l !== busOrigin).map(loc => (
+                      <option value="">Selecione o destino...</option>
+                      {availableLocations.filter(l => l !== busOrigin).map(loc => (
                         <option key={loc} value={loc}>{loc}</option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => { setBusModalStep('options'); setShowBusOptionsModal(true); }}
-                  disabled={!busOrigin || !busDestination}
-                  className={`w-full md:col-span-2 py-4 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2
-                    ${(!busOrigin || !busDestination) 
-                      ? 'bg-slate-300 cursor-not-allowed' 
-                      : 'bg-pink-600 hover:bg-pink-700 hover:scale-[1.02]'}`}
-                >
-                  Continuar <ArrowRight className="w-5 h-5" />
-                </button>
+                <div className="md:col-span-2">
+                   {matchingSchedules.length > 0 && busOrigin && busDestination && (
+                     <motion.div 
+                       initial={{ opacity: 0, y: 10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       className="mb-6 p-6 bg-pink-50 rounded-[2rem] border border-pink-100 flex items-center justify-between"
+                     >
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-pink-600 shadow-sm">
+                              <Bus size={24} />
+                           </div>
+                           <div>
+                              <p className="text-[10px] font-black text-pink-400 uppercase tracking-widest leading-none">Companhia Detetada</p>
+                              <p className="text-lg font-black text-pink-700 mt-1">
+                                 {matchingSchedules.map(s => s.company).join(' & ')}
+                              </p>
+                           </div>
+                        </div>
+                        <div className="hidden md:block">
+                           <span className="px-4 py-2 bg-pink-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest">Rota Ativa</span>
+                        </div>
+                     </motion.div>
+                   )}
+
+                   <button 
+                     onClick={() => { setBusModalStep('options'); setShowBusOptionsModal(true); }}
+                     disabled={!busOrigin || !busDestination || matchingSchedules.length === 0}
+                     className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3
+                       ${(!busOrigin || !busDestination || matchingSchedules.length === 0) 
+                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none' 
+                         : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:scale-[1.02] hover:shadow-pink-500/30 active:scale-95'}`}
+                   >
+                     {matchingSchedules.length === 0 && busOrigin && busDestination 
+                       ? 'Rota Não Disponível' 
+                       : 'Explorar Horários & Bilhetes'} 
+                     <ArrowRight className="w-5 h-5" />
+                   </button>
+                </div>
              </div>
           </div>
         </div>
-        {/* Results Area (Now in Modal) */}
+        
+        {/* Info Banner */}
+        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center gap-8 border border-white/5 relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/10 to-transparent"></div>
+           <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md relative z-10">
+              <Info className="text-blue-400" />
+           </div>
+           <div className="relative z-10 text-center md:text-left flex-1">
+              <h4 className="text-xl font-black uppercase tracking-tighter">Sabia que pode carregar o seu passe?</h4>
+              <p className="text-slate-400 text-sm mt-1">Utilize os seus créditos para adquirir bilhetes e passes turísticos diretamente na app.</p>
+           </div>
+           <div className="relative z-10">
+              <button className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all shadow-xl">Saiba Mais</button>
+           </div>
+        </div>
       </div>
     );
   };
+;
 
   const renderRestaurants = () => {
     const cuisines = Array.from(new Set(allRestaurants.map(r => r.cuisine))).sort();
