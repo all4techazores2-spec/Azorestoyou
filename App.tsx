@@ -1861,18 +1861,30 @@ const App: React.FC = () => {
                     onClose={() => setExploreCategory(null)}
                     onShowMap={(url: string) => setShowMapUrl(url)}
                     onShowInteractiveMap={(trailId: string) => {
+                      // 1. Procurar primeiro nos dados REAIS da Base de Dados (atividades)
+                      const realTrail = activities.find(a => a.id === trailId || a.title === trailId);
+                      
+                      if (realTrail && realTrail.pontosInteresse && realTrail.pontosInteresse.length > 0) {
+                        // Se temos dados ricos na DB, usamos esses!
+                        setSelectedTrailData({
+                          climaSimulado: realTrail.climaSimulado || { condicao: 'Céu Limpo', temperatura: 20 },
+                          rota: realTrail.rota || [],
+                          pontosInteresse: realTrail.pontosInteresse
+                        });
+                        setShowInteractiveMap(true);
+                        return;
+                      }
+
+                      // 2. Fallback para os dados estáticos (apenas se a DB estiver vazia para este trilho)
                       const idLower = trailId.toLowerCase().replace(/[^a-z0-9]/g, '_');
                       const keys = Object.keys(trilhosAcoresDados);
                       
-                      // 1. Exact or partial key match
                       let trailKey = keys.find(k => 
                         idLower.includes(k.toLowerCase()) || 
                         k.toLowerCase().includes(idLower) ||
-                        // Check for trail code like PR01SMI
                         (k.split('_')[0] && trailId.toUpperCase().includes(k.split('_')[0]))
                       );
 
-                      // 2. Fallback fuzzy match for common names
                       if (!trailKey) {
                         const name = trailId.toLowerCase();
                         if (name.includes('furnas')) trailKey = keys.find(k => k.includes('furnas'));

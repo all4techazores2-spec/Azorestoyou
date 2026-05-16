@@ -61,7 +61,7 @@ export const EcraMapa: React.FC<EcraMapaProps> = ({ dadosTrilho, aoVoltar }) => 
       window.speechSynthesis.cancel();
       const mensagem = new SpeechSynthesisUtterance(texto);
       mensagem.lang = 'pt-PT';
-      mensagem.rate = 1.0;
+      mensagem.rate = 0.85; // Voz mais lenta e clara
       window.speechSynthesis.speak(mensagem);
     }
   };
@@ -117,11 +117,11 @@ export const EcraMapa: React.FC<EcraMapaProps> = ({ dadosTrilho, aoVoltar }) => 
             // Voz: Aproximação a [Nome]. [Descrição]
             falarInstrucao(`Aproximação a: ${poi.nome}. ${poi.descricao}`);
 
-            // Fechar modal e retomar automaticamente após 4 segundos
+            // Fechar modal e retomar automaticamente após 12 segundos (mais tempo para ver e ouvir)
             setTimeout(() => {
               setPoiAtivo(null);
               setSimulacaoAtiva(true);
-            }, 4000);
+            }, 12000);
           }
         });
         

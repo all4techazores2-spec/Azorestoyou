@@ -363,7 +363,7 @@ export const trilhosAcoresDados: Record<string, DetalheTrilhoAvancado> = {
       { lat: 37.8565, lng: -25.7672, altitude: 260, indicacao: "Trilho Concluído na Vila!" }
     ],
     pontosInteresse: [
-      { lat: 37.8392, lng: -25.7941, nome: "Miradouro da Vista do Rei", tipo: "miradouro", foto: "/imagens/pois/vista_rei.jpg", descricao: "A vista mais famosa dos Açores sobre as duas lagoas coloridas." }
+      { lat: 37.8392, lng: -25.7941, nome: "Miradouro da Vista do Rei", tipo: "miradouro", foto: "", descricao: "A vista mais famosa dos Açores sobre as duas lagoas coloridas." }
     ]
   },
   "PR04SMI_mata_canario_sete_cidades": {
@@ -490,8 +490,8 @@ export const trilhosAcoresDados: Record<string, DetalheTrilhoAvancado> = {
       { lat: 37.7732, lng: -25.3362, altitude: 282, indicacao: "Parabéns! Completou o trilho circular das Furnas." }
     ],
     pontosInteresse: [
-      { lat: 37.7712, lng: -25.3284, nome: "Caldeiras das Furnas", tipo: "monumento", foto: "/imagens/pois/caldeiras.jpg", descricao: "Zonas de vulcanismo ativo onde é confecionado o famoso cozido das Furnas." },
-      { lat: 37.7728, lng: -25.3308, nome: "Ermida da Nossa Senhora da Vitória", tipo: "monumento", foto: "/imagens/pois/ermida.jpg", descricao: "Templo neoclássico construído no século XIX junto à margem da lagoa." }
+      { lat: 37.7712, lng: -25.3284, nome: "Caldeiras das Furnas", tipo: "monumento", foto: "", descricao: "Zonas de vulcanismo ativo onde é confecionado o famoso cozido das Furnas." },
+      { lat: 37.7728, lng: -25.3308, nome: "Ermida da Nossa Senhora da Vitória", tipo: "monumento", foto: "", descricao: "Templo neoclássico construído no século XIX junto à margem da lagoa." }
     ]
   },
   "PR07SMI_pico_ferro_furnas": {
