@@ -982,9 +982,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderFormFields = () => {
     if (!editingItem) return null;
 
+    const isTrail = activeTab === 'trails' || editingItem?.type === 'trail';
+
     const commonInput = (label: string, field: string, type: string = 'text', colSpan: boolean = false) => {
       // Ocultar campos desnecessários para Trilhos
-      const isTrail = activeTab === 'trails' || editingItem?.type === 'trail';
       const fieldsToHide = ['adminEmail', 'adminPassword', 'publicEmail', 'phone', 'contact', 'mapUrl'];
       
       if (isTrail && fieldsToHide.includes(field)) return null;
