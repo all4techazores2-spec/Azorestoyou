@@ -44,10 +44,11 @@ app.use(cors({
         // Permitir requests sem origin (como apps mobile ou curl)
         if (!origin) return callback(null, true);
         
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com')) {
+        // Em produção, ser o mais permissivo possível com o domínio oficial e subdomínios Render
+        if (origin.includes('azorestoyou.pt') || origin.endsWith('.onrender.com') || origin.includes('localhost')) {
             callback(null, true);
         } else {
-            // Em caso de dúvida, permitimos para evitar bloqueios em produção enquanto diagnosticamos
+            // Fallback permissivo para evitar bloqueios em cenários de rede instáveis
             callback(null, true);
         }
     },

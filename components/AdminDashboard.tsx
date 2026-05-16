@@ -649,51 +649,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       let processedCount = 0;
 
-      for (const listObj of lists) {
+            for (const listObj of lists) {
         addLog(`📂 Categoria: ${listObj.title}...`);
         
-        for (let i = 0; i < listObj.data.length; i++) {
-          const item = listObj.data[i];
-          const itemName = item.name || item.title || item.id;
-          
-          addLog(`📤 A enviar item ${i+1}/${listObj.data.length}: ${itemName}...`);
-          
-          // Usar XMLHttpRequest para monitorizar o progresso real do upload
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${API_BASE_URL}/api/${listObj.label}?mode=merge`, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            
-            xhr.upload.onprogress = (event) => {
-              if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 100);
-                setCompressionLabel(`A enviar (${i+1}/${listObj.data.length}): ${itemName} - ${percentComplete}%`);
-                setCompressionProgress({ 
-                  current: processedCount + (event.loaded / event.total), 
-                  total: totalItems 
-                });
-              }
-            };
-            
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve();
-              } else {
-                reject(new Error(`Erro do servidor (${xhr.status}): ${xhr.responseText}`));
-              }
-            };
-            
-            xhr.onerror = () => reject(new Error('Erro de rede ou ligação perdida.'));
-            xhr.ontimeout = () => reject(new Error('O tempo de resposta do servidor esgotou.'));
-            
-            xhr.send(JSON.stringify(item));
-          });
-          
-          processedCount++;
-          setCompressionProgress({ current: processedCount, total: totalItems });
-        }
+        const itemsToSync = listObj.data;
+        const categoryLabel = listObj.label;
         
+        addLog(`📤 A enviar ${itemsToSync.length} itens de ${listObj.title} em bloco...`);
+        
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `${API_BASE_URL}/api/${categoryLabel}?mode=merge`, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              setCompressionLabel(`A enviar ${listObj.title}: ${percentComplete}%`);
+              setCompressionProgress({ 
+                current: processedCount + (itemsToSync.length * (event.loaded / event.total)), 
+                total: totalItems 
+              });
+            }
+          };
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Erro do servidor na categoria ${listObj.title} (${xhr.status}): ${xhr.responseText}`));
+            }
+          };
+          
+          xhr.onerror = () => reject(new Error(`Erro de rede ao enviar ${listObj.title}.`));
+          xhr.ontimeout = () => reject(new Error(`Timeout ao enviar ${listObj.title}.`));
+          
+          xhr.send(JSON.stringify(itemsToSync));
+        });
+        
+        processedCount += itemsToSync.length;
+        setCompressionProgress({ current: processedCount, total: totalItems });
         addLog(`✅ Categoria ${listObj.title} concluída.`);
+
       }
       
       setCompressionLabel('Sincronização concluída com sucesso!');
