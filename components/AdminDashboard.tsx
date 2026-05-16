@@ -1569,11 +1569,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                       <div className="space-y-1.5">
                         <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Condição Climática</label>
-                        <input className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" value={editingItem.climaSimulado?.condicao || ''} onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), condicao: e.target.value}})} placeholder="Ex: Céu Limpo" />
+                        <select 
+                          className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none bg-white font-bold" 
+                          value={editingItem.climaSimulado?.condicao || 'Céu Limpo'} 
+                          onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), condicao: e.target.value}})}
+                        >
+                          {["Céu Limpo", "Sol e Nuvens", "Nublado", "Nevoeiro", "Chuva Ligeira", "Chuva Forte", "Vento Forte"].map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
                       </div>
                       <div className="space-y-1.5">
                         <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Temperatura (ºC)</label>
-                        <input type="number" className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm font-black focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" value={editingItem.climaSimulado?.temperatura || 0} onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), temperatura: Number(e.target.value)}})} />
+                        <select 
+                          className="w-full border-2 border-slate-200 p-3 rounded-2xl text-sm font-black focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none bg-white" 
+                          value={editingItem.climaSimulado?.temperatura || 18} 
+                          onChange={e => setEditingItem({...editingItem, climaSimulado: {...(editingItem.climaSimulado || {}), temperatura: Number(e.target.value)}})}
+                        >
+                          {Array.from({length: 41}, (_, i) => i).map(t => <option key={t} value={t}>{t} ºC</option>)}
+                        </select>
                       </div>
                       <div className="space-y-1.5">
                         <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Alerta de Segurança</label>
