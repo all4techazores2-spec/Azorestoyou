@@ -393,6 +393,11 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       )}
                       <button 
                         onClick={() => {
+                          if (trail.type === 'trail' && onShowInteractiveMap) {
+                            onShowInteractiveMap(trail.id);
+                            onClose();
+                            return;
+                          }
                           const query = `${trail.title}, ${trail.island}, Azores`;
                           const url = trail.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
                           if (onShowMap) {

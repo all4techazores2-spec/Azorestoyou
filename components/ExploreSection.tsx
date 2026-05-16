@@ -509,12 +509,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         const mapped = listaTrilhosSaoMiguel.find(t => 
           a.id === t.id || 
           a.title.toLowerCase().includes(t.nome.toLowerCase()) || 
+          a.title.toLowerCase().includes(t.codigo.toLowerCase()) ||
           a.id.includes(t.codigo)
         );
         if (mapped) {
           return {
             ...a,
-            id: mapped.id, // Sincronizar ID
+            type: 'trail', // Forçar tipo trail para garantir que o modal use o mapa interativo
+            id: mapped.id, // Sincronizar ID com o dadosTrilhos.ts
             title: mapped.nome,
             distance: mapped.distancia,
             duration: mapped.duracao,
