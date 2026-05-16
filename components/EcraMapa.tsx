@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap, Popup } from 'react-
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { PontoRota, PontoInteresse, DetalheTrilhoAvancado } from '../data/dadosTrilhos';
+import { Image as ImageIcon, AlertTriangle } from 'lucide-react';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
