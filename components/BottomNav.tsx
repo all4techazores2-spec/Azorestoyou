@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { User, Bell, Heart, Home, Briefcase, UserPen, CalendarDays, Receipt, MessageCircle, Users, X, PlaySquare, PlusSquare, LogOut, Film, Compass } from 'lucide-react';
+import { User, Bell, Heart, Home, Briefcase, UserPen, CalendarDays, Receipt, MessageCircle, Users, X, PlaySquare, PlusSquare, LogOut, Film, Compass, ShoppingCart } from 'lucide-react';
 import { Language } from '../types';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface BottomNavProps {
   onHome: () => void;
-  onViewPackage: () => void;
+  onMarketplace: () => void;
   onShowAuth?: () => void;
   onShowFavorites?: () => void;
   itemCount: number;
@@ -22,7 +22,7 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ 
   onHome, 
-  onViewPackage, 
+  onMarketplace, 
   onShowAuth,
   onShowFavorites,
   itemCount, 
@@ -57,18 +57,13 @@ const BottomNav: React.FC<BottomNavProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-tight">Favoritos</span>
           </button>
           
-          {/* Pacote */}
+          {/* Marketplace */}
           <button 
-            onClick={onViewPackage}
+            onClick={onMarketplace}
             className="flex flex-col items-center justify-center flex-1 text-slate-300 hover:text-blue-600 transition-all active:scale-90 relative"
           >
-            <Briefcase className="w-6 h-6 mb-1" />
-            {itemCount > 0 && (
-              <span className="absolute top-0 right-1/4 bg-blue-600 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                {itemCount}
-              </span>
-            )}
-            <span className="text-[10px] font-bold uppercase tracking-tight">Pacote</span>
+            <ShoppingCart className="w-6 h-6 mb-1" />
+            <span className="text-[10px] font-bold uppercase tracking-tight">Marketplace</span>
           </button>
 
           {/* Central EXPLORAR Button */}

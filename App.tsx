@@ -1995,7 +1995,7 @@ const App: React.FC = () => {
       {/* Persistent Trip Button (Mobile) */}
       <BottomNav 
         onHome={goHome} 
-        onViewPackage={handleViewPackage} 
+        onMarketplace={() => setExploreCategory('used_market')} 
         onShowAuth={() => setShowAuthModal(true)}
         onShowFavorites={() => setShowFavoritesModal(true)}
         onShowProfile={() => setShowProfileModal(true)}

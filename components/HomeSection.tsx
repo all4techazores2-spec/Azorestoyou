@@ -61,20 +61,16 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-blue-600' },
     { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-6 h-6" />, color: 'bg-green-600' },
     { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
-    { id: 'flights', label: 'Viagens', icon: <Plane className="w-6 h-6" />, color: 'bg-blue-600' },
-    { id: 'shops', label: 'Lojas', icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-pink-500' },
-    { id: 'beauty', label: 'Beleza', icon: <Sparkles className="w-6 h-6" />, color: 'bg-rose-400' },
+    { id: 'shops', label: 'Comércio', icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-pink-500' },
+    { id: 'beauty', label: 'Beleza e Barbearia', icon: <Sparkles className="w-6 h-6" />, color: 'bg-rose-400' },
     { id: 'services', label: 'Serviços', icon: <Wrench className="w-6 h-6" />, color: 'bg-slate-600' },
     { id: 'auto_repair', label: 'Oficinas', icon: <Settings className="w-6 h-6" />, color: 'bg-red-600' },
-    { id: 'auto_electronics', label: 'Auto Elétrica', icon: <Zap className="w-6 h-6" />, color: 'bg-yellow-500' },
-    { id: 'used_market', label: 'Usados', icon: <ShoppingCart className="w-6 h-6" />, color: 'bg-emerald-600' },
     { id: 'animals', label: 'Animais', icon: <Dog className="w-6 h-6" />, color: 'bg-orange-600' },
     { id: 'real_estate', label: 'Imobiliária', icon: <Building2 className="w-6 h-6" />, color: 'bg-blue-800' },
     { id: 'gyms', label: 'Ginásios', icon: <Dumbbell className="w-6 h-6" />, color: 'bg-slate-800' },
     { id: 'stands', label: 'Stands', icon: <CarFront className="w-6 h-6" />, color: 'bg-indigo-600' },
     { id: 'offices', label: 'Escritórios', icon: <Briefcase className="w-6 h-6" />, color: 'bg-cyan-600' },
     { id: 'it_services', label: 'Informática', icon: <Laptop className="w-6 h-6" />, color: 'bg-slate-700' },
-    { id: 'perfumes', label: 'Perfumes', icon: <Pipette className="w-6 h-6" />, color: 'bg-fuchsia-500' },
   ];
 
   const nearbyItems = restaurants.slice(0, 4).map((r, i) => ({
@@ -91,7 +87,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'poi', title: 'Pontos Turísticos', subtitle: 'Trilhos, miradouros e muito mais', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop' },
     { id: 'restaurants', title: 'Comer & Beber', subtitle: 'Restaurantes, cafés e sabores locais', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' },
     { id: 'accommodation', title: 'Alojamentos', subtitle: 'Hotéis, casas e alojamento local', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop' },
-    { id: 'flights', title: 'Planear viagem', subtitle: 'Voos, pacotes e dicas úteis', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109c055?q=80&w=2070&auto=format&fit=crop' },
     { id: 'mobility', title: 'Mobilidade', subtitle: 'Rent-a-car, autocarros e transfers', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop' },
     { id: 'activities', title: 'Atividades', subtitle: 'Tours, experiências e aventura', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop' },
   ];
