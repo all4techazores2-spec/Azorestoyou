@@ -603,31 +603,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     addLog('🚀 A iniciar processo de sincronização seletiva...');
     
     const allLists = [
-      { data: restaurants, label: 'restaurants', title: 'Restaurantes' },
-      { data: shops, label: 'shops', title: 'Lojas' },
-      { data: beauty, label: 'beauty', title: 'Beleza' },
-      { data: hotels, label: 'hotels', title: 'Alojamentos' },
-      { data: cars, label: 'cars', title: 'Rentcar' },
-      { data: activities, label: 'activities', title: 'Atividades' },
-      { data: activities.filter(a => a.type === 'trail'), label: 'activities', title: 'Trilhos' },
-      { data: services, label: 'services', title: 'Serviços' },
-      { data: autoRepairs, label: 'auto_repairs', title: 'Reparação Auto' },
-      { data: autoElectronics, label: 'auto_electronics', title: 'Eletrónica Auto' },
-      { data: usedMarket, label: 'used_market', title: 'Mercado Usados' },
-      { data: animals, label: 'animals', title: 'Animais' },
-      { data: realEstate, label: 'real_estate', title: 'Imobiliária' },
-      { data: gyms, label: 'gyms', title: 'Ginásios' },
-      { data: activities.filter(a => a.type === 'poi' || a.type === 'landscape'), label: 'activities', title: 'Pontos Turísticos' },
-      { data: stands, label: 'stands', title: 'Stands' },
-      { data: offices, label: 'offices', title: 'Escritórios' },
-      { data: itServices, label: 'it_services', title: 'Informática' },
-      { data: perfumes, label: 'perfumes', title: 'Perfumaria' },
-      { data: flights, label: 'flights', title: 'Voos' },
-      { data: busSchedules, label: 'bus-schedules', title: 'Autocarros' }
+      { data: restaurants, label: 'restaurants', id: 'restaurants', title: 'Restaurantes' },
+      { data: shops, label: 'shops', id: 'shops', title: 'Lojas' },
+      { data: beauty, label: 'beauty', id: 'beauty', title: 'Beleza' },
+      { data: hotels, label: 'hotels', id: 'hotels', title: 'Alojamentos' },
+      { data: cars, label: 'cars', id: 'cars', title: 'Rentcar' },
+      { data: activities.filter(a => a.type === 'activity' || a.type === 'culture'), label: 'activities', id: 'activities', title: 'Atividades' },
+      { data: activities.filter(a => a.type === 'trail'), label: 'activities', id: 'trails', title: 'Trilhos' },
+      { data: services, label: 'services', id: 'services', title: 'Serviços' },
+      { data: autoRepairs, label: 'auto_repairs', id: 'auto_repairs', title: 'Reparação Auto' },
+      { data: autoElectronics, label: 'auto_electronics', id: 'auto_electronics', title: 'Eletrónica Auto' },
+      { data: usedMarket, label: 'used_market', id: 'used_market', title: 'Mercado Usados' },
+      { data: animals, label: 'animals', id: 'animals', title: 'Animais' },
+      { data: realEstate, label: 'real_estate', id: 'real_estate', title: 'Imobiliária' },
+      { data: gyms, label: 'gyms', id: 'gyms', title: 'Ginásios' },
+      { data: activities.filter(a => a.type === 'poi' || a.type === 'landscape'), label: 'activities', id: 'poi', title: 'Pontos Turísticos' },
+      { data: stands, label: 'stands', id: 'stands', title: 'Stands' },
+      { data: offices, label: 'offices', id: 'offices', title: 'Escritórios' },
+      { data: itServices, label: 'it_services', id: 'it_services', title: 'Informática' },
+      { data: perfumes, label: 'perfumes', id: 'perfumes', title: 'Perfumaria' },
+      { data: flights, label: 'flights', id: 'flights', title: 'Voos' },
+      { data: busSchedules, label: 'bus-schedules', id: 'bus-schedules', title: 'Autocarros' }
     ];
 
-    // Filter based on user selection
-    const lists = allLists.filter(l => syncSelection.includes(l.label));
+    // Filter based on user selection using the new 'id' field
+    const lists = allLists.filter(l => syncSelection.includes(l.id));
 
     const totalItems = lists.reduce((sum, l) => sum + l.data.length, 0);
     setCompressionProgress({ current: 0, total: totalItems });
@@ -1494,12 +1494,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             )}
 
-            {commonInput('Email de Contacto Público', 'email')}
-            {commonInput('Telefone de Contacto Público', 'phone')}
-            {commonInput('Email Admin (Dashboard)', 'adminEmail')}
-            {commonInput('Password Admin', 'adminPassword')}
-            {commonInput('Morada / Ponto de Encontro', 'address')}
-            {commonInput('Google Maps URL', 'mapUrl', 'text', true)}
+            {!isTrail && (
+              <>
+                {commonInput('Email de Contacto Público', 'email')}
+                {commonInput('Telefone de Contacto Público', 'phone')}
+                {commonInput('Email Admin (Dashboard)', 'adminEmail')}
+                {commonInput('Password Admin', 'adminPassword')}
+                {commonInput('Morada / Ponto de Encontro', 'address')}
+                {commonInput('Google Maps URL', 'mapUrl', 'text', true)}
+              </>
+            )}
 
             {/* Activity Gallery Section */}
             <div className="md:col-span-2 border-t pt-6 mt-4">
