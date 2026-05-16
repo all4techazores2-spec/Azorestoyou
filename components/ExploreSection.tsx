@@ -715,7 +715,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             {subcats.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setBeautyFilter(cat.id)}
+                onClick={() => { setBeautyFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
                 <div 
@@ -806,7 +806,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             {subcats.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setServicesFilter(cat.id)}
+                onClick={() => { setServicesFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
                 <div 
@@ -975,7 +975,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 {subcats.map(cat => (
                   <button
                     key={cat.id}
-                    onClick={() => setAutoRepairFilter(cat.id)}
+                    onClick={() => { setAutoRepairFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
                   >
                     <div 
@@ -1076,87 +1076,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         );
       };
 
-  const renderCategorySlider = (data: any[]) => {
-    // Check if there is a custom config slider for this category
-    const configId = `CONFIG_SLIDER_${category.toUpperCase()}`;
-    const configSlider = allActivities.find(a => a.id === configId);
-    
-    // If custom gallery exists, use it. Otherwise use the first 3 items.
-    const sliderImages = (configSlider && configSlider.gallery && configSlider.gallery.length > 0)
-      ? configSlider.gallery.map(img => ({ id: null, image: img, title: '', island: '' }))
-      : data.slice(0, 3).map(item => ({ 
-          id: item.id,
-          image: item.image, 
-          title: item.name || item.title, 
-          island: item.island,
-          isPaid: item.isPaid,
-          type: item.type
-        }));
 
-    if (sliderImages.length === 0) return null;
-
-    return (
-      <div className="mb-16 -mx-6 md:-mx-10 mt-4">
-        <div className="flex overflow-x-auto pb-8 px-0 md:px-0 gap-0 scrollbar-hide snap-x">
-          {sliderImages.map((item, idx) => (
-            <div 
-              key={`slider-${idx}`}
-              className="min-w-full h-[450px] relative shadow-2xl snap-center group"
-            >
-              <img 
-                src={item.image.startsWith('/') ? `${API_BASE_URL}${item.image}` : item.image} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                alt={item.title}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent"></div>
-              
-              {/* Top Badges */}
-              <div className="absolute top-8 left-8 flex items-center gap-2">
-                 <span className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl">Destaque Premium</span>
-                 {item.isPaid !== undefined && (
-                   <span className={`px-4 py-1.5 ${item.isPaid ? 'bg-orange-500' : 'bg-green-500'} text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-xl`}>
-                     {item.isPaid ? 'Reserva Disponível' : 'Acesso Grátis'}
-                   </span>
-                 )}
-              </div>
-
-              <div className="absolute bottom-10 left-8 right-8 flex flex-col md:flex-row items-end justify-between gap-6">
-                <div>
-                  {item.title && <h4 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-4 drop-shadow-xl max-w-2xl">{item.title}</h4>}
-                  {item.island && (
-                    <div className="flex items-center gap-3 text-white/90 text-sm font-black uppercase tracking-[0.1em]">
-                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                        <MapPin size={14} className="text-blue-400" />
-                      </div>
-                      {item.island}
-                    </div>
-                  )}
-                </div>
-
-                {item.id && (
-                  <button 
-                    onClick={() => {
-                      const found = data.find(d => d.id === item.id);
-                      if (found) {
-                        if (category === 'trails' || category === 'poi' || category === 'landscapes' || category === 'activities') {
-                          setSelectedTrail(found);
-                        } else if (category === 'restaurants') {
-                          setSelectedRestaurant(found);
-                        }
-                      }
-                    }}
-                    className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl active:scale-95 whitespace-nowrap"
-                  >
-                    {category === 'trails' ? 'Ver Trilho' : 'Ver Detalhes'}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   const getContent = () => {
     switch (category) {
@@ -1473,7 +1393,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             {subcats.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setUsedMarketFilter(cat.id)}
+                onClick={() => { setUsedMarketFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-6 group p-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
               >
                 <div 
@@ -1623,28 +1543,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </button>
       </div>
 
-      {/* Category Featured Slider */}
-      {category !== 'buses' && (
-        renderCategorySlider(
-          category === 'restaurants' ? filteredRestaurants :
-          category === 'shops' ? allShops :
-          category === 'trails' ? getActivitiesByType('trail') :
-          category === 'landscapes' ? getActivitiesByType(['poi', 'landscape']) :
-          category === 'poi' ? getActivitiesByType(['poi', 'landscape']) :
-          category === 'beauty' ? allBeauty :
-          category === 'services' ? allServices :
-          category === 'auto_repair' ? allAutoRepairs :
-          category === 'auto_electronics' ? allAutoElectronics :
-          category === 'used_market' ? allUsedMarket :
-          category === 'animals' ? allAnimals :
-          category === 'real_estate' ? allRealEstate :
-          category === 'gyms' ? allGyms :
-          category === 'stands' ? allStands :
-          category === 'offices' ? allOffices :
-          category === 'it_services' ? allITServices :
-          category === 'perfumes' ? allPerfumes : allActivities
-        )
-      )}
+
 
       {/* Main Content Area */}
       <div className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 bg-slate-50/50 border-t border-slate-100">

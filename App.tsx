@@ -790,6 +790,9 @@ const App: React.FC = () => {
   };
 
   const handleNavClick = (category: ExploreCategory) => {
+    // Auto scroll to top when changing category
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     if (exploreCategory === category) {
       setExploreCategory(null);
       setMobileMenuOpen(false);
