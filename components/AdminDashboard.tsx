@@ -177,6 +177,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     setSelectedIds([]);
+    // Se mudarmos para a tab de trilhos, mostramos logo tudo para não parecer "bloqueado"
+    if (activeTab === 'trails') {
+      setVisibleCount(100);
+    } else {
+      setVisibleCount(6);
+    }
   }, [activeTab, islandFilter, beautyFilter, shopsFilter, hotelFilter, servicesFilter, autoRepairsFilter]);
 
   const togglePassword = (id: string) => {
@@ -976,18 +982,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderFormFields = () => {
     if (!editingItem) return null;
 
-    const commonInput = (label: string, field: string, type: string = 'text', colSpan: boolean = false) => (
-      <div className={colSpan ? 'md:col-span-2' : ''}>
-        <label className="block text-sm font-bold text-slate-700 mb-1">{label}</label>
-        <input 
-          type={type} 
-          className="w-full border p-2 rounded-lg"
-          value={editingItem[field]}
-          onChange={e => setEditingItem({...editingItem, [field]: type === 'number' ? parseFloat(e.target.value) : e.target.value})}
-          required
-        />
-      </div>
-    );
+    const commonInput = (label: string, field: string, type: string = 'text', colSpan: boolean = false) => {
+      // Ocultar campos desnecessários para Trilhos
+      const isTrail = activeTab === 'trails' || editingItem?.type === 'trail';
+      const fieldsToHide = ['adminEmail', 'adminPassword', 'publicEmail', 'phone', 'contact', 'mapUrl'];
+      
+      if (isTrail && fieldsToHide.includes(field)) return null;
+
+      return (
+        <div className={colSpan ? 'md:col-span-2' : ''}>
+          <label className="block text-sm font-bold text-slate-700 mb-1">{label}</label>
+          <input 
+            type={type} 
+            className="w-full border p-2 rounded-lg"
+            value={editingItem[field]}
+            onChange={e => setEditingItem({...editingItem, [field]: type === 'number' ? parseFloat(e.target.value) : e.target.value})}
+            required={!['description', 'mapUrl', 'adminEmail', 'adminPassword'].includes(field)}
+          />
+        </div>
+      );
+    };
 
     const islandSelect = (field: string = 'island') => (
       <div>
@@ -3313,8 +3327,8 @@ Av. do Mar, Madalena, Pico
                     </span>
                   )}
                   
-                  {/* Credentials Preview for Businesses */}
-                  {['restaurants', 'shops', 'beauty', 'activities', 'trails', 'poi'].includes(activeTab) && (
+                  {/* Credentials Preview for Businesses (Hidden for Trails as requested) */}
+                  {['restaurants', 'shops', 'beauty', 'activities', 'poi'].includes(activeTab) && activeTab !== 'trails' && (
                     <div className="mt-3 pt-3 border-t border-slate-100 space-y-1">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                         <Mail size={12} className="text-blue-500" /> {item.adminEmail || 'Sem email'}
