@@ -2111,11 +2111,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </button>
                             </div>
                           ))}
-                          {(!car.gallery || car.gallery.length === 0) && (
-                            <div className="flex-1 py-4 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                               Sem Fotos na Galeria
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -2129,11 +2124,103 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'buses':
         return (
           <>
-            {commonInput('Empresa', 'company')}
-            {islandSelect()}
-            {commonInput('Origem', 'origin')}
-            {commonInput('Destino', 'destination')}
-            {commonInput(t('item_price'), 'price', 'number')}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Companhia</label>
+                <select 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold"
+                  value={editingItem.company || ''}
+                  onChange={(e) => setEditingItem({ ...editingItem, company: e.target.value })}
+                >
+                  <option value="">Selecionar Companhia...</option>
+                  <option value="Varela">Varela</option>
+                  <option value="CRP">CRP (Caetano, Raposo & Pereiras)</option>
+                  <option value="AVM">AVM (Auto Viação Micaelense)</option>
+                </select>
+              </div>
+              {islandSelect()}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              {commonInput('Origem', 'origin')}
+              {commonInput('Destino', 'destination')}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              {commonInput(t('item_price'), 'price', 'number')}
+              {commonInput('Duração (ex: 45m)', 'duration')}
+            </div>
+
+            <div className="space-y-4 mt-8 p-6 bg-slate-900 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Bus size={120} className="text-white" />
+              </div>
+              
+              <div className="relative z-10">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 mb-6 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                  Configuração de Horários
+                </h4>
+                
+                <div className="grid gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex justify-between">
+                      <span>Dias Úteis (Segunda a Sexta)</span>
+                      <span className="text-slate-600 font-mono">Separar por vírgula</span>
+                    </label>
+                    <textarea 
+                      className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                      rows={3}
+                      value={editingItem.schedule?.weekdays?.join(', ') || ''}
+                      onChange={(e) => {
+                        const times = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                        setEditingItem({
+                          ...editingItem,
+                          schedule: { ...editingItem.schedule, weekdays: times },
+                          times: times // Sync with flat times for legacy support
+                        });
+                      }}
+                      placeholder="Ex: 07:00, 08:30, 12:15, 17:40..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Sábados</label>
+                      <textarea 
+                        className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                        rows={3}
+                        value={editingItem.schedule?.saturdays?.join(', ') || ''}
+                        onChange={(e) => {
+                          const times = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                          setEditingItem({
+                            ...editingItem,
+                            schedule: { ...editingItem.schedule, saturdays: times }
+                          });
+                        }}
+                        placeholder="Ex: 09:00, 13:30..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Domingos / Feriados</label>
+                      <textarea 
+                        className="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                        rows={3}
+                        value={editingItem.schedule?.sundays?.join(', ') || ''}
+                        onChange={(e) => {
+                          const times = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                          setEditingItem({
+                            ...editingItem,
+                            schedule: { ...editingItem.schedule, sundays: times }
+                          });
+                        }}
+                        placeholder="Ex: 10:00, 16:00..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </>
         );
     }
