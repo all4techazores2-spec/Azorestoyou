@@ -287,14 +287,19 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.tables) setTables(business.tables);
   }, [business]);
 
+  const onForceRefreshRef = React.useRef(onForceRefresh);
+  useEffect(() => {
+    onForceRefreshRef.current = onForceRefresh;
+  }, [onForceRefresh]);
+
   // Auto-Refresh (5 segundos) para manter o dashboard atualizado com novas reservas
   useEffect(() => {
     const refreshInterval = setInterval(() => {
       console.log("⏱️ Auto-refreshing dashboard data from server...");
-      if (onForceRefresh) onForceRefresh();
+      if (onForceRefreshRef.current) onForceRefreshRef.current();
     }, 5000);
     return () => clearInterval(refreshInterval);
-  }, [onForceRefresh]);
+  }, []);
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
@@ -2597,7 +2602,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <div className="space-y-6">
                        <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Pedidos de Reserva Pendentes</h3>
                        <AnimatePresence mode="popLayout">
-                         {reservations.filter(r => r.status === 'pending' || r.status === 'pendente' || r.status === 'accepted').map(res => (
+                         {reservations.filter(r => r.status === 'pending' || r.status === 'pendente').map(res => (
                            <motion.div 
                              layout
                              initial={{ opacity: 0, x: -20 }}

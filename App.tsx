@@ -594,12 +594,12 @@ const App: React.FC = () => {
               profile: {
                 phone: userProfile.phone,
                 avatar: userProfile.avatar
-              },
-              reservations: myReservations
+              }
+              // REMOVIDO: reservations para evitar que o cliente sobrescreva o estado atualizado pelo gerente (A Tasca)
               // REMOVIDO: notifications: notifications (Não sobrescrever notificações do servidor)
             }),
           });
-          console.log("👤 Perfil do utilizador sincronizado (sem sobrescrever notificações)");
+          console.log("👤 Perfil do utilizador sincronizado (sem sobrescrever notificações/reservas)");
         } catch (err) {
           console.error("Erro na sincronização do utilizador:", err);
         }
@@ -882,7 +882,8 @@ const App: React.FC = () => {
     if (!rest) return;
 
     // Just mark as finished and free the table — credits come after payment confirmation by the restaurant
-    setMyReservations(prev => prev.map(r => r.id === resId ? { ...r, status: 'finished' } : r));
+    const updatedUserRes = myReservations.map(r => r.id === resId ? { ...r, status: 'finished' } : r);
+    setMyReservations(updatedUserRes);
 
     const updatedTables = rest.tables?.map(t => t.id === tableId ? { ...t, status: 'available' as const, customerName: undefined, reservationTime: undefined, currentTab: [] } : t);
     const updatedReservations = rest.reservations?.map(r => r.id === resId ? { ...r, status: 'finished' as const } : r);
@@ -890,11 +891,20 @@ const App: React.FC = () => {
     setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
 
     try {
+      // 1. Atualizar o restaurante
       await fetch(`${API_BASE_URL}/api/restaurants/${restaurantId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRest),
       });
+
+      // 2. Atualizar o perfil do utilizador de forma explícita
+      await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservations: updatedUserRes }),
+      });
+
       alert('✅ Saída registada! Os créditos serão atribuídos após confirmação do pagamento pelo restaurante.');
     } catch (err) { console.error(err); }
   };
