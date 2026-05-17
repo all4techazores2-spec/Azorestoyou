@@ -275,7 +275,7 @@ const App: React.FC = () => {
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   // Function to fetch data from Backend with Retry logic for Cold Starts
-  const fetchData = async (retries = 3) => {
+  const fetchData = async (retries = 3, specificKeys?: string[]) => {
     setIsSyncing(true);
     try {
       const normalizeBusiness = (b: any) => ({
@@ -292,14 +292,14 @@ const App: React.FC = () => {
         }))
       });
 
-      // 1. Streaming Fetch for ZERO delay
-      // 1. Streaming Fetch for ZERO delay
       const endpointKeys = [
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
         'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes', 'bars', 'events', 'municipal',
         'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats'
       ];
+
+      const keysToFetch = specificKeys || endpointKeys;
 
       const setterMap: Record<string, Function> = {
         'restaurants': setRestaurants, 'hotels': setHotels, 'cars': setCars, 'shops': setShops,
@@ -311,7 +311,7 @@ const App: React.FC = () => {
       };
 
       // 0. Load from Cache immediately for Offline Support
-      endpointKeys.forEach(async key => {
+      keysToFetch.forEach(async key => {
         try {
           const cached = await getCache(`azores_cache_${key}`);
           if (cached && setterMap[key]) {
@@ -323,7 +323,7 @@ const App: React.FC = () => {
       let emptyCount = 0;
       let completedCount = 0;
 
-      endpointKeys.forEach(key => {
+      keysToFetch.forEach(key => {
         fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}`)
           .then(r => r.ok ? r.json() : [])
           .then(data => {
@@ -349,9 +349,9 @@ const App: React.FC = () => {
                   try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
                 }
               }
-             if (completedCount === endpointKeys.length) {
-                if (emptyCount === endpointKeys.length && retries > 0) {
-                   setTimeout(() => fetchData(retries - 1), 3000);
+             if (completedCount === keysToFetch.length) {
+                if (emptyCount === keysToFetch.length && retries > 0) {
+                   setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
                 }
              }
           })
@@ -1398,8 +1398,8 @@ const App: React.FC = () => {
                });
             }}
             onForceRefresh={() => {
-              console.log("🔄 Force refreshing dashboard data from server...");
-              fetchData(1);
+              console.log(`🔄 Force refreshing dashboard data for category [${bEndpoint}] from server...`);
+              fetchData(1, [bEndpoint]);
             }}
             onUpdateBusiness={async (updated) => {
               // Encontrar o endpoint correto usando o mapa central

@@ -129,6 +129,27 @@ const handleBusinessUpdate = async (req, res) => {
 
         if (targetArray && index !== -1) {
             targetArray[index] = normalizeTrailData({ ...targetArray[index], ...req.body });
+
+            // Sincronizar automaticamente as alterações de reserva com os perfis de utilizador correspondentes
+            if (req.body.reservations && Array.isArray(req.body.reservations)) {
+                req.body.reservations.forEach(resItem => {
+                    if (db.users) {
+                        db.users.forEach(user => {
+                            if (user.reservations) {
+                                const uResIdx = user.reservations.findIndex(r => r.id === resItem.id);
+                                if (uResIdx !== -1) {
+                                    // Sincronizar o estado, a mesa vinculada e qualquer outro detalhe alterado
+                                    user.reservations[uResIdx] = { 
+                                        ...user.reservations[uResIdx], 
+                                        ...resItem 
+                                    };
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
             await writeDB(db);
             res.json(targetArray[index]);
         } else {
