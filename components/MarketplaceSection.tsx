@@ -169,7 +169,13 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowPostModal(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  onShowAuth();
+                } else {
+                  setShowPostModal(true);
+                }
+              }}
               className="group flex items-center gap-3 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-orange-600/20 transition-all border border-orange-400/20"
             >
               <div className="p-1 bg-white/20 rounded-lg group-hover:rotate-90 transition-transform duration-300">
