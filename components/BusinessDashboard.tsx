@@ -287,17 +287,21 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.tables) setTables(business.tables);
   }, [business]);
 
+  const [isSyncingVisual, setIsSyncingVisual] = useState(false);
+
   const onForceRefreshRef = React.useRef(onForceRefresh);
   useEffect(() => {
     onForceRefreshRef.current = onForceRefresh;
   }, [onForceRefresh]);
 
-  // Auto-Refresh (5 segundos) para manter o dashboard atualizado com novas reservas
+  // Auto-Refresh (2 segundos) para manter o dashboard atualizado com novas reservas
   useEffect(() => {
     const refreshInterval = setInterval(() => {
       console.log("⏱️ Auto-refreshing dashboard data from server...");
+      setIsSyncingVisual(true);
       if (onForceRefreshRef.current) onForceRefreshRef.current();
-    }, 5000);
+      setTimeout(() => setIsSyncingVisual(false), 800);
+    }, 2000);
     return () => clearInterval(refreshInterval);
   }, []);
 
@@ -2239,7 +2243,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     onClick={() => onForceRefresh && onForceRefresh()}
                     className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
                   >
-                    <RefreshCw size={16} className={`text-blue-500 group-hover:rotate-180 transition-transform duration-700 ${isUploading ? 'animate-spin' : ''}`} />
+                    <RefreshCw size={16} className={`text-blue-500 transition-transform duration-700 ${isUploading || isSyncingVisual ? 'animate-spin' : 'group-hover:rotate-180'}`} />
                     Sincronizar Dashboard
                   </button>
                </div>
