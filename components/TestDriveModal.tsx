@@ -46,6 +46,7 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
       const resData = {
         id: `TD-${Math.random().toString(36).substr(2, 9)}`,
         businessId: stand.id,
+        businessType: stand.businessType || 'stand',
         businessName: stand.name,
         carModel: car.model,
         carId: car.id,
@@ -58,7 +59,7 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
         type: 'test_drive'
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/offices/${stand.id}/reservations`, { // Reusing office endpoint for simplicity or can add a generic one
+      const res = await fetch(`${API_BASE_URL}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resData),

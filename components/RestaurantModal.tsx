@@ -170,6 +170,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
       // Preparar dados da reserva
       const reservationData = {
+        businessId: restaurant.id,
+        businessType: restaurant.businessType,
         customerName: customerName,
         customerEmail: customerEmail,
         customerPhone: customerPhone,
@@ -185,22 +187,13 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         // Payment details
         paymentDetails: paymentType === 'mbway' ? { mbwayPhone } : paymentType === 'transfer' ? { cardNumber, cardExpiry, cardCvv } : null,
         bookingFee: isBeauty ? bookingFee : 0,
-        preOrderCreditsPaid: isPaidOnline && preorderSelected && orderItems.length > 0,
-        businessType: restaurant.businessType
+        preOrderCreditsPaid: isPaidOnline && preorderSelected && orderItems.length > 0
       };
 
       console.log('Iniciando handleFinalize...', reservationData);
 
-      // 1. Enviar Reserva
-      const endpoint = isBeauty 
-        ? `${API_BASE_URL}/api/beauty/${restaurant.id}/reservations`
-        : restaurant.businessType === 'shop'
-          ? `${API_BASE_URL}/api/shops/${restaurant.id}/reservations`
-          : restaurant.businessType === 'auto_repair'
-            ? `${API_BASE_URL}/api/auto_repair/${restaurant.id}/reservations`
-            : isOffice 
-              ? `${API_BASE_URL}/api/offices/${restaurant.id}/reservations`
-              : `${API_BASE_URL}/api/restaurants/${restaurant.id}/reservations`;
+      // 1. Enviar Reserva (Endpoint global para todas as categorias)
+      const endpoint = `${API_BASE_URL}/api/reservations`;
 
       console.log('Enviando para endpoint:', endpoint);
       const res = await fetch(endpoint, {

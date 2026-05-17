@@ -53,7 +53,8 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
 
       const resData = {
         id: Math.random().toString(36).substr(2, 9),
-        officeId: office.id,
+        businessId: office.id,
+        businessType: office.businessType || 'office',
         officeName: office.name,
         date: selectedDate.toISOString().split('T')[0],
         time: selectedTime,
@@ -65,7 +66,7 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
         type: 'office_visit'
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/offices/${office.id}/reservations`, {
+      const res = await fetch(`${API_BASE_URL}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resData),
