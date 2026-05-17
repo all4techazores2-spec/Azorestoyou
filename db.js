@@ -31,12 +31,13 @@ export const connectDB = async () => {
         try {
             console.log("🌐 Attempting to connect to MongoDB Atlas...");
             await mongoose.connect(uri, {
-                maxPoolSize: 50, // Aumentado para lidar com mais tráfego
-                minPoolSize: 5,
-                connectTimeoutMS: 120000, // 120 segundos (aguentar fotos grandes)
-                socketTimeoutMS: 120000,
-                serverSelectionTimeoutMS: 120000,
-                heartbeatFrequencyMS: 10000,
+                maxPoolSize: 10,
+                minPoolSize: 2,
+                connectTimeoutMS: 10000,     // 10s para estabelecer ligação
+                socketTimeoutMS: 60000,      // 60s para operações grandes
+                serverSelectionTimeoutMS: 8000, // 8s máx para escolher servidor (CRÍTICO!)
+                heartbeatFrequencyMS: 30000, // Ping ao servidor a cada 30s
+                family: 4,                   // Forçar IPv4 (mais rápido em cloud)
             });
             isMongoConnected = true;
             mongoError = null;
@@ -90,7 +91,7 @@ const DEFAULT_DB = {
 // In-memory cache to prevent OOM from 19 parallel requests
 let memoryCache = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 5000; // 5 seconds
+const CACHE_TTL_MS = 30000; // 30 segundos - reduz drasticamente os pedidos ao Atlas
 
 // Lock for preventing Cache Stampedes (Thundering Herd problem)
 let activeFetchPromise = null;
