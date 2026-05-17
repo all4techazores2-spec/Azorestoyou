@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, ArrowLeft, MessageCircle, ChevronRight, User } from 'lucide-react';
+import { X, Send, ArrowLeft, MessageCircle, MessageSquare, ChevronRight, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface ChatMessage {
