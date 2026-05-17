@@ -22,7 +22,7 @@ interface Ad {
   userName: string;
   userPhone: string;
   createdAt: string;
-  status: 'active' | 'sold' | 'hidden';
+  status?: 'active' | 'sold' | 'hidden' | 'pending' | 'rejected' | 'pendingApproval';
 }
 
 interface MarketplaceSectionProps {
@@ -75,6 +75,11 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   const [selectedIsland, setSelectedIsland] = useState('Todas');
   const [showIslandDropdown, setShowIslandDropdown] = useState(false);
 
+  // Approval Modal States
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalAdId, setApprovalAdId] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(10);
+
   // Form State
   const [newAd, setNewAd] = useState({
     title: '',
@@ -110,11 +115,15 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
         userName: userProfile.name,
         userPhone: userProfile.phone || '',
         createdAt: new Date().toISOString(),
-        status: 'active'
+        status: 'pending'
       };
 
       const updatedAds = [ad, ...ads];
       await onUpdateAds(updatedAds);
+      
+      setApprovalAdId(ad.id);
+      setTimeLeft(10);
+      setShowApprovalModal(true);
       
       setShowPostModal(false);
       setNewAd({ title: '', description: '', price: '', category: 'electronics', location: 'São Miguel', images: [] });
@@ -124,6 +133,22 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!showApprovalModal || !approvalAdId) return;
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [showApprovalModal, approvalAdId]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -171,7 +196,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           ad.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesIsland = selectedIsland === 'Todas' || ad.location === selectedIsland;
-    return matchesCategory && matchesSearch && matchesIsland;
+    const isActive = ad.status === 'active' || ad.status === undefined;
+    return matchesCategory && matchesSearch && matchesIsland && isActive;
   });
 
   return (
@@ -552,6 +578,150 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
+      {/* Approval Status Wait Modal */}
+      <AnimatePresence>
+        {showApprovalModal && approvalAdId && (() => {
+          const currentAd = ads.find(ad => ad.id === approvalAdId);
+          const currentStatus = currentAd?.status || 'pending';
+          
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-6"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-white rounded-[3rem] p-10 w-full max-w-lg shadow-2xl border border-slate-100 text-center space-y-6 relative overflow-hidden"
+              >
+                {/* Visual Status Indicator */}
+                {currentStatus === 'pending' && (
+                  <div className="space-y-6">
+                    <div className="relative w-24 h-24 mx-auto flex items-center justify-center bg-amber-50 rounded-full border border-amber-200">
+                      <Clock className="w-10 h-10 text-amber-500 animate-spin" style={{ animationDuration: '3s' }} />
+                      <div className="absolute inset-0 border-4 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '10s' }} />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Aguardando Aprovação...</h3>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">O seu anúncio está a ser verificado pelo administrador</p>
+                    </div>
+
+                    {/* Progress Bar (10 Seconds Countdown) */}
+                    <div className="space-y-2 max-w-md mx-auto">
+                      <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 tracking-widest px-1">
+                        <span>Tempo para análise rápida</span>
+                        <span>{timeLeft}s</span>
+                      </div>
+                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <motion.div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20"
+                          initial={{ width: '100%' }}
+                          animate={{ width: `${(timeLeft / 10) * 100}%` }}
+                          transition={{ ease: 'linear', duration: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 font-bold uppercase leading-relaxed max-w-sm mx-auto">
+                      Por favor, aguarde enquanto o administrador analisa e valida os dados de segurança do seu anúncio no painel administrativo.
+                    </p>
+
+                    {/* Fallback button when time runs out */}
+                    {timeLeft === 0 && (
+                      <div className="pt-4 space-y-2">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">O administrador ainda está a analisar...</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              // Auto Approve Test Fallback
+                              const updated = ads.map(a => a.id === approvalAdId ? { ...a, status: 'active' } : a);
+                              await onUpdateAds(updated);
+                            }}
+                            className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-emerald-500/20 transition-all"
+                          >
+                            Auto-Aprovar (Modo Teste)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowApprovalModal(false);
+                              setApprovalAdId(null);
+                            }}
+                            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-2xl text-xs font-black uppercase transition-all"
+                          >
+                            Fechar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {currentStatus === 'active' && (
+                  <div className="space-y-6 py-4">
+                    <div className="w-20 h-20 bg-emerald-50 border-2 border-emerald-200 rounded-full flex items-center justify-center mx-auto text-emerald-500 shadow-lg shadow-emerald-100 animate-bounce">
+                      <Check className="w-10 h-10 stroke-[3]" />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Anúncio Aprovado!</h3>
+                      <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-1">O seu anúncio já está online e visível para todos!</p>
+                    </div>
+
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      O classificado cumpre todas as nossas diretivas de segurança e foi publicado no Marketplace Azores4you com sucesso.
+                    </p>
+
+                    <button
+                      onClick={() => {
+                        setShowApprovalModal(false);
+                        setApprovalAdId(null);
+                      }}
+                      className="w-full max-w-xs py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 mx-auto"
+                    >
+                      Entrar no Marketplace
+                    </button>
+                  </div>
+                )}
+
+                {currentStatus === 'rejected' && (
+                  <div className="space-y-6 py-4">
+                    <div className="w-20 h-20 bg-red-50 border-2 border-red-200 rounded-full flex items-center justify-center mx-auto text-red-500 shadow-lg shadow-red-100">
+                      <X className="w-10 h-10 stroke-[3]" />
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Anúncio Rejeitado</h3>
+                      <p className="text-xs font-bold text-red-600 uppercase tracking-widest mt-1">Erro de Segurança ou Violação de Política</p>
+                    </div>
+
+                    <div className="bg-red-50/50 p-4 rounded-2xl border border-red-100 text-left space-y-2 max-w-md mx-auto">
+                      <span className="text-[10px] font-black uppercase text-red-700 tracking-wider">Motivo da rejeição:</span>
+                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                        O anúncio contém erros de segurança, fotografias não condizentes ou viola alguma das políticas e termos de utilização estipulados pela plataforma Azores4you.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setShowApprovalModal(false);
+                        setApprovalAdId(null);
+                      }}
+                      className="w-full max-w-xs py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 mx-auto"
+                    >
+                      Fechar e Corrigir
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

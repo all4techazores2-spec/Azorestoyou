@@ -3652,6 +3652,54 @@ Av. do Mar, Madalena, Pico
                       </div>
                     </div>
                   )}
+
+                  {/* Marketplace Verification Actions (Aprovar / Rejeitar) */}
+                  {activeTab === 'marketplace' && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-2">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                        <span>Anunciante: {item.userName || 'Cliente'}</span>
+                        <span>{item.userPhone || ''}</span>
+                      </div>
+                      
+                      {item.status === 'pending' || item.status === 'pendingApproval' || !item.status ? (
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            onClick={async () => {
+                              const newList = marketplaceAds.map(ad => ad.id === item.id ? { ...ad, status: 'active' } : ad);
+                              onUpdateMarketplaceAds(newList);
+                            }}
+                            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 transition-all text-center"
+                          >
+                            Aprovar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const newList = marketplaceAds.map(ad => ad.id === item.id ? { ...ad, status: 'rejected' } : ad);
+                              onUpdateMarketplaceAds(newList);
+                            }}
+                            className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-500/20 transition-all text-center"
+                          >
+                            Rejeitar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-center mt-1">
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${item.status === 'active' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            {item.status === 'active' ? 'Aprovado' : 'Rejeitado'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const newList = marketplaceAds.map(ad => ad.id === item.id ? { ...ad, status: 'pending' } : ad);
+                              onUpdateMarketplaceAds(newList);
+                            }}
+                            className="text-[9px] font-bold text-blue-600 hover:underline uppercase"
+                          >
+                            Recarregar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
              ))}
