@@ -595,27 +595,6 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
             </div>
           </div>
 
-          {/* Modern Categories Bar - Now integrated inside the sticky header */}
-          <div className="w-full mt-3">
-            <div className="flex overflow-x-auto gap-2.5 py-2 no-scrollbar scroll-smooth">
-              {MARKET_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 border text-xs font-bold uppercase tracking-wider whitespace-nowrap active:scale-95 shadow-sm ${
-                    activeCategory === cat.id 
-                      ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-600/20' 
-                      : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200/60 hover:text-slate-800'
-                  }`}
-                >
-                  <span className={`transition-colors duration-300 ${activeCategory === cat.id ? 'text-white' : 'text-slate-400'}`}>
-                    {React.cloneElement(cat.icon as React.ReactElement, { size: 16 })}
-                  </span>
-                  <span className="text-[10px] font-extrabold">{cat.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 

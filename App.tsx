@@ -26,7 +26,7 @@ import SupplierDashboard from './components/SupplierDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
-import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn } from 'lucide-react';
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
@@ -1597,91 +1597,107 @@ const App: React.FC = () => {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 220 }}
-                className="fixed top-0 right-0 h-full w-[80%] max-w-[320px] bg-white/95 backdrop-blur-xl shadow-[-20px_0_60px_rgba(0,0,0,0.15)] z-[160] flex flex-col md:hidden border-l border-white/20"
+                className="fixed top-0 right-0 h-full w-[80%] max-w-[320px] bg-white z-[160] flex flex-col md:hidden shadow-[-20px_0_60px_rgba(0,0,0,0.18)] border-l border-slate-100"
               >
                 {/* Drawer Header */}
-                <div className="p-8 flex items-center justify-between border-b border-slate-100/50">
+                <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-                      <LayoutDashboard size={20} />
+                    <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                      <LayoutDashboard size={18} />
                     </div>
-                    <span className="font-black text-slate-800 uppercase tracking-tighter text-lg">Menu</span>
+                    <span className="font-black text-slate-800 uppercase tracking-tighter text-base">Menu</span>
                   </div>
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all active:scale-90"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all active:scale-90"
                   >
-                    <X size={22} />
+                    <X size={20} />
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-6 py-8 space-y-12 scrollbar-hide">
-                  
-                  {/* Actions Section */}
-                  <div className="space-y-6">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-4">Menu de Opções</p>
-                    <div className="grid grid-cols-1 gap-3">
-                      
-                      {/* Login / Profile */}
+                {/* User Card */}
+                <div className="px-5 pt-5 pb-3">
+                  {isAuthenticated ? (
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl text-white shadow-lg shadow-blue-600/20">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-white/30 shadow-md flex-shrink-0">
+                        <img src={userProfile?.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-white/70">Bem-vindo</p>
+                        <p className="text-sm font-black text-white truncate">{userProfile?.name?.split(' ')[0] || 'Utilizador'}</p>
+                        <p className="text-[10px] font-bold text-white/60">{userCredits} créditos</p>
+                      </div>
                       <button 
-                        onClick={() => { 
-                          if (isAuthenticated) setShowProfileModal(true); 
-                          else setShowAuthModal(true);
-                          setMobileMenuOpen(false); 
-                        }}
-                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
+                        onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
+                        className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all active:scale-90"
                       >
-                        <div className="flex items-center gap-4">
-                           <div className="p-3.5 bg-blue-600 rounded-2xl text-white shadow-lg"><User size={22} /></div>
-                           <div className="text-left">
-                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">{isAuthenticated ? (userProfile?.name?.split(' ')[0] || 'Perfil') : 'Fazer Login'}</span>
-                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{isAuthenticated ? `${userCredits} Créditos` : 'Acesse sua conta'}</span>
-                           </div>
-                        </div>
-                        <ArrowRight size={18} className="text-slate-200 group-hover:text-blue-600 transition-colors" />
+                        <ArrowRight size={16} />
                       </button>
-
-                      {/* Contacts */}
-                      <button 
-                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
-                      >
-                        <div className="flex items-center gap-4">
-                           <div className="p-3.5 bg-green-600 rounded-2xl text-white shadow-lg"><Phone size={22} /></div>
-                           <div className="text-left">
-                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">Contactos</span>
-                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Fale connosco</span>
-                           </div>
-                        </div>
-                        <ArrowRight size={18} className="text-slate-200 group-hover:text-green-600 transition-colors" />
-                      </button>
-
-                      {/* Support */}
-                      <button 
-                        className="flex items-center justify-between w-full p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all active:scale-98 group"
-                      >
-                        <div className="flex items-center gap-4">
-                           <div className="p-3.5 bg-slate-900 rounded-2xl text-white shadow-lg"><ShieldAlert size={22} /></div>
-                           <div className="text-left">
-                             <span className="font-black text-slate-900 uppercase text-[11px] tracking-widest block">Suporte Técnico</span>
-                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Ajuda e Segurança</span>
-                           </div>
-                        </div>
-                        <ArrowRight size={18} className="text-slate-200 group-hover:text-slate-600 transition-colors" />
-                      </button>
-
                     </div>
-                  </div>
+                  ) : (
+                    <button 
+                      onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
+                      className="flex items-center justify-between w-full p-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl text-white shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                          <LogIn size={20} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-[11px] font-black uppercase tracking-widest text-white/80">Entrar na Conta</p>
+                          <p className="text-sm font-black text-white">Fazer Login</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={18} className="text-white/70" />
+                    </button>
+                  )}
+                </div>
 
-                  {/* Footer Action - Logout */}
+                <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] px-2 pt-3 pb-1">Opções</p>
+
+                  {/* Contactos */}
+                  <button className="flex items-center justify-between w-full px-4 py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-green-100 text-green-600 rounded-xl">
+                        <Phone size={18} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-black text-slate-900 text-[12px] block">Contactos</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Fale connosco</span>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  </button>
+
+                  {/* Suporte */}
+                  <button className="flex items-center justify-between w-full px-4 py-4 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-2xl transition-all active:scale-95 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-slate-200 text-slate-600 rounded-xl">
+                        <ShieldAlert size={18} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-black text-slate-900 text-[12px] block">Suporte Técnico</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Ajuda e Segurança</span>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  </button>
+
+                  {/* Logout */}
                   {isAuthenticated && (
-                    <div className="pt-8 border-t border-slate-100">
-                      <button 
-                        onClick={() => { goBackToLanding(); setMobileMenuOpen(false); }} 
-                        className="flex items-center justify-center gap-3 w-full py-6 text-red-500 font-black text-[11px] uppercase tracking-[0.2em] bg-red-50/50 hover:bg-red-50 rounded-[2rem] transition-all active:scale-95 border border-red-100"
-                      >
-                        <LogOut size={20} /> Terminar Sessão
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => { goBackToLanding(); setMobileMenuOpen(false); }} 
+                      className="flex items-center gap-3 w-full px-4 py-4 mt-4 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-2xl transition-all active:scale-95"
+                    >
+                      <div className="p-2.5 bg-red-100 text-red-600 rounded-xl">
+                        <LogOut size={18} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-black text-red-700 text-[12px] block">Terminar Sessão</span>
+                        <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Sair da aplicação</span>
+                      </div>
+                    </button>
                   )}
                 </div>
               </motion.div>

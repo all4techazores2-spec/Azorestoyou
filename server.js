@@ -280,6 +280,54 @@ app.post('/api/reset-db', async (req, res) => {
     }
 });
 
+// --- CLEAR ALL RESERVATIONS (for testing) ---
+app.post('/api/clear-reservations', async (req, res) => {
+    try {
+        const db = await readDB();
+        let totalCleared = 0;
+
+        // 1. Limpar reservas em todos os negócios de todas as coleções
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key] && Array.isArray(db[key])) {
+                db[key].forEach(biz => {
+                    if (biz.reservations && biz.reservations.length > 0) {
+                        totalCleared += biz.reservations.length;
+                        biz.reservations = [];
+                    }
+                    // Limpar também tabelas (reservas de mesa em restaurantes)
+                    if (biz.tables && Array.isArray(biz.tables)) {
+                        biz.tables.forEach(table => {
+                            if (table.reservations && table.reservations.length > 0) {
+                                totalCleared += table.reservations.length;
+                                table.reservations = [];
+                            }
+                            // Reset table status to available
+                            table.status = 'available';
+                        });
+                    }
+                });
+            }
+        });
+
+        // 2. Limpar reservas de todos os utilizadores
+        if (db.users && Array.isArray(db.users)) {
+            db.users.forEach(user => {
+                if (user.reservations && user.reservations.length > 0) {
+                    totalCleared += user.reservations.length;
+                    user.reservations = [];
+                }
+            });
+        }
+
+        await writeDB(db);
+        console.log(`🧹 CLEAR RESERVATIONS: ${totalCleared} reservations removed from all collections and users.`);
+        res.json({ success: true, cleared: totalCleared, message: `${totalCleared} reservas removidas com sucesso de todos os negócios e utilizadores.` });
+    } catch (err) {
+        console.error("❌ Clear reservations failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Secure Env Check (Only returns keys, not values)
 app.get('/api/env-check', (req, res) => {
     res.json({
