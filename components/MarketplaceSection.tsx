@@ -150,7 +150,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-700 pb-32">
       {/* Premium Sub-Header */}
-      <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 sticky top-[80px] lg:top-[96px] z-[80] px-4 py-4 md:px-8 transition-all duration-300 shadow-sm">
+      <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 sticky top-[64px] lg:top-[80px] z-[80] px-4 pt-4 pb-2 md:px-8 transition-all duration-300 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -178,7 +178,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
               Publicar
             </motion.button>
           </div>
-
+ 
           {/* Luxury Search & Filters */}
           <div className="flex gap-3 relative">
             <div className="flex-1 relative group">
@@ -253,28 +253,28 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
               </AnimatePresence>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Modern Categories Bar */}
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 mt-4 mb-2">
-        <div className="flex overflow-x-auto gap-2.5 py-3 no-scrollbar scroll-smooth">
-          {MARKET_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 border text-xs font-bold uppercase tracking-wider whitespace-nowrap active:scale-95 shadow-sm ${
-                activeCategory === cat.id 
-                  ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-600/20' 
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200/60 hover:text-slate-800'
-              }`}
-            >
-              <span className={`transition-colors duration-300 ${activeCategory === cat.id ? 'text-white' : 'text-slate-400'}`}>
-                {React.cloneElement(cat.icon as React.ReactElement, { size: 16 })}
-              </span>
-              <span className="text-[10px] font-extrabold">{cat.label}</span>
-            </button>
-          ))}
+          {/* Modern Categories Bar - Now integrated inside the sticky header */}
+          <div className="w-full mt-3">
+            <div className="flex overflow-x-auto gap-2.5 py-2 no-scrollbar scroll-smooth">
+              {MARKET_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 border text-xs font-bold uppercase tracking-wider whitespace-nowrap active:scale-95 shadow-sm ${
+                    activeCategory === cat.id 
+                      ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-600/20' 
+                      : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200/60 hover:text-slate-800'
+                  }`}
+                >
+                  <span className={`transition-colors duration-300 ${activeCategory === cat.id ? 'text-white' : 'text-slate-400'}`}>
+                    {React.cloneElement(cat.icon as React.ReactElement, { size: 16 })}
+                  </span>
+                  <span className="text-[10px] font-extrabold">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
