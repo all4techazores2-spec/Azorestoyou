@@ -124,7 +124,9 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       };
 
       const updatedAds = [ad, ...ads];
-      await onUpdateAds(updatedAds);
+      onUpdateAds(updatedAds).catch(err => {
+        console.error("Async sync failed:", err);
+      });
       
       setApprovalAdId(ad.id);
       setTimeLeft(10);
