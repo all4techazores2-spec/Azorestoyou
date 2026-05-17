@@ -598,7 +598,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       <AnimatePresence>
         {showApprovalModal && approvalAdId && (() => {
           const currentAd = ads.find(ad => ad.id === approvalAdId);
-          const currentStatus = currentAd?.status || 'pending';
+          const currentStatus = currentAd ? (currentAd.status || 'pending') : 'rejected';
           
           return (
             <motion.div 

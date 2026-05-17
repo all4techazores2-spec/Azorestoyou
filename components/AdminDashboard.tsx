@@ -3676,7 +3676,7 @@ Av. do Mar, Madalena, Pico
                           </button>
                           <button
                             onClick={async () => {
-                              const newList = marketplaceAds.map(ad => ad.id === item.id ? { ...ad, status: 'rejected' } : ad);
+                              const newList = marketplaceAds.filter(ad => ad.id !== item.id);
                               onUpdateMarketplaceAds(newList);
                             }}
                             className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-500/20 transition-all text-center"
