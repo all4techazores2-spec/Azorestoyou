@@ -49,6 +49,7 @@ const MARKET_CATEGORIES = [
   { id: 'fashion', label: 'Moda e Acessórios', icon: <Tag size={20} /> },
   { id: 'services', label: 'Serviços', icon: <Briefcase size={20} /> },
   { id: 'fashion_beauty', label: 'Beleza e Barbearia', icon: <Smartphone size={20} /> },
+  { id: 'jobs', label: 'Empregos', icon: <Briefcase size={20} /> },
 ];
 
 const AZORES_ISLANDS = [
@@ -85,6 +86,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [selectedIsland, setSelectedIsland] = useState('Todas');
   const [showIslandDropdown, setShowIslandDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   // Approval Modal States
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -454,6 +456,72 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
  
           {/* Luxury Search & Filters */}
           <div className="flex gap-3 relative">
+            {/* Left Filter (Categories) */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className={`p-4 border rounded-[1.25rem] shadow-sm transition-all active:scale-95 group flex items-center gap-1.5 h-14 ${
+                  activeCategory !== 'all'
+                    ? 'bg-orange-50 border-orange-200 text-orange-600'
+                    : 'bg-white border-slate-200/60 text-slate-600 hover:text-orange-600 hover:border-orange-500/30'
+                }`}
+              >
+                <LayoutGrid size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+                {activeCategory !== 'all' && (
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded-full max-w-[85px] truncate">
+                    {MARKET_CATEGORIES.find(c => c.id === activeCategory)?.label}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showCategoryDropdown && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-[90]" 
+                      onClick={() => setShowCategoryDropdown(false)}
+                    />
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute left-0 mt-2 w-64 bg-white border border-slate-100 rounded-3xl shadow-xl z-[100] py-3 overflow-hidden"
+                    >
+                      <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrar por Categoria</p>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto no-scrollbar">
+                        {MARKET_CATEGORIES.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => {
+                              setActiveCategory(cat.id);
+                              setShowCategoryDropdown(false);
+                            }}
+                            className={`w-full px-5 py-2.5 text-left text-xs font-bold transition-all flex items-center justify-between ${
+                              activeCategory === cat.id
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400">
+                                {React.cloneElement(cat.icon as React.ReactElement, { size: 16 })}
+                              </span>
+                              <span>{cat.label}</span>
+                            </div>
+                            {activeCategory === cat.id && <Check size={14} className="text-orange-600" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="flex-1 relative group">
               <div className="absolute inset-0 bg-orange-500/5 rounded-[1.25rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
@@ -715,6 +783,17 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                       </select>
                     </div>
                   </div>
+                  {newAd.category === 'jobs' && (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in duration-300">
+                      <Check className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-black text-emerald-800 uppercase tracking-tight">Publicação Gratuita</p>
+                        <p className="text-[10px] font-bold text-emerald-600 leading-normal mt-0.5">
+                          Nesta categoria não são cobrados créditos nem taxas de publicação (disponível para procura de emprego e prestação de serviços).
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-2">Descrição</label>
                     <textarea 
