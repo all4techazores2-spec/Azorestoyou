@@ -2579,31 +2579,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               >
                 <RefreshCw size={12} className={isSyncing ? 'animate-spin text-blue-400' : ''} />
               </button>
-           </div>
-           <p className={`text-[11px] font-bold ${dbStatus?.isMongo ? 'text-emerald-500' : 'text-amber-500'}`}>
-              {dbStatus?.storage}
-           </p>
-           {!dbStatus?.isMongo && (
-             <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                <p className="text-[9px] text-amber-600 leading-tight mb-1">
-                  Atenção: Os dados são <b>temporários</b> e serão perdidos ao reiniciar.
-                </p>
-                <p className="text-[8px] text-slate-500">
-                  Config: {dbStatus?.isConfigured ? '✅ URI Detetada' : '❌ URI em falta no Render'}
-                </p>
-                <p className="text-[8px] text-slate-500">
-                  Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou'}
-                </p>
-                {dbStatus?.error && (
-                  <p className="text-[7px] text-red-400 mt-1 font-mono break-all leading-tight">
-                    Erro: {dbStatus.error}
-                  </p>
-                )}
-                <p className="text-[7px] text-slate-600 mt-1 opacity-50">
-                  Srv Time: {dbStatus?.timestamp ? new Date(dbStatus.timestamp).toLocaleTimeString() : 'N/A'}
-                </p>
-             </div>
-           )}
+           </div>            <p className={`text-[11px] font-bold ${dbStatus?.isMongo ? 'text-emerald-500' : 'text-amber-500'}`}>
+               {dbStatus?.storage}
+            </p>
+            {!dbStatus?.isMongo && dbStatus?.storage !== 'A ligar...' && (
+              <div className="mt-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                 <p className="text-[9px] text-amber-600 leading-tight mb-1">
+                   Atenção: Os dados são <b>temporários</b> e serão perdidos ao reiniciar.
+                 </p>
+                 <p className="text-[8px] text-slate-500">
+                   Config: {dbStatus?.isConfigured ? '✅ URI Detetada' : '❌ URI em falta no Render'}
+                 </p>
+                 <p className="text-[8px] text-slate-500">
+                   Ligação: {dbStatus?.isMongo ? '✅ Ativa' : '❌ Falhou'}
+                 </p>
+                 {dbStatus?.error && (
+                   <p className="text-[7px] text-red-400 mt-1 font-mono break-all leading-tight">
+                     Erro: {dbStatus.error}
+                   </p>
+                 )}
+                 <p className="text-[7px] text-slate-600 mt-1 opacity-50">
+                   Srv Time: {dbStatus?.timestamp ? new Date(dbStatus.timestamp).toLocaleTimeString() : 'N/A'}
+                 </p>
+              </div>
+            )}
+            {dbStatus?.storage === 'A ligar...' && (
+              <div className="mt-2 p-2 bg-blue-500/5 rounded-lg border border-blue-500/20 flex items-center gap-2 animate-pulse">
+                <RefreshCw size={10} className="animate-spin text-blue-400" />
+                <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider">A ligar ao MongoDB Atlas...</span>
+              </div>
+            )}
         </div>
 
         <div className="p-4 border-t border-slate-800 space-y-2">

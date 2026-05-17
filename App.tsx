@@ -320,7 +320,14 @@ const App: React.FC = () => {
              if (Array.isArray(data) && data.length === 0) emptyCount++;
              const setter = setterMap[key];
              if (setter && Array.isArray(data)) {
-               const normalized = data.map(normalizeBusiness);
+               let normalized = data.map(normalizeBusiness);
+               if (key === 'marketplace_ads') {
+                 const localPending = marketplaceAds.filter(localAd => 
+                   (localAd.status === 'pending' || localAd.status === 'pendingApproval') && 
+                   !normalized.some(serverAd => serverAd.id === localAd.id)
+                 );
+                 normalized = [...localPending, ...normalized];
+               }
                setter(normalized);
                // Save to IndexedDB which has massive storage capacity!
                setCache(`azores_cache_${key}`, normalized);
