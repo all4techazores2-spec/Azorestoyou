@@ -1,6 +1,6 @@
-
 import mongoose from 'mongoose';
-import 'dotenv/config';
+
+const mongoURI = 'mongodb://all4techazores2_db_user:azorestoyou@ac-3pnfstw-shard-00-00.5bkexpa.mongodb.net:27017,ac-3pnfstw-shard-00-01.5bkexpa.mongodb.net:27017,ac-3pnfstw-shard-00-02.5bkexpa.mongodb.net:27017/master_db?ssl=true&replicaSet=atlas-tidfjh-shard-0&authSource=admin&appName=Cluster0';
 
 const dbSchema = new mongoose.Schema({
     key: { type: String, unique: true },
@@ -9,34 +9,52 @@ const dbSchema = new mongoose.Schema({
 
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
-async function diagnostic() {
+async function checkAtlas() {
     try {
-        const uri = process.env.MONGODB_URI;
-        if (!uri) {
-            console.error("❌ MONGODB_URI não encontrada.");
-            process.exit(1);
-        }
+        console.log("🌐 A ligar ao MongoDB Atlas de Produção...");
+        await mongoose.connect(mongoURI, {
+            connectTimeoutMS: 30000,
+            socketTimeoutMS: 60000,
+            serverSelectionTimeoutMS: 30000,
+        });
+        console.log("✅ Ligado com sucesso ao Atlas!");
 
-        await mongoose.connect(uri);
-        console.log("✅ Ligado ao Atlas");
+        console.log("🔍 A pesquisar pelo documento 'master_db'...");
+        const doc = await DBModel.findOne({ key: 'master_db' }).lean();
 
-        const doc = await DBModel.findOne({ key: 'master_db' });
         if (!doc) {
-            console.log("❌ master_db NÃO EXISTE no Atlas.");
-        } else {
-            const stats = {};
-            for (const k in doc.data) {
-                if (Array.isArray(doc.data[k])) {
-                    stats[k] = doc.data[k].length;
-                }
-            }
-            console.log("📊 Estatísticas do Atlas:", stats);
+            console.log("❌ ERRO: O documento com a chave 'master_db' não existe na base de dados do Atlas!");
+            process.exit(0);
         }
+
+        console.log("✅ Documento 'master_db' encontrado!");
+        console.log(`🕒 Última Atualização: ${doc.updatedAt || doc.createdAt || 'Desconhecida'}`);
+        
+        if (!doc.data) {
+            console.log("⚠️ O campo 'data' está vazio ou inexistente!");
+            process.exit(0);
+        }
+
+        console.log("\n📊 ESTATÍSTICAS DA BASE DE DADOS NA NUVEM (ATLAS):");
+        Object.keys(doc.data).forEach(key => {
+            const item = doc.data[key];
+            if (Array.isArray(item)) {
+                console.log(` - ${key}: ${item.length} itens`);
+                if (item.length > 0) {
+                    // Mostrar uma pequena amostra para sabermos o que é
+                    const sampleNames = item.slice(0, 3).map(i => i.name || i.title || i.id || JSON.stringify(i));
+                    console.log(`   └─ Exemplo: ${sampleNames.join(', ')}`);
+                }
+            } else {
+                console.log(` - ${key}: ${typeof item}`);
+            }
+        });
+
         process.exit(0);
     } catch (err) {
-        console.error("Erro:", err);
+        console.error("❌ ERRO AO ACEDER AO ATLAS:", err.message);
         process.exit(1);
     }
 }
 
-diagnostic();
+checkAtlas();

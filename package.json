@@ -7,9 +7,13 @@
     "dev": "vite --host",
     "server": "node server.js",
     "start": "node server.js",
+    "prebuild": "node backup_db.js",
     "build": "vite build",
+    "postbuild": "node backup_db.js",
     "build:local": "vite build",
+    "predeploy": "node backup_db.js",
     "deploy": "npm run build:local && git add . && git commit -m \"Update and Deploy\" && git push origin main",
+    "postdeploy": "node backup_db.js",
     "lint": "echo No lint",
     "preview": "vite preview"
   },
