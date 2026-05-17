@@ -368,15 +368,6 @@ const App: React.FC = () => {
           console.log("✅ Diagnóstico recebido:", statusData);
           setDbStatus(statusData);
         }
-
-        // 4. Se for Admin, carregar todos os utilizadores
-        if (isAdmin || userProfile.email === 'adminadmin@gmail.com') {
-          const uResp = await fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`);
-          if (uResp.ok) {
-            const allUsers = await uResp.json();
-            setUsers(allUsers || []);
-          }
-        }
       } catch (e) {
         console.error("❌ Erro de rede ao contactar servidor:", e);
       }
