@@ -318,23 +318,26 @@ const App: React.FC = () => {
           .then(data => {
              completedCount++;
              if (Array.isArray(data) && data.length === 0) emptyCount++;
-             const setter = setterMap[key];
-             if (setter && Array.isArray(data)) {
-               let normalized = data.map(normalizeBusiness);
-               if (key === 'marketplace_ads') {
-                 const localPending = marketplaceAds.filter(localAd => 
-                   (localAd.status === 'pending' || localAd.status === 'pendingApproval') && 
-                   !normalized.some(serverAd => serverAd.id === localAd.id)
-                 );
-                 normalized = [...localPending, ...normalized];
-               }
-               setter(normalized);
-               // Save to IndexedDB which has massive storage capacity!
-               setCache(`azores_cache_${key}`, normalized);
-
-               // Also try localStorage for fallback if it's small enough
-               try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
-             }
+                           const setter = setterMap[key];
+              if (setter && Array.isArray(data)) {
+                let normalized = data.map(normalizeBusiness);
+                if (key === 'marketplace_ads') {
+                  setMarketplaceAds(prev => {
+                    const localPending = prev.filter(localAd => 
+                      localAd.status === 'localPending' && 
+                      !normalized.some(serverAd => serverAd.id === localAd.id)
+                    );
+                    const merged = [...localPending, ...normalized];
+                    setCache(`azores_cache_${key}`, merged);
+                    try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
+                    return merged;
+                  });
+                } else {
+                  setter(normalized);
+                  setCache(`azores_cache_${key}`, normalized);
+                  try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+                }
+              }
              if (completedCount === endpointKeys.length) {
                 if (emptyCount === endpointKeys.length && retries > 0) {
                    setTimeout(() => fetchData(retries - 1), 3000);
@@ -1853,10 +1856,11 @@ const App: React.FC = () => {
                     onUpdateAds={async (updated) => {
                        setMarketplaceAds(updated);
                        try {
+                         const serverList = updated.map(ad => ad.status === 'localPending' ? { ...ad, status: 'pending' } : ad);
                          await fetch(`${API_BASE_URL}/api/marketplace_ads/bulk`, {
                            method: 'POST',
                            headers: { 'Content-Type': 'application/json' },
-                           body: JSON.stringify(updated)
+                           body: JSON.stringify(serverList)
                          });
                          console.log("✅ Marketplace ads synchronized");
                        } catch (e) {

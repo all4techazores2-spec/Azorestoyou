@@ -121,7 +121,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
         userName,
         userPhone,
         createdAt: new Date().toISOString(),
-        status: 'pending'
+        status: 'localPending'
       };
 
       const updatedAds = [ad, ...ads];
@@ -628,7 +628,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 className="bg-white rounded-[3rem] p-10 w-full max-w-lg shadow-2xl border border-slate-100 text-center space-y-6 relative overflow-hidden"
               >
                 {/* Visual Status Indicator */}
-                {currentStatus === 'pending' && (
+                {(currentStatus === 'pending' || currentStatus === 'localPending') && (
                   <div className="space-y-6">
                     <div className="relative w-24 h-24 mx-auto flex items-center justify-center bg-amber-50 rounded-full border border-amber-200">
                       <Clock className="w-10 h-10 text-amber-500 animate-spin" style={{ animationDuration: '3s' }} />
