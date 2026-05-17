@@ -410,9 +410,10 @@ const App: React.FC = () => {
     let syncInterval: any;
     if (!isManager && isDataLoaded) {
       syncInterval = setInterval(() => {
-        fetchData();
-        console.log("🔄 Client-side real-time sync...");
-      }, 5000); // Increased to 5s for better stability
+        // Sincronização ultra-rápida (2s) limitada às categorias de reservas para máxima performance
+        fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services']);
+        console.log("🔄 Client-side real-time sync (2s interval)...");
+      }, 2000); // Reduzido para 2 segundos!
     }
     
     return () => {
