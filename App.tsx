@@ -2084,6 +2084,7 @@ const App: React.FC = () => {
           language={language} 
           isAuthenticated={isAuthenticated}
           isCommunity={exploreCategory === 'community'}
+          isMarketplace={exploreCategory === 'marketplace'}
         />
       </div>
 
