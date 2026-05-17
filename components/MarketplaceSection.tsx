@@ -45,6 +45,19 @@ const MARKET_CATEGORIES = [
   { id: 'fashion_beauty', label: 'Beleza e Barbearia', icon: <Smartphone size={20} /> },
 ];
 
+const AZORES_ISLANDS = [
+  'Todas',
+  'São Miguel',
+  'Santa Maria',
+  'Terceira',
+  'Faial',
+  'Pico',
+  'São Jorge',
+  'Graciosa',
+  'Flores',
+  'Corvo'
+];
+
 const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   isAuthenticated,
   userProfile,
@@ -59,6 +72,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showPostModal, setShowPostModal] = useState(false);
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [selectedIsland, setSelectedIsland] = useState('Todas');
+  const [showIslandDropdown, setShowIslandDropdown] = useState(false);
 
   // Form State
   const [newAd, setNewAd] = useState({
@@ -128,7 +143,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     const matchesCategory = activeCategory === 'all' || ad.category === activeCategory;
     const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           ad.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesIsland = selectedIsland === 'Todas' || ad.location === selectedIsland;
+    return matchesCategory && matchesSearch && matchesIsland;
   });
 
   return (
@@ -164,7 +180,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
           </div>
 
           {/* Luxury Search & Filters */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 relative">
             <div className="flex-1 relative group">
               <div className="absolute inset-0 bg-orange-500/5 rounded-[1.25rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
@@ -176,38 +192,87 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 className="w-full h-14 bg-slate-50 border border-slate-200/60 rounded-[1.25rem] pl-14 pr-4 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:bg-white focus:border-orange-500/30 transition-all shadow-inner"
               />
             </div>
-            <button className="p-4 bg-white border border-slate-200/60 rounded-[1.25rem] text-slate-600 hover:text-orange-600 hover:border-orange-500/30 shadow-sm transition-all active:scale-95 group">
-              <Filter size={22} className="group-hover:rotate-180 transition-transform duration-500" />
-            </button>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowIslandDropdown(!showIslandDropdown)}
+                className={`p-4 border rounded-[1.25rem] shadow-sm transition-all active:scale-95 group flex items-center gap-1.5 h-14 ${
+                  selectedIsland !== 'Todas'
+                    ? 'bg-orange-50 border-orange-200 text-orange-600'
+                    : 'bg-white border-slate-200/60 text-slate-600 hover:text-orange-600 hover:border-orange-500/30'
+                }`}
+              >
+                <Filter size={22} className="group-hover:rotate-180 transition-transform duration-500" />
+                {selectedIsland !== 'Todas' && (
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                    {selectedIsland}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showIslandDropdown && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-[90]" 
+                      onClick={() => setShowIslandDropdown(false)}
+                    />
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 rounded-3xl shadow-xl z-[100] py-3 overflow-hidden"
+                    >
+                      <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrar por Ilha</p>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto no-scrollbar">
+                        {AZORES_ISLANDS.map((island) => (
+                          <button
+                            key={island}
+                            onClick={() => {
+                              setSelectedIsland(island);
+                              setShowIslandDropdown(false);
+                            }}
+                            className={`w-full px-5 py-2.5 text-left text-xs font-bold transition-all flex items-center justify-between ${
+                              selectedIsland === island
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                          >
+                            <span>{island}</span>
+                            {selectedIsland === island && <Check size={14} className="text-orange-600" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Modern Categories Bar */}
-      <div className="max-w-7xl mx-auto w-full mb-4">
-        <div className="flex overflow-x-auto gap-4 px-4 py-8 no-scrollbar scroll-smooth">
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 mt-4 mb-2">
+        <div className="flex overflow-x-auto gap-2.5 py-3 no-scrollbar scroll-smooth">
           {MARKET_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex flex-col items-center gap-3 min-w-[100px] p-5 rounded-[2.5rem] transition-all duration-500 border-2 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 border text-xs font-bold uppercase tracking-wider whitespace-nowrap active:scale-95 shadow-sm ${
                 activeCategory === cat.id 
-                  ? 'bg-orange-600 text-white shadow-2xl shadow-orange-600/30 border-orange-600 scale-105' 
-                  : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 border-slate-100/60 shadow-sm'
+                  ? 'bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-600/20' 
+                  : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200/60 hover:text-slate-800'
               }`}
             >
-              <div className={`p-3.5 rounded-[1.5rem] transition-all duration-500 ${
-                activeCategory === cat.id 
-                  ? 'bg-white text-orange-600 shadow-inner' 
-                  : 'bg-slate-50 text-slate-400 group-hover:bg-white'
-              }`}>
-                {cat.icon}
-              </div>
-              <span className={`text-[10px] font-[1000] uppercase tracking-wider text-center whitespace-nowrap ${
-                activeCategory === cat.id ? 'text-white' : 'text-slate-600'
-              }`}>
-                {cat.label}
+              <span className={`transition-colors duration-300 ${activeCategory === cat.id ? 'text-white' : 'text-slate-400'}`}>
+                {React.cloneElement(cat.icon as React.ReactElement, { size: 16 })}
               </span>
+              <span className="text-[10px] font-extrabold">{cat.label}</span>
             </button>
           ))}
         </div>
@@ -339,22 +404,31 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                       className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-2">Preço (€)</label>
                       <input 
                         type="number" placeholder="0.00"
                         value={newAd.price} onChange={e => setNewAd(p => ({ ...p, price: e.target.value }))}
-                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                       />
                     </div>
                     <div>
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-2">Categoria</label>
                       <select 
                         value={newAd.category} onChange={e => setNewAd(p => ({ ...p, category: e.target.value }))}
-                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                       >
                         {MARKET_CATEGORIES.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block px-2">Ilha</label>
+                      <select 
+                        value={newAd.location} onChange={e => setNewAd(p => ({ ...p, location: e.target.value }))}
+                        className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                      >
+                        {AZORES_ISLANDS.filter(island => island !== 'Todas').map(island => <option key={island} value={island}>{island}</option>)}
                       </select>
                     </div>
                   </div>
