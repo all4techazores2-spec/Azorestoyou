@@ -287,12 +287,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.tables) setTables(business.tables);
   }, [business]);
 
-  // Auto-Refresh (10 segundos) para manter o dashboard atualizado com novas reservas
+  // Auto-Refresh (5 segundos) para manter o dashboard atualizado com novas reservas
   useEffect(() => {
     const refreshInterval = setInterval(() => {
       console.log("⏱️ Auto-refreshing dashboard data from server...");
       if (onForceRefresh) onForceRefresh();
-    }, 10000);
+    }, 5000);
     return () => clearInterval(refreshInterval);
   }, [onForceRefresh]);
 
@@ -661,6 +661,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       reservations: updatedReservations
     });
 
+    // Sincronizar globalmente para o cliente ver
+    fetch(`${API_BASE_URL}/api/reservations/${acceptingReservation.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'accepted', tableId })
+    }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+
     // 4. Limpar estado de aceitação
     setAcceptingReservation(null);
     setActiveTab('tables');
@@ -843,6 +850,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     );
     setReservations(newReservations);
     
+    // Sincronizar com a coleção global de reservas para o cliente ver (para todos os tipos de negócios)
+    fetch(`${API_BASE_URL}/api/reservations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: action, tableId: tableId || resObj?.tableId, confirmedByRestaurant: action === 'accepted' })
+    }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+
     if (action === 'accepted' && tableId) {
       const newTables = tables.map(t => t.id === tableId ? { ...t, status: 'reserved', customerName: resObj?.customerName, reservationTime: resObj?.time } as const : t);
       setTables(newTables);
