@@ -280,48 +280,96 @@ app.post('/api/reset-db', async (req, res) => {
     }
 });
 
-// --- CLEAR ALL RESERVATIONS (for testing) ---
+// --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
     try {
         const db = await readDB();
         let totalCleared = 0;
+        const summary = {};
 
-        // 1. Limpar reservas em todos os negócios de todas as coleções
+        // 1. Limpar tudo em todos os negócios de todas as coleções
         ALL_BUSINESS_COLLECTIONS.forEach(key => {
             if (db[key] && Array.isArray(db[key])) {
                 db[key].forEach(biz => {
+                    // Reservas
                     if (biz.reservations && biz.reservations.length > 0) {
                         totalCleared += biz.reservations.length;
+                        summary['reservations'] = (summary['reservations'] || 0) + biz.reservations.length;
                         biz.reservations = [];
                     }
-                    // Limpar também tabelas (reservas de mesa em restaurantes)
+                    // Pedidos de comida / kitchen orders
+                    if (biz.orders && biz.orders.length > 0) {
+                        totalCleared += biz.orders.length;
+                        summary['orders'] = (summary['orders'] || 0) + biz.orders.length;
+                        biz.orders = [];
+                    }
+                    // Mesas
                     if (biz.tables && Array.isArray(biz.tables)) {
                         biz.tables.forEach(table => {
+                            // Reservas de mesa
                             if (table.reservations && table.reservations.length > 0) {
                                 totalCleared += table.reservations.length;
+                                summary['table_reservations'] = (summary['table_reservations'] || 0) + table.reservations.length;
                                 table.reservations = [];
                             }
-                            // Reset table status to available
+                            // Pedidos ativos da mesa
+                            if (table.orders && table.orders.length > 0) {
+                                totalCleared += table.orders.length;
+                                summary['table_orders'] = (summary['table_orders'] || 0) + table.orders.length;
+                                table.orders = [];
+                            }
+                            if (table.currentOrder) {
+                                totalCleared += 1;
+                                summary['table_current_orders'] = (summary['table_current_orders'] || 0) + 1;
+                                table.currentOrder = null;
+                            }
+                            // Reset estado da mesa
                             table.status = 'available';
+                            table.occupiedBy = null;
+                            table.occupiedSince = null;
                         });
+                    }
+                    // Chats de marketplace ligados a negócios
+                    if (biz.chats && biz.chats.length > 0) {
+                        totalCleared += biz.chats.length;
+                        summary['biz_chats'] = (summary['biz_chats'] || 0) + biz.chats.length;
+                        biz.chats = [];
                     }
                 });
             }
         });
 
-        // 2. Limpar reservas de todos os utilizadores
+        // 2. Limpar reservas e pedidos dos utilizadores
         if (db.users && Array.isArray(db.users)) {
             db.users.forEach(user => {
                 if (user.reservations && user.reservations.length > 0) {
                     totalCleared += user.reservations.length;
+                    summary['user_reservations'] = (summary['user_reservations'] || 0) + user.reservations.length;
                     user.reservations = [];
+                }
+                if (user.orders && user.orders.length > 0) {
+                    totalCleared += user.orders.length;
+                    summary['user_orders'] = (summary['user_orders'] || 0) + user.orders.length;
+                    user.orders = [];
                 }
             });
         }
 
+        // 3. Limpar marketplace_chats (coleção separada)
+        if (db.marketplace_chats && db.marketplace_chats.length > 0) {
+            summary['marketplace_chats'] = db.marketplace_chats.length;
+            totalCleared += db.marketplace_chats.length;
+            db.marketplace_chats = [];
+        }
+
         await writeDB(db);
-        console.log(`🧹 CLEAR RESERVATIONS: ${totalCleared} reservations removed from all collections and users.`);
-        res.json({ success: true, cleared: totalCleared, message: `${totalCleared} reservas removidas com sucesso de todos os negócios e utilizadores.` });
+        console.log(`🧹 FULL CLEAR: ${totalCleared} items removed. Summary:`, JSON.stringify(summary));
+        res.json({ 
+            success: true, 
+            cleared: totalCleared, 
+            summary,
+            message: `✅ ${totalCleared} registos removidos. Tudo limpo para testes.`
+        });
     } catch (err) {
         console.error("❌ Clear reservations failed:", err.message);
         res.status(500).json({ error: err.message });
