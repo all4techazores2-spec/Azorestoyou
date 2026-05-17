@@ -267,12 +267,6 @@ const App: React.FC = () => {
   const [showBusIslandModal, setShowBusIslandModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showMarketplaceFavorites, setShowMarketplaceFavorites] = useState(false);
-
-  useEffect(() => {
-    if (exploreCategory !== 'marketplace') {
-      setShowMarketplaceFavorites(false);
-    }
-  }, [exploreCategory]);
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [directAdStart, setDirectAdStart] = useState<any | null>(null);
@@ -475,6 +469,13 @@ const App: React.FC = () => {
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreCategory, setExploreCategory] = useState<ExploreCategory>(null);
+
+  useEffect(() => {
+    if (exploreCategory !== 'marketplace') {
+      setShowMarketplaceFavorites(false);
+    }
+  }, [exploreCategory]);
+
   const [currentStep, setCurrentStep] = useState<BookingStep>('flights');
   const [publicIslandFilter, setPublicIslandFilter] = useState<string>('all');
   const [showAuthModal, setShowAuthModal] = useState(false);
