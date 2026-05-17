@@ -34,6 +34,10 @@ interface MarketplaceSectionProps {
   onShowAuth: () => void;
   onClose: () => void;
   onStartChat?: (ad: Ad) => void;
+  favoriteAdIds: string[];
+  onToggleFavoriteAd: (id: string) => void;
+  showMarketplaceFavorites: boolean;
+  onCloseMarketplaceFavorites: () => void;
 }
 
 const MARKET_CATEGORIES = [
@@ -67,7 +71,11 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   onUpdateAds,
   onShowAuth,
   onClose,
-  onStartChat
+  onStartChat,
+  favoriteAdIds = [],
+  onToggleFavoriteAd,
+  showMarketplaceFavorites,
+  onCloseMarketplaceFavorites
 }) => {
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -228,6 +236,183 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     const isActive = ad.status === 'active' || ad.status === undefined;
     return matchesCategory && matchesSearch && matchesIsland && isActive;
   });
+
+  if (showMarketplaceFavorites) {
+    const favoriteAds = ads.filter(ad => favoriteAdIds.includes(ad.id));
+    
+    return (
+      <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-500 pb-32">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 sticky top-[64px] lg:top-[80px] z-[80] px-4 pt-6 pb-6 md:px-8 shadow-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={onCloseMarketplaceFavorites} 
+                className="p-2.5 hover:bg-slate-100/80 text-slate-600 rounded-2xl transition-all active:scale-90"
+              >
+                <ArrowLeft size={22} />
+              </button>
+              <div>
+                <h1 className="text-2xl font-[900] text-slate-900 tracking-tighter uppercase leading-none">Meus Favoritos</h1>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Classificados Salvos</p>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={onCloseMarketplaceFavorites}
+              className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all active:scale-90"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-7xl mx-auto w-full px-4 md:px-8 py-8 flex-1">
+          {favoriteAds.length === 0 ? (
+            <div className="py-24 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm max-w-xl mx-auto px-6 mt-10">
+              <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Heart className="w-10 h-10 fill-current" />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-2">Nenhum Favorito Salvo</h3>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider max-w-xs mx-auto leading-relaxed">
+                Toca no ícone de coração nos anúncios que gostares para os guardares na tua lista pessoal.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {favoriteAds.map(ad => (
+                <div 
+                  key={ad.id}
+                  onClick={() => setSelectedAd(ad)}
+                  className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all duration-500 cursor-pointer group flex flex-col hover:shadow-[0_20px_50px_rgba(239,68,68,0.08)]"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden m-2 rounded-[2rem]">
+                    <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleFavoriteAd(ad.id);
+                      }}
+                      className="absolute top-4 right-4 p-2.5 bg-red-500 text-white rounded-2xl transition-all active:scale-90 border border-red-400"
+                    >
+                      <Heart size={16} className="fill-current" />
+                    </button>
+                    
+                    <div className="absolute bottom-4 left-4">
+                      <span className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-[900] text-slate-900 uppercase tracking-wider shadow-sm">
+                        {ad.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm font-[900] text-slate-800 line-clamp-2 mb-3 leading-[1.3] uppercase tracking-tight group-hover:text-red-500 transition-colors">{ad.title}</h3>
+                      <div className="flex items-center gap-1.5 text-[9px] font-[900] text-slate-500 uppercase tracking-widest mb-4">
+                        <MapPin size={12} className="text-slate-400" />
+                        {ad.location}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100/60 mt-auto">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Preço</span>
+                        <p className="text-xl font-[1000] text-slate-900 tracking-tighter">
+                          {ad.price.toLocaleString('pt-PT')} <span className="text-xs text-orange-500 font-black">€</span>
+                        </p>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isAuthenticated) {
+                            onShowAuth();
+                            return;
+                          }
+                          onStartChat?.(ad);
+                        }}
+                        className="px-5 py-3 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 border border-red-100"
+                      >
+                        <MessageSquare size={14} /> Mensagem
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Selected Ad Detail Modal within Favorites */}
+        <AnimatePresence>
+          {selectedAd && (
+            <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
+              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedAd(null)}></div>
+              <motion.div 
+                initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 100 }}
+                className="relative w-full max-w-4xl bg-white rounded-t-[3rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+              >
+                <div className="w-full md:w-1/2 aspect-square md:aspect-auto bg-slate-900 relative group overflow-hidden flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.img 
+                      key={currentImgIdx}
+                      src={selectedAd.images[currentImgIdx] || selectedAd.images[0]} 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
+                      className="w-full h-full object-cover" 
+                    />
+                  </AnimatePresence>
+                  {selectedAd.images && selectedAd.images.length > 1 && (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); setCurrentImgIdx(p => p === 0 ? selectedAd.images.length - 1 : p - 1); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 text-white rounded-full transition-all opacity-0 group-hover:opacity-100 z-10"><ChevronLeft size={20} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); setCurrentImgIdx(p => p === selectedAd.images.length - 1 ? 0 : p + 1); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 text-white rounded-full transition-all opacity-0 group-hover:opacity-100 z-10"><ChevronRight size={20} /></button>
+                    </>
+                  )}
+                </div>
+                <div className="flex-1 p-8 overflow-y-auto flex flex-col">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <span className="bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{selectedAd.category}</span>
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mt-2">{selectedAd.title}</h2>
+                    </div>
+                    <button onClick={() => setSelectedAd(null)} className="p-3 bg-slate-100 rounded-full"><X size={20} /></button>
+                  </div>
+                  <p className="text-3xl font-black text-orange-600 mb-8">{selectedAd.price.toLocaleString('pt-PT')} €</p>
+                  
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-8">
+                    <User size={24} className="text-slate-400" />
+                    <div className="flex-1">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendedor</p>
+                      <p className="text-sm font-bold text-slate-900">{selectedAd.userName}</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (!isAuthenticated) { onShowAuth(); return; }
+                        onStartChat?.(selectedAd);
+                        setSelectedAd(null);
+                      }} 
+                      className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100 active:scale-90 transition-all flex items-center gap-2 font-bold text-xs"
+                    >
+                      <MessageSquare size={20} /> Enviar Mensagem
+                    </button>
+                  </div>
+                  <div className="space-y-4 mb-8">
+                    <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Descrição</h4>
+                    <p className="text-sm text-slate-600 leading-relaxed">{selectedAd.description}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafc] animate-in fade-in duration-700 pb-32">
@@ -401,8 +586,18 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                     </span>
                   </div>
                   
-                  <button className="absolute top-4 right-4 p-2.5 bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-red-500 rounded-2xl transition-all active:scale-90 border border-white/10">
-                    <Heart size={16} />
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavoriteAd(ad.id);
+                    }}
+                    className={`absolute top-4 right-4 p-2.5 backdrop-blur-md rounded-2xl transition-all active:scale-90 border border-white/10 ${
+                      favoriteAdIds.includes(ad.id)
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-white/20 text-white hover:bg-white hover:text-red-500'
+                    }`}
+                  >
+                    <Heart size={16} className={favoriteAdIds.includes(ad.id) ? "fill-current text-white" : ""} />
                   </button>
                 </div>
 
@@ -696,7 +891,12 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                      <MapPin size={16} /> {selectedAd.location}
                    </div>
                    <div className="flex gap-4">
-                     <button className="text-slate-400 hover:text-red-500"><Heart size={22} /></button>
+                     <button 
+                       onClick={() => onToggleFavoriteAd(selectedAd.id)} 
+                       className={`transition-colors active:scale-95 ${favoriteAdIds.includes(selectedAd.id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
+                     >
+                       <Heart size={22} className={favoriteAdIds.includes(selectedAd.id) ? "fill-current" : ""} />
+                     </button>
                      <button className="text-slate-400 hover:text-blue-500"><Share2 size={22} /></button>
                    </div>
                 </div>

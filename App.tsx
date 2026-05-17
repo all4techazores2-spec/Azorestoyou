@@ -266,6 +266,13 @@ const App: React.FC = () => {
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [showBusIslandModal, setShowBusIslandModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+  const [showMarketplaceFavorites, setShowMarketplaceFavorites] = useState(false);
+
+  useEffect(() => {
+    if (exploreCategory !== 'marketplace') {
+      setShowMarketplaceFavorites(false);
+    }
+  }, [exploreCategory]);
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [directAdStart, setDirectAdStart] = useState<any | null>(null);
@@ -511,6 +518,10 @@ const App: React.FC = () => {
     }
   }, [itinerary]);
   const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState<string[]>([]);
+  const [favoriteAdIds, setFavoriteAdIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('favorite_ad_ids');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
@@ -1941,6 +1952,20 @@ const App: React.FC = () => {
                     }}
                     onShowAuth={() => setShowAuthModal(true)}
                     onClose={() => setExploreCategory(null)}
+                    favoriteAdIds={favoriteAdIds}
+                    onToggleFavoriteAd={(id) => {
+                      if (!isAuthenticated) {
+                        setShowAuthModal(true);
+                        return;
+                      }
+                      setFavoriteAdIds(prev => {
+                        const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+                        localStorage.setItem('favorite_ad_ids', JSON.stringify(next));
+                        return next;
+                      });
+                    }}
+                    showMarketplaceFavorites={showMarketplaceFavorites}
+                    onCloseMarketplaceFavorites={() => setShowMarketplaceFavorites(false)}
                   />
                 )}
                 {!['flights', 'accommodation', 'rentcar', 'community', 'marketplace'].includes(exploreCategory as string) && (
@@ -2160,7 +2185,13 @@ const App: React.FC = () => {
           onHome={goHome} 
           onMarketplace={() => setExploreCategory('marketplace')} 
           onShowAuth={() => setShowAuthModal(true)}
-          onShowFavorites={() => setShowFavoritesModal(true)}
+          onShowFavorites={() => {
+            if (exploreCategory === 'marketplace') {
+              setShowMarketplaceFavorites(true);
+            } else {
+              setShowFavoritesModal(true);
+            }
+          }}
           onShowProfile={() => setShowProfileModal(true)}
           onShowReservations={() => setShowMyReservationsModal(true)}
           onShowNotifications={() => {
