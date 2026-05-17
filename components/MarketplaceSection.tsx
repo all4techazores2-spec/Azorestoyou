@@ -80,6 +80,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalAdId, setApprovalAdId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(10);
+  const [hasSeenInProps, setHasSeenInProps] = useState(false);
 
   // Form State
   const [newAd, setNewAd] = useState({
@@ -157,6 +158,17 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     
     return () => clearInterval(timer);
   }, [showApprovalModal, approvalAdId]);
+
+  useEffect(() => {
+    if (!approvalAdId) {
+      setHasSeenInProps(false);
+      return;
+    }
+    const found = ads.some(ad => ad.id === approvalAdId);
+    if (found) {
+      setHasSeenInProps(true);
+    }
+  }, [ads, approvalAdId]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -600,7 +612,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       <AnimatePresence>
         {showApprovalModal && approvalAdId && (() => {
           const currentAd = ads.find(ad => ad.id === approvalAdId);
-          const currentStatus = currentAd ? (currentAd.status || 'pending') : 'rejected';
+          const currentStatus = currentAd ? (currentAd.status || 'pending') : (hasSeenInProps ? 'rejected' : 'pending');
           
           return (
             <motion.div 
