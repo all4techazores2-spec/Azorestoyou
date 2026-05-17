@@ -6,9 +6,15 @@ const mongoURI = 'mongodb://all4techazores2_db_user:azorestoyou@ac-3pnfstw-shard
 
 async function performBackup() {
   try {
-    const backupDir = path.join(process.cwd(), 'backups');
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
+    const localBackupDir = path.join(process.cwd(), 'backups');
+    const desktopBackupDir = 'c:\\Users\\PC\\Desktop\\bakups';
+
+    // Garantir que as pastas existem
+    if (!fs.existsSync(localBackupDir)) {
+      fs.mkdirSync(localBackupDir, { recursive: true });
+    }
+    if (!fs.existsSync(desktopBackupDir)) {
+      fs.mkdirSync(desktopBackupDir, { recursive: true });
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -17,9 +23,15 @@ async function performBackup() {
     // 1. Backup do ficheiro local db.json
     const localDbPath = path.join(process.cwd(), 'db.json');
     if (fs.existsSync(localDbPath)) {
-      const localBackupPath = path.join(backupDir, `local_db_backup_${timestamp}.json`);
+      const localBackupPath = path.join(localBackupDir, `local_db_backup_${timestamp}.json`);
       fs.copyFileSync(localDbPath, localBackupPath);
-      console.log(`  💾 Backup local guardado em: backups/local_db_backup_${timestamp}.json`);
+      
+      const desktopLocalBackupPath = path.join(desktopBackupDir, `local_db_backup_${timestamp}.json`);
+      fs.copyFileSync(localDbPath, desktopLocalBackupPath);
+      
+      console.log(`  💾 Backup local guardado em:`);
+      console.log(`    -> Azores4you/backups/local_db_backup_${timestamp}.json`);
+      console.log(`    -> C:\\Users\\PC\\Desktop\\bakups\\local_db_backup_${timestamp}.json`);
     } else {
       console.log('  ⚠️ Ficheiro db.json local não encontrado para backup.');
     }
@@ -37,9 +49,15 @@ async function performBackup() {
     const cloudRecord = await DBModel.findOne({ key: 'master_db' });
 
     if (cloudRecord && cloudRecord.data) {
-      const cloudBackupPath = path.join(backupDir, `cloud_db_backup_${timestamp}.json`);
-      fs.writeFileSync(cloudBackupPath, JSON.stringify(cloudRecord.data, null, 2), 'utf8');
-      console.log(`  ✅ Backup do MongoDB Atlas guardado em: backups/cloud_db_backup_${timestamp}.json`);
+      const localCloudBackupPath = path.join(localBackupDir, `cloud_db_backup_${timestamp}.json`);
+      fs.writeFileSync(localCloudBackupPath, JSON.stringify(cloudRecord.data, null, 2), 'utf8');
+
+      const desktopCloudBackupPath = path.join(desktopBackupDir, `cloud_db_backup_${timestamp}.json`);
+      fs.writeFileSync(desktopCloudBackupPath, JSON.stringify(cloudRecord.data, null, 2), 'utf8');
+
+      console.log(`  ✅ Backup do MongoDB Atlas guardado em:`);
+      console.log(`    -> Azores4you/backups/cloud_db_backup_${timestamp}.json`);
+      console.log(`    -> C:\\Users\\PC\\Desktop\\bakups\\cloud_db_backup_${timestamp}.json`);
     } else {
       console.log('  ⚠️ Não foi encontrado o registo master_db no Atlas para backup da nuvem.');
     }
