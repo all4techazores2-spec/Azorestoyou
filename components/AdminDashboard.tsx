@@ -49,6 +49,9 @@ interface AdminDashboardProps {
   offices: Business[];
   itServices: Business[];
   perfumes: Business[];
+  bars: Business[];
+  events: Business[];
+  municipal: Business[];
   activities: Activity[];
   flights: Flight[];
   hotels: Hotel[];
@@ -70,6 +73,9 @@ interface AdminDashboardProps {
   onUpdateOffices: (newOffices: Business[]) => void;
   onUpdateITServices: (newITServices: Business[]) => void;
   onUpdatePerfumes: (newPerfumes: Business[]) => void;
+  onUpdateBars: (newBars: Business[]) => void;
+  onUpdateEvents: (newEvents: Business[]) => void;
+  onUpdateMunicipal: (newMunicipal: Business[]) => void;
   onUpdateActivities: (list: Activity[]) => void;
   onUpdateFlights: (list: Flight[]) => void;
   onUpdateHotels: (list: Hotel[]) => void;
@@ -85,11 +91,11 @@ interface AdminDashboardProps {
   onUpdateUsers?: (users: any[]) => void;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [],
-  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers, onUpdateMarketplaceAds,
+  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], bars = [], events = [], municipal = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [],
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateBars, onUpdateEvents, onUpdateMunicipal, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers, onUpdateMarketplaceAds,
   onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
@@ -165,7 +171,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { key: 'stands', label: 'Stands', items: data.stands || [] },
             { key: 'offices', label: 'Escritórios', items: data.offices || [] },
             { key: 'it_services', label: 'Informática', items: data.it_services || [] },
-            { key: 'perfumes', label: 'Perfumaria', items: data.perfumes || [] }
+            { key: 'perfumes', label: 'Perfumaria', items: data.perfumes || [] },
+            { key: 'bars', label: 'Bares/Noite', items: data.bars || [] },
+            { key: 'events', label: 'Eventos', items: data.events || [] },
+            { key: 'municipal', label: 'Serviços Municipais', items: data.municipal || [] }
         ];
 
         for (const cat of categories) {
@@ -242,6 +251,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': onUpdateOffices(filterList(offices)); break;
       case 'it_services': onUpdateITServices(filterList(itServices)); break;
       case 'perfumes': onUpdatePerfumes(filterList(perfumes)); break;
+      case 'bars': onUpdateBars(filterList(bars)); break;
+      case 'events': onUpdateEvents(filterList(events)); break;
+      case 'municipal': onUpdateMunicipal(filterList(municipal)); break;
       case 'activities': 
       case 'trails':
       case 'poi': onUpdateActivities(filterList(activities)); break;
@@ -350,6 +362,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': onUpdateOffices(offices.filter(o => o.id !== id)); break;
       case 'it_services': onUpdateITServices(itServices.filter(i => i.id !== id)); break;
       case 'perfumes': onUpdatePerfumes(perfumes.filter(p => p.id !== id)); break;
+      case 'bars': onUpdateBars(bars.filter(b => b.id !== id)); break;
+      case 'events': onUpdateEvents(events.filter(e => e.id !== id)); break;
+      case 'municipal': onUpdateMunicipal(municipal.filter(m => m.id !== id)); break;
       case 'activities':
       case 'trails':
       case 'poi': onUpdateActivities(activities.filter(a => a.id !== id)); break;
@@ -481,6 +496,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'offices': await onUpdateOffices([...offices, ...newItems]); break;
         case 'it_services': await onUpdateITServices([...itServices, ...newItems]); break;
         case 'perfumes': await onUpdatePerfumes([...perfumes, ...newItems]); break;
+        case 'bars': await onUpdateBars([...bars, ...newItems]); break;
+        case 'events': await onUpdateEvents([...events, ...newItems]); break;
+        case 'municipal': await onUpdateMunicipal([...municipal, ...newItems]); break;
         case 'activities': await onUpdateActivities([...activities, ...newItems]); break;
         case 'flights': await onUpdateFlights([...flights, ...newItems]); break;
         case 'hotels': await onUpdateHotels([...hotels, ...newItems]); break;
@@ -532,6 +550,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'offices': updateLocal(offices, onUpdateOffices); break;
         case 'it_services': updateLocal(itServices, onUpdateITServices); break;
         case 'perfumes': updateLocal(perfumes, onUpdatePerfumes); break;
+        case 'bars': updateLocal(bars, onUpdateBars); break;
+        case 'events': updateLocal(events, onUpdateEvents); break;
+        case 'municipal': updateLocal(municipal, onUpdateMunicipal); break;
         case 'activities': 
         case 'trails':
         case 'poi': updateLocal(activities, onUpdateActivities); break;
@@ -640,6 +661,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       { data: offices, label: 'offices', id: 'offices', title: 'Escritórios' },
       { data: itServices, label: 'it_services', id: 'it_services', title: 'Informática' },
       { data: perfumes, label: 'perfumes', id: 'perfumes', title: 'Perfumaria' },
+      { data: bars, label: 'bars', id: 'bars', title: 'Bares/Noite' },
+      { data: events, label: 'events', id: 'events', title: 'Eventos' },
+      { data: municipal, label: 'municipal', id: 'municipal', title: 'Serviços Municipais' },
       { data: flights, label: 'flights', id: 'flights', title: 'Voos' },
       { data: busSchedules, label: 'bus-schedules', id: 'bus-schedules', title: 'Autocarros' }
     ];
@@ -763,6 +787,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices':
       case 'it_services':
       case 'perfumes':
+      case 'bars':
+      case 'events':
+      case 'municipal':
         newItem = { 
           id: `${activeTab.substring(0,3).toUpperCase()}${timestamp}`, 
           name: '', 
@@ -1128,6 +1155,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices':
       case 'it_services':
       case 'perfumes':
+      case 'bars':
+      case 'events':
+      case 'municipal':
         return (
           <>
             {commonInput(t('item_name'), 'name')}
@@ -2264,6 +2294,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'offices': list = offices; break;
       case 'it_services': list = itServices; break;
       case 'perfumes': list = perfumes; break;
+      case 'bars': list = bars; break;
+      case 'events': list = events; break;
+      case 'municipal': list = municipal; break;
       case 'activities': list = activities.filter(a => a.type === 'activity' || a.type === 'culture'); break;
       case 'trails': list = activities.filter(a => a.type === 'trail'); break;
       case 'poi': list = activities.filter(a => a.type === 'poi' || a.type === 'landscape'); break;
@@ -2315,6 +2348,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'offices': 'Escritórios & Cowork',
       'it_services': 'Serviços IT',
       'perfumes': 'Perfumes & Fragrâncias',
+      'bars': 'Bares & Noite',
+      'events': 'Eventos & Espetáculos',
+      'municipal': 'Serviços Municipais',
       'marketplace': 'Classificados (Marketplace)',
       'customers': 'Gestão de Clientes'
     };
@@ -2554,6 +2590,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
                 <button onClick={() => { setActiveTab('perfumes'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'perfumes' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
                   <Pipette size={14} /> Perfumaria
+                </button>
+                <button onClick={() => { setActiveTab('bars'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'bars' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Wine size={14} /> Bares/Noite
+                </button>
+                <button onClick={() => { setActiveTab('events'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'events' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Calendar size={14} /> Eventos
+                </button>
+                <button onClick={() => { setActiveTab('municipal'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'municipal' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
+                  <Landmark size={14} /> Serviços Municipais
                 </button>
                 <button onClick={() => { setActiveTab('flights'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'flights' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
                   <Plane size={14} /> Voos
@@ -3949,6 +3994,9 @@ Av. do Mar, Madalena, Pico
                       { id: 'offices', label: 'Escritórios', icon: Building2 },
                       { id: 'it_services', label: 'Informática', icon: Laptop },
                       { id: 'perfumes', label: 'Perfumaria', icon: Pipette },
+                      { id: 'bars', label: 'Bares/Noite', icon: Wine },
+                      { id: 'events', label: 'Eventos', icon: Calendar },
+                      { id: 'municipal', label: 'Serviços Municipais', icon: Landmark },
                       { id: 'flights', label: 'Voos', icon: Plane },
                       { id: 'bus-schedules', label: 'Autocarros', icon: Bus }
                     ].map(cat => (

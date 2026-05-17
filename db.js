@@ -101,7 +101,7 @@ const DEFAULT_DB = {
     shops: [], beauty: [], services: [], offices: [], 
     animals: [], real_estate: [], gyms: [], stands: [],
     auto_repairs: [], auto_electronics: [], used_market: [],
-    it_services: [], perfumes: [], users: [], posts: [],
+    it_services: [], perfumes: [], bars: [], events: [], municipal: [], users: [], posts: [],
     marketplace_ads: [] 
 };
 

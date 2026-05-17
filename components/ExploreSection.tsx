@@ -33,6 +33,9 @@ interface ExploreSectionProps {
   offices: Business[];
   itServices: Business[];
   perfumes: Business[];
+  bars: Business[];
+  events: Business[];
+  municipal: Business[];
   userCredits?: number;
   setUserCredits?: (credits: number) => void;
   favoriteRestaurantIds?: string[];
@@ -68,6 +71,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   offices = [],
   itServices = [],
   perfumes = [],
+  bars = [],
+  events = [],
+  municipal = [],
   userCredits,
   setUserCredits,
   favoriteRestaurantIds = [],
@@ -103,6 +109,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const allOffices = offices || [];
   const allITServices = itServices || [];
   const allPerfumes = perfumes || [];
+  const allBars = bars || [];
+  const allEvents = events || [];
+  const allMunicipal = municipal || [];
 
   const [selectedRestaurant, setSelectedRestaurant] = useState<Business | null>(null);
   const [selectedOffice, setSelectedOffice] = useState<Business | null>(null);
@@ -226,6 +235,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'offices': return t('nav_offices');
       case 'it_services': return t('nav_it_services');
       case 'perfumes': return t('nav_perfumes');
+      case 'bars': return t('nav_bars');
+      case 'events': return t('nav_events');
+      case 'municipal': return t('nav_municipal');
       default: return 'Explorar';
     }
   };
@@ -251,6 +263,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'offices': return <Briefcase />;
       case 'it_services': return <Laptop />;
       case 'perfumes': return <Pipette />;
+      case 'bars': return <Wine />;
+      case 'events': return <Calendar />;
+      case 'municipal': return <Landmark />;
       default: return <LandPlot />;
     }
   };
@@ -1176,6 +1191,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'offices': return renderStandardBusiness(allOffices, t('nav_offices'), <Briefcase />, '#455A64', true);
       case 'it_services': return renderStandardBusiness(allITServices, t('nav_it_services'), <Laptop />, '#2196F3');
       case 'perfumes': return renderStandardBusiness(allPerfumes, t('nav_perfumes'), <Pipette />, '#E91E63');
+      case 'bars': return renderStandardBusiness(allBars, t('nav_bars'), <Wine />, '#7B1FA2');
+      case 'events': return renderStandardBusiness(allEvents, t('nav_events'), <Calendar />, '#F57C00');
+      case 'municipal': return renderStandardBusiness(allMunicipal, t('nav_municipal'), <Landmark />, '#0288D1');
       default: return renderActivities();
     }
   };

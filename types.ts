@@ -366,6 +366,9 @@ export type ExploreCategory =
   | 'offices'
   | 'it_services'
   | 'perfumes'
+  | 'bars'
+  | 'events'
+  | 'municipal'
   | 'community'
   | 'marketplace'
   | null;

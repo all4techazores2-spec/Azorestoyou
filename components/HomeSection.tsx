@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette } from 'lucide-react';
+import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Wine, Calendar, Landmark } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
@@ -71,6 +71,9 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'stands', label: 'Stands', icon: <CarFront className="w-6 h-6" />, color: 'bg-indigo-600' },
     { id: 'offices', label: 'Escritórios', icon: <Briefcase className="w-6 h-6" />, color: 'bg-cyan-600' },
     { id: 'it_services', label: 'Informática', icon: <Laptop className="w-6 h-6" />, color: 'bg-slate-700' },
+    { id: 'bars', label: 'Bares/Noite', icon: <Wine className="w-6 h-6" />, color: 'bg-purple-800' },
+    { id: 'events', label: 'Eventos', icon: <Calendar className="w-6 h-6" />, color: 'bg-amber-500' },
+    { id: 'municipal', label: 'Serviços Municipais', icon: <Landmark className="w-6 h-6" />, color: 'bg-sky-600' },
   ];
 
   const nearbyItems = restaurants.slice(0, 4).map((r, i) => ({

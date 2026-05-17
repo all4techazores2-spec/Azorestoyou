@@ -135,6 +135,9 @@ const App: React.FC = () => {
   const [offices, setOffices] = useState<Business[]>(() => loadFromCache('offices', []));
   const [itServices, setItServices] = useState<Business[]>(() => loadFromCache('it_services', []));
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
+  const [bars, setBars] = useState<Business[]>(() => loadFromCache('bars', []));
+  const [events, setEvents] = useState<Business[]>(() => loadFromCache('events', []));
+  const [municipal, setMunicipal] = useState<Business[]>(() => loadFromCache('municipal', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [marketplaceAds, setMarketplaceAds] = useState<any[]>(() => loadFromCache('marketplace_ads', []));
   const [marketplaceChats, setMarketplaceChats] = useState<any[]>(() => loadFromCache('marketplace_chats', []));
@@ -177,6 +180,9 @@ const App: React.FC = () => {
         { key: 'used_market', setter: setUsedMarket },
         { key: 'it_services', setter: setItServices },
         { key: 'perfumes', setter: setPerfumes },
+        { key: 'bars', setter: setBars },
+        { key: 'events', setter: setEvents },
+        { key: 'municipal', setter: setMunicipal },
         { key: 'activities', setter: setActivities as Function },
         { key: 'marketplace_ads', setter: setMarketplaceAds },
         { key: 'bus-schedules', setter: setBusSchedules as Function },
@@ -290,7 +296,7 @@ const App: React.FC = () => {
       const endpointKeys = [
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
-        'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes',
+        'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes', 'bars', 'events', 'municipal',
         'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats'
       ];
 
@@ -299,7 +305,7 @@ const App: React.FC = () => {
         'beauty': setBeauty, 'services': setServices, 'offices': setOffices, 'animals': setAnimals,
         'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
         'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
-        'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
+        'perfumes': setPerfumes, 'bars': setBars, 'events': setEvents, 'municipal': setMunicipal, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
         'posts': setPosts, 'marketplace_ads': setMarketplaceAds, 'marketplace_chats': setMarketplaceChats
       };
 
@@ -1201,6 +1207,9 @@ const App: React.FC = () => {
         offices={offices}
         itServices={itServices}
         perfumes={perfumes}
+        bars={bars}
+        events={events}
+        municipal={municipal}
         activities={activities}
         flights={flights}
         hotels={hotels}
@@ -1222,6 +1231,9 @@ const App: React.FC = () => {
         onUpdateOffices={async (list) => { setOffices(list); await fetch(`${API_BASE_URL}/api/offices/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateITServices={async (list) => { setItServices(list); await fetch(`${API_BASE_URL}/api/it_services/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdatePerfumes={async (list) => { setPerfumes(list); await fetch(`${API_BASE_URL}/api/perfumes/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateBars={async (list) => { setBars(list); await fetch(`${API_BASE_URL}/api/bars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateEvents={async (list) => { setEvents(list); await fetch(`${API_BASE_URL}/api/events/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        onUpdateMunicipal={async (list) => { setMunicipal(list); await fetch(`${API_BASE_URL}/api/municipal/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateActivities={async (list) => { setActivities(list); await fetch(`${API_BASE_URL}/api/activities/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateFlights={async (list) => { setFlights(list); await fetch(`${API_BASE_URL}/api/flights/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateHotels={async (list) => { setHotels(list); await fetch(`${API_BASE_URL}/api/hotels/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
@@ -1239,7 +1251,7 @@ const App: React.FC = () => {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 restaurants, shops, beauty, services, autoRepairs, autoElectronics, usedMarket, animals,
-                realEstate, gyms, stands, offices, itServices, perfumes,
+                realEstate, gyms, stands, offices, itServices, perfumes, bars, events, municipal,
                 activities, flights, hotels, cars, busSchedules, posts, users, marketplaceAds
               }),
             });
@@ -1378,6 +1390,9 @@ const App: React.FC = () => {
                 'offices': setOffices,
                 'it_services': setItServices,
                 'perfumes': setPerfumes,
+                 'bars': setBars,
+                 'events': setEvents,
+                 'municipal': setMunicipal,
                 'animals': setAnimals,
                 'real_estate': setRealEstate,
                 'gyms': setGyms,
@@ -1732,11 +1747,14 @@ const App: React.FC = () => {
                 const allOffices = filterByIsland(offices);
                 const allITServices = filterByIsland(itServices);
                 const allPerfumes = filterByIsland(perfumes);
+                const allBars = filterByIsland(bars);
+                const allEvents = filterByIsland(events);
+                const allMunicipal = filterByIsland(municipal);
 
                 const sortFeatured = (items: any[]) => {
                   if (!isNearbyFilter || !userCoords) return items;
                   return [...items].map(item => {
-                    const business = [...allRestaurants, ...allActivities, ...allShops, ...allBeauty, ...allServices, ...allAutoRepairs, ...allAutoElectronics, ...allUsedMarket, ...allAnimals, ...allRealEstate, ...allGyms, ...allStands, ...allOffices, ...allITServices, ...allPerfumes].find(b => b.id === item.id);
+                    const business = [...allRestaurants, ...allActivities, ...allShops, ...allBeauty, ...allServices, ...allAutoRepairs, ...allAutoElectronics, ...allUsedMarket, ...allAnimals, ...allRealEstate, ...allGyms, ...allStands, ...allOffices, ...allITServices, ...allPerfumes, ...allBars, ...allEvents, ...allMunicipal].find(b => b.id === item.id);
                     const distance = (business?.latitude && business?.longitude) 
                       ? getDistance(userCoords[0], userCoords[1], parseFloat(business.latitude), parseFloat(business.longitude))
                       : 999999;
@@ -1786,6 +1804,15 @@ const App: React.FC = () => {
                     break;
                   case 'perfumes':
                     featuredItems = sortFeatured((allPerfumes || []).slice(0, 10).map(p => ({ id: p.id, title: p.name, image: p.image, rating: p.rating, location: p.island, category: 'Perfume', phone: p.phone, buttonLabel: 'Ligar' })));
+                    break;
+                  case 'bars':
+                    featuredItems = sortFeatured((allBars || []).slice(0, 10).map(b => ({ id: b.id, title: b.name, image: b.image, rating: b.rating, location: b.island, category: 'Bar/Noite', phone: b.phone, buttonLabel: 'Ligar' })));
+                    break;
+                  case 'events':
+                    featuredItems = sortFeatured((allEvents || []).slice(0, 10).map(e => ({ id: e.id, title: e.name, image: e.image, rating: e.rating, location: e.island, category: 'Evento', phone: e.phone, buttonLabel: 'Ligar' })));
+                    break;
+                  case 'municipal':
+                    featuredItems = sortFeatured((allMunicipal || []).slice(0, 10).map(m => ({ id: m.id, title: m.name, image: m.image, rating: m.rating, location: m.island, category: 'Serviço Municipal', phone: m.phone, buttonLabel: 'Ligar' })));
                     break;
                   case 'trails':
                   case 'landscapes':
@@ -1942,6 +1969,9 @@ const App: React.FC = () => {
                     offices={filterByIsland(offices)}
                     itServices={filterByIsland(itServices)}
                     perfumes={filterByIsland(perfumes)}
+                    bars={filterByIsland(bars)}
+                    events={filterByIsland(events)}
+                    municipal={filterByIsland(municipal)}
                     userCredits={userCredits}
                     setUserCredits={setUserCredits}
                     favoriteRestaurantIds={favoriteRestaurantIds}

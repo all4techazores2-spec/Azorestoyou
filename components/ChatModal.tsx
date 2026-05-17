@@ -76,13 +76,23 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
     const adId = msg.adId;
     const adTitle = msg.adTitle;
-    const adImage = msg.adImage || 'https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop';
 
-    // Find the ad in master list to get precise seller
+    // Find the ad in master list to get precise seller and image
     const adObj = ads.find(a => a.id === adId);
     const sellerEmail = adObj ? adObj.userEmail : msg.receiverEmail;
     const sellerName = adObj ? adObj.userName : msg.receiverName;
     const adPrice = adObj ? adObj.price : 0;
+
+    let adImage = '';
+    if (adObj) {
+      adImage = (adObj.images && adObj.images[0]) || adObj.image || '';
+    }
+    if (!adImage || adImage === 'undefined' || adImage === 'null') {
+      adImage = msg.adImage || '';
+    }
+    if (!adImage || adImage === 'undefined' || adImage === 'null') {
+      adImage = 'https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop';
+    }
 
     const isSeller = currentUserEmail === sellerEmail;
     const buyerEmail = isSeller 
