@@ -2286,6 +2286,7 @@ const App: React.FC = () => {
         onClose={() => setShowChatModal(false)}
         currentUserProfile={isAuthenticated ? userProfile : null}
         chats={marketplaceChats}
+        ads={marketplaceAds}
         onUpdateChats={async (newChats) => {
           setMarketplaceChats(newChats);
           try {
