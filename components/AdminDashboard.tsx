@@ -237,6 +237,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'hotels': onUpdateHotels(filterList(hotels)); break;
       case 'cars': onUpdateCars(filterList(cars)); break;
       case 'buses': onUpdateBusSchedules(filterList(busSchedules)); break;
+      case 'marketplace': onUpdateMarketplaceAds(filterList(marketplaceAds)); break;
     }
 
     setSelectedIds([]);
@@ -344,6 +345,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'hotels': onUpdateHotels(hotels.filter(h => h.id !== id)); break;
       case 'cars': onUpdateCars(cars.filter(c => c.id !== id)); break;
       case 'buses': onUpdateBusSchedules(busSchedules.filter(b => b.id !== id)); break;
+      case 'marketplace': onUpdateMarketplaceAds(marketplaceAds.filter(ad => ad.id !== id)); break;
     }
     setModifiedCategories(prev => new Set(prev).add(activeTab));
   };
