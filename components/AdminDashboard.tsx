@@ -22,6 +22,18 @@ import { API_BASE_URL } from '../config';
 
 console.log("%c🚀 Azores4you v1.2.1 - Pro Instance Active", "color: #10b981; font-weight: bold; font-size: 14px;");
 
+const islandMapping: Record<string, string> = {
+  'São Miguel': 'PDL',
+  'Santa Maria': 'SMA',
+  'Terceira': 'TER',
+  'Faial': 'HOR',
+  'Pico': 'PIX',
+  'São Jorge': 'SJZ',
+  'Graciosa': 'GRW',
+  'Flores': 'FLW',
+  'Corvo': 'CVU'
+};
+
 interface AdminDashboardProps {
   restaurants: Restaurant[];
   shops: Business[];
@@ -2265,7 +2277,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     if (islandFilter !== 'all') {
-    list = list.filter(item => item.island === islandFilter);
+    list = list.filter(item => { const itemIsland = item.island || (item.location && islandMapping[item.location]); return itemIsland === islandFilter; });
     }
     return list;
   };
@@ -3608,8 +3620,8 @@ Av. do Mar, Madalena, Pico
 
                  {/* Image or Icon Placeholder */}
                  <div className="h-32 relative bg-slate-100 flex items-center justify-center">
-                   {item.image ? (
-                     <img src={item.image} className="w-full h-full object-cover" alt="" />
+                   {(item.image || (item.images && item.images[0])) ? (
+                     <img src={item.image || item.images[0]} className="w-full h-full object-cover" alt="" />
                    ) : (
                      <ImageIcon className="w-10 h-10 text-slate-300" />
                    )}
@@ -3622,7 +3634,7 @@ Av. do Mar, Madalena, Pico
 
                    {/* Badges */}
                    <div className="absolute bottom-2 left-2 flex gap-1">
-                      {item.island && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island}</span>}
+                      {(item.island || (item.location && islandMapping[item.location])) && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island || islandMapping[item.location]}</span>}
                       {item.status && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
                       {(item.price > 0 || item.isPaid) && <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">€{item.price}</span>}
                       {activeTab === 'activities' && !item.isPaid && item.type !== 'trail' && <span className="bg-emerald-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-widest text-[8px]">Grátis</span>}
@@ -3668,12 +3680,12 @@ Av. do Mar, Madalena, Pico
                         <span>{item.userPhone || ''}</span>
                       </div>
                       
-                      {item.status === 'pending' || item.status === 'pendingApproval' || !item.status ? (
+                      {item.status === 'pending' || item.status === 'pendingApproval' || item.status === 'localPending' || !item.status ? (
                         <div className="flex gap-2 mt-1">
                           <button
                             onClick={async () => {
                               const newList = marketplaceAds.map(ad => ad.id === item.id ? { ...ad, status: 'active' } : ad);
-                              onUpdateMarketplaceAds(newList);
+                              await onUpdateMarketplaceAds(newList); alert("✅ Classificado confirmado com sucesso!");
                             }}
                             className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 transition-all text-center"
                           >
@@ -3682,7 +3694,7 @@ Av. do Mar, Madalena, Pico
                           <button
                             onClick={async () => {
                               const newList = marketplaceAds.filter(ad => ad.id !== item.id);
-                              onUpdateMarketplaceAds(newList);
+                              await onUpdateMarketplaceAds(newList); alert("❌ Classificado rejeitado com sucesso!");
                             }}
                             className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-500/20 transition-all text-center"
                           >

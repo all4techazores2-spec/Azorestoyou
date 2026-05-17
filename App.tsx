@@ -36,6 +36,7 @@ import { EcraMapa } from './components/EcraMapa';
 import { trilhosAcoresDados } from './data/dadosTrilhos';
 import DesktopView, { DesktopHeader, DesktopFooter } from './components/DesktopView';
 import MarketplaceSection from './components/MarketplaceSection';
+import ChatModal from './components/ChatModal';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
@@ -136,6 +137,7 @@ const App: React.FC = () => {
   const [perfumes, setPerfumes] = useState<Business[]>(() => loadFromCache('perfumes', []));
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [marketplaceAds, setMarketplaceAds] = useState<any[]>(() => loadFromCache('marketplace_ads', []));
+  const [marketplaceChats, setMarketplaceChats] = useState<any[]>(() => loadFromCache('marketplace_chats', []));
   const [users, setUsers] = useState<any[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -259,6 +261,8 @@ const App: React.FC = () => {
   const [showBusIslandModal, setShowBusIslandModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [directAdStart, setDirectAdStart] = useState<any | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
@@ -287,7 +291,7 @@ const App: React.FC = () => {
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
         'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes',
-        'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads'
+        'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats'
       ];
 
       const setterMap: Record<string, Function> = {
@@ -296,7 +300,7 @@ const App: React.FC = () => {
         'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
         'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
         'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
-        'posts': setPosts, 'marketplace_ads': setMarketplaceAds
+        'posts': setPosts, 'marketplace_ads': setMarketplaceAds, 'marketplace_chats': setMarketplaceChats
       };
 
       // 0. Load from Cache immediately for Offline Support
@@ -408,6 +412,51 @@ const App: React.FC = () => {
       if (syncInterval) clearInterval(syncInterval);
     };
   }, [API_BASE_URL, isAuthenticated, isAdmin, isBusiness, isStaff, isSupplier, isDataLoaded]);
+
+  // Poll only marketplace ads for admin so they see pending ads in real-time
+  useEffect(() => {
+    if (!isAdmin) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/marketplace_ads?t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setMarketplaceAds(prev => {
+              const localPending = prev.filter(localAd => 
+                localAd.status === 'localPending' && 
+                !data.some(serverAd => serverAd.id === localAd.id)
+              );
+              return [...localPending, ...data];
+            });
+          }
+        }
+      } catch (err) {
+        console.log("Error polling marketplace ads:", err.message);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isAdmin, API_BASE_URL]);
+
+  // Poll chats in real-time when logged in
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/marketplace_chats?t=${Date.now()}`);
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setMarketplaceChats(data);
+          }
+        }
+      } catch (err) {
+        console.log("Error polling chats:", err.message);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, API_BASE_URL]);
 
   // 3. NAVIGATION & UI STATE
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
@@ -1859,6 +1908,10 @@ const App: React.FC = () => {
                          throw e;
                        }
                     }}
+                    onStartChat={(ad) => {
+                      setDirectAdStart(ad);
+                      setShowChatModal(true);
+                    }}
                     onShowAuth={() => setShowAuthModal(true)}
                     onClose={() => setExploreCategory(null)}
                   />
@@ -2080,8 +2133,18 @@ const App: React.FC = () => {
           onShowFavorites={() => setShowFavoritesModal(true)}
           onShowProfile={() => setShowProfileModal(true)}
           onShowReservations={() => setShowMyReservationsModal(true)}
-          onShowNotifications={() => setShowNotificationsModal(true)}
-          notificationCount={notifications.filter(n => !n.read).length}
+          onShowNotifications={() => {
+            if (exploreCategory === 'marketplace') {
+              setShowChatModal(true);
+            } else {
+              setShowNotificationsModal(true);
+            }
+          }}
+          notificationCount={
+            exploreCategory === 'marketplace' 
+              ? marketplaceChats.filter(msg => msg.receiverEmail === userProfile?.email && !msg.read).length
+              : notifications.filter(n => !n.read).length
+          }
           itemCount={itineraryItemCount} 
           language={language} 
           isAuthenticated={isAuthenticated}
@@ -2110,7 +2173,7 @@ const App: React.FC = () => {
         language={language} 
         userCredits={userCredits}
         userProfile={userProfile}
-        onUpdateProfile={(update) => {
+        onUpdateProfile={async (update) => {
            setUserProfile({
              name: update.name,
              email: update.email,
@@ -2118,7 +2181,26 @@ const App: React.FC = () => {
              avatar: update.avatar,
              nif: update.nif
            });
-           // Password change would be handled by a dedicated API call here
+           try {
+             await fetch(`${API_BASE_URL}/api/users/${update.email}`, {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 email: update.email,
+                 phone: update.phone,
+                 name: update.name,
+                 profile: {
+                   name: update.name,
+                   phone: update.phone,
+                   avatar: update.avatar,
+                   nif: update.nif
+                 },
+                 password: update.password
+               })
+             });
+           } catch (e) {
+             console.error("Failed to update profile:", e);
+           }
         }}
         onShowReservations={() => {
           setReturnToProfile(true);
@@ -2197,6 +2279,28 @@ const App: React.FC = () => {
         onClose={() => setShowSOSModal(false)} 
         language={language} 
         onShowMap={(url: string) => setShowMapUrl(url)}
+      />
+
+      <ChatModal 
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        currentUserProfile={isAuthenticated ? userProfile : null}
+        chats={marketplaceChats}
+        onUpdateChats={async (newChats) => {
+          setMarketplaceChats(newChats);
+          try {
+            await fetch(`${API_BASE_URL}/api/marketplace_chats/bulk`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newChats)
+            });
+          } catch (err) {
+            console.error("Failed to sync chats:", err);
+          }
+        }}
+        directAdStart={directAdStart}
+        onClearDirectAdStart={() => setDirectAdStart(null)}
+        onShowAuth={() => setShowAuthModal(true)}
       />
 
       {/* Desktop Global Footer */}

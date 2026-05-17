@@ -2,11 +2,11 @@
 // Force new deploy trigger to Render
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, Plus, MapPin, Tag, Clock, ChevronRight, 
+  Search, Plus, MapPin, Tag, Clock, ChevronRight, ChevronLeft, 
   Filter, LayoutGrid, List, MessageSquare, Phone,
   Camera, X, Check, ArrowLeft, ShoppingBag, Car, 
   Home, Laptop, Smartphone, Briefcase, Heart, Share2, 
-  Trash2, Edit
+  Trash2, Edit, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -33,6 +33,7 @@ interface MarketplaceSectionProps {
   onUpdateAds: (ads: Ad[]) => Promise<void>;
   onShowAuth: () => void;
   onClose: () => void;
+  onStartChat?: (ad: Ad) => void;
 }
 
 const MARKET_CATEGORIES = [
@@ -65,7 +66,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   ads,
   onUpdateAds,
   onShowAuth,
-  onClose
+  onClose,
+  onStartChat
 }) => {
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -81,6 +83,11 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   const [approvalAdId, setApprovalAdId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(10);
   const [hasSeenInProps, setHasSeenInProps] = useState(false);
+  const [currentImgIdx, setCurrentImgIdx] = useState(0);
+
+  useEffect(() => {
+    setCurrentImgIdx(0);
+  }, [selectedAd]);
 
   // Form State
   const [newAd, setNewAd] = useState({
@@ -91,6 +98,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     location: 'São Miguel',
     images: [] as string[]
   });
+  const [phoneVisible, setPhoneVisible] = useState(true);
 
   const handlePostAd = async () => {
     if (!isAuthenticated) {
@@ -115,13 +123,14 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
         description: newAd.description,
         price: parseFloat(newAd.price),
         category: newAd.category,
-        location: newAd.location,
+        location: newAd.location, island: ({ 'São Miguel': 'PDL', 'Santa Maria': 'SMA', 'Terceira': 'TER', 'Faial': 'HOR', 'Pico': 'PIX', 'São Jorge': 'SJZ', 'Graciosa': 'GRW', 'Flores': 'FLW', 'Corvo': 'CVU' } as Record<string, string>)[newAd.location] || 'PDL',
         images: newAd.images.length > 0 ? newAd.images : ['https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop'],
         userEmail,
         userName,
         userPhone,
         createdAt: new Date().toISOString(),
-        status: 'localPending'
+        status: 'localPending',
+        phoneVisible
       };
 
       const updatedAds = [ad, ...ads];
@@ -519,6 +528,34 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                     ></textarea>
                   </div>
+
+                  {/* Contact Info Panel */}
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100/50 space-y-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Informações de Contacto</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 px-1">Nome do Anunciante</p>
+                        <div className="h-12 bg-white border border-slate-100 rounded-xl px-4 flex items-center text-xs font-bold text-slate-800">
+                          {userProfile?.name || 'Administrador'}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 px-1">Telemóvel do Anunciante</p>
+                        <div className="h-12 bg-white border border-slate-100 rounded-xl px-4 flex items-center text-xs font-bold text-slate-800">
+                          {userProfile?.phone || 'Sem telemóvel registado'}
+                        </div>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-3 px-1 pt-1 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={phoneVisible} 
+                        onChange={(e) => setPhoneVisible(e.target.checked)}
+                        className="w-4 h-4 text-orange-600 border-slate-200 rounded focus:ring-orange-500/20"
+                      />
+                      <span className="text-xs font-bold text-slate-600 select-none">Mostrar o meu número de telemóvel publicamente no anúncio</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -557,8 +594,53 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
               initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 100 }}
               className="relative w-full max-w-4xl bg-white rounded-t-[3rem] md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
             >
-              <div className="w-full md:w-1/2 aspect-square md:aspect-auto bg-slate-100">
-                <img src={selectedAd.images[0]} className="w-full h-full object-cover" />
+              <div className="w-full md:w-1/2 aspect-square md:aspect-auto bg-slate-900 relative group overflow-hidden flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.img 
+                    key={currentImgIdx}
+                    src={selectedAd.images[currentImgIdx] || selectedAd.images[0]} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="w-full h-full object-cover" 
+                  />
+                </AnimatePresence>
+                
+                {/* Navigation Arrows if more than 1 image */}
+                {selectedAd.images && selectedAd.images.length > 1 && (
+                  <>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImgIdx(prev => prev === 0 ? selectedAd.images.length - 1 : prev - 1);
+                      }} 
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all backdrop-blur-sm opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImgIdx(prev => prev === selectedAd.images.length - 1 ? 0 : prev + 1);
+                      }} 
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all backdrop-blur-sm opacity-0 group-hover:opacity-100 flex items-center justify-center z-10"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                    
+                    {/* Dots indicator */}
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-auto">
+                      {selectedAd.images.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={(e) => { e.stopPropagation(); setCurrentImgIdx(i); }}
+                          className={`w-2.5 h-2.5 rounded-full transition-all ${i === currentImgIdx ? 'bg-orange-600 w-5' : 'bg-white/60'}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="flex-1 p-8 overflow-y-auto flex flex-col">
                 <div className="flex justify-between items-start mb-6">
@@ -583,8 +665,24 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                     <p className="text-sm font-bold text-slate-900">{selectedAd.userName}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100 active:scale-90 transition-all"><MessageSquare size={20} /></button>
-                    <button className="p-3 bg-green-600 text-white rounded-xl shadow-lg shadow-green-600/20 active:scale-90 transition-all"><Phone size={20} /></button>
+                    <button 
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          onShowAuth();
+                          return;
+                        }
+                        onStartChat?.(selectedAd);
+                        setSelectedAd(null);
+                      }} 
+                      className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100 active:scale-90 transition-all flex items-center gap-2 font-bold text-xs"
+                    >
+                      <MessageSquare size={20} /> Enviar Mensagem
+                    </button>
+                    {selectedAd.phoneVisible && selectedAd.userPhone && (
+                      <a href={`tel:${selectedAd.userPhone}`} className="p-3 bg-green-600 text-white rounded-xl shadow-lg shadow-green-600/20 active:scale-90 transition-all flex items-center justify-center">
+                        <Phone size={20} />
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -628,7 +726,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 className="bg-white rounded-[3rem] p-10 w-full max-w-lg shadow-2xl border border-slate-100 text-center space-y-6 relative overflow-hidden"
               >
                 {/* Visual Status Indicator */}
-                {(currentStatus === 'pending' || currentStatus === 'localPending') && (
+                {currentStatus !== 'active' && currentStatus !== 'rejected' && (
                   <div className="space-y-6">
                     <div className="relative w-24 h-24 mx-auto flex items-center justify-center bg-amber-50 rounded-full border border-amber-200">
                       <Clock className="w-10 h-10 text-amber-500 animate-spin" style={{ animationDuration: '3s' }} />

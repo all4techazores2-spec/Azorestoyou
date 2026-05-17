@@ -62,6 +62,43 @@ async function performBackup() {
       console.log('  ⚠️ Não foi encontrado o registo master_db no Atlas para backup da nuvem.');
     }
 
+    // 3. Backup da pasta 'dist' se ela existir
+    const distPath = path.join(process.cwd(), 'dist');
+    if (fs.existsSync(distPath)) {
+      const localDistBackupPath = path.join(localBackupDir, `dist_backup_${timestamp}`);
+      const desktopDistBackupPath = path.join(desktopBackupDir, `dist_backup_${timestamp}`);
+      
+      try {
+        if (typeof fs.cpSync === 'function') {
+          fs.cpSync(distPath, localDistBackupPath, { recursive: true });
+          fs.cpSync(distPath, desktopDistBackupPath, { recursive: true });
+        } else {
+          const copyDirRecursive = (src, dest) => {
+            fs.mkdirSync(dest, { recursive: true });
+            const entries = fs.readdirSync(src, { withFileTypes: true });
+            for (let entry of entries) {
+              const srcPath = path.join(src, entry.name);
+              const destPath = path.join(dest, entry.name);
+              if (entry.isDirectory()) {
+                copyDirRecursive(srcPath, destPath);
+              } else {
+                fs.copyFileSync(srcPath, destPath);
+              }
+            }
+          };
+          copyDirRecursive(distPath, localDistBackupPath);
+          copyDirRecursive(distPath, desktopDistBackupPath);
+        }
+        console.log(`  📦 Backup da pasta 'dist' guardado em:`);
+        console.log(`    -> Azores4you/backups/dist_backup_${timestamp}`);
+        console.log(`    -> C:\\Users\\PC\\Desktop\\bakups\\dist_backup_${timestamp}`);
+      } catch (distErr) {
+        console.log('  ⚠️ Falha ao copiar pasta dist:', distErr.message);
+      }
+    } else {
+      console.log('  ℹ️ Pasta dist não existe ainda (será criada após o build).');
+    }
+
     console.log('🎉 Backup automático concluído com sucesso total!\n');
     process.exit(0);
   } catch (err) {

@@ -86,6 +86,11 @@ const BottomNav: React.FC<BottomNavProps> = ({
             {isMarketplace ? (
               <>
                 <MessageCircle className="w-6 h-6 mb-1 animate-bounce-short" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-0 right-1/4 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                    {notificationCount}
+                  </span>
+                )}
                 <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500">Mensagens</span>
               </>
             ) : (
