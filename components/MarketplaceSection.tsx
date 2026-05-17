@@ -103,6 +103,10 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
 
     setLoading(true);
     try {
+      const userEmail = userProfile?.email || 'adminadmin@gmail.com';
+      const userName = userProfile?.name || 'Administrador';
+      const userPhone = userProfile?.phone || '';
+
       const ad: Ad = {
         id: `ad_${Date.now()}`,
         title: newAd.title,
@@ -111,9 +115,9 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
         category: newAd.category,
         location: newAd.location,
         images: newAd.images.length > 0 ? newAd.images : ['https://images.unsplash.com/photo-1540340334550-624b32a8a1de?q=80&w=2070&auto=format&fit=crop'],
-        userEmail: userProfile.email,
-        userName: userProfile.name,
-        userPhone: userProfile.phone || '',
+        userEmail,
+        userName,
+        userPhone,
         createdAt: new Date().toISOString(),
         status: 'pending'
       };
@@ -128,7 +132,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
       setShowPostModal(false);
       setNewAd({ title: '', description: '', price: '', category: 'electronics', location: 'São Miguel', images: [] });
     } catch (err) {
-      alert("Erro ao publicar anúncio. Tente novamente.");
+      console.error("Post ad error:", err);
+      alert("Erro ao publicar anúncio: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -506,9 +511,17 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 <button onClick={() => setShowPostModal(false)} className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all">Cancelar</button>
                 <button 
                   onClick={handlePostAd}
-                  className="flex-[2] h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20 transition-all active:scale-95"
+                  disabled={loading}
+                  className="flex-[2] h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Confirmar e Publicar
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      A publicar...
+                    </>
+                  ) : (
+                    "Confirmar e Publicar"
+                  )}
                 </button>
               </div>
             </motion.div>
