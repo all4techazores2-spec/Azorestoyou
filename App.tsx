@@ -287,7 +287,7 @@ const App: React.FC = () => {
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
         'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes',
-        'activities', 'bus-schedules', 'flights', 'posts'
+        'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads'
       ];
 
       const setterMap: Record<string, Function> = {
@@ -296,7 +296,7 @@ const App: React.FC = () => {
         'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
         'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
         'perfumes': setPerfumes, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
-        'posts': setPosts
+        'posts': setPosts, 'marketplace_ads': setMarketplaceAds
       };
 
       // 0. Load from Cache immediately for Offline Support
