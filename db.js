@@ -25,6 +25,10 @@ const dbSchema = new mongoose.Schema({
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
 export const connectDB = async () => {
+    // GUARD: Se já está ligado, não reconectar
+    if (mongoose.connection.readyState === 1) {
+        return;
+    }
     const uri = getMongoURI();
     console.log("🔍 Checking Database Configuration...");
     if (uri) {
@@ -192,7 +196,7 @@ export const writeDB = async (data) => {
 
 export const updateCollection = async (key, data, mode = 'overwrite') => {
     try {
-        await connectDB();
+        // NÃO chamar connectDB() aqui - a ligação é feita UMA VEZ no arranque do servidor
         
         if (mode === 'merge' && isMongoConnected) {
             console.log(`Merge inteligente na coleção '${key}'...`);
