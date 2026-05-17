@@ -121,7 +121,11 @@ export const readDB = async () => {
                 return memoryCache;
             }
             
-            // If a fetch is already in progress, wait for it instead of firing another massive DB query
+            // Se já há um pedido em curso para a base de dados, reutiliza a Promise para evitar Thundering Herd
+            if (activeFetchPromise) {
+                return await activeFetchPromise;
+            }
+            
             // Start a new fetch and lock it with retry logic
             activeFetchPromise = (async () => {
                 let retries = 3;
