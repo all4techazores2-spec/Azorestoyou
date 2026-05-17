@@ -40,7 +40,9 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-    origin: '*',
+    origin: (origin, callback) => {
+        callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
