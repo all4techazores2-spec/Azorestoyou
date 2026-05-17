@@ -32,37 +32,50 @@ export const connectDB = async () => {
     const uri = getMongoURI();
     console.log("🔍 Checking Database Configuration...");
     if (uri) {
-        try {
-            console.log("🌐 Attempting to connect to MongoDB Atlas...");
-            await mongoose.connect(uri, {
-                maxPoolSize: 10,
-                minPoolSize: 2,
-                connectTimeoutMS: 10000,     // 10s para estabelecer ligação
-                socketTimeoutMS: 60000,      // 60s para operações grandes
-                serverSelectionTimeoutMS: 8000, // 8s máx para escolher servidor (CRÍTICO!)
-                heartbeatFrequencyMS: 30000, // Ping ao servidor a cada 30s
-                family: 4,                   // Forçar IPv4 (mais rápido em cloud)
-            });
-            isMongoConnected = true;
-            mongoError = null;
-            console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
-
-            // Listen for disconnection events
-            mongoose.connection.on('disconnected', () => {
-                isMongoConnected = false;
-                console.warn("⚠️ MongoDB disconnected. Attempting to reconnect...");
-            });
-            mongoose.connection.on('reconnected', () => {
+        const attempt = async (triesLeft) => {
+            try {
+                console.log(`🌐 Connecting to MongoDB Atlas... (tentativas restantes: ${triesLeft})`);
+                await mongoose.connect(uri, {
+                    maxPoolSize: 10,
+                    minPoolSize: 1,
+                    connectTimeoutMS: 30000,
+                    socketTimeoutMS: 60000,
+                    serverSelectionTimeoutMS: 30000, // 30s - tempo suficiente para Atlas acordar
+                    heartbeatFrequencyMS: 30000,
+                    retryWrites: true,
+                    w: 'majority',
+                });
                 isMongoConnected = true;
-                console.log("✅ MongoDB reconnected.");
-            });
+                mongoError = null;
+                console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
 
-        } catch (err) {
-            isMongoConnected = false;
-            mongoError = err.message;
-            console.error("❌ DATABASE ERROR: MongoDB Connection Failed:", err.message);
-            console.log("⚠️ Running in local JSON fallback mode.");
-        }
+                mongoose.connection.on('disconnected', () => {
+                    isMongoConnected = false;
+                    console.warn("⚠️ MongoDB disconnected. A reconectar em 10s...");
+                    setTimeout(() => connectDB(), 10000);
+                });
+                mongoose.connection.on('reconnected', () => {
+                    isMongoConnected = true;
+                    console.log("✅ MongoDB reconnected.");
+                });
+                mongoose.connection.on('error', (err) => {
+                    mongoError = err.message;
+                    console.error("❌ MongoDB connection error:", err.message);
+                });
+
+            } catch (err) {
+                isMongoConnected = false;
+                mongoError = err.message;
+                console.error(`❌ Atlas connection failed: ${err.message}`);
+                if (triesLeft > 1) {
+                    console.log(`🔄 A tentar novamente em 10 segundos...`);
+                    setTimeout(() => attempt(triesLeft - 1), 10000);
+                } else {
+                    console.log("⚠️ Todas as tentativas falharam. A usar JSON local.");
+                }
+            }
+        };
+        attempt(3); // 3 tentativas com 10s de intervalo
     } else {
         mongoError = "No MONGODB_URI found in environment variables.";
         console.log("📂 DATABASE STATUS: Using Local JSON Storage (db.json)");
