@@ -1387,6 +1387,10 @@ const App: React.FC = () => {
                  if (r.ok) console.log(`✅ ${updated.id} sincronizado com sucesso.`);
                });
             }}
+            onForceRefresh={() => {
+              console.log("🔄 Force refreshing dashboard data from server...");
+              fetchData(1);
+            }}
             onUpdateBusiness={async (updated) => {
               // Encontrar o endpoint correto usando o mapa central
               const endpoint = BUSINESS_TYPE_TO_ENDPOINT[updated.type] || 'restaurants';

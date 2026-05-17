@@ -23,6 +23,7 @@ interface BusinessDashboardProps {
   language?: Language;
   isStaff?: boolean;
   staffRole?: string;
+  onForceRefresh?: () => void;
 }
 
 type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
@@ -126,7 +127,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   onLogout,
   language = 'pt',
   isStaff = false,
-  staffRole
+  staffRole,
+  onForceRefresh
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
@@ -285,14 +287,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.tables) setTables(business.tables);
   }, [business]);
 
-  // Auto-Refresh (10 segundos) para manter o dashboard atualizado em tempo real
+  // Auto-Refresh (10 segundos) para manter o dashboard atualizado com novas reservas
   useEffect(() => {
     const refreshInterval = setInterval(() => {
-      console.log("⏱️ Auto-refreshing dashboard data...");
-      onSync(business);
+      console.log("⏱️ Auto-refreshing dashboard data from server...");
+      if (onForceRefresh) onForceRefresh();
     }, 10000);
     return () => clearInterval(refreshInterval);
-  }, [business, onSync]);
+  }, [onForceRefresh]);
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
@@ -2215,7 +2217,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Gestão de Pedidos Integrados (Hotel + Carro)</p>
                   </div>
                   <button 
-                    onClick={() => onSync(business)}
+                    onClick={() => onForceRefresh && onForceRefresh()}
                     className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
                   >
                     <RefreshCw size={16} className={`text-blue-500 group-hover:rotate-180 transition-transform duration-700 ${isUploading ? 'animate-spin' : ''}`} />
@@ -2567,7 +2569,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                  </div>
 
                  <button 
-                   onClick={() => onSync(business)}
+                   onClick={() => onForceRefresh && onForceRefresh()}
                    className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
                  >
                    <RefreshCw size={16} className={`text-blue-500 group-hover:rotate-180 transition-transform duration-700 ${isUploading ? 'animate-spin' : ''}`} />
