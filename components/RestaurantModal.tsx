@@ -645,76 +645,162 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   </div>
                 )}
 
-                {/* Final Details Section (replaces the popup) */}
-                {selectedDate && selectedTime && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl text-white space-y-6"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xl font-black uppercase tracking-tighter">Detalhes Finais</h4>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize a sua reserva</p>
-                      </div>
-                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                        <CheckCircle className="text-red-500" />
-                      </div>
+                {/* Final Details Popup Modal */}
+                <AnimatePresence>
+                  {selectedDate && selectedTime && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                      {/* Dark blurred glass backdrop */}
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedTime(null)}
+                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
+                      />
+                      
+                      {/* Premium Center Modal Container */}
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[3rem] p-8 shadow-2xl text-white space-y-6 overflow-y-auto max-h-[90vh] z-10 scrollbar-thin"
+                      >
+                        {/* Close button */}
+                        <button 
+                          onClick={() => setSelectedTime(null)}
+                          className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
+                        >
+                          <X size={18} />
+                        </button>
+
+                        <div className="flex items-center justify-between pr-8">
+                          <div>
+                            <h4 className="text-2xl font-black uppercase tracking-tighter">Detalhes Finais</h4>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize a sua reserva</p>
+                          </div>
+                          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                            <CheckCircle className="text-red-500" />
+                          </div>
+                        </div>
+
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between text-xs font-bold">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Calendar size={14} className="text-red-500" />
+                            <span>{selectedDate.toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Clock size={14} className="text-red-500" />
+                            <span>{selectedTime}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                            <textarea 
+                              value={bookingNote}
+                              onChange={(e) => setBookingNote(e.target.value)}
+                              placeholder="Ex: Alergias, mesa perto da janela, aniversário..."
+                              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-24"
+                            />
+                          </div>
+
+                          <div>
+                             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Garantia de Reserva</h5>
+                             <div className="grid grid-cols-2 gap-2">
+                               {[
+                                 { id: 'reserve', label: 'No Local', icon: <Wallet size={14} /> },
+                                 { id: 'mbway', label: 'MBWay', icon: <Smartphone size={14} /> },
+                                 { id: 'points', label: 'Créditos', icon: <Star size={14} /> },
+                                 { id: 'transfer', label: 'Cartão', icon: <CreditCard size={14} /> }
+                               ].map(opt => (
+                                 <button 
+                                   key={opt.id}
+                                   onClick={() => setPaymentType(opt.id as any)}
+                                   className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95
+                                     ${paymentType === opt.id 
+                                       ? 'border-red-500 bg-red-500/10' 
+                                       : 'border-white/5 hover:border-white/20'}`}
+                                 >
+                                   <div className="flex items-center gap-2">
+                                     <div className={`p-1.5 rounded-lg ${paymentType === opt.id ? 'bg-red-500 text-white' : 'bg-white/10 text-slate-400'}`}>
+                                       {opt.icon}
+                                     </div>
+                                     <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
+                                   </div>
+                                 </button>
+                               ))}
+                             </div>
+                          </div>
+
+                          {/* Dynamic Payment Fields */}
+                          {paymentType === 'mbway' && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 pt-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Número de Telemóvel MBWay</label>
+                              <input 
+                                type="tel"
+                                value={mbwayPhone}
+                                onChange={(e) => setMbwayPhone(e.target.value)}
+                                placeholder="9xxxxxxxx"
+                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                              />
+                            </motion.div>
+                          )}
+
+                          {paymentType === 'transfer' && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-2">
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Número do Cartão</label>
+                                <input 
+                                  type="text"
+                                  value={cardNumber}
+                                  onChange={(e) => setCardNumber(e.target.value)}
+                                  placeholder="0000 0000 0000 0000"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Validade</label>
+                                  <input 
+                                    type="text"
+                                    value={cardExpiry}
+                                    onChange={(e) => setCardExpiry(e.target.value)}
+                                    placeholder="MM/AA"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">CVV</label>
+                                  <input 
+                                    type="text"
+                                    value={cardCvv}
+                                    onChange={(e) => setCardCvv(e.target.value)}
+                                    placeholder="000"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
+
+                        <button 
+                          disabled={isProcessing || !paymentType}
+                          onClick={handleFinalize}
+                          className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
+                            ${(!paymentType || isProcessing) 
+                              ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                              : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                        >
+                          {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
+                          <ArrowRight className="w-5 h-5" />
+                        </button>
+                      </motion.div>
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
-                        <textarea 
-                          value={bookingNote}
-                          onChange={(e) => setBookingNote(e.target.value)}
-                          placeholder="Ex: Alergias, mesa perto da janela, aniversário..."
-                          className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-24"
-                        />
-                      </div>
-
-                      <div>
-                         <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Garantia de Reserva</h5>
-                         <div className="grid grid-cols-2 gap-2">
-                           {[
-                             { id: 'reserve', label: 'No Local', icon: <Wallet size={14} /> },
-                             { id: 'mbway', label: 'MBWay', icon: <Smartphone size={14} /> },
-                             { id: 'points', label: 'Créditos', icon: <Star size={14} /> },
-                             { id: 'transfer', label: 'Cartão', icon: <CreditCard size={14} /> }
-                           ].map(opt => (
-                             <button 
-                               key={opt.id}
-                               onClick={() => setPaymentType(opt.id as any)}
-                               className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95
-                                 ${paymentType === opt.id 
-                                   ? 'border-red-500 bg-red-500/10' 
-                                   : 'border-white/5 hover:border-white/20'}`}
-                             >
-                               <div className="flex items-center gap-2">
-                                 <div className={`p-1.5 rounded-lg ${paymentType === opt.id ? 'bg-red-500 text-white' : 'bg-white/10 text-slate-400'}`}>
-                                   {opt.icon}
-                                 </div>
-                                 <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
-                               </div>
-                             </button>
-                           ))}
-                         </div>
-                      </div>
-                    </div>
-
-                    <button 
-                      disabled={isProcessing || !paymentType}
-                      onClick={handleFinalize}
-                      className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3
-                        ${(!paymentType || isProcessing) 
-                          ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                          : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
-                    >
-                      {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </motion.div>
-                )}
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 

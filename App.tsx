@@ -326,7 +326,8 @@ const App: React.FC = () => {
       let completedCount = 0;
 
       keysToFetch.forEach(key => {
-        fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}`)
+        const bypass = (specificKeys && specificKeys.length > 0) ? '&bypassCache=true' : '';
+        fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`)
           .then(r => r.ok ? r.json() : [])
           .then(data => {
              completedCount++;

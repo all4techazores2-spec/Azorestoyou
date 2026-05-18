@@ -165,7 +165,7 @@ const handleBusinessUpdate = async (req, res) => {
 ALL_BUSINESS_COLLECTIONS.forEach(key => {
     app.get(`/api/${key}`, async (req, res) => {
         try {
-            const db = await readDB();
+            const db = await readDB(req.query.bypassCache === 'true');
             res.json(db[key] || []);
         } catch (err) {
             res.status(500).json({ error: err.message });
@@ -205,7 +205,7 @@ ALL_KEYS.forEach(key => {
         const dbKey = key === 'bus-schedules' ? 'busSchedules' : key;
         app.get(`/api/${key}`, async (req, res) => {
             try {
-                const db = await readDB();
+                const db = await readDB(req.query.bypassCache === 'true');
                 res.json(db[dbKey] || []);
             } catch (err) {
                 res.status(500).json({ error: err.message });

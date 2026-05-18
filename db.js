@@ -113,11 +113,11 @@ const CACHE_TTL_MS = 30000; // 30 segundos - reduz drasticamente os pedidos ao A
 // Lock for preventing Cache Stampedes (Thundering Herd problem)
 let activeFetchPromise = null;
 
-export const readDB = async () => {
+export const readDB = async (bypassCache = false) => {
     if (isMongoConnected) {
         try {
             const now = Date.now();
-            if (memoryCache && (now - lastCacheTime < CACHE_TTL_MS)) {
+            if (!bypassCache && memoryCache && (now - lastCacheTime < CACHE_TTL_MS)) {
                 return memoryCache;
             }
             
