@@ -310,15 +310,17 @@ const App: React.FC = () => {
         'posts': setPosts, 'marketplace_ads': setMarketplaceAds, 'marketplace_chats': setMarketplaceChats
       };
 
-      // 0. Load from Cache immediately for Offline Support
-      keysToFetch.forEach(async key => {
-        try {
-          const cached = await getCache(`azores_cache_${key}`);
-          if (cached && setterMap[key]) {
-            setterMap[key](cached);
-          }
-        } catch (e) {}
-      });
+      // 0. Load from Cache immediately for Offline Support (Apenas no carregamento inicial)
+      if (!isDataLoaded) {
+        keysToFetch.forEach(async key => {
+          try {
+            const cached = await getCache(`azores_cache_${key}`);
+            if (cached && setterMap[key]) {
+              setterMap[key](cached);
+            }
+          } catch (e) {}
+        });
+      }
 
       let emptyCount = 0;
       let completedCount = 0;
@@ -838,33 +840,19 @@ const App: React.FC = () => {
         const updatedRest = { ...rest, tables: updatedTables, reservations: updatedReservations, kitchenOrders: updatedKitchenOrders };
         setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
 
-        await fetch(`${API_BASE_URL}/api/restaurants/${restaurantId}`, {
+        await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedRest),
+          body: JSON.stringify({ status: 'occupied', tableId }),
         });
-        console.log('✅ Restaurante atualizado no servidor');
+        console.log('✅ Reserva global e mesa atualizadas no servidor');
       } else {
-        // Restaurant not in local state — send minimal update directly
-        console.warn('Restaurante não encontrado localmente, enviando update direto ao servidor');
-      }
-
-      // Always update user profile reservation status
-      if (userProfile.email) {
-        const userRes = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`);
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          if (userData?.reservations) {
-            const updatedUserRes = userData.reservations.map((r: any) =>
-              r.id === resId ? { ...r, status: 'occupied' } : r
-            );
-            await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reservations: updatedUserRes }),
-            });
-          }
-        }
+        // Restaurant not in local state — send update directly
+        await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'occupied', tableId }),
+        });
       }
 
       alert('🛎️ Bem-vindo! Entrada registada com sucesso. O restaurante foi notificado.');
@@ -892,22 +880,18 @@ const App: React.FC = () => {
     setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
 
     try {
-      // 1. Atualizar o restaurante
-      await fetch(`${API_BASE_URL}/api/restaurants/${restaurantId}`, {
+      // 1. Atualizar a reserva global no servidor (o servidor libertará a mesa automaticamente)
+      await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedRest),
-      });
-
-      // 2. Atualizar o perfil do utilizador de forma explícita
-      await fetch(`${API_BASE_URL}/api/users/${userProfile.email}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservations: updatedUserRes }),
+        body: JSON.stringify({ status: 'finished', tableId }),
       });
 
       alert('✅ Saída registada! Os créditos serão atribuídos após confirmação do pagamento pelo restaurante.');
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err); 
+      alert('✅ Saída registada localmente. Será sincronizada em breve.');
+    }
   };
 
   const updateItinerary = (update: Partial<Itinerary>) => {

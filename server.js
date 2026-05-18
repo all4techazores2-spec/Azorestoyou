@@ -485,6 +485,35 @@ app.put('/api/reservations/:id', async (req, res) => {
                     const idx = biz.reservations.findIndex(r => r.id === id);
                     if (idx !== -1) {
                         biz.reservations[idx] = { ...biz.reservations[idx], ...req.body };
+                        const updatedRes = biz.reservations[idx];
+                        
+                        // SE A RESERVA MUDOU PARA OCCUPIED, ATUALIZAR MESA PARA OCCUPIED
+                        if (updatedRes.status === 'occupied' && updatedRes.tableId && biz.tables) {
+                            const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId);
+                            if (tableIdx !== -1) {
+                                biz.tables[tableIdx] = {
+                                    ...biz.tables[tableIdx],
+                                    status: 'occupied',
+                                    customerName: updatedRes.customerName,
+                                    reservationTime: updatedRes.time
+                                };
+                            }
+                        }
+                        
+                        // SE A RESERVA MUDOU PARA FINISHED OU CANCELLED, LIBERTAR A MESA
+                        if ((updatedRes.status === 'finished' || updatedRes.status === 'cancelled') && updatedRes.tableId && biz.tables) {
+                            const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId);
+                            if (tableIdx !== -1) {
+                                biz.tables[tableIdx] = {
+                                    ...biz.tables[tableIdx],
+                                    status: 'available',
+                                    customerName: undefined,
+                                    reservationTime: undefined,
+                                    currentTab: []
+                                };
+                            }
+                        }
+                        
                         found = true;
                     }
                 }
