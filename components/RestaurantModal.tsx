@@ -871,12 +871,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   </div>
                 )}
 
-                <button 
-                  onClick={() => setBookingStep('datetime')}
-                  className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
-                >
-                  <CalendarCheck size={18} /> Reservar Mesa Agora
-                </button>
+                {restaurant.businessType === 'restaurant' && (
+                  <button 
+                    onClick={() => setBookingStep('datetime')}
+                    className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                  >
+                    <CalendarCheck size={18} /> Reservar Mesa Agora
+                  </button>
+                )}
 
                 <AnimatePresence>
                   {selectedDishIdx !== null && restaurant.dishes && restaurant.dishes[selectedDishIdx] && (

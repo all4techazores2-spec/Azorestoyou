@@ -1188,7 +1188,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'real_estate': return renderStandardBusiness(allRealEstate, t('nav_real_estate'), <Building2 />, '#3F51B5');
       case 'gyms': return renderStandardBusiness(allGyms, t('nav_gyms'), <Dumbbell />, '#000000');
       case 'stands': return renderStandardBusiness(allStands, t('nav_stands'), <CarFront />, '#212121');
-      case 'offices': return renderStandardBusiness(allOffices, t('nav_offices'), <Briefcase />, '#455A64', true);
+      case 'offices': return renderStandardBusiness(allOffices, t('nav_offices'), <Briefcase />, '#455A64', false);
       case 'it_services': return renderStandardBusiness(allITServices, t('nav_it_services'), <Laptop />, '#2196F3');
       case 'perfumes': return renderStandardBusiness(allPerfumes, t('nav_perfumes'), <Pipette />, '#E91E63');
       case 'bars': return renderStandardBusiness(allBars, t('nav_bars'), <Wine />, '#7B1FA2');
@@ -1212,7 +1212,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               key={s.id} 
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group cursor-pointer"
               onClick={() => {
-                if (s.businessType === 'offices' || category === 'offices') setSelectedOffice(s);
+                if (s.businessType === 'offices' || category === 'offices') setSelectedRestaurant(s);
                 else if (s.businessType === 'stands' || category === 'stands') setSelectedStand(s);
                 else if (s.businessType === 'shop' || category === 'shops' || category === 'gyms' || category === 'real_estate' || s.businessType === 'real_estate') setSelectedShop(s);
                 else setSelectedRestaurant(s);

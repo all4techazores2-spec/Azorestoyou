@@ -145,9 +145,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<DashboardTab>(
     isStaff ? 'kitchen' : 
     isShop ? 'pos' : 
-    isBeauty ? 'reservations' : 
-    isHotel ? 'reservas_hotel' :
-    isRentCar ? 'reservations' : 'tables'
+    isBeauty ? 'pos' : 'tables'
   );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
@@ -676,10 +674,25 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     })
     .catch(err => console.error("Erro ao sincronizar reserva global:", err));
 
+    // 4.5. Enviar pré-pedidos de comida automaticamente para a cozinha
+    if (acceptingReservation.preOrder && acceptingReservation.preOrder.length > 0) {
+      const newOrder: KitchenOrder = {
+        id: `ORD_${Date.now()}`,
+        tableId: tableId,
+        reservationId: acceptingReservation.id,
+        items: acceptingReservation.preOrder,
+        status: 'pending_admin',
+        timestamp: new Date().toISOString()
+      };
+      const updatedOrders = [...kitchenOrders, newOrder];
+      setKitchenOrders(updatedOrders);
+      handleUpdate({ kitchenOrders: updatedOrders });
+    }
+
     // 5. Limpar estado de aceitação
     setAcceptingReservation(null);
     setActiveTab('tables');
-    alert('✅ Reserva vinculada à mesa com sucesso!');
+    alert('✅ Reserva vinculada à mesa e pré-pedido enviado para a cozinha com sucesso!');
   };
 
   const toggleTableStatus = (id: string) => {
@@ -1107,8 +1120,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length },
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
               { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
-              (!isHotel && !isRentCar && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
-              (isHotel && { id: 'reservas_hotel', label: 'Check-ins / Pacotes', icon: <Calendar size={18} />, badge: pendingCount }),
+              (isRestaurant && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
               { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
               { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
             ] as any[]).filter(item => item && (!isStaff || !item.hideForStaff)).map((item) => (
@@ -2681,7 +2693,127 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                            </div>
                          )}
                        </AnimatePresence>
-                    </div>
+
+                        {/* Seção de Reservas Ativas / Confirmadas */}
+                        <div className="pt-8 border-t border-slate-100 mt-8">
+                           <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-6 flex items-center gap-2">
+                             <CheckCircle className="text-emerald-500 w-6 h-6" /> Reservas Confirmadas e Ativas
+                           </h3>
+                           <div className="space-y-4">
+                             {reservations.filter(r => ['accepted', 'occupied'].includes(r.status)).length === 0 ? (
+                               <div className="py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                                 <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                                 <p className="font-bold text-sm text-slate-400 uppercase tracking-widest">Nenhuma reserva ativa no momento.</p>
+                               </div>
+                             ) : (
+                               reservations.filter(r => ['accepted', 'occupied'].includes(r.status)).map(res => (
+                                 <div 
+                                   key={res.id} 
+                                   className={`bg-white border border-slate-100 p-6 rounded-[2.5rem] shadow-sm hover:shadow-md transition-all duration-300 border-l-8 ${
+                                     res.status === 'occupied' ? 'border-l-blue-500' : 'border-l-emerald-500'
+                                   }`}
+                                 >
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                       <div className="flex items-center gap-4">
+                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black ${
+                                           res.status === 'occupied' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+                                         }`}>
+                                           {res.customerName.charAt(0)}
+                                         </div>
+                                         <div>
+                                            <div className="flex items-center gap-2">
+                                              <p className="text-lg font-black text-slate-800 tracking-tight leading-none">{res.customerName}</p>
+                                              <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                                                res.status === 'occupied' 
+                                                  ? 'bg-blue-50 text-blue-700 border-blue-100' 
+                                                  : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                              }`}>
+                                                {res.status === 'occupied' ? 'Em Mesa' : 'Confirmada'}
+                                              </span>
+                                            </div>
+                                            <p className="text-xs text-slate-400 font-bold mt-1">{res.customerPhone} • {res.customerEmail}</p>
+                                            <div className="flex items-center gap-3 mt-2">
+                                               <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
+                                               {res.time && <span className="bg-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white tracking-widest">{res.time}</span>}
+                                               <span className="flex items-center gap-1 text-[9px] font-black uppercase text-slate-400"><Users size={10}/> {res.guests} Pax</span>
+                                               {res.tableId && (
+                                                 <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest">
+                                                   Mesa #{res.tableId.replace('T', '')}
+                                                 </span>
+                                               )}
+                                            </div>
+                                         </div>
+                                       </div>
+                                       <div className="flex gap-2 w-full md:w-auto self-stretch md:self-auto justify-end">
+                                          {res.status === 'accepted' && (
+                                            <button 
+                                              onClick={async () => {
+                                                try {
+                                                  const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ status: 'occupied' })
+                                                  });
+                                                  if (response.ok) {
+                                                    if (onForceRefresh) onForceRefresh();
+                                                  }
+                                                } catch (err) {
+                                                  console.error(err);
+                                                }
+                                              }}
+                                              className="px-4 py-2 bg-blue-600 text-white rounded-xl font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all"
+                                            >
+                                              Check-In
+                                            </button>
+                                          )}
+                                          {res.status === 'occupied' && (
+                                            <button 
+                                              onClick={async () => {
+                                                try {
+                                                  const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ status: 'finished' })
+                                                  });
+                                                  if (response.ok) {
+                                                    if (res.tableId) {
+                                                      const updatedRest = { ...business };
+                                                      if (updatedRest.tables) {
+                                                        const tIdx = updatedRest.tables.findIndex(t => t.id === res.tableId);
+                                                        if (tIdx > -1) {
+                                                          updatedRest.tables[tIdx].status = 'free';
+                                                          updatedRest.tables[tIdx].reservationId = undefined;
+                                                          updatedRest.tables[tIdx].currentOrder = undefined;
+                                                          onUpdateBusiness(updatedRest);
+                                                          onSync(updatedRest);
+                                                        }
+                                                      }
+                                                    }
+                                                    if (onForceRefresh) onForceRefresh();
+                                                  }
+                                                } catch (err) {
+                                                  console.error(err);
+                                                }
+                                              }}
+                                              className="px-4 py-2 bg-slate-800 text-white rounded-xl font-black uppercase text-[9px] tracking-widest hover:bg-slate-900 transition-all"
+                                            >
+                                              Liberar Mesa
+                                            </button>
+                                          )}
+                                          <button 
+                                            onClick={() => deleteReservation(res.id)}
+                                            className="px-4 py-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-black uppercase text-[9px] tracking-widest transition-all"
+                                          >
+                                            Cancelar
+                                          </button>
+                                       </div>
+                                    </div>
+                                 </div>
+                               ))
+                             )}
+                           </div>
+                        </div>
+                     </div>
                   ) : (
                     /* App Orders List */
                     <div className="space-y-6">
