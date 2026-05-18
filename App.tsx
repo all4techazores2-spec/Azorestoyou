@@ -409,13 +409,13 @@ const App: React.FC = () => {
       fetchData();
     }
     
-    // Poll ONLY for regular clients - NEVER for admin/business to avoid flooding and overwriting
+    // Poll for all users (clients and managers) for full real-time synchronization
     let syncInterval: any;
-    if (!isManager && isDataLoaded) {
+    if (isDataLoaded) {
       syncInterval = setInterval(() => {
         // Sincronização ultra-rápida (2s) limitada às categorias de reservas para máxima performance
         fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services']);
-        console.log("🔄 Client-side real-time sync (2s interval)...");
+        console.log("🔄 Real-time sync (2s interval)...");
       }, 2000); // Reduzido para 2 segundos!
     }
     
@@ -2047,8 +2047,8 @@ const App: React.FC = () => {
                           return updatedReservationsList;
                         });
 
-                        // PERSIST TO SERVER if user is logged in
-                        if (isAuthenticated && userProfile?.email) {
+                        // PERSIST TO SERVER if user is logged in (ONLY for landscape bookings that don't use the dedicated business endpoint)
+                        if (isAuthenticated && userProfile?.email && type === 'landscape') {
                           // Wait a tick to ensure updatedReservationsList is populated from the set state call
                           // or just use the current state + new one if we are sure it's up to date
                           // Safer: compute it here

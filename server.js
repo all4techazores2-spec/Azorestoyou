@@ -116,7 +116,7 @@ app.get('/api/debug-db', async (req, res) => {
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         let targetArray = null;
         let index = -1;
         
@@ -247,7 +247,7 @@ app.get('/api/users/:email', async (req, res) => {
 
 app.put('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = await readDB();
+    const db = await readDB(true);
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
         db.users[index] = { ...db.users[index], ...req.body, email };
@@ -304,7 +304,7 @@ app.post('/api/reset-db', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         let totalCleared = 0;
         const summary = {};
 
@@ -438,7 +438,7 @@ app.get('/api/cars/:id', async (req, res) => {
 
 // --- RESERVATIONS ---
 app.post('/api/reservations', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     const { businessId, businessType, customerEmail } = req.body;
     const reservation = { ...req.body, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
     
@@ -474,7 +474,7 @@ app.post('/api/reservations', async (req, res) => {
 
 app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await readDB();
+    const db = await readDB(true);
     let found = false;
 
     // 1. Atualizar nos Negócios
