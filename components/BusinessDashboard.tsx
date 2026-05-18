@@ -640,7 +640,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const assignReservationToTable = (tableId: string) => {
     if (!acceptingReservation) return;
 
-    // 1. Atualizar o estado da mesa
+    // 1. Atualizar o estado da mesa localmente
     const updatedTables = tables.map(t => {
       if (t.id === tableId) {
         return {
@@ -653,7 +653,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       return t;
     });
 
-    // 2. Atualizar o estado da reserva
+    // 2. Atualizar o estado da reserva localmente
     const updatedReservations = reservations.map(r => {
       if (r.id === acceptingReservation.id) {
         return { ...r, status: 'accepted' as const, tableId };
@@ -661,23 +661,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       return r;
     });
 
-    // 3. Sincronizar tudo
+    // 3. Sincronizar localmente para feedback instantâneo
     setTables(updatedTables);
     setReservations(updatedReservations);
-    onUpdateBusiness({
-      ...business,
-      tables: updatedTables,
-      reservations: updatedReservations
-    });
 
-    // Sincronizar globalmente para o cliente ver
+    // 4. Sincronizar apenas com a coleção global de reservas
     fetch(`${API_BASE_URL}/api/reservations/${acceptingReservation.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'accepted', tableId })
-    }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+      body: JSON.stringify({ status: 'accepted', tableId, customerName: acceptingReservation.customerName, time: acceptingReservation.time })
+    })
+    .then(() => {
+      if (onForceRefresh) onForceRefresh();
+    })
+    .catch(err => console.error("Erro ao sincronizar reserva global:", err));
 
-    // 4. Limpar estado de aceitação
+    // 5. Limpar estado de aceitação
     setAcceptingReservation(null);
     setActiveTab('tables');
     alert('✅ Reserva vinculada à mesa com sucesso!');
@@ -829,17 +828,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRes)
-      }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+      })
+      .then(() => {
+        if (onForceRefresh) onForceRefresh();
+      })
+      .catch(err => console.error("Erro ao sincronizar reserva global:", err));
 
-      // Se for hotel, marcar o quarto como ocupado
+      // Se for hotel, marcar o quarto como ocupado localmente para feedback imediato
       if (isHotel && resObj?.selectedRoom?.id) {
         const newTables = tables.map(t => 
           t.id === resObj.selectedRoom.id ? { ...t, status: 'occupied' } : t
         );
         setTables(newTables);
-        handleUpdate({ reservations: newReservations, tables: newTables });
-      } else {
-        handleUpdate({ reservations: newReservations });
       }
       
       alert(`✅ ${isHotel ? 'Reserva' : 'Marcação'} aprovada com sucesso!`);
@@ -864,7 +864,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: action, tableId: tableId || resObj?.tableId, confirmedByRestaurant: action === 'accepted' })
-    }).catch(err => console.error("Erro ao sincronizar reserva global:", err));
+    })
+    .then(() => {
+      if (onForceRefresh) onForceRefresh();
+    })
+    .catch(err => console.error("Erro ao sincronizar reserva global:", err));
 
     if (action === 'accepted' && tableId) {
       const newTables = tables.map(t => t.id === tableId ? { ...t, status: 'reserved', customerName: resObj?.customerName, reservationTime: resObj?.time } as const : t);
@@ -873,7 +877,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       const foodItems = resObj?.preOrder || resObj?.preorder;
       let updatedKitchenOrders = [...kitchenOrders];
 
-      // Criar Pedido na Cozinha se houver comida
+      // Criar Pedido na Cozinha se houver comida localmente para feedback visual imediato
       if (foodItems && foodItems.length > 0) {
         const newOrder: KitchenOrder = {
           id: `ORD_${Date.now()}`,
@@ -886,17 +890,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         updatedKitchenOrders = [...updatedKitchenOrders, newOrder];
         setKitchenOrders(updatedKitchenOrders);
       }
-      
-      // Notificação Push Removida
-
-      handleUpdate({ 
-        tables: newTables, 
-        reservations: newReservations, 
-        kitchenOrders: updatedKitchenOrders 
-      });
       setSelectedResForTable(null);
-    } else {
-      handleUpdate({ reservations: newReservations });
     }
   };
 
@@ -911,7 +905,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       if (response.ok) {
         const updatedReservations = reservations.filter(r => r.id !== id);
         setReservations(updatedReservations);
-        onSync({ ...business, reservations: updatedReservations });
+        if (onForceRefresh) onForceRefresh();
         alert("🗑️ Reserva eliminada permanentemente!");
       } else {
         alert("Erro ao eliminar a reserva no servidor.");
@@ -1156,7 +1150,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
              </div>
              
              <button 
-               onClick={() => { onSync(business); }}
+               onClick={() => { 
+                 onSync({ 
+                   ...business, 
+                   tables, 
+                   products, 
+                   kitchenOrders, 
+                   reservations 
+                 }); 
+               }}
                className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
              >
                Publicar no Servidor

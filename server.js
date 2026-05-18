@@ -487,6 +487,37 @@ app.put('/api/reservations/:id', async (req, res) => {
                         biz.reservations[idx] = { ...biz.reservations[idx], ...req.body };
                         const updatedRes = biz.reservations[idx];
                         
+                        // SE A RESERVA MUDOU PARA ACCEPTED (CONFIRMADA), ATUALIZAR MESA PARA RESERVED
+                        if (updatedRes.status === 'accepted' && updatedRes.tableId && biz.tables) {
+                            const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId);
+                            if (tableIdx !== -1) {
+                                biz.tables[tableIdx] = {
+                                    ...biz.tables[tableIdx],
+                                    status: 'reserved',
+                                    customerName: updatedRes.customerName,
+                                    reservationTime: updatedRes.time
+                                };
+                            }
+                        }
+
+                        // SE HOUVER PREORDER (COMIDA NO PEDIDO DE RESERVA), CRIAR KITCHEN ORDER AUTOMATICAMENTE
+                        const foodItems = updatedRes.preOrder || updatedRes.preorder;
+                        if (updatedRes.status === 'accepted' && foodItems && foodItems.length > 0) {
+                            if (!biz.kitchenOrders) biz.kitchenOrders = [];
+                            // Evitar duplicados
+                            const hasOrder = biz.kitchenOrders.some(o => o.reservationId === id);
+                            if (!hasOrder) {
+                                biz.kitchenOrders.push({
+                                    id: `ORD_${Date.now()}`,
+                                    tableId: updatedRes.tableId,
+                                    reservationId: id,
+                                    items: foodItems,
+                                    status: 'pending_admin',
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
+                        }
+                        
                         // SE A RESERVA MUDOU PARA OCCUPIED, ATUALIZAR MESA PARA OCCUPIED
                         if (updatedRes.status === 'occupied' && updatedRes.tableId && biz.tables) {
                             const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId);
