@@ -2080,7 +2080,7 @@ const App: React.FC = () => {
                         
                         // Sync with server to get latest global state
                         setTimeout(() => {
-                           fetchData().catch(err => console.error("Error in fetchData after reservation:", err));
+                           fetchData(1, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services']).catch(err => console.error("Error in fetchData after reservation:", err));
                         }, 500);
                       } catch (err) {
                         console.error("Critical error in onReserveSuccess:", err);
