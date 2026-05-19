@@ -1572,26 +1572,60 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             </div>
                          </div>
 
-                         <button 
-                           onClick={() => {
-                             const newTableNum = business.tables ? business.tables.length + 1 : 1;
-                             const newTable: any = { id: Date.now(), number: newTableNum, status: 'available', seats: 4, x: 100, y: 100 };
-                             onUpdateBusiness({ ...business, tables: [...(business.tables || []), newTable] });
-                           }}
-                           className="px-6 py-3 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
-                         >
-                           <Plus size={16} />
-                           {isHotel ? 'Novo Quarto' : isRentCar ? 'Novo Veículo' : isBeauty ? 'Nova Cadeira' : isShop ? 'Nova Secção' : 'Nova Mesa'}
-                         </button>
+                          <button 
+                            onClick={handleAddArea}
+                            className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm mr-2"
+                          >
+                            <Plus size={16} />
+                            Nova Área
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                              const newTableNum = business.tables ? business.tables.length + 1 : 1;
+                              const newTable: any = { 
+                                id: Date.now(), 
+                                number: newTableNum, 
+                                status: 'available', 
+                                seats: 4, 
+                                x: 100, 
+                                y: 100,
+                                area: activeArea 
+                              };
+                              onUpdateBusiness({ ...business, tables: [...(business.tables || []), newTable] });
+                            }}
+                            className="px-6 py-3 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                          >
+                            <Plus size={16} />
+                            {isHotel ? 'Novo Quarto' : isRentCar ? 'Novo Veículo' : isBeauty ? 'Nova Cadeira' : isShop ? 'Nova Secção' : 'Nova Mesa'}
+                          </button>
                       </div>
                    </div>
 
+                    <div className="flex flex-wrap items-center gap-2 mb-8 bg-slate-100/50 p-2 rounded-3xl border border-slate-200/50 max-w-max">
+                      {tableAreas.map(area => (
+                        <button
+                          key={area}
+                          onClick={() => setActiveArea(area)}
+                          className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                            activeArea === area
+                              ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20'
+                              : 'bg-white/80 text-slate-500 hover:bg-white border border-slate-100 hover:text-slate-700'
+                          }`}
+                        >
+                          {area}
+                        </button>
+                      ))}
+                    </div>
+
                    <div className="bg-slate-50 border border-slate-100 rounded-3xl md:rounded-[3rem] p-4 md:p-12 min-h-[600px] shadow-inner flex items-center justify-center relative overflow-hidden">
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 w-full max-w-4xl">
-                         {tables.map(table => (
+                         {tables.filter(t => (t.area || 'Geral') === activeArea).map(table => (
                            <motion.div 
                              key={table.id}
                              whileHover={{ scale: 1.05 }}
+                             onMouseEnter={() => setHoveredTableId(table.id)}
+                             onMouseLeave={() => setHoveredTableId(null)}
                              className="relative"
                            >
                               <motion.button 
@@ -1634,46 +1668,54 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                   </div>
                               </motion.button>
 
-                               {table.alertStatus === 'new_order' && (
-                                 <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 mb-4 w-64 bg-slate-950/95 backdrop-blur-xl border border-slate-800 text-white rounded-[2rem] p-5 shadow-2xl z-[150] text-center space-y-4">
-                                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-950 rotate-45 border-r border-b border-slate-800 z-0" />
-                                   <div className="relative z-10 space-y-3">
-                                     <div className="flex items-center justify-center gap-2">
-                                       <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-                                       <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Novo Pedido Remoto</p>
-                                     </div>
-                                     <div className="max-h-24 overflow-y-auto custom-scrollbar space-y-1 py-1.5 px-1 bg-white/5 rounded-xl text-left">
-                                       {(table.pendingOrderItems || []).map((item: any, idx: number) => (
-                                         <p key={idx} className="text-[10px] font-bold text-slate-300 truncate">
-                                           <span className="text-orange-400 font-black mr-1">{item.quantity}x</span> {item.dish?.name || item.name}
-                                         </p>
-                                       ))}
-                                     </div>
-                                     <div className="grid grid-cols-1 gap-2 pt-1.5">
-                                       <button
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           handleSendToKitchen(table.id);
-                                         }}
-                                         className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
-                                       >
-                                         <ChefHat size={12} />
-                                         Cozinha (Só Pratos)
-                                       </button>
-                                       <button
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           handleVerMesa(table.id);
-                                         }}
-                                         className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
-                                       >
-                                         <Eye size={12} />
-                                         Ver Mesa / POS
-                                       </button>
-                                     </div>
-                                   </div>
-                                 </div>
-                               )}
+                               <AnimatePresence>
+                                {(hoveredTableId === table.id || String(hoveredTableId) === String(table.id)) && (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
+                                  <motion.div 
+                                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: "easeOut" }}
+                                    className="absolute bottom-[105%] left-1/2 -translate-x-1/2 mb-4 w-64 bg-slate-950/95 backdrop-blur-xl border border-slate-800 text-white rounded-[2rem] p-5 shadow-2xl z-[150] text-center space-y-4"
+                                  >
+                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-950 rotate-45 border-r border-b border-slate-800 z-0" />
+                                    <div className="relative z-10 space-y-3">
+                                      <div className="flex items-center justify-center gap-2">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                                        <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Novo Pedido Remoto</p>
+                                      </div>
+                                      <div className="max-h-24 overflow-y-auto custom-scrollbar space-y-1 py-1.5 px-1 bg-white/5 rounded-xl text-left">
+                                        {(table.pendingOrderItems || []).map((item: any, idx: number) => (
+                                          <p key={idx} className="text-[10px] font-bold text-slate-300 truncate">
+                                            <span className="text-orange-400 font-black mr-1">{item.quantity}x</span> {item.dish?.name || item.name}
+                                          </p>
+                                        ))}
+                                      </div>
+                                      <div className="grid grid-cols-1 gap-2 pt-1.5">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSendToKitchen(table.id);
+                                          }}
+                                          className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
+                                        >
+                                          <ChefHat size={12} />
+                                          Cozinha (Só Pratos)
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleVerMesa(table.id);
+                                          }}
+                                          className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
+                                        >
+                                          <Eye size={12} />
+                                          Ver Mesa / POS
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                               </AnimatePresence>
                            </motion.div>
                          ))}
                       </div>
