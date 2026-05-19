@@ -1128,8 +1128,9 @@ const App: React.FC = () => {
   };
 
    const handlePlaceTableOrder = async (items: OrderItem[]) => {
-     if (!tableMenuRes || !tableMenuRes.restaurantId) return;
-     const restId = tableMenuRes.restaurantId;
+     if (!tableMenuRes) return;
+     const restId = tableMenuRes.restaurantId || tableMenuRes.businessId;
+     if (!restId) return;
      const rest = restaurants.find(r => r.id === restId);
      if (!rest) return;
 
@@ -2317,13 +2318,13 @@ const App: React.FC = () => {
         onReview={handleReview}
         language={language}
       />
-       {tableMenuRes && restaurants.find(r => r.id === tableMenuRes.restaurantId) && (
+       {tableMenuRes && (restaurants.find(r => r.id === tableMenuRes.restaurantId) || restaurants.find(r => r.id === tableMenuRes.businessId)) && (
          <TableMenuModal
             isOpen={!!tableMenuRes}
             onClose={() => { setTableMenuRes(null); setShowMyReservationsModal(true); }}
-            restaurant={restaurants.find(r => r.id === tableMenuRes.restaurantId)!}
+            restaurant={restaurants.find(r => r.id === tableMenuRes.restaurantId) || restaurants.find(r => r.id === tableMenuRes.businessId)!}
             tableId={tableMenuRes.tableId || ''}
-            tableStatus={restaurants.find(r => r.id === tableMenuRes.restaurantId)?.tables?.find(t => t.id === tableMenuRes.tableId)?.status || 'available'}
+            tableStatus={(restaurants.find(r => r.id === tableMenuRes.restaurantId) || restaurants.find(r => r.id === tableMenuRes.businessId))?.tables?.find(t => t.id === tableMenuRes.tableId)?.status || 'available'}
             reservationId={tableMenuRes.id}
             onPlaceOrder={handlePlaceTableOrder}
          />
