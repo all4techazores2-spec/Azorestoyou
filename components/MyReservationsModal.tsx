@@ -56,14 +56,16 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     status: packagesMap[id].every((r: any) => r.status === 'accepted') ? 'accepted' : 'pending'
   }));
 
-  const restaurantReservations = activeReservations.filter(r => r.type === 'restaurant');
-  const beautyReservations = activeReservations.filter(r => r.type === 'beauty');
-  const shopReservations = activeReservations.filter(r => r.type === 'shop');
-  const hotelReservations = activeReservations.filter(r => r.type === 'hotel' && !r.packageId);
-  const alReservations = activeReservations.filter(r => r.type === 'al' && !r.packageId);
-  const carReservations = activeReservations.filter(r => r.type === 'car' && !r.packageId);
-  const flightReservations = activeReservations.filter(r => r.type === 'flight' && !r.packageId);
-  const landscapeReservations = activeReservations.filter(r => r.type === 'landscape');
+  const getResType = (r: any) => r.type || r.businessType || 'restaurant';
+
+  const restaurantReservations = activeReservations.filter(r => getResType(r) === 'restaurant');
+  const beautyReservations = activeReservations.filter(r => getResType(r) === 'beauty');
+  const shopReservations = activeReservations.filter(r => getResType(r) === 'shop');
+  const hotelReservations = activeReservations.filter(r => getResType(r) === 'hotel' && !r.packageId);
+  const alReservations = activeReservations.filter(r => getResType(r) === 'al' && !r.packageId);
+  const carReservations = activeReservations.filter(r => getResType(r) === 'car' && !r.packageId);
+  const flightReservations = activeReservations.filter(r => getResType(r) === 'flight' && !r.packageId);
+  const landscapeReservations = activeReservations.filter(r => getResType(r) === 'landscape');
 
   const categories = [
     { id: 'packages', label: 'Pacotes', icon: <Briefcase size={24} />, count: packagesList.length, color: 'from-blue-600 to-indigo-700', shadow: 'shadow-blue-600/20' },
@@ -183,39 +185,45 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                   selectedCategory === 'shops' ? shopReservations :
                   landscapeReservations
                 ).map((res) => {
-                  const rest = restaurants.find(r => r.id === res.restaurantId || r.name === res.restaurantName);
-                  const isBeautyRes = res.type === 'beauty';
-                  const isShopRes = res.type === 'shop';
-                  const isLandscapeRes = res.type === 'landscape';
-                  
-                  const statusConfig = {
-                    pending: { label: 'Aguardando aprovação', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
-                    accepted: { label: isBeautyRes ? 'Agendada' : isLandscapeRes ? 'Confirmada' : 'Confirmada', color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
-                    occupied: { label: isBeautyRes ? 'Em Serviço' : isLandscapeRes ? 'Em Atividade' : 'Em Experiência', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
-                    cancelled: { label: 'Cancelada', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
-                    finished: { label: 'Concluída', color: 'bg-slate-800', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
-                  };
-                  const config = statusConfig[res.status as keyof typeof statusConfig] || statusConfig.pending;
+          const rType = res.type || res.businessType || 'restaurant';
+          const rest = restaurants.find(r => 
+            r.id === res.restaurantId || 
+            r.id === res.businessId || 
+            r.name === res.restaurantName || 
+            r.name === res.businessName
+          );
+          const isBeautyRes = rType === 'beauty';
+          const isShopRes = rType === 'shop';
+          const isLandscapeRes = rType === 'landscape';
+          
+          const statusConfig = {
+            pending: { label: 'Aguardando aprovação', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
+            accepted: { label: isBeautyRes ? 'Agendada' : isLandscapeRes ? 'Confirmada' : 'Confirmada', color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+            occupied: { label: isBeautyRes ? 'Em Serviço' : isLandscapeRes ? 'Em Atividade' : 'Em Experiência', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
+            cancelled: { label: 'Cancelada', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
+            finished: { label: 'Concluída', color: 'bg-slate-800', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
+          };
+          const config = statusConfig[res.status as keyof typeof statusConfig] || statusConfig.pending;
 
-                  return (
-                    <div key={res.id} className="group relative bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all text-left">
-                      <div className="flex justify-between items-start gap-4 mb-6">
-                        <div className="flex-1 text-left">
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                             <div className={`w-2 h-2 rounded-full ${config.color} animate-pulse`}></div>
-                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${config.bg} ${config.text} ${config.border}`}>
-                               {config.label}
-                             </span>
-                             {res.paymentType && (
-                               <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-200">
-                                 {res.paymentType === 'points' ? 'Créditos' : res.paymentType === 'mbway' ? 'MBWay' : 'Presencial'}
-                               </span>
-                             )}
-                          </div>
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
-                              {res.itemName || rest?.name || res.restaurantName}
-                            </h3>
+          return (
+            <div key={res.id} className="group relative bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all text-left">
+              <div className="flex justify-between items-start gap-4 mb-6">
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                     <div className={`w-2 h-2 rounded-full ${config.color} animate-pulse`}></div>
+                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${config.bg} ${config.text} ${config.border}`}>
+                       {config.label}
+                     </span>
+                     {res.paymentType && (
+                       <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-slate-200">
+                         {res.paymentType === 'points' ? 'Créditos' : res.paymentType === 'mbway' ? 'MBWay' : 'Presencial'}
+                       </span>
+                     )}
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
+                      {res.itemName || rest?.name || res.restaurantName || res.businessName}
+                    </h3>
                             {res.tableId && (
                               <span className="px-2.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
                                 Mesa #{res.tableId}
@@ -272,7 +280,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                  </button>
                                )}
                                <button 
-                                 onClick={() => onCheckIn(res.id, res.restaurantId || '', res.tableId)}
+                                 onClick={() => onCheckIn(res.id, res.restaurantId || res.businessId || '', res.tableId)}
                                  className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                                >
                                  <CheckCircle size={18} /> {isBeautyRes ? 'Já cheguei ao Salão' : isShopRes ? 'Já cheguei à Loja' : 'Já cheguei ao Restaurante'}
@@ -287,7 +295,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                            {/* Row for Staff and Menu Actions */}
                            <div className="grid grid-cols-2 gap-3">
                              <button 
-                               onClick={() => onTableAction?.(res.restaurantId, res.tableId, 'calling_waiter')}
+                               onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'calling_waiter')}
                                className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
                              >
                                <Bell size={16} /> Chamar Staff
@@ -302,7 +310,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
                            {/* Request Bill Button */}
                            <button 
-                             onClick={() => onTableAction?.(res.restaurantId, res.tableId, 'waiting_bill')}
+                             onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'waiting_bill')}
                              className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2"
                            >
                              <Receipt size={18} /> Pedir a Conta
@@ -310,7 +318,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
                            {/* Checkout Button */}
                            <button 
-                             onClick={() => onCheckOut(res.id, res.restaurantId, res.tableId)}
+                             onClick={() => onCheckOut(res.id, res.restaurantId || res.businessId || '', res.tableId)}
                              className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                            >
                              <LogOut size={18} /> Fechar Conta & Sair
@@ -351,7 +359,12 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
                 {/* HISTORY VIEW */}
                 {selectedCategory === 'history' && historyReservations.map((res) => {
-                  const rest = restaurants.find(r => r.id === res.restaurantId || r.name === res.restaurantName);
+                  const rest = restaurants.find(r => 
+                    r.id === res.restaurantId || 
+                    r.id === res.businessId || 
+                    r.name === res.restaurantName || 
+                    r.name === res.businessName
+                  );
                   return (
                     <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm overflow-hidden relative group">
                       {res.status === 'cancelled' && (
@@ -362,7 +375,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       
                       <div className="flex justify-between items-start mb-4">
                          <div className="text-left">
-                            <h3 className="font-black text-lg text-slate-800">{rest?.name || res.restaurantName}</h3>
+                            <h3 className="font-black text-lg text-slate-800">{rest?.name || res.restaurantName || res.businessName}</h3>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{res.date} {res.time ? `• ${res.time}` : ''}</p>
                          </div>
                          {res.earnedCredits && (
@@ -593,8 +606,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
           <RatingModal
             isOpen={!!ratingTarget}
             onClose={() => setRatingTarget(null)}
-            restaurantName={ratingTarget.restaurantName}
-            restaurantId={ratingTarget.restaurantId}
+            restaurantName={ratingTarget.restaurantName || ratingTarget.businessName}
+            restaurantId={ratingTarget.restaurantId || ratingTarget.businessId}
             reservationId={ratingTarget.id}
             onSubmit={(data) => {
               if (onReview) onReview(data);
