@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -201,6 +201,187 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // POS State
   const [posCategory, setPosCategory] = useState<string>('Pratos');
   const [posCart, setPosCart] = useState<{ product: Product, quantity: number }[]>([]);
+  const [selectedTableId, setSelectedTableId] = useState<string | number | null>(null);
+
+  const handleSelectTable = (tableId: string | number | null) => {
+    setSelectedTableId(tableId);
+    if (!tableId) {
+      setPosCart([]);
+      return;
+    }
+    const table = tables.find(t => t.id === tableId || String(t.id) === String(tableId));
+    if (table) {
+      const cartItems = (table.currentTab || []).map((item: any) => ({
+        product: {
+          id: item.dish?.id || item.dish?.name || String(Math.random()),
+          name: item.dish?.name || item.name,
+          price: item.dish?.price || item.price || 0,
+          category: item.dish?.category || item.category || 'Ementa',
+          image: item.dish?.image || item.image
+        } as Product,
+        quantity: item.quantity
+      }));
+      setPosCart(cartItems);
+    } else {
+      setPosCart([]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTableId !== null) {
+      const table = tables.find(t => t.id === selectedTableId || String(t.id) === String(selectedTableId));
+      if (table) {
+        const tableTabItems = posCart.map(item => ({
+          dish: {
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            category: item.product.category,
+            image: item.product.image
+          } as Dish,
+          quantity: item.quantity
+        }));
+
+        const currentTabJson = JSON.stringify(table.currentTab || []);
+        const convertedJson = JSON.stringify(tableTabItems);
+
+        if (currentTabJson !== convertedJson) {
+          const updatedTables = tables.map(t => {
+            if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
+              return { ...t, currentTab: tableTabItems };
+            }
+            return t;
+          });
+          setTables(updatedTables);
+          onUpdateBusiness({
+            ...business,
+            tables: updatedTables
+          });
+        }
+      }
+    }
+  }, [posCart, selectedTableId]);
+
+  const handleSendToKitchen = (tableId: string | number) => {
+    const table = tables.find(t => t.id === tableId || String(t.id) === String(tableId));
+    if (!table) return;
+    
+    const pendingItems = table.pendingOrderItems || [];
+    // Filtrar apenas pratos (comida, sopas, entradas, sobremesas) para enviar para a cozinha
+    const foodItems = pendingItems.filter((item: any) => {
+      const cat = (item.dish?.category || item.category || '').toLowerCase();
+      return !['bebidas', 'cafetaria', 'vinhos', 'cervejas', 'bebida', 'vinho', 'cerveja', 'bar'].includes(cat);
+    });
+    
+    let updatedKitchenOrders = [...(business.kitchenOrders || [])];
+    if (foodItems.length > 0) {
+      const newOrder = {
+        id: `ORD_${Date.now()}`,
+        tableId: String(tableId),
+        items: foodItems,
+        status: 'sent_to_kitchen' as const,
+        timestamp: new Date().toISOString()
+      };
+      updatedKitchenOrders.push(newOrder);
+    }
+    
+    const updatedTables = tables.map(t => {
+      if (t.id === tableId || String(t.id) === String(tableId)) {
+        return {
+          ...t,
+          alertStatus: 'none' as const,
+          pendingOrderItems: []
+        };
+      }
+      return t;
+    });
+    
+    setTables(updatedTables);
+    if (business.kitchenOrders) {
+      setKitchenOrders(updatedKitchenOrders as any);
+    }
+    onUpdateBusiness({
+      ...business,
+      tables: updatedTables,
+      kitchenOrders: updatedKitchenOrders
+    });
+    
+    alert(`👨‍🍳 Pedido enviado com sucesso para a Cozinha! (${foodItems.length} pratos encaminhados)`);
+  };
+
+  const handleVerMesa = (tableId: string | number) => {
+    const table = tables.find(t => t.id === tableId || String(t.id) === String(tableId));
+    if (!table) return;
+    
+    // 1. Limpar o alerta
+    const updatedTables = tables.map(t => {
+      if (t.id === tableId || String(t.id) === String(tableId)) {
+        return {
+          ...t,
+          alertStatus: 'none' as const,
+          pendingOrderItems: []
+        };
+      }
+      return t;
+    });
+    setTables(updatedTables);
+    onUpdateBusiness({
+      ...business,
+      tables: updatedTables
+    });
+    
+    // 2. Mudar para a tab POS
+    setActiveTab('pos');
+    
+    // 3. Pré-selecionar a mesa e carregar o carrinho
+    handleSelectTable(tableId);
+  };
+
+  const handleFinalizeSale = (saveOnly: boolean = false) => {
+    if (posCart.length === 0) return;
+    
+    if (saveOnly) {
+      alert("🛎️ Pedido salvo com sucesso! Os itens foram vinculados à mesa.");
+      return;
+    }
+    
+    alert(`🛎️ Venda finalizada e fatura emitida: €${(posTotal * 1.10).toFixed(2).replace('.', ',')}`);
+    
+    if (selectedTableId !== null) {
+      const updatedTables = tables.map(t => {
+        if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
+          return {
+            ...t,
+            status: 'available' as const,
+            customerName: undefined,
+            reservationTime: undefined,
+            currentTab: [],
+            pendingOrderItems: [],
+            alertStatus: 'none' as const
+          };
+        }
+        return t;
+      });
+      setTables(updatedTables);
+      
+      const updatedReservations = (business.reservations || []).map((r: any) => {
+        if (String(r.tableId) === String(selectedTableId) && (r.status === 'accepted' || r.status === 'occupied')) {
+          return { ...r, status: 'finished' as const };
+        }
+        return r;
+      });
+      
+      onUpdateBusiness({
+        ...business,
+        tables: updatedTables,
+        reservations: updatedReservations
+      });
+      
+      setSelectedTableId(null);
+    }
+    
+    setPosCart([]);
+  };
 
   const addToPosCart = (product: Product) => {
     setPosCart(prev => {
@@ -1452,6 +1633,47 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                      'LIVRE'}
                                   </div>
                               </motion.button>
+
+                               {table.alertStatus === 'new_order' && (
+                                 <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 mb-4 w-64 bg-slate-950/95 backdrop-blur-xl border border-slate-800 text-white rounded-[2rem] p-5 shadow-2xl z-[150] text-center space-y-4">
+                                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-950 rotate-45 border-r border-b border-slate-800 z-0" />
+                                   <div className="relative z-10 space-y-3">
+                                     <div className="flex items-center justify-center gap-2">
+                                       <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                                       <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Novo Pedido Remoto</p>
+                                     </div>
+                                     <div className="max-h-24 overflow-y-auto custom-scrollbar space-y-1 py-1.5 px-1 bg-white/5 rounded-xl text-left">
+                                       {(table.pendingOrderItems || []).map((item: any, idx: number) => (
+                                         <p key={idx} className="text-[10px] font-bold text-slate-300 truncate">
+                                           <span className="text-orange-400 font-black mr-1">{item.quantity}x</span> {item.dish?.name || item.name}
+                                         </p>
+                                       ))}
+                                     </div>
+                                     <div className="grid grid-cols-1 gap-2 pt-1.5">
+                                       <button
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleSendToKitchen(table.id);
+                                         }}
+                                         className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
+                                       >
+                                         <ChefHat size={12} />
+                                         Cozinha (Só Pratos)
+                                       </button>
+                                       <button
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleVerMesa(table.id);
+                                         }}
+                                         className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
+                                       >
+                                         <Eye size={12} />
+                                         Ver Mesa / POS
+                                       </button>
+                                     </div>
+                                   </div>
+                                 </div>
+                               )}
                            </motion.div>
                          ))}
                       </div>
@@ -1623,10 +1845,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
                        <TableIcon size={16} className="text-slate-400" />
-                       <select className="bg-transparent font-black text-xs uppercase outline-none">
-                          <option>Mesa 05</option>
-                          <option>Balcão</option>
-                          <option>Take-away</option>
+                       <select 
+                         value={selectedTableId === null ? 'fast' : String(selectedTableId)}
+                         onChange={(e) => {
+                           const val = e.target.value;
+                           handleSelectTable(val === 'fast' ? null : isNaN(Number(val)) ? val : Number(val));
+                         }}
+                         className="bg-transparent font-black text-xs uppercase outline-none"
+                       >
+                          <option value="fast">Venda Rápida / Balcão</option>
+                          {tables.map(t => (
+                            <option key={t.id} value={String(t.id)}>Mesa #{t.number} ({t.status === 'occupied' ? 'Ocupada' : 'Livre'})</option>
+                          ))}
                        </select>
                     </div>
                     <button className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all">
@@ -1635,6 +1865,51 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     </button>
                   </div>
                 </div>
+
+                {/* MODERN HORIZONTAL TABLE FILTERS */}
+                {!isBeauty && !isShop && tables.length > 0 && (
+                  <div className="bg-white border-b border-slate-100 px-8 py-3.5 flex items-center gap-3 overflow-x-auto custom-scrollbar flex-shrink-0 z-10">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-2 whitespace-nowrap">Filtrar por Mesa:</span>
+                    <button
+                      onClick={() => handleSelectTable(null)}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border flex items-center gap-2 ${
+                        selectedTableId === null
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-950/20'
+                          : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600'
+                      }`}
+                    >
+                      <Users size={12} />
+                      Venda Rápida
+                    </button>
+                    {tables.map(t => {
+                      const isSelected = selectedTableId === t.id || String(selectedTableId) === String(t.id);
+                      const isOccupied = t.status === 'occupied';
+                      const isReserved = t.status === 'reserved';
+                      const hasItems = t.currentTab && t.currentTab.length > 0;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => handleSelectTable(t.id)}
+                          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border flex items-center gap-2.5 relative ${
+                            isSelected
+                              ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
+                              : isOccupied
+                                ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'
+                                : isReserved
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 shadow-sm'
+                                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-800'
+                          }`}
+                        >
+                          <TableIcon size={12} className={isSelected ? 'text-white' : isOccupied ? 'text-red-500 animate-pulse' : 'text-slate-400'} />
+                          <span>Mesa #{t.number}</span>
+                          {hasItems && (
+                            <span className={`w-2 h-2 rounded-full absolute -top-1 -right-1 border border-white ${isSelected ? 'bg-white' : 'bg-red-500'} animate-pulse shadow-md`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="flex flex-1 min-h-0">
                   {/* MAIN CONTENT AREA */}
@@ -1778,15 +2053,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       </div>
 
                       <div className="grid grid-cols-1 gap-3 pt-4">
-                        <button className="w-full py-5 bg-orange-100 text-orange-600 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-200 transition-all flex items-center justify-center gap-3">
+                        <button 
+                          onClick={() => handleFinalizeSale(true)}
+                          className="w-full py-5 bg-orange-100 text-orange-600 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-200 transition-all flex items-center justify-center gap-3"
+                        >
                            <Save size={18} /> Salvar Pedido (F8)
                         </button>
                         <button 
-                          onClick={() => {
-                            if (posCart.length === 0) return;
-                            alert(`Venda finalizada: €${(posTotal * 1.10).toFixed(2)}`);
-                            setPosCart([]);
-                          }}
+                          onClick={() => handleFinalizeSale(false)}
                           className="w-full py-6 bg-orange-500 text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] shadow-2xl shadow-orange-500/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                         >
                            <DollarSign size={20} /> Finalizar Venda (F9)

@@ -26,7 +26,7 @@ import SupplierDashboard from './components/SupplierDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
-import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn } from 'lucide-react';
+import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn, UtensilsCrossed } from 'lucide-react';
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
@@ -488,6 +488,7 @@ const App: React.FC = () => {
   const [pendingFlight, setPendingFlight] = useState<Flight | null>(null);
   const [scannerConfig, setScannerConfig] = useState<{ type: 'checkin' | 'checkout', resId: string, restaurantId: string, tableId: string } | null>(null);
   const [tableMenuRes, setTableMenuRes] = useState<any | null>(null);
+  const [welcomePopupDetails, setWelcomePopupDetails] = useState<{ restaurantName: string, tableName: string } | null>(null);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
@@ -809,26 +810,28 @@ const App: React.FC = () => {
   };
 
   const handleCheckIn = async (resId: string, restaurantId: string, tableId: string) => {
-    const confirmIn = window.confirm("Confirmar entrada no restaurante?");
-    if (!confirmIn) return;
-
     // 1. Local Update
     setMyReservations(prev => prev.map(r => r.id === resId ? { ...r, status: 'occupied' } : r));
     
     console.log(`🛎️ Iniciando Check-in: Reserva=${resId}, Mesa=${tableId || 'sem mesa'}, Rest=${restaurantId}`);
     
+    let restName = "Restaurante";
+    let tableName = tableId ? `Mesa #${tableId}` : "Mesa Principal";
+
     try {
       const rest = restaurants.find(r => r.id === restaurantId);
 
       if (rest) {
-        // Has restaurant in state — update tables + reservations
+        restName = rest.name;
         const resObj = rest.reservations?.find(r => r.id === resId);
         const updatedReservations = (rest.reservations || []).map(r =>
           r.id === resId ? { ...r, status: 'occupied' as const } : r
         );
         let updatedTables = rest.tables || [];
         if (tableId) {
-          updatedTables = updatedTables.map(t => t.id === tableId ? {
+          const matchingTable = updatedTables.find(t => t.id === tableId || String(t.id) === String(tableId));
+          if (matchingTable) tableName = `Mesa #${matchingTable.number}`;
+          updatedTables = updatedTables.map(t => (t.id === tableId || String(t.id) === String(tableId)) ? {
             ...t,
             status: 'occupied' as const,
             customerName: resObj?.customerName,
@@ -848,7 +851,6 @@ const App: React.FC = () => {
         });
         console.log('✅ Reserva global e mesa atualizadas no servidor');
       } else {
-        // Restaurant not in local state — send update directly
         await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -856,11 +858,10 @@ const App: React.FC = () => {
         });
       }
 
-      alert('🛎️ Bem-vindo! Entrada registada com sucesso. O restaurante foi notificado.');
+      setWelcomePopupDetails({ restaurantName: restName, tableName });
     } catch (err) {
       console.error('Erro no check-in:', err);
-      // Still show success locally — server will sync on next poll
-      alert('🛎️ Entrada registada localmente. Será sincronizada em breve.');
+      setWelcomePopupDetails({ restaurantName: restName, tableName });
     }
   };
 
@@ -1140,22 +1141,13 @@ const App: React.FC = () => {
         return;
      }
 
-     // 1. Criar Kitchen Order com status sent_to_kitchen para ser impresso/visto logo pela cozinha
-     const newOrder: KitchenOrder = {
-       id: `ORD_${Date.now()}`,
-       tableId: tableMenuRes.tableId,
-       reservationId: tableMenuRes.id,
-       items,
-       status: 'sent_to_kitchen',
-       timestamp: new Date().toISOString()
-     };
-
-     // 2. Atualizar o currentTab da mesa
+     // 1. Atualizar a mesa com o pedido acumulado no currentTab e em pendingOrderItems para o balão do gerente
      const updatedTables = (rest.tables || []).map(t => {
         if (t.id === tableMenuRes.tableId) {
            return { 
              ...t, 
              currentTab: [...(t.currentTab || []), ...items],
+             pendingOrderItems: [...(t.pendingOrderItems || []), ...items],
              alertStatus: 'new_order' as const
            };
         }
@@ -1164,19 +1156,18 @@ const App: React.FC = () => {
 
      const updatedRest = {
        ...rest,
-       kitchenOrders: [...(rest.kitchenOrders || []), newOrder],
        tables: updatedTables
      };
 
      setRestaurants(prev => prev.map(r => r.id === restId ? updatedRest : r));
 
      try {
-       await fetch(`${API_BASE_URL}/api/restaurants/${restId}`, {
-         method: 'PUT',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(updatedRest),
+        await fetch(`${API_BASE_URL}/api/reservations/${tableMenuRes.id}/append-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
        });
-       alert('👨‍🍳 Pedido enviado para a cozinha e adicionado à sua conta!');
+        alert('🛎️ Pedido enviado com sucesso! Aguarde a confirmação do restaurante.');
      } catch (err) { console.error(err); }
      setTableMenuRes(null);
   };
@@ -2391,6 +2382,60 @@ const App: React.FC = () => {
         onClearDirectAdStart={() => setDirectAdStart(null)}
         onShowAuth={() => setShowAuthModal(true)}
       />
+
+      <AnimatePresence>
+        {welcomePopupDetails && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="bg-white/95 backdrop-blur-xl border border-white/50 w-full max-w-md rounded-[3rem] p-8 shadow-2xl text-center relative overflow-hidden"
+            >
+              {/* Background Glows */}
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl z-0" />
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl z-0" />
+
+              <div className="relative z-10 space-y-6">
+                {/* Visual Icon */}
+                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30">
+                  <UtensilsCrossed size={36} className="text-white" />
+                </div>
+
+                {/* Typography details */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.25em]">Entrada Registada</p>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
+                    Bem-vindo!
+                  </h3>
+                  <p className="text-slate-500 text-xs font-black uppercase tracking-widest mt-1">
+                    {welcomePopupDetails.restaurantName}
+                  </p>
+                </div>
+
+                {/* Table card */}
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[2rem] p-6 shadow-lg border border-slate-700/50">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Mesa Atribuída</span>
+                  <p className="text-3xl font-black tracking-tight">{welcomePopupDetails.tableName}</p>
+                </div>
+
+                <p className="text-xs text-slate-500 font-bold leading-relaxed italic">
+                  O staff foi notificado da sua chegada. Pode fazer novos pedidos e chamar a equipa diretamente do telemóvel!
+                </p>
+
+                {/* Action button */}
+                <button
+                  onClick={() => setWelcomePopupDetails(null)}
+                  className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  Entrar na Mesa
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Desktop Global Footer */}
       <div className="hidden lg:block">

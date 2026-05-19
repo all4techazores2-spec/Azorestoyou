@@ -630,6 +630,71 @@ app.put('/api/reservations/:id', async (req, res) => {
     }
 });
 
+app.post('/api/reservations/:id/append-order', async (req, res) => {
+    const { id } = req.params;
+    const { items } = req.body;
+    const db = await readDB(true);
+    let found = false;
+
+    // 1. Procurar a reserva nos Negócios
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    const reservation = biz.reservations.find(r => r.id === id);
+                    if (reservation) {
+                        found = true;
+                        
+                        // Atualizar a mesa correspondente no negócio
+                        if (reservation.tableId && biz.tables) {
+                            const tableIdx = biz.tables.findIndex(t => t.id === reservation.tableId || String(t.id) === String(reservation.tableId));
+                            if (tableIdx !== -1) {
+                                const currentTab = biz.tables[tableIdx].currentTab || [];
+                                const pendingOrderItems = biz.tables[tableIdx].pendingOrderItems || [];
+                                
+                                biz.tables[tableIdx] = {
+                                    ...biz.tables[tableIdx],
+                                    currentTab: [...currentTab, ...items],
+                                    pendingOrderItems: [...pendingOrderItems, ...items],
+                                    alertStatus: 'new_order'
+                                };
+                            }
+                        }
+
+                        // Atualizar a lista de pré-pedidos/pedidos extras na reserva
+                        if (!reservation.preOrder) {
+                            reservation.preOrder = [];
+                        }
+                        reservation.preOrder = [...reservation.preOrder, ...items];
+                    }
+                }
+            });
+        }
+    });
+
+    // 2. Sincronizar com o Utilizador correspondente
+    if (db.users) {
+        db.users.forEach(user => {
+            if (user.reservations) {
+                const r = user.reservations.find(res => res.id === id);
+                if (r) {
+                    if (!r.preOrder) {
+                        r.preOrder = [];
+                    }
+                    r.preOrder = [...r.preOrder, ...items];
+                }
+            }
+        });
+    }
+
+    if (found) {
+        await writeDB(db);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: "Reservation not found" });
+    }
+});
+
 app.delete('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
     const db = await readDB();
