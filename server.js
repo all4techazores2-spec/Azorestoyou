@@ -501,6 +501,8 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
                             t.customerName = undefined;
                             t.reservationTime = undefined;
                             t.currentTab = [];
+                            t.pendingOrderItems = [];
+                            t.alertStatus = 'none';
                         });
                     }
                     if (biz.rooms) {
