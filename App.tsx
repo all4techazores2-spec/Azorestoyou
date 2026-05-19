@@ -2041,6 +2041,16 @@ const App: React.FC = () => {
                         // Use a local copy to avoid stale state issues in the async call
                         let updatedReservationsList: any[] = [];
                         
+                         setIsAuthenticated(true);
+                         if (resData?.customerEmail && userProfile?.email !== resData.customerEmail) {
+                           setUserProfile(prev => ({
+                             ...prev,
+                             email: resData.customerEmail,
+                             name: resData.customerName || prev.name,
+                             phone: resData.customerPhone || prev.phone
+                           }));
+                         }
+
                         // Add to personal reservations locally
                         setMyReservations(prev => {
                           updatedReservationsList = [...prev, newReservation];

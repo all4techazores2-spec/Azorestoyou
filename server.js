@@ -459,16 +459,74 @@ app.post('/api/reservations', async (req, res) => {
         if (!business.reservations) business.reservations = [];
         business.reservations.push(reservation);
         
-        const user = db.users.find(u => normalizeEmail(u.email) === normalizeEmail(customerEmail));
-        if (user) {
-            if (!user.reservations) user.reservations = [];
-            user.reservations.push({ ...reservation, businessName: business.name });
+        let user = db.users.find(u => normalizeEmail(u.email) === normalizeEmail(customerEmail));
+        if (!user) {
+            user = {
+                email: normalizeEmail(customerEmail),
+                role: 'client',
+                credits: 100,
+                reservations: [],
+                profile: {
+                    name: req.body.customerName || customerEmail.split('@')[0],
+                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + customerEmail
+                }
+            };
+            db.users.push(user);
         }
+        if (!user.reservations) user.reservations = [];
+        user.reservations.push({ ...reservation, businessName: business.name });
         
         await writeDB(db);
         res.status(201).json(reservation);
     } else {
         res.status(404).send("Business not found");
+    }
+});
+
+// --- CLEAR ALL RESERVATIONS FOR TESTING ---
+app.post('/api/admin/clear-reservations', async (req, res) => {
+    try {
+        const db = await readDB(true);
+        
+        // 1. Limpar reservas em todos os negócios
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key]) {
+                db[key].forEach(biz => {
+                    biz.reservations = [];
+                    biz.kitchenOrders = [];
+                    // Restaurar status das mesas / quartos
+                    if (biz.tables) {
+                        biz.tables.forEach(t => {
+                            t.status = 'available';
+                            t.customerName = undefined;
+                            t.reservationTime = undefined;
+                            t.currentTab = [];
+                        });
+                    }
+                    if (biz.rooms) {
+                        biz.rooms.forEach(r => {
+                            r.status = 'available';
+                            r.customerName = undefined;
+                            r.reservationTime = undefined;
+                        });
+                    }
+                });
+            }
+        });
+        
+        // 2. Limpar reservas em todos os utilizadores
+        if (db.users) {
+            db.users.forEach(user => {
+                user.reservations = [];
+            });
+        }
+        
+        await writeDB(db);
+        console.log("🧹 DATABASE CLEANUP: All reservations successfully cleared.");
+        res.json({ success: true, message: "Todas as reservas foram eliminadas com sucesso." });
+    } catch (err) {
+        console.error("Erro ao limpar reservas:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 

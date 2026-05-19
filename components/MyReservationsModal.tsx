@@ -36,8 +36,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeReservations = reservations.filter(r => ['pending', 'accepted', 'occupied'].includes(r.status));
-  const historyReservations = reservations.filter(r => ['finished', 'cancelled'].includes(r.status));
+  const activeReservations = reservations.filter(r => ['pending', 'pendente', 'accepted', 'occupied'].includes(r.status));
+  const historyReservations = reservations.filter(r => ['finished', 'concluida', 'concluído', 'cancelled', 'cancelada'].includes(r.status));
 
   // Filter packages (reservations that have a packageId and are NOT restaurant/shop/beauty)
   const packageReservations = activeReservations.filter(r => r.packageId && (r.type === 'hotel' || r.type === 'al' || r.type === 'car' || r.type === 'flight'));
