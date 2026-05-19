@@ -154,6 +154,28 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [walkInTableId, setWalkInTableId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   
+  // Custom Area and Table States
+  const [hoveredTableId, setHoveredTableId] = useState<string | number | null>(null);
+  const [activeArea, setActiveArea] = useState<string>('Geral');
+  const [tableAreas, setTableAreas] = useState<string[]>(() => {
+    const existingAreas = (business.tables || [])
+      .map((t: any) => t.area)
+      .filter((area: any) => typeof area === 'string' && area.trim().length > 0);
+    const uniqueAreas = Array.from(new Set(['Geral', ...existingAreas]));
+    return uniqueAreas;
+  });
+
+  const handleAddArea = () => {
+    const areaName = prompt('Introduza o nome da nova área (ex: Esplanada):');
+    if (areaName && areaName.trim()) {
+      const trimmed = areaName.trim();
+      if (!tableAreas.includes(trimmed)) {
+        setTableAreas(prev => [...prev, trimmed]);
+        setActiveArea(trimmed);
+      }
+    }
+  };
+
   // Staff State already declared below
 
 
