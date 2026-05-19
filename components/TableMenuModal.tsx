@@ -16,12 +16,12 @@ interface TableMenuModalProps {
 const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos'];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  'Todos': <ShoppingBag size={14} />,
-  'Pratos': <Utensils size={14} />,
-  'Bebidas': <Beer size={14} />,
-  'Cafetaria': <Coffee size={14} />,
-  'Sobremesas': <Sparkles size={14} />,
-  'Vinhos': <Wine size={14} />
+  'Todos': <ShoppingBag size={15} />,
+  'Pratos': <Utensils size={15} />,
+  'Bebidas': <Beer size={15} />,
+  'Cafetaria': <Coffee size={15} />,
+  'Sobremesas': <Sparkles size={15} />,
+  'Vinhos': <Wine size={15} />
 };
 
 const TableMenuModal: React.FC<TableMenuModalProps> = ({ 
@@ -78,7 +78,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-slate-955/85 backdrop-blur-md p-0 md:p-6">
+    <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-slate-950/80 backdrop-blur-md p-0 md:p-6">
       <motion.div 
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
@@ -115,104 +115,111 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
               exit={{ opacity: 0, x: 20 }}
               className="flex-1 flex flex-col min-h-0 overflow-hidden"
             >
-              {/* CATEGORIES & SEARCH */}
-              <div className="p-5 bg-slate-900 border-b border-slate-800 space-y-4">
+              {/* SEARCH BAR (TOP) */}
+              <div className="p-4 bg-slate-900 border-b border-slate-850">
                  <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                     <input 
-                      className="w-full bg-slate-800/50 border border-slate-800 rounded-xl py-3.5 pl-11 pr-4 text-xs font-bold text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                      className="w-full bg-slate-850/50 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs font-bold text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                       placeholder="Pesquisar pratos ou bebidas..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
                  </div>
-                 
-                 {/* Category Scroll Bar */}
-                 <div className="flex overflow-x-auto gap-2 pb-1.5 custom-scrollbar">
+              </div>
+
+              {/* SPLIT LAYOUT BODY */}
+              <div className="flex-1 flex min-h-0 overflow-hidden bg-slate-950/20">
+                 {/* LEFT VERTICAL CATEGORY BAR */}
+                 <div className="w-[88px] shrink-0 bg-slate-900 border-r border-slate-850 overflow-y-auto custom-scrollbar py-4 px-2.5 flex flex-col gap-3 select-none scroll-smooth">
                     {CATEGORIES.map(cat => {
                       const isActive = activeCategory === cat;
                       return (
                         <button 
                           key={cat}
                           onClick={() => setActiveCategory(cat)}
-                          className={`px-4 py-2.5 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 border ${
+                          className={`w-[66px] aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all border ${
                              isActive 
-                               ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20' 
-                               : 'bg-slate-800/40 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                               ? 'bg-gradient-to-b from-orange-500 to-amber-600 text-white border-orange-500 shadow-lg shadow-orange-500/25 scale-[1.02]' 
+                               : 'bg-slate-850/40 text-slate-400 border-slate-800/40 hover:bg-slate-850 hover:text-slate-200'
                           }`}
                         >
-                           {CATEGORY_ICONS[cat]}
-                           <span>{cat}</span>
+                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/15 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                             {CATEGORY_ICONS[cat]}
+                           </div>
+                           <span className="text-[7.5px] font-black uppercase tracking-[0.08em] truncate max-w-full px-1">
+                             {cat}
+                           </span>
                         </button>
                       );
                     })}
                  </div>
-              </div>
 
-              {/* DISHES LIST */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-950/40 custom-scrollbar">
-                 {filteredItems.length === 0 ? (
-                   <div className="text-center py-20 opacity-30">
-                      <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-slate-600" />
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Sem itens nesta categoria</p>
-                   </div>
-                 ) : (
-                   <div className="grid grid-cols-2 gap-3">
-                      {filteredItems.map((item, idx) => {
-                         const cartItem = cart.find(c => c.dish.name === item.name);
-                         return (
-                           <div key={idx} className="bg-slate-900 border border-slate-800/60 p-3 rounded-2xl flex flex-col justify-between hover:border-slate-700 transition-colors shadow-sm relative overflow-hidden group">
-                              
-                              {/* Price tag on image */}
-                              <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-black text-orange-400 z-10 border border-white/5">
-                                €{item.price.toFixed(2)}
-                              </div>
+                 {/* RIGHT ITEMS LIST (SCROLLABLE GRID) */}
+                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/40 custom-scrollbar scroll-smooth">
+                    {filteredItems.length === 0 ? (
+                      <div className="text-center py-20 opacity-30">
+                         <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-slate-600" />
+                         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Sem itens</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2.5">
+                         {filteredItems.map((item, idx) => {
+                            const cartItem = cart.find(c => c.dish.name === item.name);
+                            return (
+                              <div key={idx} className="bg-slate-900 border border-slate-850/80 p-2.5 rounded-2xl flex flex-col justify-between hover:border-slate-750 transition-colors shadow-sm relative overflow-hidden group">
+                                 
+                                 {/* Price tag on image */}
+                                 <div className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[8.5px] font-black text-orange-400 z-10 border border-white/5">
+                                   €{item.price.toFixed(2)}
+                                 </div>
 
-                              <div className="space-y-2.5">
-                                 <div className="h-28 bg-slate-950/50 rounded-xl overflow-hidden flex items-center justify-center relative">
-                                    {item.image ? (
-                                       <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                 <div className="space-y-2">
+                                    <div className="h-24 bg-slate-950/50 rounded-xl overflow-hidden flex items-center justify-center relative">
+                                       {item.image ? (
+                                          <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                       ) : (
+                                          <Utensils className="text-slate-700 w-6 h-6" />
+                                       )}
+                                    </div>
+                                    <div>
+                                      <h3 className="font-bold text-slate-200 text-[10px] leading-tight line-clamp-1">{item.name}</h3>
+                                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.category}</p>
+                                    </div>
+                                 </div>
+
+                                 <div className="mt-2.5">
+                                    {cartItem ? (
+                                       <div className="flex items-center justify-between bg-slate-950/60 rounded-xl p-0.5 border border-slate-800/80">
+                                          <button 
+                                            onClick={() => updateQuantity(item, -1)} 
+                                            className="w-6.5 h-6.5 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
+                                          >
+                                            <Minus size={8} />
+                                          </button>
+                                          <span className="font-black text-slate-200 text-[10.5px]">{cartItem.quantity}</span>
+                                          <button 
+                                            onClick={() => updateQuantity(item, 1)} 
+                                            className="w-6.5 h-6.5 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
+                                          >
+                                            <Plus size={8} />
+                                          </button>
+                                       </div>
                                     ) : (
-                                       <Utensils className="text-slate-700 w-8 h-8" />
-                                    )}
-                                 </div>
-                                 <div>
-                                   <h3 className="font-bold text-slate-200 text-[11px] leading-tight line-clamp-1">{item.name}</h3>
-                                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.category}</p>
-                                 </div>
-                              </div>
-
-                              <div className="mt-3">
-                                 {cartItem ? (
-                                    <div className="flex items-center justify-between bg-slate-950/60 rounded-xl p-1 border border-slate-800">
-                                       <button 
-                                         onClick={() => updateQuantity(item, -1)} 
-                                         className="w-7 h-7 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
-                                       >
-                                         <Minus size={10} />
-                                       </button>
-                                       <span className="font-black text-slate-200 text-xs">{cartItem.quantity}</span>
                                        <button 
                                          onClick={() => updateQuantity(item, 1)} 
-                                         className="w-7 h-7 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
+                                         className="py-2 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white font-black text-[8px] uppercase tracking-widest rounded-xl transition-all w-full text-center border border-orange-500/20"
                                        >
-                                         <Plus size={10} />
+                                          Adicionar
                                        </button>
-                                    </div>
-                                 ) : (
-                                    <button 
-                                      onClick={() => updateQuantity(item, 1)} 
-                                      className="py-2.5 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all w-full text-center border border-orange-500/20"
-                                    >
-                                       Adicionar
-                                    </button>
-                                 )}
+                                    )}
+                                 </div>
                               </div>
-                           </div>
-                         );
-                      })}
-                   </div>
-                 )}
+                            );
+                         })}
+                      </div>
+                    )}
+                 </div>
               </div>
 
               {/* NEXT / CHECKOUT BAR */}
