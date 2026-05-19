@@ -76,7 +76,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
     { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
     { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages');
+  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages' || cat.id === 'restaurants');
 
   const handleBack = () => setSelectedCategory(null);
 
@@ -102,9 +102,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                  <ChevronLeft size={24} className="text-slate-600" />
                </button>
             ) : (
-              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-emerald-500/30 ring-4 ring-emerald-50">
-                <Calendar size={28} />
-              </div>
+               <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-emerald-500/30 ring-4 ring-emerald-50">
+                 <Calendar size={28} />
+               </div>
             )}
             <div className="text-left">
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
@@ -189,7 +189,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                   const isLandscapeRes = res.type === 'landscape';
                   
                   const statusConfig = {
-                    pending: { label: 'Pendente', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
+                    pending: { label: 'Aguardando aprovação', color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
                     accepted: { label: isBeautyRes ? 'Agendada' : isLandscapeRes ? 'Confirmada' : 'Confirmada', color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
                     occupied: { label: isBeautyRes ? 'Em Serviço' : isLandscapeRes ? 'Em Atividade' : 'Em Experiência', color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
                     cancelled: { label: 'Cancelada', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
@@ -201,7 +201,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                     <div key={res.id} className="group relative bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all text-left">
                       <div className="flex justify-between items-start gap-4 mb-6">
                         <div className="flex-1 text-left">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                              <div className={`w-2 h-2 rounded-full ${config.color} animate-pulse`}></div>
                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${config.bg} ${config.text} ${config.border}`}>
                                {config.label}
@@ -212,9 +212,16 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                </span>
                              )}
                           </div>
-                          <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
-                            {res.itemName || rest?.name || res.restaurantName}
-                          </h3>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
+                              {res.itemName || rest?.name || res.restaurantName}
+                            </h3>
+                            {res.tableId && (
+                              <span className="px-2.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                Mesa #{res.tableId}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-1.5">
                             <MapPin size={12} /> {isLandscapeRes ? 'Açores' : (rest?.island || 'Açores')}
                           </p>
