@@ -170,6 +170,9 @@ const App: React.FC = () => {
       setIsGuestMode(true);
       setGuestRestaurantId(qrRestId);
       setGuestTableId(qrTableId);
+      setGuestCheckIn(false);
+      setGuestOrderSent(false);
+      setGuestFormData({ name: '', people: 2, phone: '', email: '' });
       setHasEnteredApp(true);
       // Limpar URL params sem recarregar
       window.history.replaceState({}, '', window.location.pathname);
@@ -509,6 +512,9 @@ const App: React.FC = () => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [guestRestaurantId, setGuestRestaurantId] = useState<string | null>(null);
   const [guestTableId, setGuestTableId] = useState<string | null>(null);
+  const [guestCheckIn, setGuestCheckIn] = useState(false);
+  const [guestOrderSent, setGuestOrderSent] = useState(false);
+  const [guestFormData, setGuestFormData] = useState({ name: '', people: 2, phone: '', email: '' });
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
@@ -1210,7 +1216,6 @@ const App: React.FC = () => {
 
 
   // --- GUEST QR MODE RENDER ---
-  // Quando um cliente escaneia o QR Code, entra aqui sem login
   if (isGuestMode && guestRestaurantId && guestTableId) {
     const guestRestaurant = restaurants.find(r => String(r.id) === String(guestRestaurantId));
     
@@ -1218,7 +1223,7 @@ const App: React.FC = () => {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 p-8">
           <div className="text-center text-white">
-            <div className="text-6xl mb-6">🔄</div>
+            <div className="text-6xl mb-6 animate-spin">🔄</div>
             <p className="text-xl font-black uppercase tracking-widest">A carregar restaurante...</p>
             <p className="text-slate-400 text-sm mt-2">Por favor aguarde</p>
           </div>
@@ -1229,30 +1234,144 @@ const App: React.FC = () => {
     const guestTable = (guestRestaurant.tables || []).find((t: any) => String(t.id) === String(guestTableId));
     const tableName = guestTable ? `Mesa ${guestTable.number}` : `Mesa ${guestTableId}`;
 
-    // Guest places order — sends to server directly as a pending table order
+    // ── STEP 1: Check-in form ──
+    if (!guestCheckIn) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+          {/* Decorative blobs */}
+          <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div className="absolute top-[-20%] right-[-10%] w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="relative w-full max-w-sm bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center">
+              <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">🍽️</div>
+              <h1 className="text-white font-black text-xl tracking-tight">{guestRestaurant.name}</h1>
+              <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mt-1">{tableName} · Bem-vindo!</p>
+            </div>
+            {/* Form */}
+            <div className="p-7 space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nome do Responsável *</label>
+                <input
+                  type="text"
+                  value={guestFormData.name}
+                  onChange={e => setGuestFormData(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Ex: João Silva"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nº de Pessoas *</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setGuestFormData(p => ({ ...p, people: Math.max(1, p.people - 1) }))}
+                    className="w-11 h-11 bg-slate-100 hover:bg-slate-200 rounded-2xl flex items-center justify-center font-black text-slate-700 transition-all active:scale-90 text-lg">−</button>
+                  <span className="flex-1 text-center font-black text-2xl text-slate-800">{guestFormData.people}</span>
+                  <button onClick={() => setGuestFormData(p => ({ ...p, people: Math.min(20, p.people + 1) }))}
+                    className="w-11 h-11 bg-slate-100 hover:bg-slate-200 rounded-2xl flex items-center justify-center font-black text-slate-700 transition-all active:scale-90 text-lg">+</button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Telemóvel *</label>
+                <input
+                  type="tel"
+                  value={guestFormData.phone}
+                  onChange={e => setGuestFormData(p => ({ ...p, phone: e.target.value }))}
+                  placeholder="Ex: 912 345 678"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email <span className="text-slate-300">(opcional)</span></label>
+                <input
+                  type="email"
+                  value={guestFormData.email}
+                  onChange={e => setGuestFormData(p => ({ ...p, email: e.target.value }))}
+                  placeholder="Ex: joao@email.com"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  if (!guestFormData.name.trim() || !guestFormData.phone.trim()) {
+                    alert('Por favor preencha o nome e o telemóvel.');
+                    return;
+                  }
+                  // Save guest info to the table on the server
+                  const updatedTables = (guestRestaurant.tables || []).map((t: any) => {
+                    if (String(t.id) === String(guestTableId)) {
+                      return {
+                        ...t,
+                        status: 'occupied',
+                        customerName: guestFormData.name,
+                        seats: guestFormData.people,
+                        guestPhone: guestFormData.phone,
+                        guestEmail: guestFormData.email,
+                      };
+                    }
+                    return t;
+                  });
+                  try {
+                    await fetch(`${API_BASE_URL}/api/restaurants/${guestRestaurantId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ...guestRestaurant, tables: updatedTables }),
+                    });
+                    await fetchData(0, ['restaurants']);
+                  } catch (e) {}
+                  setGuestCheckIn(true);
+                }}
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/30 active:scale-95 mt-2"
+              >
+                Entrar e Ver Menu 🍽️
+              </button>
+              <button
+                onClick={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
+                className="w-full py-3 text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
+    // ── STEP 2: POS Menu ──
+    // Guest places order — sends to server as pendingOrderItems on the table
     const handleGuestOrder = async (items: OrderItem[]) => {
-      // Create a guest session reservation object
       const guestSessionId = `GUEST_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const freshRestaurant = restaurants.find(r => String(r.id) === String(guestRestaurantId)) || guestRestaurant;
       try {
-        // Update the table's pendingOrderItems directly on the restaurant
-        const updatedTables = (guestRestaurant.tables || []).map((t: any) => {
+        const updatedTables = (freshRestaurant.tables || []).map((t: any) => {
           if (String(t.id) === String(guestTableId)) {
             return {
               ...t,
               status: 'occupied',
               alertStatus: 'new_order',
-              pendingOrderItems: [...(t.pendingOrderItems || []), ...items.map(it => ({...it, guestSession: guestSessionId}))],
+              customerName: guestFormData.name,
+              pendingOrderItems: [...(t.pendingOrderItems || []), ...items.map(it => ({
+                ...it,
+                guestSession: guestSessionId,
+                guestName: guestFormData.name,
+                guestPhone: guestFormData.phone,
+              }))],
             };
           }
           return t;
         });
-        const endpoint = 'restaurants';
-        await fetch(`${API_BASE_URL}/api/${endpoint}/${guestRestaurantId}`, {
+        await fetch(`${API_BASE_URL}/api/restaurants/${guestRestaurantId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...guestRestaurant, tables: updatedTables }),
+          body: JSON.stringify({ ...freshRestaurant, tables: updatedTables }),
         });
-        alert('🛎️ Pedido enviado! O restaurante foi notificado. Pode continuar a adicionar mais itens.');
+        await fetchData(0, ['restaurants']);
+        setGuestOrderSent(true);
       } catch (e) {
         alert('❌ Erro ao enviar pedido. Por favor tente novamente.');
       }
@@ -1260,28 +1379,27 @@ const App: React.FC = () => {
 
     return (
       <div className="min-h-screen bg-slate-950">
-        {/* Header do modo convidado */}
+        {/* Top bar */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-black text-xs">🍽️</span>
-            </div>
+            <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-sm">🍽️</div>
             <div>
               <p className="text-white font-black text-sm tracking-tight">{guestRestaurant.name}</p>
-              <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">{tableName} · Convidado</p>
+              <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">{tableName} · {guestFormData.name || 'Convidado'}</p>
             </div>
           </div>
           <button
-            onClick={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
+            onClick={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
             className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-bold transition-all"
           >
             Sair
           </button>
         </div>
+
         <div className="pt-16">
           <TableMenuModal
             isOpen={true}
-            onClose={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
+            onClose={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
             restaurant={guestRestaurant}
             tableId={String(guestTableId)}
             reservationId={`GUEST_${guestTableId}`}
@@ -1289,6 +1407,105 @@ const App: React.FC = () => {
             onPlaceOrder={handleGuestOrder}
           />
         </div>
+
+        {/* ── ORDER SENT POPUP (fade-in / fade-out) ── */}
+        <AnimatePresence>
+          {guestOrderSent && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 60, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 40, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+                className="w-full max-w-sm bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] overflow-hidden border border-white relative"
+              >
+                {/* Decorative glows */}
+                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-100/60 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-100/40 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+
+                <div className="relative z-10 p-7">
+                  {/* Status chips */}
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-200">Em Experiência</span>
+                    <span className="bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-slate-200">Presencial</span>
+                    <span className="ml-auto text-slate-400 text-[10px] font-bold">{new Date().toLocaleDateString('pt-PT')}</span>
+                  </div>
+
+                  {/* Restaurant + table */}
+                  <div className="flex items-start justify-between mb-6">
+                    <div>
+                      <h2 className="font-black text-2xl text-slate-800 tracking-tight">{guestRestaurant.name}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="bg-blue-100 text-blue-700 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">{tableName}</span>
+                        {guestRestaurant.island && <span className="text-[10px] text-slate-400 font-bold uppercase">📍 {guestRestaurant.island}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-[9px] uppercase tracking-widest font-bold">Hora</p>
+                      <p className="font-black text-xl text-slate-800">{new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
+
+                  {/* Person info */}
+                  <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Titular</p>
+                      <p className="font-black text-slate-800 text-sm">{guestFormData.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Pessoas</p>
+                      <p className="font-black text-slate-800 text-sm">{guestFormData.people} {guestFormData.people === 1 ? 'Pessoa' : 'Pessoas'}</p>
+                    </div>
+                  </div>
+
+                  {/* Status bar */}
+                  <div className="mb-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <p className="text-emerald-700 font-black text-xs uppercase tracking-widest">Pedido Enviado!</p>
+                    </div>
+                    <p className="text-emerald-600 text-[11px] font-medium">🛎️ O restaurante foi notificado. Aguarde enquanto processam o seu pedido.</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <button
+                      onClick={() => setGuestOrderSent(false)}
+                      className="py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      🍽️ Mais Itens
+                    </button>
+                    <button
+                      onClick={() => setGuestOrderSent(false)}
+                      className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      🔔 Chamar Staff
+                    </button>
+                  </div>
+
+                  {/* Exit button */}
+                  <button
+                    onClick={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
+                    className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/20"
+                  >
+                    ← Sair e Voltar ao Telemóvel
+                  </button>
+                </div>
+
+                {/* Footer */}
+                <div className="relative z-10 px-7 py-4 border-t border-slate-100/60 flex items-center justify-between bg-white/50">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">⭐ Acumule Créditos</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">🕐 Suporte 24H</span>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
