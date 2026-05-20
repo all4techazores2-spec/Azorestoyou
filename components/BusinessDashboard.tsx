@@ -176,6 +176,75 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
+  const handleDeleteTable = (tableId: string | number) => {
+    if (!confirm('Eliminar esta mesa permanentemente?')) return;
+    const updatedTables = tables.filter(t => t.id !== tableId && String(t.id) !== String(tableId));
+    setTables(updatedTables);
+    onUpdateBusiness({ ...business, tables: updatedTables });
+  };
+
+  const handleDeleteArea = (area: string) => {
+    if (area === 'Geral') { alert('Não é possível eliminar a área Geral.'); return; }
+    if (!confirm(`Eliminar a área "${area}" e todas as suas mesas?`)) return;
+    const updatedTables = tables.filter(t => (t.area || 'Geral') !== area);
+    const updatedAreas = tableAreas.filter(a => a !== area);
+    setTables(updatedTables);
+    setTableAreas(updatedAreas);
+    setActiveArea('Geral');
+    onUpdateBusiness({ ...business, tables: updatedTables });
+  };
+
+  // QR Code state
+  const [qrTableTarget, setQrTableTarget] = useState<string | null>(null);
+  const [generatedQRUrl, setGeneratedQRUrl] = useState<string | null>(null);
+
+  const handleGenerateQR = (tableId: string) => {
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/?qr=${business.id}&table=${tableId}`;
+    setQrTableTarget(tableId);
+    setGeneratedQRUrl(url);
+  };
+
+  const handlePrintQR = () => {
+    if (!generatedQRUrl || !qrTableTarget) return;
+    const table = tables.find(t => String(t.id) === String(qrTableTarget));
+    const tableName = table ? `Mesa ${table.number}` : `Mesa ${qrTableTarget}`;
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>QR Code - ${tableName} - ${business.name}</title>
+        <style>
+          body { font-family: 'Arial', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fff; }
+          .card { text-align: center; padding: 40px; border: 3px solid #1e293b; border-radius: 24px; max-width: 400px; }
+          h1 { font-size: 28px; font-weight: 900; color: #1e293b; margin: 0 0 4px; text-transform: uppercase; letter-spacing: -1px; }
+          p { color: #64748b; font-size: 14px; margin: 4px 0 24px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+          img { width: 240px; height: 240px; }
+          .footer { margin-top: 20px; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+          .url { font-size: 10px; color: #cbd5e1; word-break: break-all; margin-top: 8px; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+      </head>
+      <body>
+        <div class="card">
+          <h1>${business.name}</h1>
+          <p>${tableName}</p>
+          <div id="qr"></div>
+          <p class="footer">📱 Aponte a câmara para pedir</p>
+          <p class="url">${generatedQRUrl}</p>
+        </div>
+        <script>
+          new QRCode(document.getElementById('qr'), { text: '${generatedQRUrl}', width: 240, height: 240, colorDark: '#1e293b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+          setTimeout(() => window.print(), 800);
+        </script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  };
+
   // Staff State already declared below
 
 
@@ -1624,19 +1693,101 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       </div>
                    </div>
 
+                   {/* ── QR CODE PANEL ── */}
+                   {!isHotel && !isRentCar && (
+                     <div className="mb-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 border border-white/10 shadow-2xl">
+                       <div className="flex flex-col md:flex-row gap-6 items-start">
+                         {/* Left: controls */}
+                         <div className="flex-1">
+                           <div className="flex items-center gap-3 mb-4">
+                             <div className="w-10 h-10 bg-blue-500/20 rounded-2xl flex items-center justify-center">
+                               <QrCode size={20} className="text-blue-400" />
+                             </div>
+                             <div>
+                               <p className="text-white font-black text-sm uppercase tracking-widest">QR Code por Mesa</p>
+                               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Cliente escaneia → entra direto no menu, sem login</p>
+                             </div>
+                           </div>
+                           <div className="flex flex-wrap gap-3">
+                             {/* Select table */}
+                             <select
+                               value={qrTableTarget || ''}
+                               onChange={e => { setQrTableTarget(e.target.value); setGeneratedQRUrl(null); }}
+                               className="bg-white/10 text-white border border-white/20 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[140px]"
+                             >
+                               <option value="" disabled>Escolher mesa...</option>
+                               {tables.map(t => (
+                                 <option key={t.id} value={String(t.id)}>Mesa {t.number} {t.area && t.area !== 'Geral' ? `(${t.area})` : ''}</option>
+                               ))}
+                             </select>
+                             {/* Generate */}
+                             <button
+                               onClick={() => qrTableTarget && handleGenerateQR(qrTableTarget)}
+                               disabled={!qrTableTarget}
+                               className="px-5 py-2.5 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                             >
+                               <QrCode size={14} />
+                               Gerar QR Code
+                             </button>
+                             {/* Print */}
+                             <button
+                               onClick={handlePrintQR}
+                               disabled={!generatedQRUrl}
+                               className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                             >
+                               <Printer size={14} />
+                               Imprimir QR Code
+                             </button>
+                           </div>
+                           {generatedQRUrl && (
+                             <p className="mt-3 text-slate-400 text-[10px] font-mono break-all border-t border-white/10 pt-3">{generatedQRUrl}</p>
+                           )}
+                         </div>
+                         {/* Right: QR preview */}
+                         {generatedQRUrl && (
+                           <div className="flex flex-col items-center gap-3 bg-white rounded-2xl p-4 min-w-[160px]">
+                             <div id={`qr-preview-${qrTableTarget}`} className="w-32 h-32">
+                               {/* QR renderizado via canvas inline */}
+                               <img
+                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(generatedQRUrl)}&color=1e293b&bgcolor=ffffff`}
+                                 alt="QR Code"
+                                 className="w-32 h-32 rounded-xl"
+                               />
+                             </div>
+                             <p className="text-slate-700 font-black text-xs uppercase tracking-widest text-center">
+                               {tables.find(t => String(t.id) === String(qrTableTarget)) 
+                                 ? `Mesa ${tables.find(t => String(t.id) === String(qrTableTarget))!.number}` 
+                                 : ''}
+                             </p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   )}
+
                     <div className="flex flex-wrap items-center gap-2 mb-8 bg-slate-100/50 p-2 rounded-3xl border border-slate-200/50 max-w-max">
                       {tableAreas.map(area => (
-                        <button
-                          key={area}
-                          onClick={() => setActiveArea(area)}
-                          className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                            activeArea === area
-                              ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20'
-                              : 'bg-white/80 text-slate-500 hover:bg-white border border-slate-100 hover:text-slate-700'
-                          }`}
-                        >
-                          {area}
-                        </button>
+                        <div key={area} className="flex items-center gap-1">
+                          <button
+                            onClick={() => setActiveArea(area)}
+                            className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                              activeArea === area
+                                ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20'
+                                : 'bg-white/80 text-slate-500 hover:bg-white border border-slate-100 hover:text-slate-700'
+                            }`}
+                          >
+                            {area}
+                          </button>
+                          {area !== 'Geral' && (
+                            <button
+                              onClick={() => handleDeleteArea(area)}
+                              title={`Eliminar área ${area}`}
+                              className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-500 text-red-400 hover:text-white flex items-center justify-center transition-all"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
+                        </div>
                       ))}
                     </div>
 
@@ -1707,6 +1858,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                     </div>
                                   )}
                               </motion.button>
+
+                              {/* Delete table button — top left, visible on hover */}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteTable(table.id); }}
+                                title="Eliminar mesa"
+                                className="absolute -bottom-2 -left-2 z-50 w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                              >
+                                <Trash2 size={11} />
+                              </button>
 
                                <AnimatePresence>
                                 {(hoveredTableId === table.id || String(hoveredTableId) === String(table.id)) && (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (

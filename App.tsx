@@ -160,6 +160,22 @@ const App: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // --- DETEÇÃO DE QR CODE GUEST MODE ---
+  // Se o URL tem ?qr=RESTAURANT_ID&table=TABLE_ID, entrar diretamente no POS como convidado
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qrRestId = params.get('qr');
+    const qrTableId = params.get('table');
+    if (qrRestId && qrTableId) {
+      setIsGuestMode(true);
+      setGuestRestaurantId(qrRestId);
+      setGuestTableId(qrTableId);
+      setHasEnteredApp(true);
+      // Limpar URL params sem recarregar
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
     const loadCaches = async () => {
@@ -489,6 +505,10 @@ const App: React.FC = () => {
   const [scannerConfig, setScannerConfig] = useState<{ type: 'checkin' | 'checkout', resId: string, restaurantId: string, tableId: string } | null>(null);
   const [tableMenuRes, setTableMenuRes] = useState<any | null>(null);
   const [welcomePopupDetails, setWelcomePopupDetails] = useState<{ restaurantName: string, tableName: string } | null>(null);
+  // --- GUEST QR MODE ---
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [guestRestaurantId, setGuestRestaurantId] = useState<string | null>(null);
+  const [guestTableId, setGuestTableId] = useState<string | null>(null);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
@@ -1187,6 +1207,91 @@ const App: React.FC = () => {
      } catch (err) { console.error(err); alert('❌ Erro de ligação ao servidor.'); }
      setTableMenuRes(null);
   };
+
+
+  // --- GUEST QR MODE RENDER ---
+  // Quando um cliente escaneia o QR Code, entra aqui sem login
+  if (isGuestMode && guestRestaurantId && guestTableId) {
+    const guestRestaurant = restaurants.find(r => String(r.id) === String(guestRestaurantId));
+    
+    if (!guestRestaurant) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 p-8">
+          <div className="text-center text-white">
+            <div className="text-6xl mb-6">🔄</div>
+            <p className="text-xl font-black uppercase tracking-widest">A carregar restaurante...</p>
+            <p className="text-slate-400 text-sm mt-2">Por favor aguarde</p>
+          </div>
+        </div>
+      );
+    }
+
+    const guestTable = (guestRestaurant.tables || []).find((t: any) => String(t.id) === String(guestTableId));
+    const tableName = guestTable ? `Mesa ${guestTable.number}` : `Mesa ${guestTableId}`;
+
+    // Guest places order — sends to server directly as a pending table order
+    const handleGuestOrder = async (items: OrderItem[]) => {
+      // Create a guest session reservation object
+      const guestSessionId = `GUEST_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      try {
+        // Update the table's pendingOrderItems directly on the restaurant
+        const updatedTables = (guestRestaurant.tables || []).map((t: any) => {
+          if (String(t.id) === String(guestTableId)) {
+            return {
+              ...t,
+              status: 'occupied',
+              alertStatus: 'new_order',
+              pendingOrderItems: [...(t.pendingOrderItems || []), ...items.map(it => ({...it, guestSession: guestSessionId}))],
+            };
+          }
+          return t;
+        });
+        const endpoint = 'restaurants';
+        await fetch(`${API_BASE_URL}/api/${endpoint}/${guestRestaurantId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...guestRestaurant, tables: updatedTables }),
+        });
+        alert('🛎️ Pedido enviado! O restaurante foi notificado. Pode continuar a adicionar mais itens.');
+      } catch (e) {
+        alert('❌ Erro ao enviar pedido. Por favor tente novamente.');
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-950">
+        {/* Header do modo convidado */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center">
+              <span className="text-white font-black text-xs">🍽️</span>
+            </div>
+            <div>
+              <p className="text-white font-black text-sm tracking-tight">{guestRestaurant.name}</p>
+              <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">{tableName} · Convidado</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
+            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-bold transition-all"
+          >
+            Sair
+          </button>
+        </div>
+        <div className="pt-16">
+          <TableMenuModal
+            isOpen={true}
+            onClose={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
+            restaurant={guestRestaurant}
+            tableId={String(guestTableId)}
+            reservationId={`GUEST_${guestTableId}`}
+            tableStatus="occupied"
+            onPlaceOrder={handleGuestOrder}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (!hasEnteredApp) {
     return (
