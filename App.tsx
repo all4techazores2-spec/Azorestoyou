@@ -102,6 +102,53 @@ const getCache = async (key: string): Promise<any> => {
 
 // Business type mapping moved to config.ts
 
+// ── GUEST EXIT PROMO POPUP ──
+const GuestExitPromoPopup: React.FC<{ onYes: () => void; onNo: () => void }> = ({ onYes, onNo }) => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 30, scale: 0.95 }}
+      transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+      className="w-full max-w-sm bg-white rounded-[2.5rem] shadow-[0_40px_80px_-12px_rgba(0,0,0,0.4)] overflow-hidden relative"
+    >
+      <div className="h-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-500" />
+      <div className="absolute top-0 right-0 w-56 h-56 bg-emerald-100/50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-56 h-56 bg-blue-100/40 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
+      <div className="relative z-10 p-8">
+        <div className="flex items-center justify-center mb-6">
+          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/30 ring-4 ring-emerald-50">
+            <span className="text-4xl">🌊</span>
+          </div>
+        </div>
+        <h2 className="text-2xl font-black text-slate-800 text-center tracking-tight mb-2">
+          Conhece o <span className="text-emerald-600">Azores4You</span>?
+        </h2>
+        <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-2xl p-5 mb-6 border border-slate-100">
+          <p className="text-slate-600 text-sm font-medium leading-relaxed text-center">
+            Reserva restaurantes, atividades, hotéis e muito mais nos <strong className="text-slate-800">Açores</strong> — tudo numa só app.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            {['🍽️ Restaurantes', '🏄 Atividades', '🏨 Hotéis', '✈️ Voos', '🚗 Carros', '⭐ Créditos'].map(item => (
+              <span key={item} className="bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">{item}</span>
+            ))}
+          </div>
+          <p className="text-emerald-600 text-[11px] font-black uppercase tracking-widest text-center mt-4">
+            🎁 Regista-te e ganha créditos na primeira reserva!
+          </p>
+        </div>
+        <button onClick={onYes} className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/25 active:scale-95 mb-3 flex items-center justify-center gap-2">
+          🌊 Sim, quero conhecer!
+        </button>
+        <button onClick={onNo} className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95">
+          Não, obrigado — Sair
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
+
 const App: React.FC = () => {
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
@@ -515,6 +562,7 @@ const App: React.FC = () => {
   const [guestCheckIn, setGuestCheckIn] = useState(false);
   const [guestOrderSent, setGuestOrderSent] = useState(false);
   const [guestFormData, setGuestFormData] = useState({ name: '', people: 2, phone: '', email: '' });
+  const [showGuestExitPromo, setShowGuestExitPromo] = useState(false);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
@@ -1234,6 +1282,17 @@ const App: React.FC = () => {
     const guestTable = (guestRestaurant.tables || []).find((t: any) => String(t.id) === String(guestTableId));
     const tableName = guestTable ? `Mesa ${guestTable.number}` : `Mesa ${guestTableId}`;
 
+    // Auto-reconhecer: se mesa já tem cliente registado, skip ao formulário
+    const tableAlreadyHasGuest = guestTable && guestTable.status === 'occupied' && guestTable.customerName && guestTable.guestPhone;
+    if (tableAlreadyHasGuest && !guestCheckIn) {
+      if (!guestFormData.name && guestTable.customerName) {
+        setGuestFormData({ name: guestTable.customerName || '', people: guestTable.seats || 2, phone: guestTable.guestPhone || '', email: guestTable.guestEmail || '' });
+      }
+      setGuestCheckIn(true);
+    }
+    const handleGuestExit = () => setShowGuestExitPromo(true);
+    const doExit = () => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); setShowGuestExitPromo(false); setGuestFormData({ name: '', people: 2, phone: '', email: '' }); };
+
     // ── STEP 1: Check-in form ──
     if (!guestCheckIn) {
       return (
@@ -1338,6 +1397,9 @@ const App: React.FC = () => {
               </button>
             </div>
           </motion.div>
+          <AnimatePresence>
+            {showGuestExitPromo && <GuestExitPromoPopup onYes={() => { window.location.href = 'https://azorestoyou.pt'; }} onNo={doExit} />}
+          </AnimatePresence>
         </div>
       );
     }
@@ -1389,7 +1451,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
+            onClick={handleGuestExit}
             className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-xs font-bold transition-all"
           >
             Sair
@@ -1399,7 +1461,7 @@ const App: React.FC = () => {
         <div className="pt-16">
           <TableMenuModal
             isOpen={true}
-            onClose={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
+            onClose={handleGuestExit}
             restaurant={guestRestaurant}
             tableId={String(guestTableId)}
             reservationId={`GUEST_${guestTableId}`}
@@ -1490,7 +1552,7 @@ const App: React.FC = () => {
 
                   {/* Exit button */}
                   <button
-                    onClick={() => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); }}
+                    onClick={() => { setGuestOrderSent(false); handleGuestExit(); }}
                     className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/20"
                   >
                     ← Sair e Voltar ao Telemóvel
@@ -1505,6 +1567,10 @@ const App: React.FC = () => {
               </motion.div>
             </motion.div>
           )}
+        </AnimatePresence>
+        {/* ── EXIT PROMO POPUP ── */}
+        <AnimatePresence>
+          {showGuestExitPromo && <GuestExitPromoPopup onYes={() => { window.location.href = 'https://azorestoyou.pt'; }} onNo={doExit} />}
         </AnimatePresence>
       </div>
     );
