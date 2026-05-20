@@ -1165,13 +1165,26 @@ const App: React.FC = () => {
      setRestaurants(prev => prev.map(r => r.id === restId ? updatedRest : r));
 
      try {
-        await fetch(`${API_BASE_URL}/api/reservations/${tableMenuRes.id}/append-order`, {
+        const orderResp = await fetch(`${API_BASE_URL}/api/reservations/${tableMenuRes.id}/append-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items }),
        });
-        alert('🛎️ Pedido enviado com sucesso! Aguarde a confirmação do restaurante.');
-     } catch (err) { console.error(err); }
+        if (orderResp.ok) {
+          alert('🛎️ Pedido enviado com sucesso! Aguarde a confirmação do restaurante.');
+          // Resync restaurants so table alertStatus & pendingOrderItems are up-to-date for kitchen monitor
+          await fetchData(0, ['restaurants']);
+          // Resync current user reservations so order tracker reflects the new preOrder
+          if (userProfile?.email) {
+            try {
+              const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}?t=${Date.now()}`);
+              if (userResp.ok) { const userData = await userResp.json(); setMyReservations(userData.reservations || []); }
+            } catch (e) { console.error('Sync user reservations error:', e); }
+          }
+        } else {
+          alert('❌ Não foi possível enviar o pedido. Tente novamente.');
+        }
+     } catch (err) { console.error(err); alert('❌ Erro de ligação ao servidor.'); }
      setTableMenuRes(null);
   };
 

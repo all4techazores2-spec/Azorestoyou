@@ -58,7 +58,12 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     const latestOrder = tableOrders[tableOrders.length - 1];
     const status = latestOrder.status;
     
-    if (status === 'sent_to_kitchen' || status === 'pending' || status === 'preparing' || status === 'preparando') {
+    // 'pending_admin' = awaiting restaurant acceptance, 'sent_to_kitchen'/'pending' = received, not yet cooking
+    if (status === 'pending_admin' || status === 'sent_to_kitchen' || status === 'pending' || status === 'waiting_confirmation') {
+      return 'Pendente';
+    }
+    
+    if (status === 'preparing' || status === 'preparando') {
       return 'Em preparação';
     }
     

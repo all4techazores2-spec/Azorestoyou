@@ -290,18 +290,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     
     const pendingItems = table.pendingOrderItems || [];
     // Filtrar apenas pratos (comida, sopas, entradas, sobremesas) para enviar para a cozinha
+    // Itens sem categoria são considerados pratos por defeito
+    const drinkCategories = ['bebidas', 'cafetaria', 'vinhos', 'cervejas', 'bebida', 'vinho', 'cerveja', 'bar'];
     const foodItems = pendingItems.filter((item: any) => {
-      const cat = (item.dish?.category || item.category || '').toLowerCase();
-      return !['bebidas', 'cafetaria', 'vinhos', 'cervejas', 'bebida', 'vinho', 'cerveja', 'bar'].includes(cat);
+      const cat = (item.dish?.category || item.category || '').toLowerCase().trim();
+      return cat === '' || !drinkCategories.includes(cat);
     });
     
-    let updatedKitchenOrders = [...(business.kitchenOrders || [])];
+    let updatedKitchenOrders = [...(kitchenOrders || [])];
     if (foodItems.length > 0) {
       const newOrder = {
         id: `ORD_${Date.now()}`,
         tableId: String(tableId),
         items: foodItems,
-        status: 'sent_to_kitchen' as const,
+        status: 'pending' as const,
         timestamp: new Date().toISOString()
       };
       updatedKitchenOrders.push(newOrder);
@@ -319,9 +321,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     });
     
     setTables(updatedTables);
-    if (business.kitchenOrders) {
-      setKitchenOrders(updatedKitchenOrders as any);
-    }
+    setKitchenOrders(updatedKitchenOrders as any);
     onUpdateBusiness({
       ...business,
       tables: updatedTables,
@@ -1320,7 +1320,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : <TableIcon size={18} />, hideForStaff: true },
               (isHotel && { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={18} />, hideForStaff: true }),
               { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
-              { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status === 'preparing' || o.status === 'preparando').length },
+              { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status !== 'delivered').length },
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
               { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
               (isRestaurant && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
@@ -1799,22 +1799,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                              {statusGroup.emoji} {statusGroup.label}
                           </h4>
                           <span className={`bg-${statusGroup.color}-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg shadow-${statusGroup.color}-500/20`}>
-                             {kitchenOrders.filter(o => 
-                               o.status === statusGroup.id || 
-                               (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                               (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
-                             ).length}
-                          </span>
-                       </div>
+                           {kitchenOrders.filter(o => 
+                             o.status === statusGroup.id || 
+                             (statusGroup.id === 'preparing' && o.status === 'preparando') ||
+                             (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                           ).length}
+                        </span>
+                     </div>
 
-                       <div className="space-y-4 flex-1">
-                          <AnimatePresence mode="popLayout">
-                            {kitchenOrders
-                              .filter(o => 
-                                o.status === statusGroup.id || 
-                                (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                                (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
-                              )
+                     <div className="space-y-4 flex-1">
+                        <AnimatePresence mode="popLayout">
+                          {kitchenOrders
+                            .filter(o => 
+                              o.status === statusGroup.id || 
+                              (statusGroup.id === 'preparing' && o.status === 'preparando') ||
+                              (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                            )
                               .map((order, idx) => (
                               <motion.div 
                                 layout
@@ -1877,7 +1877,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             ))}
                           </AnimatePresence>
                           
-                          {kitchenOrders.filter(o => o.status === statusGroup.id || (statusGroup.id === 'preparing' && o.status === 'preparando')).length === 0 && (
+                          {kitchenOrders.filter(o => 
+                             o.status === statusGroup.id || 
+                             (statusGroup.id === 'preparing' && o.status === 'preparando') ||
+                             (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                          ).length === 0 && (
                             <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-20 grayscale">
                                <div className="text-4xl mb-2">{statusGroup.emoji}</div>
                                <p className="text-[10px] font-black uppercase tracking-widest">Sem pedidos</p>
