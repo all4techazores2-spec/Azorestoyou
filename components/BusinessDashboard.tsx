@@ -197,6 +197,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // QR Code state
   const [qrTableTarget, setQrTableTarget] = useState<string | null>(null);
   const [generatedQRUrl, setGeneratedQRUrl] = useState<string | null>(null);
+  const [qrDropdownOpen, setQrDropdownOpen] = useState(false);
 
   const handleGenerateQR = (tableId: string) => {
     const baseUrl = window.location.origin;
@@ -1708,40 +1709,78 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Cliente escaneia → entra direto no menu, sem login</p>
                              </div>
                            </div>
-                           <div className="flex flex-wrap gap-3">
-                             {/* Select table */}
-                             <select
-                               value={qrTableTarget || ''}
-                               onChange={e => { setQrTableTarget(e.target.value); setGeneratedQRUrl(null); }}
-                               className="bg-white/10 text-white border border-white/20 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[140px]"
-                             >
-                               <option value="" disabled>Escolher mesa...</option>
-                               {tables.map(t => (
-                                 <option key={t.id} value={String(t.id)}>Mesa {t.number} {t.area && t.area !== 'Geral' ? `(${t.area})` : ''}</option>
-                               ))}
-                             </select>
-                             {/* Generate */}
-                             <button
-                               onClick={() => qrTableTarget && handleGenerateQR(qrTableTarget)}
-                               disabled={!qrTableTarget}
-                               className="px-5 py-2.5 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
-                             >
-                               <QrCode size={14} />
-                               Gerar QR Code
-                             </button>
-                             {/* Print */}
-                             <button
-                               onClick={handlePrintQR}
-                               disabled={!generatedQRUrl}
-                               className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
-                             >
-                               <Printer size={14} />
-                               Imprimir QR Code
-                             </button>
-                           </div>
-                           {generatedQRUrl && (
-                             <p className="mt-3 text-slate-400 text-[10px] font-mono break-all border-t border-white/10 pt-3">{generatedQRUrl}</p>
-                           )}
+                           
+                            {/* Custom dark dropdown + action buttons */}
+                            <div className="flex flex-wrap gap-3 items-center">
+                              {/* Custom dropdown */}
+                              <div className="relative">
+                                <button
+                                  onClick={() => setQrDropdownOpen(prev => !prev)}
+                                  className="flex items-center gap-3 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-all min-w-[190px] justify-between"
+                                >
+                                  <span className="truncate">
+                                    {qrTableTarget
+                                      ? (() => { const t = tables.find(x => String(x.id) === String(qrTableTarget)); return t ? `Mesa ${t.number}${t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}` : 'Mesa'; })()
+                                      : 'Escolher mesa...'}
+                                  </span>
+                                  <ChevronRight size={12} className={`flex-shrink-0 transition-transform duration-200 ${qrDropdownOpen ? 'rotate-90' : ''}`} />
+                                </button>
+                                <AnimatePresence>
+                                  {qrDropdownOpen && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                                      transition={{ duration: 0.15 }}
+                                      className="absolute top-full left-0 mt-2 z-[300] bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden min-w-[220px] max-h-60 overflow-y-auto"
+                                    >
+                                      {tables.length === 0 && (
+                                        <p className="text-slate-400 text-xs px-4 py-4 font-bold uppercase tracking-widest text-center">Sem mesas criadas</p>
+                                      )}
+                                      {tables.map(t => (
+                                        <button
+                                          key={t.id}
+                                          onClick={() => { setQrTableTarget(String(t.id)); setGeneratedQRUrl(null); setQrDropdownOpen(false); }}
+                                          className={`w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-between gap-3 border-b border-white/5 last:border-0 ${
+                                            String(qrTableTarget) === String(t.id)
+                                              ? 'bg-blue-600 text-white'
+                                              : 'text-slate-200 hover:bg-white/10'
+                                          }`}
+                                        >
+                                          <span>Mesa {t.number}{t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}</span>
+                                          <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase flex-shrink-0 ${
+                                            t.status === 'occupied' ? 'bg-red-500/30 text-red-300' :
+                                            t.status === 'reserved' ? 'bg-orange-500/30 text-orange-300' :
+                                            'bg-emerald-500/30 text-emerald-300'
+                                          }`}>{t.status === 'occupied' ? 'Em uso' : t.status === 'reserved' ? 'Reserv.' : 'Livre'}</span>
+                                        </button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              {/* Generate */}
+                              <button
+                                onClick={() => qrTableTarget && handleGenerateQR(qrTableTarget)}
+                                disabled={!qrTableTarget}
+                                className="px-5 py-2.5 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                              >
+                                <QrCode size={14} />
+                                Gerar QR Code
+                              </button>
+                              {/* Print */}
+                              <button
+                                onClick={handlePrintQR}
+                                disabled={!generatedQRUrl}
+                                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                              >
+                                <Printer size={14} />
+                                Imprimir QR Code
+                              </button>
+                            </div>
+                            {generatedQRUrl && (
+                              <p className="mt-3 text-slate-400 text-[10px] font-mono break-all border-t border-white/10 pt-3">{generatedQRUrl}</p>
+                            )}
                          </div>
                          {/* Right: QR preview */}
                          {generatedQRUrl && (
