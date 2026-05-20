@@ -1652,7 +1652,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                            >
                               <motion.button 
                                 whileTap={{ scale: 0.9 }}
-                                onClick={() => toggleTableStatus(table.id)}
+                                onClick={(e) => {
+                                  if (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setHoveredTableId(hoveredTableId === table.id || String(hoveredTableId) === String(table.id) ? null : table.id);
+                                  } else {
+                                    toggleTableStatus(table.id);
+                                  }
+                                }}
                                 className={`aspect-square w-full rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-500 shadow-xl relative group ${
                                   acceptingReservation ? (table.status === 'available' ? 'bg-emerald-50 border-4 border-emerald-500 scale-110 shadow-emerald-500/20' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
                                   selectedResForTable ? (table.status === 'available' ? 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
@@ -1717,21 +1725,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleSendToKitchen(table.id);
+                                            setHoveredTableId(null);
                                           }}
                                           className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
                                         >
                                           <ChefHat size={12} />
-                                          Cozinha (Só Pratos)
+                                          Enviar Pedido
                                         </button>
                                         <button
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleVerMesa(table.id);
+                                            setHoveredTableId(null);
                                           }}
                                           className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
                                         >
                                           <Eye size={12} />
-                                          Ver Mesa / POS
+                                          Ver Pedido
                                         </button>
                                       </div>
                                     </div>

@@ -24,6 +24,51 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Vinhos': <Wine size={15} />
 };
 
+const CATEGORY_DETAILS: Record<string, { label: string, desc: string, gradient: string, border: string, text: string }> = {
+  'Todos': {
+    label: 'Ementa Completa',
+    desc: 'Todos os pratos e bebidas da nossa ementa',
+    gradient: 'from-slate-500/10 to-slate-700/10 hover:from-slate-500/20 hover:to-slate-700/20',
+    border: 'border-slate-800/60 hover:border-slate-650',
+    text: 'text-slate-400'
+  },
+  'Pratos': {
+    label: 'Pratos Principais',
+    desc: 'Deliciosas especialidades regionais e grelhados',
+    gradient: 'from-rose-500/10 to-orange-500/10 hover:from-rose-500/20 hover:to-orange-500/20',
+    border: 'border-orange-500/20 hover:border-orange-500/40',
+    text: 'text-orange-400'
+  },
+  'Bebidas': {
+    label: 'Bebidas Refrescantes',
+    desc: 'Sumos naturais, refrigerantes e cervejas geladas',
+    gradient: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20',
+    border: 'border-blue-500/20 hover:border-blue-500/40',
+    text: 'text-blue-400'
+  },
+  'Cafetaria': {
+    label: 'Cafetaria & Quentes',
+    desc: 'Expressos aromáticos, chás e infusões regionais',
+    gradient: 'from-amber-600/10 to-amber-800/10 hover:from-amber-600/20 hover:to-amber-800/20',
+    border: 'border-amber-600/20 hover:border-amber-600/40',
+    text: 'text-amber-500'
+  },
+  'Sobremesas': {
+    label: 'Sobremesas & Doces',
+    desc: 'Sobremesas caseiras, pudins e frutas frescas',
+    gradient: 'from-pink-500/10 to-purple-500/10 hover:from-pink-500/20 hover:to-purple-500/20',
+    border: 'border-pink-500/20 hover:border-pink-500/40',
+    text: 'text-pink-400'
+  },
+  'Vinhos': {
+    label: 'Vinhos Regionais',
+    desc: 'Vinhos brancos, tintos e verdes da ementa',
+    gradient: 'from-purple-600/10 to-indigo-700/10 hover:from-purple-600/20 hover:to-indigo-700/20',
+    border: 'border-purple-600/20 hover:border-purple-600/40',
+    text: 'text-purple-400'
+  }
+};
+
 const TableMenuModal: React.FC<TableMenuModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -34,6 +79,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
   onPlaceOrder
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [search, setSearch] = useState('');
   const [step, setStep] = useState<'menu' | 'review'>('menu');
@@ -128,79 +174,123 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                  </div>
               </div>
 
-              {/* SPLIT LAYOUT BODY */}
-              <div className="flex-1 flex min-h-0 overflow-hidden bg-slate-950/20">
-                 {/* LEFT VERTICAL CATEGORY BAR */}
-                 <div className="w-[88px] shrink-0 bg-slate-900 border-r border-slate-850 overflow-y-auto custom-scrollbar py-4 px-2.5 flex flex-col gap-3 select-none scroll-smooth">
-                    {CATEGORIES.map(cat => {
-                      const isActive = activeCategory === cat;
-                      return (
-                        <button 
-                          key={cat}
-                          onClick={() => setActiveCategory(cat)}
-                          className={`w-[66px] aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all border ${
-                             isActive 
-                               ? 'bg-gradient-to-b from-orange-500 to-amber-600 text-white border-orange-500 shadow-lg shadow-orange-500/25 scale-[1.02]' 
-                               : 'bg-slate-850/40 text-slate-400 border-slate-800/40 hover:bg-slate-850 hover:text-slate-200'
-                          }`}
+              {/* BODY: EITHER CATEGORIES DASHBOARD OR ITEMS LIST */}
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-slate-950/20">
+                {selectedCategory === null && search === '' ? (
+                  /* CATEGORY DASHBOARD GRID */
+                  <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-4">
+                    <div className="mb-2">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">O nosso menu</p>
+                      <h3 className="text-sm font-black text-slate-300">Escolha uma categoria</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3.5 pb-6">
+                      {CATEGORIES.map(cat => {
+                        const count = allItems.filter(item => cat === 'Todos' || item.category === cat).length;
+                        const details = CATEGORY_DETAILS[cat];
+                        return (
+                          <motion.button
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.98 }}
+                            key={cat}
+                            onClick={() => {
+                              setActiveCategory(cat);
+                              setSelectedCategory(cat);
+                            }}
+                            className={`w-full p-4 rounded-3xl border ${details.border} bg-gradient-to-r ${details.gradient} backdrop-blur-md flex items-center justify-between text-left transition-all duration-300 shadow-sm`}
+                          >
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
+                                {React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 22 })}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-white block mb-0.5">
+                                  {cat === 'Todos' ? 'Ementa Completa' : cat}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block truncate font-medium">
+                                  {details.desc}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-3">
+                              <span className="text-[9px] font-black bg-slate-950/60 px-2.5 py-1 rounded-xl border border-white/5 text-slate-400 whitespace-nowrap">
+                                {count} {count === 1 ? 'item' : 'itens'}
+                              </span>
+                              <ChevronRight className="text-slate-500" size={14} />
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  /* CATEGORY ITEMS LIST WITH FADE-IN */
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex-1 flex flex-col min-h-0 overflow-hidden"
+                  >
+                    {/* Header bar with Back button if no search is active */}
+                    {search === '' && (
+                      <div className="px-4 py-3 bg-slate-900 border-b border-slate-850 flex items-center gap-3 select-none">
+                        <button
+                          onClick={() => setSelectedCategory(null)}
+                          className="px-3.5 py-1.5 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-xs font-black text-slate-300 rounded-xl hover:text-white transition-all flex items-center gap-1.5 active:scale-95"
                         >
-                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/15 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                             {CATEGORY_ICONS[cat]}
-                           </div>
-                           <span className="text-[7.5px] font-black uppercase tracking-[0.08em] truncate max-w-full px-1">
-                             {cat}
-                           </span>
+                          <ChevronRight size={14} className="rotate-180" /> Voltar para as Categorias
                         </button>
-                      );
-                    })}
-                 </div>
-
-                 {/* RIGHT ITEMS LIST (SCROLLABLE GRID) */}
-                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/40 custom-scrollbar scroll-smooth">
-                    {filteredItems.length === 0 ? (
-                      <div className="text-center py-20 opacity-30">
-                         <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-slate-600" />
-                         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Sem itens</p>
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest ml-auto">
+                          {selectedCategory === 'Todos' ? 'Completa' : selectedCategory}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2.5">
-                         {filteredItems.map((item, idx) => {
+                    )}
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/40 custom-scrollbar scroll-smooth">
+                      {filteredItems.length === 0 ? (
+                        <div className="text-center py-20 opacity-30">
+                          <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-slate-600" />
+                          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Sem itens</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 pb-6">
+                          {filteredItems.map((item, idx) => {
                             const cartItem = cart.find(c => c.dish.name === item.name);
                             return (
-                              <div key={idx} className="bg-slate-900 border border-slate-850/80 p-2.5 rounded-2xl flex flex-col justify-between hover:border-slate-750 transition-colors shadow-sm relative overflow-hidden group">
+                              <div key={idx} className="bg-slate-900 border border-slate-850/80 p-3 rounded-3xl flex flex-col justify-between hover:border-slate-750 transition-colors shadow-sm relative overflow-hidden group">
                                  
                                  {/* Price tag on image */}
-                                 <div className="absolute top-2 left-2 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[8.5px] font-black text-orange-400 z-10 border border-white/5">
+                                 <div className="absolute top-2.5 left-2.5 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-black text-orange-400 z-10 border border-white/5">
                                    €{item.price.toFixed(2)}
                                  </div>
 
                                  <div className="space-y-2">
-                                    <div className="h-24 bg-slate-950/50 rounded-xl overflow-hidden flex items-center justify-center relative">
+                                    <div className="h-24 bg-slate-950/50 rounded-2xl overflow-hidden flex items-center justify-center relative">
                                        {item.image ? (
                                           <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                        ) : (
                                           <Utensils className="text-slate-700 w-6 h-6" />
                                        )}
                                     </div>
-                                    <div>
-                                      <h3 className="font-bold text-slate-200 text-[10px] leading-tight line-clamp-1">{item.name}</h3>
+                                    <div className="px-0.5">
+                                      <h3 className="font-bold text-slate-200 text-[11px] leading-tight line-clamp-1">{item.name}</h3>
                                       <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.category}</p>
                                     </div>
                                  </div>
 
-                                 <div className="mt-2.5">
+                                 <div className="mt-3">
                                     {cartItem ? (
                                        <div className="flex items-center justify-between bg-slate-950/60 rounded-xl p-0.5 border border-slate-800/80">
                                           <button 
                                             onClick={() => updateQuantity(item, -1)} 
-                                            className="w-6.5 h-6.5 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
+                                            className="w-7 h-7 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
                                           >
                                             <Minus size={8} />
                                           </button>
-                                          <span className="font-black text-slate-200 text-[10.5px]">{cartItem.quantity}</span>
+                                          <span className="font-black text-slate-200 text-[11px]">{cartItem.quantity}</span>
                                           <button 
                                             onClick={() => updateQuantity(item, 1)} 
-                                            className="w-6.5 h-6.5 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
+                                            className="w-7 h-7 bg-slate-850 rounded-lg hover:bg-slate-750 flex items-center justify-center font-bold text-slate-400 active:scale-90 transition-transform"
                                           >
                                             <Plus size={8} />
                                           </button>
@@ -208,7 +298,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                                     ) : (
                                        <button 
                                          onClick={() => updateQuantity(item, 1)} 
-                                         className="py-2 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white font-black text-[8px] uppercase tracking-widest rounded-xl transition-all w-full text-center border border-orange-500/20"
+                                         className="py-2.5 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white font-black text-[8px] uppercase tracking-widest rounded-xl transition-all w-full text-center border border-orange-500/20 active:scale-95"
                                        >
                                           Adicionar
                                        </button>
@@ -216,10 +306,12 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                                  </div>
                               </div>
                             );
-                         })}
-                      </div>
-                    )}
-                 </div>
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               {/* NEXT / CHECKOUT BAR */}

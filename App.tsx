@@ -545,10 +545,12 @@ const App: React.FC = () => {
     if (!isAuthenticated || isAdmin || isBusiness) return;
     
     myReservations.forEach(res => {
+      const restName = res.businessName || res.restaurantName || 'Restaurante';
+
       // 1. Notificação de Reserva Confirmada
       if (res.status === 'accepted' && !notifiedResIds.has(res.id)) {
         const title = "Reserva Confirmada!";
-        const message = `O restaurante ${res.restaurantName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
+        const message = `O restaurante ${restName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
         
         const newNotification: AppNotification = {
           id: `NOTIF_ACC_${Date.now()}_${res.id}`,
@@ -568,7 +570,7 @@ const App: React.FC = () => {
       const tableNotifKey = `table_${res.id}`;
       if (res.status === 'accepted' && res.tableId && !notifiedResIds.has(tableNotifKey)) {
         const title = "Mesa Atribuída!";
-        const message = `Já temos uma mesa pronta para si no ${res.restaurantName}: Mesa #${res.tableId.replace('T', '')}.`;
+        const message = `Já temos uma mesa pronta para si no ${restName}: Mesa #${res.tableId.replace('T', '')}.`;
         
         const newNotification: AppNotification = {
           id: `NOTIF_TAB_${Date.now()}_${res.id}`,

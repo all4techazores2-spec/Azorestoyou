@@ -34,6 +34,41 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [ratingTarget, setRatingTarget] = useState<any | null>(null);
 
+  const getOrderStatus = (res: any) => {
+    const preOrder = res.preOrder || res.preorder;
+    if (!preOrder || preOrder.length === 0) return null;
+    
+    // Find restaurant in the restaurants prop
+    const rest = (restaurants || []).find(r => r.id === res.restaurantId || r.id === res.businessId);
+    if (!rest) return 'Pendente';
+    
+    // 1. Check if the table still has a new order alert
+    const table = (rest.tables || []).find(t => t.id === res.tableId || String(t.id) === String(res.tableId));
+    if (table && (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0))) {
+      return 'Pendente';
+    }
+    
+    // 2. Find kitchen orders for this table
+    const tableOrders = (rest.kitchenOrders || []).filter(o => String(o.tableId) === String(res.tableId));
+    if (tableOrders.length === 0) {
+      return 'Pendente';
+    }
+    
+    // Get the most recent kitchen order
+    const latestOrder = tableOrders[tableOrders.length - 1];
+    const status = latestOrder.status;
+    
+    if (status === 'sent_to_kitchen' || status === 'pending' || status === 'preparing' || status === 'preparando') {
+      return 'Em preparação';
+    }
+    
+    if (status === 'ready' || status === 'delivered') {
+      return 'Concluído';
+    }
+    
+    return 'Pendente';
+  };
+
   if (!isOpen) return null;
 
   const activeReservations = reservations.filter(r => ['pending', 'pendente', 'accepted', 'occupied'].includes(r.status));
@@ -290,41 +325,138 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                         </div>
                       )}
 
-                      {res.status === 'occupied' && (
-                        <div className="space-y-4">
-                           {/* Row for Staff and Menu Actions */}
-                           <div className="grid grid-cols-2 gap-3">
-                             <button 
-                               onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'calling_waiter')}
-                               className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
-                             >
-                               <Bell size={16} /> Chamar Staff
-                             </button>
-                             <button 
-                               onClick={() => onAddItems?.(res)}
-                               className="py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
-                             >
-                               <UtensilsCrossed size={16} /> Novo Pedido
-                             </button>
-                           </div>
+                      {res.status === 'occupied' && (() => {
+                        const orderStatus = getOrderStatus(res);
+                        return (
+                          <div className="space-y-4">
+                             {orderStatus && (
+                               <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4 mb-1 select-none">
+                                 <div className="flex justify-between items-center">
+                                   <div>
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Estado do Pedido</p>
+                                     <p className="text-xs font-black text-slate-800 mt-1">Acompanhe o seu pedido</p>
+                                   </div>
+                                   <span className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider shadow-sm border ${
+                                     orderStatus === 'Pendente' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                     orderStatus === 'Em preparação' ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse' :
+                                     'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                   }`}>
+                                     {orderStatus}
+                                   </span>
+                                 </div>
 
-                           {/* Request Bill Button */}
-                           <button 
-                             onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'waiting_bill')}
-                             className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2"
-                           >
-                             <Receipt size={18} /> Pedir a Conta
-                           </button>
+                                 {/* Stepper Progress Bar */}
+                                 <div className="relative pt-2 pb-1">
+                                   {/* Gray connecting line */}
+                                   <div className="absolute top-1/2 left-4 right-4 h-1 bg-slate-200 -translate-y-1/2 rounded-full z-0"></div>
+                                   {/* Dynamic active filled line */}
+                                   <div 
+                                     className={`absolute top-1/2 left-4 h-1 bg-gradient-to-r -translate-y-1/2 rounded-full transition-all duration-700 z-0 ${
+                                       orderStatus === 'Pendente' ? 'w-0' :
+                                       orderStatus === 'Em preparação' ? 'w-[46%]' :
+                                       'w-[92%]'
+                                     } ${
+                                       orderStatus === 'Pendente' ? 'from-amber-500 to-amber-500' :
+                                       orderStatus === 'Em preparação' ? 'from-amber-500 to-blue-500' :
+                                       'from-amber-500 via-blue-500 to-emerald-500'
+                                     }`}
+                                   ></div>
 
-                           {/* Checkout Button */}
-                           <button 
-                             onClick={() => onCheckOut(res.id, res.restaurantId || res.businessId || '', res.tableId)}
-                             className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                           >
-                             <LogOut size={18} /> Fechar Conta & Sair
-                           </button>
-                        </div>
-                      )}
+                                   {/* Stepper Nodes */}
+                                   <div className="relative z-10 flex justify-between">
+                                     {/* Step 1: Pendente */}
+                                     <div className="flex flex-col items-center">
+                                       <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                                         orderStatus === 'Pendente' || orderStatus === 'Em preparação' || orderStatus === 'Concluído'
+                                           ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                                           : 'bg-white border-slate-200 text-slate-400'
+                                       }`}>
+                                         <Clock size={14} className={orderStatus === 'Pendente' ? 'animate-pulse' : ''} />
+                                       </div>
+                                       <span className={`text-[8.5px] font-black uppercase tracking-wider mt-2 transition-colors ${
+                                         orderStatus === 'Pendente' ? 'text-amber-600 font-bold' : 'text-slate-500'
+                                       }`}>
+                                         Pendente
+                                       </span>
+                                     </div>
+
+                                     {/* Step 2: Em preparação */}
+                                     <div className="flex flex-col items-center">
+                                       <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                                         orderStatus === 'Em preparação' || orderStatus === 'Concluído'
+                                           ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20'
+                                           : 'bg-white border-slate-200 text-slate-400'
+                                       }`}>
+                                         <UtensilsCrossed size={14} className={orderStatus === 'Em preparação' ? 'animate-bounce' : ''} />
+                                       </div>
+                                       <span className={`text-[8.5px] font-black uppercase tracking-wider mt-2 transition-colors ${
+                                         orderStatus === 'Em preparação' ? 'text-blue-600 font-bold' : 'text-slate-500'
+                                       }`}>
+                                         Preparação
+                                       </span>
+                                     </div>
+
+                                     {/* Step 3: Concluído */}
+                                     <div className="flex flex-col items-center">
+                                       <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                                         orderStatus === 'Concluído'
+                                           ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-105'
+                                           : 'bg-white border-slate-200 text-slate-400'
+                                       }`}>
+                                         <CheckCircle size={14} />
+                                       </div>
+                                       <span className={`text-[8.5px] font-black uppercase tracking-wider mt-2 transition-colors ${
+                                         orderStatus === 'Concluído' ? 'text-emerald-600 font-bold' : 'text-slate-500'
+                                       }`}>
+                                         Concluído
+                                       </span>
+                                     </div>
+                                   </div>
+                                 </div>
+
+                                 {/* Helpful Status Text Description */}
+                                 <p className="text-[10px] text-slate-500 font-medium bg-white/50 p-2.5 rounded-2xl text-center border border-slate-100">
+                                   {orderStatus === 'Pendente' && '🛎️ O seu pedido foi registado! Aguarde que o restaurante envie para a cozinha.'}
+                                   {orderStatus === 'Em preparação' && '👨‍🍳 O seu pedido já foi enviado para a cozinha e está em preparação!'}
+                                   {orderStatus === 'Concluído' && '🎉 O seu pedido está pronto! Bom apetite.'}
+                                 </p>
+                               </div>
+                             )}
+
+                             {/* Row for Staff and Menu Actions */}
+                             <div className="grid grid-cols-2 gap-3">
+                               <button 
+                                 onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'calling_waiter')}
+                                 className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                               >
+                                 <Bell size={16} /> Chamar Staff
+                               </button>
+                               <button 
+                                 onClick={() => onAddItems?.(res)}
+                                 className="py-4 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                               >
+                                 <UtensilsCrossed size={16} /> Novo Pedido
+                               </button>
+                             </div>
+
+                             {/* Request Bill Button */}
+                             <button 
+                               onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'waiting_bill')}
+                               className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2"
+                             >
+                               <Receipt size={18} /> Pedir a Conta
+                             </button>
+
+                             {/* Checkout Button */}
+                             <button 
+                               onClick={() => onCheckOut(res.id, res.restaurantId || res.businessId || '', res.tableId)}
+                               className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                             >
+                               <LogOut size={18} /> Fechar Conta & Sair
+                             </button>
+                          </div>
+                        );
+                      })()}
 
                       {res.status === 'finished' && !res.reviewed && (
                          <div className="pt-4">
