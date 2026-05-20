@@ -120,7 +120,89 @@ const MOCK_BEAUTY_SERVICES: any[] = [
   { id: 'b_s10', name: 'Depilação Sobrancelha', price: 8.00, category: 'Sobrancelhas', description: 'Design com pinça', image: '' },
 ];
 
+// ── LIVE CLOCK CARD ──
+const LiveClockCard: React.FC<{ businessName: string; island: string }> = ({ businessName, island }) => {
+  const [now, setNow] = React.useState(new Date());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const timeStr = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const dateStr = now.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const dateCapital = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  const hours = now.getHours();
+  const greeting = hours < 12 ? 'Bom Dia' : hours < 19 ? 'Boa Tarde' : 'Boa Noite';
+  const greetEmoji = hours < 12 ? '☀️' : hours < 19 ? '🌤️' : '🌙';
+  const weatherOptions = ['☁️ 18°C', '⛅ 21°C', '☀️ 24°C', '🌦️ 16°C'];
+  const weatherStr = weatherOptions[now.getDate() % 4];
+  return (
+    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[3rem] p-8 overflow-hidden shadow-2xl shadow-slate-900/30">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+      <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-2xl">{greetEmoji}</span>
+            <p className="text-white/60 text-sm font-black uppercase tracking-[0.2em]">{greeting}, {businessName}</p>
+          </div>
+          <p className="text-white/40 text-xs font-bold mb-1">{dateCapital}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="bg-white/10 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">📍 {island || 'Açores'}</span>
+            <span className="bg-white/10 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{weatherStr}</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="font-mono font-black text-white" style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', letterSpacing: '0.05em', textShadow: '0 0 40px rgba(59,130,246,0.4)' }}>{timeStr}</p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">Ao Vivo</p>
+          </div>
+        </div>
+        <div className="flex-1 flex justify-end">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Dia', value: now.toLocaleDateString('pt-PT', { weekday: 'short' }).toUpperCase(), color: 'text-blue-400' },
+              { label: 'Semana', value: `Nº ${Math.ceil(now.getDate()/7)}`, color: 'text-emerald-400' },
+              { label: 'Mês', value: now.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase(), color: 'text-amber-400' },
+              { label: 'Ano', value: String(now.getFullYear()), color: 'text-purple-400' },
+            ].map((s, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
+                <p className={`font-black text-sm ${s.color}`}>{s.value}</p>
+                <p className="text-white/30 text-[9px] font-bold uppercase tracking-widest mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── REPORT EXPORT MENU ──
+const ReportExportMenu: React.FC<{ onExport: (period: 'hoje' | 'semana' | 'mes') => void }> = ({ onExport }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-emerald-600/30 active:scale-95">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Exportar Relatório
+        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-900/10 overflow-hidden z-50 min-w-[180px]">
+          {([['hoje', '📅 Hoje'], ['semana', '📆 Esta Semana'], ['mes', '📊 Este Mês']] as ['hoje'|'semana'|'mes', string][]).map(([period, label]) => (
+            <button key={period} onClick={() => { onExport(period); setOpen(false); }} className="w-full px-5 py-3 text-left text-xs font-black text-slate-700 uppercase tracking-widest hover:bg-slate-50 transition-all border-b border-slate-50 last:border-0">
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
+
   business,
   onUpdateBusiness,
   onSync,
@@ -2471,86 +2553,296 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           })()}
 
           {activeTab === 'dashboard' && (() => {
-            const salesMap: Record<string, { name: string; count: number; category: string }> = {};
+            // ── SALES DATA ──
+            const today = new Date().toISOString().split('T')[0];
+            const salesHistory: any[] = (business as any).salesHistory || [];
+            const todaySales = salesHistory.filter((s: any) => (s.date || '').startsWith(today));
+
+            // All items sold today (from history + active tables)
+            const allItemsToday: { name: string; price: number; quantity: number; category: string }[] = [];
+            todaySales.forEach((s: any) => (s.items || []).forEach((it: any) => allItemsToday.push(it)));
+            // Also include active pending orders on tables
+            (business.tables || []).forEach((t: any) => {
+              (t.pendingOrderItems || []).forEach((it: any) => allItemsToday.push({ name: it.name || it.dish?.name || 'Item', price: it.price || it.dish?.price || 0, quantity: it.quantity || 1, category: it.category || it.dish?.category || '' }));
+            });
+
+            const totalItemsToday = allItemsToday.reduce((acc, it) => acc + (it.quantity || 1), 0);
+            const revenueToday = allItemsToday.reduce((acc, it) => acc + ((it.price || 0) * (it.quantity || 1)), 0);
+            const partnerRevenue = totalItemsToday * 0.05;
+
+            // Sales map for charts
+            const salesMap: Record<string, { name: string; count: number; revenue: number; category: string }> = {};
             kitchenOrders.forEach(order => {
               (order.items || []).forEach((item: any) => {
                 const key = item.dish?.name || item.name || 'Desconhecido';
-                if (!salesMap[key]) salesMap[key] = { name: key, count: 0, category: item.dish?.category || '' };
+                if (!salesMap[key]) salesMap[key] = { name: key, count: 0, revenue: 0, category: item.dish?.category || item.category || '' };
                 salesMap[key].count += item.quantity || 1;
+                salesMap[key].revenue += (item.dish?.price || item.price || 0) * (item.quantity || 1);
               });
             });
-            // Fallback: use dishes list if no orders
+            allItemsToday.forEach(item => {
+              const key = item.name || 'Desconhecido';
+              if (!salesMap[key]) salesMap[key] = { name: key, count: 0, revenue: 0, category: item.category || '' };
+              salesMap[key].count += item.quantity || 1;
+              salesMap[key].revenue += (item.price || 0) * (item.quantity || 1);
+            });
             if (Object.keys(salesMap).length === 0) {
               (business.dishes || []).slice(0, 6).forEach((d, i) => {
-                salesMap[d.name] = { name: d.name, count: Math.max(1, 18 - i * 3), category: d.category || '' };
+                salesMap[d.name] = { name: d.name, count: Math.max(1, 18 - i * 3), revenue: (d.price || 0) * Math.max(1, 18 - i * 3), category: d.category || '' };
               });
             }
             const topSales = Object.values(salesMap).sort((a, b) => b.count - a.count).slice(0, 6);
             const maxSales = Math.max(...topSales.map(s => s.count), 1);
-            
+
+            // Category donut
+            const catMap: Record<string, number> = {};
+            Object.values(salesMap).forEach(s => { catMap[s.category || 'Outros'] = (catMap[s.category || 'Outros'] || 0) + s.count; });
+            const catData = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const catTotal = catData.reduce((a, c) => a + c[1], 0) || 1;
+
+            // Product donut top 5
+            const prodData = topSales.slice(0, 5);
+            const prodTotal = prodData.reduce((a, s) => a + s.count, 0) || 1;
+            const DONUT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
             const onDutyStaff = staff.filter(m => m.onDuty && !m.vacationStart).length;
             const onVacation = staff.filter(m => m.vacationStart).length;
             const debtClients = fiadoClients.filter(c => c.balance < 0);
             const creditClients = fiadoClients.filter(c => c.balance > 0);
 
+            // ── SAFT EXPORT ──
+            const exportSAFT = () => {
+              const now = new Date();
+              const dateStr = now.toISOString().split('T')[0];
+              const nif = (business as any).nif || '999999999';
+              const items = allItemsToday.length > 0 ? allItemsToday : (business.dishes || []).slice(0, 5).map((d, i) => ({ name: d.name, price: d.price || 10, quantity: i + 1, category: d.category || 'Pratos' }));
+              const invoiceTotal = items.reduce((a, it) => a + (it.price * it.quantity), 0);
+              const iva = invoiceTotal * 0.23;
+              let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<AuditFile xmlns="urn:OECD:Standard:SAF-T:1.00:PT" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Header>
+    <AuditFileVersion>1.04_01</AuditFileVersion>
+    <CompanyID>${nif}</CompanyID>
+    <TaxRegistrationNumber>${nif}</TaxRegistrationNumber>
+    <TaxAccountingBasis>I</TaxAccountingBasis>
+    <CompanyName>${business.name}</CompanyName>
+    <BusinessName>${business.name}</BusinessName>
+    <FiscalYear>${now.getFullYear()}</FiscalYear>
+    <StartDate>${dateStr}</StartDate>
+    <EndDate>${dateStr}</EndDate>
+    <CurrencyCode>EUR</CurrencyCode>
+    <DateCreated>${dateStr}</DateCreated>
+    <TaxEntity>Global</TaxEntity>
+    <ProductCompanyTaxID>${nif}</ProductCompanyTaxID>
+    <SoftwareCertificateNumber>0000</SoftwareCertificateNumber>
+    <ProductID>AzoresToYou POS</ProductID>
+    <ProductVersion>1.0</ProductVersion>
+  </Header>
+  <MasterFiles>
+    <GeneralLedgerAccounts />
+    <Customer>
+      <CustomerID>CONSUMIDOR_FINAL</CustomerID>
+      <AccountID>21</AccountID>
+      <CustomerTaxID>999999990</CustomerTaxID>
+      <CompanyName>Consumidor Final</CompanyName>
+      <BillingAddress>
+        <AddressDetail>Desconhecido</AddressDetail>
+        <City>Açores</City>
+        <PostalCode>0000-000</PostalCode>
+        <Country>PT</Country>
+      </BillingAddress>
+      <SelfBillingIndicator>0</SelfBillingIndicator>
+    </Customer>
+    <Product>
+${items.map((it, i) => `      <Product>
+        <ProductType>P</ProductType>
+        <ProductCode>PROD${String(i+1).padStart(3,'0')}</ProductCode>
+        <ProductGroup>${it.category || 'Geral'}</ProductGroup>
+        <ProductDescription>${it.name}</ProductDescription>
+        <ProductNumberCode>PROD${String(i+1).padStart(3,'0')}</ProductNumberCode>
+      </Product>`).join('\n')}
+    </Product>
+    <TaxTable>
+      <TaxTableEntry>
+        <TaxType>IVA</TaxType>
+        <TaxCountryRegion>PT</TaxCountryRegion>
+        <TaxCode>NOR</TaxCode>
+        <Description>IVA - Taxa Normal</Description>
+        <TaxPercentage>23</TaxPercentage>
+      </TaxTableEntry>
+    </TaxTable>
+  </MasterFiles>
+  <SourceDocuments>
+    <SalesInvoices>
+      <NumberOfEntries>1</NumberOfEntries>
+      <TotalDebit>0</TotalDebit>
+      <TotalCredit>${invoiceTotal.toFixed(2)}</TotalCredit>
+      <Invoice>
+        <InvoiceNo>FT 1/${dateStr.replace(/-/g,'')}</InvoiceNo>
+        <ATCUD>0</ATCUD>
+        <DocumentStatus>
+          <InvoiceStatus>N</InvoiceStatus>
+          <InvoiceStatusDate>${now.toISOString()}</InvoiceStatusDate>
+          <SourceID>${business.name}</SourceID>
+          <SourceBilling>P</SourceBilling>
+        </DocumentStatus>
+        <Hash>0</Hash>
+        <HashControl>0</HashControl>
+        <Period>${now.getMonth() + 1}</Period>
+        <InvoiceDate>${dateStr}</InvoiceDate>
+        <InvoiceType>FT</InvoiceType>
+        <SpecialRegimes>
+          <SelfBillingIndicator>0</SelfBillingIndicator>
+          <CashVATSchemeIndicator>0</CashVATSchemeIndicator>
+          <ThirdPartiesBillingIndicator>0</ThirdPartiesBillingIndicator>
+        </SpecialRegimes>
+        <SourceID>${business.name}</SourceID>
+        <SystemEntryDate>${now.toISOString()}</SystemEntryDate>
+        <CustomerID>CONSUMIDOR_FINAL</CustomerID>
+${items.map((it, i) => `        <Line>
+          <LineNumber>${i+1}</LineNumber>
+          <ProductCode>PROD${String(i+1).padStart(3,'0')}</ProductCode>
+          <ProductDescription>${it.name}</ProductDescription>
+          <Quantity>${it.quantity}</Quantity>
+          <UnitOfMeasure>UN</UnitOfMeasure>
+          <UnitPrice>${it.price.toFixed(2)}</UnitPrice>
+          <TaxPointDate>${dateStr}</TaxPointDate>
+          <Description>${it.name}</Description>
+          <CreditAmount>${(it.price * it.quantity).toFixed(2)}</CreditAmount>
+          <Tax>
+            <TaxType>IVA</TaxType>
+            <TaxCountryRegion>PT</TaxCountryRegion>
+            <TaxCode>NOR</TaxCode>
+            <TaxPercentage>23</TaxPercentage>
+          </Tax>
+          <TaxExemptionReason />
+        </Line>`).join('\n')}
+        <DocumentTotals>
+          <TaxPayable>${iva.toFixed(2)}</TaxPayable>
+          <NetTotal>${(invoiceTotal - iva).toFixed(2)}</NetTotal>
+          <GrossTotal>${invoiceTotal.toFixed(2)}</GrossTotal>
+        </DocumentTotals>
+      </Invoice>
+    </SalesInvoices>
+  </SourceDocuments>
+</AuditFile>`;
+              const blob = new Blob([xml], { type: 'application/xml' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `SAFT_${business.name.replace(/\s+/g,'_')}_${dateStr}.xml`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+
+            // ── CSV REPORT EXPORT ──
+            const exportReport = (period: 'hoje' | 'semana' | 'mes') => {
+              const now = new Date();
+              const cutoff = new Date();
+              if (period === 'semana') cutoff.setDate(cutoff.getDate() - 7);
+              else if (period === 'mes') cutoff.setDate(cutoff.getDate() - 30);
+              const rows: string[][] = [['Data','Mesa','Cliente','Item','Qtd','Preço Unit.','Total','Taxa Parceiro']];
+              const salesFiltered = period === 'hoje' ? todaySales : salesHistory.filter((s: any) => new Date(s.date || '') >= cutoff);
+              if (salesFiltered.length > 0) {
+                salesFiltered.forEach((s: any) => {
+                  (s.items || []).forEach((it: any) => {
+                    const qty = it.quantity || 1;
+                    const price = it.price || 0;
+                    rows.push([s.date?.split('T')[0] || today, s.tableName || '-', s.customerName || 'Consumidor Final', it.name || '-', String(qty), `€${price.toFixed(2)}`, `€${(price*qty).toFixed(2)}`, `€${(qty*0.05).toFixed(2)}`]);
+                  });
+                });
+              } else {
+                allItemsToday.forEach(it => { const qty = it.quantity || 1; const price = it.price || 0; rows.push([today, 'Mesa Ativa', 'Consumidor Final', it.name || '-', String(qty), `€${price.toFixed(2)}`, `€${(price*qty).toFixed(2)}`, `€${(qty*0.05).toFixed(2)}`]); });
+              }
+              const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+              const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `relatorio_${period}_${today}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+
+            // ── DONUT SVG HELPER ──
+            const DonutChart = ({ data, colors, total, size = 160, stroke = 28 }: { data: number[]; colors: string[]; total: number; size?: number; stroke?: number }) => {
+              const r = (size - stroke) / 2;
+              const circ = 2 * Math.PI * r;
+              let offset = 0;
+              return (
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
+                  {data.map((val, i) => {
+                    const dash = (val / total) * circ;
+                    const gap = circ - dash;
+                    const seg = <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={colors[i % colors.length]} strokeWidth={stroke} strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset} strokeLinecap="round" />;
+                    offset += dash;
+                    return seg;
+                  })}
+                </svg>
+              );
+            };
+
             return (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-                {/* Stats Grid - Estilo Foto 2 (Hotel Excellence) */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                   {[
-                     { label: 'Reservas Hoje', value: reservations.length, icon: <Calendar size={24} />, color: 'blue', change: '↑ 12% vs ontem' },
-                     { label: 'Check-ins', value: pendingCount, icon: <Hotel size={24} />, color: 'orange', change: '↑ 14% vs ontem' },
-                     { label: 'Check-outs', value: '7', icon: <LogOut size={24} />, color: 'emerald', change: '↓ 5% vs ontem' },
-                     { label: 'Hóspedes', value: '42', icon: <Users size={24} />, color: 'indigo', change: '↑ 8% vs ontem' },
-                     { label: 'Receita Hoje', value: '€ 9.750', icon: <DollarSign size={24} />, color: 'purple', change: '↑ 15% vs ontem' }
-                   ].map((stat, i) => (
-                     <div key={i} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                        <div className="flex items-center justify-between mb-4">
-                           <div className={`p-4 rounded-2xl bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>
-                              {stat.icon}
-                           </div>
-                        </div>
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                        <h4 className="text-3xl font-black text-slate-900 tracking-tighter mb-2">{stat.value}</h4>
-                        <div className="flex items-center gap-2">
-                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${stat.change.includes('↑') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                              {stat.change}
-                           </span>
-                        </div>
-                     </div>
-                   ))}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+
+                {/* ── LIVE CLOCK ── */}
+                <LiveClockCard businessName={business.name} island={business.island || ''} />
+
+                {/* ── ACTION BUTTONS ── */}
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <ReportExportMenu onExport={exportReport} />
+                  <button
+                    onClick={exportSAFT}
+                    className="flex items-center gap-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-slate-900/20 active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Exportar SAFT
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* TOP SELLING CHART */}
-                  <div className="lg:col-span-2 bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
-                    <div className="flex items-center justify-between mb-10">
-                      <div>
-                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Análise de Performance</h3>
-                        <p className="text-slate-400 text-xs font-black uppercase tracking-widest mt-1">Serviços e pratos com maior volume</p>
-                      </div>
-                      <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                        <BarChart3 size={24} />
-                      </div>
+                {/* ── KPI CARDS ── */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {[
+                    { label: 'Reservas Hoje', value: reservations.length, icon: <Calendar size={22} />, color: 'blue', change: '↑ 12% vs ontem' },
+                    { label: 'Check-ins', value: pendingCount, icon: <Hotel size={22} />, color: 'orange', change: '↑ 14% vs ontem' },
+                    { label: 'Check-outs', value: '7', icon: <LogOut size={22} />, color: 'emerald', change: '↓ 5% vs ontem' },
+                    { label: 'Hóspedes', value: '42', icon: <Users size={22} />, color: 'indigo', change: '↑ 8% vs ontem' },
+                    { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2)}` : '€ 0,00', icon: <DollarSign size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
+                    { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2)}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>{stat.icon}</div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-tight">{stat.label}</p>
+                      <h4 className={`text-xl font-black tracking-tighter mb-1 ${stat.color === 'amber' ? 'text-amber-600' : 'text-slate-900'}`}>{stat.value}</h4>
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${stat.change.includes('↑') ? 'bg-emerald-50 text-emerald-600' : stat.change.includes('itens') ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>{stat.change}</span>
                     </div>
-                    <div className="space-y-6">
+                  ))}
+                </div>
+
+                {/* ── ANALYTICS ROW: Bar + Donut Charts ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Bar Chart - Top Selling */}
+                  <div className="lg:col-span-1 bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Top Vendas</h3>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Pratos com maior volume</p>
+                      </div>
+                      <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><BarChart3 size={20} /></div>
+                    </div>
+                    <div className="space-y-5">
                       {topSales.map((item, i) => (
-                        <div key={i} className="flex items-center gap-6 group">
-                          <div className="w-8 text-[11px] font-black text-slate-300 text-right flex-shrink-0">0{i+1}</div>
+                        <div key={i} className="flex items-center gap-4 group">
+                          <div className="w-6 text-[10px] font-black text-slate-300 text-right flex-shrink-0">0{i+1}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-black text-slate-700 truncate">{item.name}</p>
-                              <p className="text-sm font-black text-blue-600 ml-2 flex-shrink-0">{item.count} Unid.</p>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-xs font-black text-slate-700 truncate">{item.name}</p>
+                              <p className="text-xs font-black text-blue-600 ml-1 flex-shrink-0">{item.count}</p>
                             </div>
-                            <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${(item.count / maxSales) * 100}%` }}
-                                transition={{ delay: i * 0.1, duration: 0.8, ease: 'circOut' }}
-                                className={`h-full rounded-full shadow-lg ${
-                                  i === 0 ? 'bg-blue-600' : i === 1 ? 'bg-blue-500' : i === 2 ? 'bg-blue-400' : 'bg-slate-300'
-                                }`}
-                              />
+                            <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                              <motion.div initial={{ width: 0 }} animate={{ width: `${(item.count / maxSales) * 100}%` }} transition={{ delay: i * 0.1, duration: 0.8, ease: 'circOut' }}
+                                className={`h-full rounded-full ${i === 0 ? 'bg-blue-600' : i === 1 ? 'bg-blue-500' : i === 2 ? 'bg-emerald-500' : i === 3 ? 'bg-amber-500' : 'bg-slate-300'}`} />
                             </div>
                           </div>
                         </div>
@@ -2558,54 +2850,135 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: Staff & Island */}
-                  <div className="space-y-8">
-                    {/* Staff Quick */}
-                    <div className="bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
-                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Equipa em Serviço</p>
-                      <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
-                          <p className="text-3xl font-black text-white mb-1">{onDutyStaff}</p>
-                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ativos</p>
-                        </div>
-                        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
-                          <p className="text-3xl font-black text-slate-400 mb-1">{onVacation}</p>
-                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Férias</p>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        {staff.slice(0,3).map(m => (
-                          <div key={m.id} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10">
-                               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${m.name}`} alt="Staff" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black text-white truncate">{m.name}</p>
-                              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Colaborador</p>
-                            </div>
-                            <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${ m.vacationStart ? 'bg-amber-400' : m.onDuty ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}/>
-                          </div>
-                        ))}
+                  {/* Donut - Produtos */}
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col items-center">
+                    <div className="w-full mb-5">
+                      <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Produtos</h3>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Top 5 mais vendidos</p>
+                    </div>
+                    <div className="relative">
+                      <DonutChart data={prodData.map(p => p.count)} colors={DONUT_COLORS} total={prodTotal} size={160} stroke={30} />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ transform: 'rotate(0deg)' }}>
+                        <p className="text-2xl font-black text-slate-900">{prodTotal}</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Itens</p>
                       </div>
                     </div>
+                    <div className="w-full mt-5 space-y-2">
+                      {prodData.map((p, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+                          <p className="text-[10px] font-bold text-slate-600 truncate flex-1">{p.name}</p>
+                          <p className="text-[10px] font-black text-slate-800">{p.count}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-                    {/* Island Location Card */}
-                    <div className="bg-white border border-slate-100 rounded-[3rem] p-10 flex flex-col items-center text-center shadow-sm">
-                      <div className="w-20 h-20 bg-blue-50 rounded-[2rem] flex items-center justify-center mb-6 text-blue-600">
-                        <MapPin size={40} />
+                  {/* Donut - Categorias */}
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col items-center">
+                    <div className="w-full mb-5">
+                      <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Categorias</h3>
+                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Distribuição por categoria</p>
+                    </div>
+                    <div className="relative">
+                      <DonutChart data={catData.map(c => c[1])} colors={['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']} total={catTotal} size={160} stroke={30} />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <p className="text-2xl font-black text-slate-900">{catData.length}</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Categorias</p>
                       </div>
-                      <h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-1">{business.island}</h4>
-                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-8">Localização do Negócio</p>
-                      
-                      <div className="flex flex-col w-full gap-3">
-                        <button onClick={() => setActiveTab('reservations')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Gerir Reservas</button>
-                        <button onClick={() => setActiveTab('dishes')} className="w-full py-4 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Ver Ementa</button>
-                      </div>
+                    </div>
+                    <div className="w-full mt-5 space-y-2">
+                      {catData.map((c, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6'][i % 5] }} />
+                          <p className="text-[10px] font-bold text-slate-600 truncate flex-1">{c[0] || 'Outros'}</p>
+                          <p className="text-[10px] font-black text-slate-800">{Math.round((c[1]/catTotal)*100)}%</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {/* FIADO — Client Tabs */}
+                {/* ── STAFF + REVIEWS + ISLAND ROW ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Staff Quick */}
+                  <div className="bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Equipa em Serviço</p>
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
+                        <p className="text-3xl font-black text-white mb-1">{onDutyStaff}</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ativos</p>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
+                        <p className="text-3xl font-black text-slate-400 mb-1">{onVacation}</p>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Férias</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {staff.slice(0,3).map(m => (
+                        <div key={m.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+                          <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${m.name}`} alt="Staff" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-white truncate">{m.name}</p>
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Colaborador</p>
+                          </div>
+                          <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${m.vacationStart ? 'bg-amber-400' : m.onDuty ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}/>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reviews Card */}
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col items-center justify-between">
+                    <div className="w-full">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Avaliações</h3>
+                        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500"><Star size={20} /></div>
+                      </div>
+                      <div className="flex items-end gap-3 mb-4">
+                        <p className="text-6xl font-black text-slate-900 tracking-tighter">{averageRating}</p>
+                        <div className="pb-2">
+                          <div className="flex gap-0.5 mb-1">
+                            {[1,2,3,4,5].map(s => <span key={s} className={`text-lg ${s <= Math.round(Number(averageRating)) ? 'text-amber-400' : 'text-slate-200'}`}>★</span>)}
+                          </div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{uniqueReviews.length} avaliações</p>
+                        </div>
+                      </div>
+                      {/* Mini list */}
+                      <div className="space-y-2 mb-6">
+                        {uniqueReviews.slice(0,2).map((r, i) => (
+                          <div key={i} className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-black text-[10px]">{(r.customerName || 'A').charAt(0)}</div>
+                              <p className="text-[10px] font-black text-slate-700">{r.customerName}</p>
+                              <div className="ml-auto flex gap-0.5">{[1,2,3,4,5].map(s => <span key={s} className={`text-[10px] ${s <= r.rating ? 'text-amber-400' : 'text-slate-200'}`}>★</span>)}</div>
+                            </div>
+                            {r.reviewNote && <p className="text-[10px] text-slate-500 truncate">{r.reviewNote}</p>}
+                          </div>
+                        ))}
+                        {uniqueReviews.length === 0 && <p className="text-[11px] text-slate-400 text-center py-2">Ainda sem avaliações</p>}
+                      </div>
+                    </div>
+                    <button onClick={() => setActiveTab('reviews')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 active:scale-95">
+                      Ver Todas as Avaliações
+                    </button>
+                  </div>
+
+                  {/* Island Card */}
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 flex flex-col items-center text-center shadow-sm">
+                    <div className="w-16 h-16 bg-blue-50 rounded-[2rem] flex items-center justify-center mb-5 text-blue-600"><MapPin size={32} /></div>
+                    <h4 className="text-xl font-black text-slate-900 tracking-tighter uppercase mb-1">{business.island}</h4>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Localização do Negócio</p>
+                    <div className="flex flex-col w-full gap-3 mt-auto">
+                      <button onClick={() => setActiveTab('reservations')} className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Gerir Reservas</button>
+                      <button onClick={() => setActiveTab('dishes')} className="w-full py-3.5 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Ver Ementa</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── FIADO CLIENTS ── */}
                 <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
                   <div className="flex items-center justify-between mb-8">
                     <div>
@@ -2630,21 +3003,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{client.phone}</p>
                         </div>
                         <div className="text-right flex-shrink-0 px-4">
-                          <p className={`font-black text-2xl tracking-tighter ${ client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          <p className={`font-black text-2xl tracking-tighter ${client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                             {client.balance < 0 ? '-' : '+'}€{Math.abs(client.balance).toFixed(2)}
                           </p>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <button onClick={() => {
-                            const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance + 5).toFixed(2))} : c);
-                            setFiadoClients(updated);
-                            handleUpdate({ fiadoClients: updated });
-                          }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 shadow-sm border border-emerald-100 transition-all active:scale-90">+</button>
-                          <button onClick={() => {
-                            const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance - 5).toFixed(2))} : c);
-                            setFiadoClients(updated);
-                            handleUpdate({ fiadoClients: updated });
-                          }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-500 font-black hover:bg-red-50 shadow-sm border border-red-100 transition-all active:scale-90">−</button>
+                          <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance + 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 shadow-sm border border-emerald-100 transition-all active:scale-90">+</button>
+                          <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance - 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-500 font-black hover:bg-red-50 shadow-sm border border-red-100 transition-all active:scale-90">−</button>
                         </div>
                       </div>
                     ))}
@@ -2653,6 +3018,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               </motion.div>
             );
           })()}
+
 
 
 
