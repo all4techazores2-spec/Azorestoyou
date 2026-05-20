@@ -1696,54 +1696,65 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                      table.status === 'reserved' ? (isHotel ? 'RESERVADO' : isRentCar ? 'INDISP.' : 'RESERVADA') : 
                                      'LIVRE'}
                                   </div>
+
+                                  {/* Pulsing alert badge for new remote orders */}
+                                  {(table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
+                                    <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-6 w-6 bg-gradient-to-tr from-red-500 to-rose-600 border-2 border-white shadow-lg flex items-center justify-center text-[9px] font-black text-white">
+                                        !
+                                      </span>
+                                    </div>
+                                  )}
                               </motion.button>
 
                                <AnimatePresence>
                                 {(hoveredTableId === table.id || String(hoveredTableId) === String(table.id)) && (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
                                   <motion.div 
-                                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2, ease: "easeOut" }}
-                                    className="absolute bottom-[105%] left-1/2 -translate-x-1/2 mb-4 w-64 bg-slate-950/95 backdrop-blur-xl border border-slate-800 text-white rounded-[2rem] p-5 shadow-2xl z-[150] text-center space-y-4"
+                                    className="absolute inset-0 bg-slate-950/95 backdrop-blur-md border border-slate-800 text-white rounded-[2.5rem] p-3.5 flex flex-col items-center justify-center gap-1.5 z-[100] text-center shadow-2xl overflow-hidden"
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-950 rotate-45 border-r border-b border-slate-800 z-0" />
-                                    <div className="relative z-10 space-y-3">
-                                      <div className="flex items-center justify-center gap-2">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-                                        <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Novo Pedido Remoto</p>
-                                      </div>
-                                      <div className="max-h-24 overflow-y-auto custom-scrollbar space-y-1 py-1.5 px-1 bg-white/5 rounded-xl text-left">
-                                        {(table.pendingOrderItems || []).map((item: any, idx: number) => (
-                                          <p key={idx} className="text-[10px] font-bold text-slate-300 truncate">
-                                            <span className="text-orange-400 font-black mr-1">{item.quantity}x</span> {item.dish?.name || item.name}
-                                          </p>
-                                        ))}
-                                      </div>
-                                      <div className="grid grid-cols-1 gap-2 pt-1.5">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleSendToKitchen(table.id);
-                                            setHoveredTableId(null);
-                                          }}
-                                          className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20"
-                                        >
-                                          <ChefHat size={12} />
-                                          Enviar Pedido
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleVerMesa(table.id);
-                                            setHoveredTableId(null);
-                                          }}
-                                          className="py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
-                                        >
-                                          <Eye size={12} />
-                                          Ver Pedido
-                                        </button>
-                                      </div>
+                                    <div className="flex items-center justify-center gap-1 shrink-0">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                      <p className="text-[8px] font-black text-red-500 uppercase tracking-widest leading-none">Novo Pedido</p>
+                                    </div>
+                                    
+                                    {/* Compact scrollable items list */}
+                                    <div className="w-full flex-1 max-h-12 overflow-y-auto custom-scrollbar space-y-0.5 py-1 px-1.5 bg-white/5 rounded-xl text-center select-none text-[8px] font-bold text-slate-300">
+                                      {(table.pendingOrderItems || []).map((item: any, idx: number) => (
+                                        <p key={idx} className="truncate">
+                                          <span className="text-orange-400 font-black mr-0.5">{item.quantity}x</span> {item.dish?.name || item.name}
+                                        </p>
+                                      ))}
+                                    </div>
+                                    
+                                    <div className="w-full flex flex-col gap-1 shrink-0">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSendToKitchen(table.id);
+                                          setHoveredTableId(null);
+                                        }}
+                                        className="py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20 cursor-pointer"
+                                      >
+                                        <ChefHat size={10} />
+                                        Enviar Pedido
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleVerMesa(table.id);
+                                          setHoveredTableId(null);
+                                        }}
+                                        className="py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 cursor-pointer"
+                                      >
+                                        <Eye size={10} />
+                                        Ver Pedido
+                                      </button>
                                     </div>
                                   </motion.div>
                                 )}
@@ -1791,7 +1802,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                              {kitchenOrders.filter(o => 
                                o.status === statusGroup.id || 
                                (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                               (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
+                               (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
                              ).length}
                           </span>
                        </div>
@@ -1802,7 +1813,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               .filter(o => 
                                 o.status === statusGroup.id || 
                                 (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                                (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
+                                (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
                               )
                               .map((order, idx) => (
                               <motion.div 
@@ -1815,7 +1826,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               >
                                  <div className="flex justify-between items-start mb-4">
                                     <div>
-                                       <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId)?.number || '??'}</p>
+                                       <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId || String(t.id) === String(order.tableId))?.number || '??'}</p>
                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">#{order.id.slice(-4)}</p>
                                     </div>
                                     <div className="text-right">
@@ -1866,7 +1877,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             ))}
                           </AnimatePresence>
                           
-                          {kitchenOrders.filter(o => o.status === statusGroup.id || (statusGroup.id === 'preparing' && o.status === 'preparando')).length === 0 && (
+                          {kitchenOrders.filter(o => 
+                                o.status === statusGroup.id || 
+                                (statusGroup.id === 'preparing' && o.status === 'preparando') ||
+                                (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                          ).length === 0 && (
                             <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-20 grayscale">
                                <div className="text-4xl mb-2">{statusGroup.emoji}</div>
                                <p className="text-[10px] font-black uppercase tracking-widest">Sem pedidos</p>

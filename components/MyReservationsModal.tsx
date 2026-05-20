@@ -447,13 +447,6 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                <Receipt size={18} /> Pedir a Conta
                              </button>
 
-                             {/* Checkout Button */}
-                             <button 
-                               onClick={() => onCheckOut(res.id, res.restaurantId || res.businessId || '', res.tableId)}
-                               className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-600 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
-                             >
-                               <LogOut size={18} /> Fechar Conta & Sair
-                             </button>
                           </div>
                         );
                       })()}

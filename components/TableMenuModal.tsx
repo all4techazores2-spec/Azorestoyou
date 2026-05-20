@@ -183,40 +183,26 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">O nosso menu</p>
                       <h3 className="text-sm font-black text-slate-300">Escolha uma categoria</h3>
                     </div>
-                    <div className="grid grid-cols-1 gap-3.5 pb-6">
+                    <div className="grid grid-cols-3 gap-3.5 pb-6">
                       {CATEGORIES.map(cat => {
-                        const count = allItems.filter(item => cat === 'Todos' || item.category === cat).length;
                         const details = CATEGORY_DETAILS[cat];
                         return (
                           <motion.button
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.95 }}
                             key={cat}
                             onClick={() => {
                               setActiveCategory(cat);
                               setSelectedCategory(cat);
                             }}
-                            className={`w-full p-4 rounded-3xl border ${details.border} bg-gradient-to-r ${details.gradient} backdrop-blur-md flex items-center justify-between text-left transition-all duration-300 shadow-sm`}
+                            className={`p-3.5 rounded-3xl border ${details.border} bg-gradient-to-b ${details.gradient} backdrop-blur-md flex flex-col items-center justify-center text-center transition-all duration-300 shadow-md aspect-square gap-2.5`}
                           >
-                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
-                                {React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 22 })}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-white block mb-0.5">
-                                  {cat === 'Todos' ? 'Ementa Completa' : cat}
-                                </span>
-                                <span className="text-[10px] text-slate-400 block truncate font-medium">
-                                  {details.desc}
-                                </span>
-                              </div>
+                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
+                              {React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 20 })}
                             </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-3">
-                              <span className="text-[9px] font-black bg-slate-950/60 px-2.5 py-1 rounded-xl border border-white/5 text-slate-400 whitespace-nowrap">
-                                {count} {count === 1 ? 'item' : 'itens'}
-                              </span>
-                              <ChevronRight className="text-slate-500" size={14} />
-                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-wider text-white block truncate w-full select-none">
+                              {cat === 'Todos' ? 'Ementa' : cat}
+                            </span>
                           </motion.button>
                         );
                       })}
