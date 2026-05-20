@@ -183,24 +183,24 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">O nosso menu</p>
                       <h3 className="text-sm font-black text-slate-300">Escolha uma categoria</h3>
                     </div>
-                    <div className="grid grid-cols-3 gap-3.5 pb-6">
+                    <div className="grid grid-cols-3 gap-3 pb-6">
                       {CATEGORIES.map(cat => {
                         const details = CATEGORY_DETAILS[cat];
                         return (
                           <motion.button
-                            whileHover={{ scale: 1.03 }}
+                            whileHover={{ scale: 1.05, y: -2 }}
                             whileTap={{ scale: 0.95 }}
                             key={cat}
                             onClick={() => {
                               setActiveCategory(cat);
                               setSelectedCategory(cat);
                             }}
-                            className={`p-3.5 rounded-3xl border ${details.border} bg-gradient-to-b ${details.gradient} backdrop-blur-md flex flex-col items-center justify-center text-center transition-all duration-300 shadow-md aspect-square gap-2.5`}
+                            className={`p-4 rounded-2xl border ${details.border} bg-gradient-to-b ${details.gradient} backdrop-blur-md flex flex-col items-center justify-center text-center transition-all duration-300 shadow-md aspect-square gap-2.5 cursor-pointer`}
                           >
-                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
                               {React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 20 })}
                             </div>
-                            <span className="text-[9px] font-black uppercase tracking-wider text-white block truncate w-full select-none">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-white block truncate w-full leading-none">
                               {cat === 'Todos' ? 'Ementa' : cat}
                             </span>
                           </motion.button>

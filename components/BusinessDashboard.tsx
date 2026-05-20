@@ -1802,7 +1802,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                              {kitchenOrders.filter(o => 
                                o.status === statusGroup.id || 
                                (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                               (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                               (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
                              ).length}
                           </span>
                        </div>
@@ -1813,7 +1813,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               .filter(o => 
                                 o.status === statusGroup.id || 
                                 (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                                (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
+                                (statusGroup.id === 'pending' && o.status === 'waiting_confirmation')
                               )
                               .map((order, idx) => (
                               <motion.div 
@@ -1826,7 +1826,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               >
                                  <div className="flex justify-between items-start mb-4">
                                     <div>
-                                       <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId || String(t.id) === String(order.tableId))?.number || '??'}</p>
+                                       <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId)?.number || '??'}</p>
                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">#{order.id.slice(-4)}</p>
                                     </div>
                                     <div className="text-right">
@@ -1877,11 +1877,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             ))}
                           </AnimatePresence>
                           
-                          {kitchenOrders.filter(o => 
-                                o.status === statusGroup.id || 
-                                (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                                (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
-                          ).length === 0 && (
+                          {kitchenOrders.filter(o => o.status === statusGroup.id || (statusGroup.id === 'preparing' && o.status === 'preparando')).length === 0 && (
                             <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-20 grayscale">
                                <div className="text-4xl mb-2">{statusGroup.emoji}</div>
                                <p className="text-[10px] font-black uppercase tracking-widest">Sem pedidos</p>
