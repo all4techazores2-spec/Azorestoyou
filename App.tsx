@@ -1784,7 +1784,8 @@ const App: React.FC = () => {
             }}
             onUpdateBusiness={async (updated) => {
               // Encontrar o endpoint correto usando o mapa central
-              const endpoint = BUSINESS_TYPE_TO_ENDPOINT[updated.type] || 'restaurants';
+              const bType = (updated.businessType || (updated as any).type || 'restaurant').toLowerCase();
+              const endpoint = BUSINESS_TYPE_TO_ENDPOINT[bType] || 'restaurants';
               
               // Map de setters locais
               const setters: Record<string, any> = {

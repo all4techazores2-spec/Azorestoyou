@@ -34,6 +34,11 @@ const clearAll = async () => {
                         totalCleared += biz.orders.length;
                         biz.orders = [];
                     }
+                    // Limpar salesHistory
+                    if (biz.salesHistory && biz.salesHistory.length > 0) {
+                        totalCleared += biz.salesHistory.length;
+                        biz.salesHistory = [];
+                    }
                     // Restaurar mesas
                     if (biz.tables && Array.isArray(biz.tables)) {
                         biz.tables.forEach(table => {

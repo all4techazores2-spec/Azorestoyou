@@ -324,6 +324,12 @@ app.post('/api/clear-reservations', async (req, res) => {
                         summary['orders'] = (summary['orders'] || 0) + biz.orders.length;
                         biz.orders = [];
                     }
+                    // Histórico de Vendas
+                    if (biz.salesHistory && biz.salesHistory.length > 0) {
+                        totalCleared += biz.salesHistory.length;
+                        summary['salesHistory'] = (summary['salesHistory'] || 0) + biz.salesHistory.length;
+                        biz.salesHistory = [];
+                    }
                     // Mesas
                     if (biz.tables && Array.isArray(biz.tables)) {
                         biz.tables.forEach(table => {
@@ -494,6 +500,7 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
                 db[key].forEach(biz => {
                     biz.reservations = [];
                     biz.kitchenOrders = [];
+                    biz.salesHistory = [];
                     // Restaurar status das mesas / quartos
                     if (biz.tables) {
                         biz.tables.forEach(t => {
