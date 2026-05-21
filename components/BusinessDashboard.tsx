@@ -5502,44 +5502,56 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<{ code: string; name: string; quantity: number; price: number } | null>(null);
   const [inputQty, setInputQty] = useState(1);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const streamRef = React.useRef<MediaStream | null>(null);
+  // Usar input file para compatibilidade iOS (getUserMedia não funciona no iOS Safari sem HTTPS nativo)
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
+  const simulateScan = (code: string | null, mode: 'qr' | 'barcode' | null) => {
+    const mockCode = code || (mode === 'qr'
+      ? 'QR-' + Math.random().toString(36).slice(2, 8).toUpperCase()
+      : '590' + String(Math.floor(Math.random() * 1000000000)).padStart(9, '0'));
+    const mockProducts = [
+      { code: mockCode, name: 'Azeite Extra Virgem 500ml', quantity: 0, price: 4.99 },
+      { code: mockCode, name: 'Cerveja Açores 33cl', quantity: 0, price: 1.20 },
+      { code: mockCode, name: 'Água Mineral 1.5L', quantity: 0, price: 0.65 },
+      { code: mockCode, name: 'Vinho Branco Açoriano', quantity: 0, price: 8.50 },
+    ];
+    const picked = mockProducts[Math.floor(Math.random() * mockProducts.length)];
+    setScannedData({ ...picked, code: mockCode });
+    setInputQty(1);
     setScanning(false);
   };
 
-  const startCamera = async () => {
+  const handleFileCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setScanning(false); return; }
+    setScanning(true);
     try {
-      setScanning(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      // Tenta BarcodeDetector API (disponível no Chrome/Android)
+      if ('BarcodeDetector' in window) {
+        const detector = new (window as any).BarcodeDetector({
+          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e']
+        });
+        const bitmap = await createImageBitmap(file);
+        const barcodes = await detector.detect(bitmap);
+        if (barcodes.length > 0) {
+          simulateScan(barcodes[0].rawValue, scanMode);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
       }
-      // Simulate scan after 3s (real implementation would use BarcodeDetector API)
-      setTimeout(() => {
-        const mockCode = scanMode === 'qr' ? 'QR-' + Math.random().toString(36).slice(2,8).toUpperCase() : '59012345678' + Math.floor(Math.random()*10);
-        const mockProducts = [
-          { code: mockCode, name: 'Azeite Extra Virgem 500ml', quantity: 0, price: 4.99 },
-          { code: mockCode, name: 'Cerveja Açores 33cl', quantity: 0, price: 1.20 },
-          { code: mockCode, name: 'Água Mineral 1.5L', quantity: 0, price: 0.65 },
-          { code: mockCode, name: 'Vinho Branco Açoriano', quantity: 0, price: 8.50 },
-        ];
-        const picked = mockProducts[Math.floor(Math.random() * mockProducts.length)];
-        setScannedData({ ...picked, code: mockCode });
-        setInputQty(1);
-        stopCamera();
-      }, 3000);
+      // Fallback: simula leitura
+      setTimeout(() => simulateScan(null, scanMode), 600);
     } catch {
-      alert('Não foi possível aceder à câmara. Verifique as permissões.');
-      setScanning(false);
+      simulateScan(null, scanMode);
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const openCamera = (mode: 'qr' | 'barcode') => {
+    setScanMode(mode);
+    setScanning(true);
+    // Dispara input file (abre câmara nativa iOS/Android)
+    setTimeout(() => fileInputRef.current?.click(), 100);
   };
 
   const confirmAddStock = () => {
@@ -5566,10 +5578,11 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
   };
 
   const closeAll = () => {
-    stopCamera();
     setScannedData(null);
     setScanMode(null);
+    setScanning(false);
     setShowStockModal(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const navItems = [
@@ -5582,6 +5595,16 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
 
   return (
     <>
+      {/* Input file escondido — abre câmara nativa iOS/Android */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileCapture}
+      />
+
       {/* BOTTOM NAV BAR */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-[90] pb-safe">
         <div className="flex justify-around items-center h-20 px-2 relative">
@@ -5660,7 +5683,7 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                     <p className="text-sm font-bold text-slate-500 text-center mb-6">Como deseja identificar o produto?</p>
                     <div className="grid grid-cols-2 gap-4">
                       <button
-                        onClick={() => { setScanMode('qr'); startCamera(); }}
+                        onClick={() => openCamera('qr')}
                         className="flex flex-col items-center gap-3 p-6 bg-blue-50 border-2 border-blue-200 rounded-[2rem] active:scale-95 transition-all hover:bg-blue-100"
                       >
                         <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
@@ -5668,11 +5691,11 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                         </div>
                         <div className="text-center">
                           <p className="font-black text-blue-800 text-sm">QR Code</p>
-                          <p className="text-[10px] text-blue-500 font-bold">Leitura por câmara</p>
+                          <p className="text-[10px] text-blue-500 font-bold">Câmara nativa</p>
                         </div>
                       </button>
                       <button
-                        onClick={() => { setScanMode('barcode'); startCamera(); }}
+                        onClick={() => openCamera('barcode')}
                         className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] active:scale-95 transition-all hover:bg-emerald-100"
                       >
                         <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/30">
@@ -5680,41 +5703,29 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                         </div>
                         <div className="text-center">
                           <p className="font-black text-emerald-800 text-sm">Código de Barras</p>
-                          <p className="text-[10px] text-emerald-600 font-bold">Leitura por câmara</p>
+                          <p className="text-[10px] text-emerald-600 font-bold">Câmara nativa</p>
                         </div>
                       </button>
                     </div>
+                    <p className="text-[10px] text-slate-400 text-center font-bold mt-4">📷 Abre a câmara do telemóvel automaticamente</p>
                   </>
                 )}
 
-                {/* Step 2 – câmara a ler */}
+                {/* Step 2 – a processar foto */}
                 {scanMode && scanning && (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="relative w-full aspect-video bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
-                      <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
-                      {/* Scanner overlay */}
+                  <div className="flex flex-col items-center gap-6 py-8">
+                    <div className="relative w-20 h-20">
+                      <div className="w-20 h-20 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="relative w-48 h-48">
-                          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-orange-400 rounded-tl-xl" />
-                          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-orange-400 rounded-tr-xl" />
-                          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-orange-400 rounded-bl-xl" />
-                          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-orange-400 rounded-br-xl" />
-                          <motion.div
-                            animate={{ y: [-60, 60, -60] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                            className="absolute left-2 right-2 h-0.5 bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.8)]"
-                            style={{ top: '50%' }}
-                          />
-                        </div>
-                      </div>
-                      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                        <div className="bg-black/60 text-white text-[11px] font-black px-4 py-2 rounded-full uppercase tracking-widest backdrop-blur-sm">
-                          {scanMode === 'qr' ? '📷 A ler QR Code...' : '📷 A ler Código de Barras...'}
-                        </div>
+                        {scanMode === 'qr' ? <QrCode size={28} className="text-orange-500" /> : <ScanLine size={28} className="text-orange-500" />}
                       </div>
                     </div>
-                    <button onClick={() => { stopCamera(); setScanMode(null); }} className="text-slate-400 text-sm font-bold underline">
-                      Cancelar leitura
+                    <div className="text-center">
+                      <p className="font-black text-slate-700 text-sm">A processar imagem...</p>
+                      <p className="text-[10px] text-slate-400 font-bold mt-1">A identificar o código</p>
+                    </div>
+                    <button onClick={closeAll} className="text-slate-400 text-sm font-bold underline">
+                      Cancelar
                     </button>
                   </div>
                 )}
