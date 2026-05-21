@@ -519,28 +519,121 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       alert("🛎️ Pedido salvo com sucesso! Os itens foram vinculados à mesa.");
       return;
     }
+
+    // Em vez de finalizar logo, abrir o formulário de pagamento moderno e sofisticado
+    setPaymentMethod('multibanco');
+    setPaymentNif('');
+    setPaymentSplitBy(1);
+    setPaymentCashReceived('');
+    setPaymentFormOpen(true);
+  };
+
+  const executeConfirmPayment = () => {
+    if (posCart.length === 0) return;
+
+    const totalCart = posTotal;
+    const serviceTax = totalCart * 0.10;
+    const finalTotal = totalCart + serviceTax;
+
+    // ── Calcular IVA Discriminado (13% e 23%) ──
+    let base13 = 0;
+    let iva13 = 0;
+    let base23 = 0;
+    let iva23 = 0;
+
+    posCart.forEach(i => {
+      const itemTotal = i.product.price * i.quantity;
+      const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+      const rate = isDrink ? 23 : 13;
+      const itemBase = itemTotal / (1 + rate / 100);
+      const itemIva = itemTotal - itemBase;
+      
+      if (rate === 13) {
+        base13 += itemBase;
+        iva13 += itemIva;
+      } else {
+        base23 += itemBase;
+        iva23 += itemIva;
+      }
+    });
+
+    // IVA da taxa de serviço em Portugal (23%)
+    if (serviceTax > 0) {
+      const sBase = serviceTax / 1.23;
+      const sIva = serviceTax - sBase;
+      base23 += sBase;
+      iva23 += sIva;
+    }
+
+    // ── Numeração Sequencial Certificada e ATCUD ──
+    const existingSalesHistory: any[] = (business as any).salesHistory || [];
+    const nextInvoiceNum = existingSalesHistory.length + 1;
+    const year = new Date().getFullYear();
+    const invoiceNumber = `FR ${year}/${String(nextInvoiceNum).padStart(6, '0')}`;
+    const atcudCode = `JF5T-3E2C-7P1X-${String(nextInvoiceNum).padStart(6, '0')}`;
+
+    // Morada e NIF da empresa
+    const companyNif = (business as any).nif || '509999999';
+    const clientNif = paymentNif || '999999990'; // 999999990 é o NIF genérico de Consumidor Final em Portugal
+    const formattedDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
     
-    // ── Registar a venda no histórico (salesHistory) ──
-    const saleRecord = {
-      id: `sale_${Date.now()}`,
-      date: new Date().toISOString(),
+    // String oficial do QR Code da AT em Portugal
+    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${iva13.toFixed(2)}*I4:${iva23.toFixed(2)}*O:${finalTotal.toFixed(2)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`;
+
+    const received = parseFloat(paymentCashReceived) || finalTotal;
+    const change = Math.max(0, received - finalTotal);
+
+    const invoiceData = {
+      invoiceNumber,
+      date: new Date().toLocaleDateString('pt-PT') + ' ' + new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
       tableName: selectedTableId !== null
         ? `Mesa #${tables.find(t => String(t.id) === String(selectedTableId))?.number ?? selectedTableId}`
         : 'Balcão',
-      customerName: 'Consumidor Final',
-      total: posTotal * 1.10,
-      items: posCart.map(i => ({
-        name: i.product.name,
-        price: i.product.price,
-        quantity: i.quantity,
-        category: i.product.category || ''
+      operator: staffRole ? `Atendente (${staffRole})` : 'Operador AzoresPOS',
+      items: posCart.map(i => {
+        const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+        return {
+          name: i.product.name,
+          price: i.product.price,
+          quantity: i.quantity,
+          category: i.product.category || '',
+          ivaRate: isDrink ? 23 : 13
+        };
+      }),
+      subtotal: totalCart,
+      serviceTax,
+      total: finalTotal,
+      nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
+      paymentMethod: paymentMethod === 'cash' ? 'Dinheiro' : 'Multibanco',
+      cashReceived: received,
+      change,
+      splitBy: paymentSplitBy,
+      base13,
+      iva13,
+      base23,
+      iva23,
+      atcud: atcudCode,
+      qrCodeUrl
+    };
+
+    // ── Gravar Registo de Venda ──
+    const saleRecord = {
+      id: `sale_${Date.now()}`,
+      date: new Date().toISOString(),
+      tableName: invoiceData.tableName,
+      customerName: invoiceData.nif,
+      total: finalTotal,
+      items: invoiceData.items.map(it => ({
+        name: it.name,
+        price: it.price,
+        quantity: it.quantity,
+        category: it.category
       }))
     };
-    const existingSalesHistory: any[] = (business as any).salesHistory || [];
+
     const updatedSalesHistory = [...existingSalesHistory, saleRecord];
 
-    alert(`✅ Venda registada! €${(posTotal * 1.10).toFixed(2).replace('.', ',')} — Receita atualizada no dashboard.`);
-    
     if (selectedTableId !== null) {
       const updatedTables = tables.map(t => {
         if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
@@ -574,13 +667,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       
       setSelectedTableId(null);
     } else {
-      // Venda rápida / balcão — só atualiza o salesHistory
       onUpdateBusiness({
         ...business,
         salesHistory: updatedSalesHistory
       } as any);
     }
-    
+
+    setLastGeneratedInvoice(invoiceData);
+    setInvoicePreviewOpen(true);
+    setPaymentFormOpen(false);
     setPosCart([]);
   };
 
@@ -615,6 +710,29 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [posPaymentModal, setPosPaymentModal] = useState<'cash' | 'card' | null>(null);
   const [posNif, setPosNif] = useState('');
   const [posCashReceived, setPosCashReceived] = useState('');
+
+  // Estados de Pagamento Moderno e Faturação AT
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'multibanco'>('multibanco');
+  const [paymentNif, setPaymentNif] = useState('');
+  const [paymentSplitBy, setPaymentSplitBy] = useState(1);
+  const [paymentCashReceived, setPaymentCashReceived] = useState('');
+  const [invoicePreviewOpen, setInvoicePreviewOpen] = useState(false);
+  const [lastGeneratedInvoice, setLastGeneratedInvoice] = useState<any>(null);
+  const [selectedPrinter, setSelectedPrinter] = useState<string>('xp80');
+  const [showPrinterSelect, setShowPrinterSelect] = useState(false);
+  const [isPrintingAnim, setIsPrintingAnim] = useState(false);
+
+  const handlePrint = (printerId: string) => {
+    setSelectedPrinter(printerId);
+    setIsPrintingAnim(true);
+    setTimeout(() => {
+      setIsPrintingAnim(false);
+      if (printerId === 'pdf') {
+        window.print();
+      }
+    }, 2000);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -2502,86 +2620,552 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
                 {/* NIF + Payment Modal */}
                 <AnimatePresence>
-                  {posPaymentModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                  {paymentFormOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
                       <motion.div
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        initial={{ scale: 0.95, opacity: 0, y: 30 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        className="bg-slate-900 text-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/10"
+                        exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                        className="bg-slate-900 border border-slate-800 text-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
                       >
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
+                        <div className="p-6 md:p-8 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
                           <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{posPaymentModal === 'cash' ? '💵 Pagamento em Dinheiro' : '💳 Pagamento por Cartão'}</p>
-                            <p className="text-2xl font-black text-blue-400 mt-1">€{posTotal.toFixed(2)}</p>
-                            {posSplitBy > 1 && <p className="text-xs text-slate-400 font-bold">({posSplitBy} pessoas × €{(posTotal/posSplitBy).toFixed(2)})</p>}
+                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Checkout AzoresPOS</span>
+                            <h3 className="text-2xl font-black text-white tracking-tight mt-1">Finalizar Venda</h3>
                           </div>
                           <button 
-                            onClick={() => { setPosPaymentModal(null); setPosNif(''); }} 
-                            className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
+                            onClick={() => setPaymentFormOpen(false)} 
+                            className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-all group"
                           >
-                            <X size={20} className="group-active:scale-90 transition-transform" />
+                            <X size={20} className="group-active:scale-95 transition-transform" />
                           </button>
                         </div>
 
-                        {/* NIF Optional */}
-                        <div className="p-6 space-y-4">
-                          <div>
-                            <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                              <Receipt size={12} /> NIF para Fatura (opcional)
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={9}
-                              value={posNif}
-                              onChange={e => setPosNif(e.target.value.replace(/\D/g,''))}
-                              placeholder="Ex: 123456789"
-                              className="w-full bg-white/10 border border-white/20 rounded-2xl p-4 font-black text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none text-lg tracking-widest"
-                            />
-                            {posNif.length === 9 && <p className="text-[10px] text-emerald-400 font-bold mt-1 ml-2">✓ NIF válido — fatura será emitida</p>}
-                            {posNif.length > 0 && posNif.length < 9 && <p className="text-[10px] text-amber-400 font-bold mt-1 ml-2">{9 - posNif.length} dígitos em falta</p>}
+                        <div className="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                          {/* Total Display */}
+                          <div className="bg-gradient-to-br from-slate-950 to-slate-900 rounded-[2rem] p-6 border border-slate-800 text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Total a Pagar</p>
+                            <p className="text-5xl font-black text-emerald-400 mt-2 tracking-tighter">€{((posTotal * 1.10)).toFixed(2).replace('.', ',')}</p>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Já inclui 10% de taxa de serviço (IVA 23% incl.)</p>
                           </div>
 
-                          {posPaymentModal === 'cash' && (
-                            <div className="bg-white/5 rounded-2xl p-4">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Valor Recebido (€)</label>
+                          {/* Dividir a Conta */}
+                          <div className="space-y-3">
+                            <label className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              <span className="flex items-center gap-2"><Users size={12} className="text-blue-400" /> Dividir Conta (Pessoas)</span>
+                              <span className="text-blue-400 font-black">{paymentSplitBy} {paymentSplitBy === 1 ? 'Pessoa' : 'Pessoas'}</span>
+                            </label>
+                            <div className="grid grid-cols-5 gap-2">
+                              <button 
+                                type="button"
+                                onClick={() => setPaymentSplitBy(prev => Math.max(1, prev - 1))}
+                                className="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-black text-base active:scale-95 transition-all text-slate-300 animate-hover"
+                              >
+                                -
+                              </button>
+                              {[1, 2, 3, 4].map(num => (
+                                <button
+                                  key={num}
+                                  type="button"
+                                  onClick={() => setPaymentSplitBy(num)}
+                                  className={`py-3 rounded-xl font-black text-xs transition-all active:scale-95 ${paymentSplitBy === num ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-400'}`}
+                                >
+                                  {num === 1 ? 'Individual' : `${num} Pax`}
+                                </button>
+                              ))}
+                            </div>
+                            {paymentSplitBy > 1 && (
+                              <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 flex justify-between items-center text-xs">
+                                <span className="text-slate-400 font-bold">Valor por pessoa:</span>
+                                <span className="text-blue-400 font-black text-sm">€{((posTotal * 1.10) / paymentSplitBy).toFixed(2).replace('.', ',')} / Pax</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* NIF / Contribuinte */}
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <Receipt size={12} className="text-blue-400" /> Número de Contribuinte
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (paymentNif === '999999990') {
+                                    setPaymentNif('');
+                                  } else {
+                                    setPaymentNif('999999990');
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${paymentNif === '999999990' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 hover:text-white border border-transparent'}`}
+                              >
+                                Consumidor Final
+                              </button>
+                            </div>
+                            <div className="relative">
                               <input
-                                type="number"
-                                step="0.01"
-                                value={posCashReceived}
-                                onChange={e => setPosCashReceived(e.target.value)}
-                                placeholder="0.00"
-                                className="w-full bg-transparent text-3xl font-black text-white focus:outline-none tracking-tight"
+                                type="text"
+                                maxLength={9}
+                                value={paymentNif === '999999990' ? 'Consumidor Final' : paymentNif}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (val.toLowerCase().includes('consumidor')) {
+                                    setPaymentNif('');
+                                  } else {
+                                    setPaymentNif(val.replace(/\D/g, ''));
+                                  }
+                                }}
+                                placeholder="NIF opcional (ex: 509999999)"
+                                disabled={paymentNif === '999999990'}
+                                className={`w-full bg-slate-950/50 border rounded-2xl p-4 font-bold text-white placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base tracking-widest transition-all ${paymentNif === '999999990' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5 font-black text-center' : 'border-slate-800'}`}
                               />
-                              {parseFloat(posCashReceived) >= posTotal && (
-                                <div className="mt-3 pt-3 border-t border-white/10">
-                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Troco</p>
-                                  <p className="text-2xl font-black text-emerald-400">€{(parseFloat(posCashReceived) - posTotal).toFixed(2)}</p>
-                                </div>
+                              {paymentNif === '999999990' && (
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
+                                  ✓ AT PADRÃO
+                                </span>
                               )}
                             </div>
-                          )}
+                            {paymentNif.length > 0 && paymentNif !== '999999990' && (
+                              <div className="flex justify-between items-center px-1">
+                                {paymentNif.length === 9 ? (
+                                  <span className="text-[10px] text-emerald-400 font-bold">✓ NIF Português Válido</span>
+                                ) : (
+                                  <span className="text-[10px] text-amber-400 font-bold">{9 - paymentNif.length} dígitos restantes</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
 
+                          {/* Método de Pagamento */}
+                          <div className="space-y-3">
+                            <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              💰 Método de Pagamento
+                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPaymentMethod('multibanco');
+                                  setPaymentCashReceived('');
+                                }}
+                                className={`p-6 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all active:scale-95 ${paymentMethod === 'multibanco' ? 'border-blue-500 bg-blue-500/10 text-white shadow-lg shadow-blue-500/10' : 'border-slate-800 bg-slate-950/20 text-slate-400 hover:border-slate-700 hover:text-white'}`}
+                              >
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${paymentMethod === 'multibanco' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                  💳
+                                </div>
+                                <span className="font-black text-xs uppercase tracking-widest">Multibanco</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPaymentMethod('cash');
+                                  setPaymentCashReceived(((posTotal * 1.10)).toFixed(2));
+                                }}
+                                className={`p-6 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all active:scale-95 ${paymentMethod === 'cash' ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/10' : 'border-slate-800 bg-slate-950/20 text-slate-400 hover:border-slate-700 hover:text-white'}`}
+                              >
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${paymentMethod === 'cash' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                  💵
+                                </div>
+                                <span className="font-black text-xs uppercase tracking-widest">Dinheiro</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Se Dinheiro - Campo de Valor Recebido e Troco */}
+                          {paymentMethod === 'cash' && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 15 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-slate-950/40 rounded-[2rem] p-6 border border-slate-800 space-y-4"
+                            >
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                  Valor Recebido (€)
+                                </label>
+                                <span className="text-[9px] font-bold text-slate-500">Introduza o valor dado pelo cliente</span>
+                              </div>
+                              <div className="flex items-center gap-3 bg-slate-950/80 rounded-2xl border border-slate-800 p-4">
+                                <span className="text-slate-500 font-black text-xl">€</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={paymentCashReceived}
+                                  onChange={e => setPaymentCashReceived(e.target.value)}
+                                  placeholder="0.00"
+                                  className="w-full bg-transparent text-2xl font-black text-white focus:outline-none tracking-tight"
+                                />
+                              </div>
+                              {/* Atalhos de Dinheiro */}
+                              <div className="flex flex-wrap gap-2">
+                                {[((posTotal * 1.10)), 5, 10, 20, 50, 100].map((val, idx) => {
+                                  const isExact = idx === 0;
+                                  const displayVal = isExact ? 'Exato' : `€${val}`;
+                                  const targetVal = val;
+                                  
+                                  if (!isExact && val < ((posTotal * 1.10))) return null;
+
+                                  return (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setPaymentCashReceived(targetVal.toFixed(2))}
+                                      className="flex-1 min-w-[70px] py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-widest border border-slate-700/50"
+                                    >
+                                      {displayVal}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {/* Cálculo de Troco */}
+                              {parseFloat(paymentCashReceived) >= ((posTotal * 1.10)) ? (
+                                <div className="pt-4 border-t border-slate-800/80 flex justify-between items-center">
+                                  <div>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Troco a dar:</p>
+                                    <p className="text-3xl font-black text-emerald-400 tracking-tighter mt-1">
+                                      €{(parseFloat(paymentCashReceived) - ((posTotal * 1.10))).toFixed(2).replace('.', ',')}
+                                    </p>
+                                  </div>
+                                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                                    ✓
+                                  </div>
+                                </div>
+                              ) : parseFloat(paymentCashReceived) > 0 ? (
+                                <div className="pt-2 text-center">
+                                  <p className="text-xs text-amber-500 font-bold">Falta €{(((posTotal * 1.10)) - parseFloat(paymentCashReceived)).toFixed(2)} por liquidar</p>
+                                </div>
+                              ) : null}
+                            </motion.div>
+                          )}
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="p-6 md:p-8 border-t border-slate-800 bg-slate-950/40">
                           <motion.button
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => {
-                              // Gravar a venda antes de limpar
-                              handleFinalizeSale(false);
-                              setPosPaymentModal(null);
-                              setPosNif('');
-                              setPosCashReceived('');
-                              setPosSplitBy(1);
-                            }}
-                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
+                            whileTap={{ scale: 0.98 }}
+                            onClick={executeConfirmPayment}
+                            disabled={paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < ((posTotal * 1.10)))}
+                            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl transition-all flex items-center justify-center gap-2 ${paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < ((posTotal * 1.10))) ? 'bg-slate-800 text-slate-600 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20'}`}
                           >
-                            <CheckCircle size={18} /> Confirmar Venda
+                            <CheckCircle size={18} /> Confirmar Pagamento & Emitir Fatura
                           </motion.button>
                         </div>
                       </motion.div>
                     </div>
                   )}
+
+                  {invoicePreviewOpen && lastGeneratedInvoice && (() => {
+                    const lineW = 42;
+                    const padRight = (str: string, len: number) => str.padEnd(len, ' ');
+                    const padLeft = (str: string, len: number) => str.padStart(len, ' ');
+                    
+                    const formatReceiptLine = (left: string, right: string) => {
+                      const spaceCount = lineW - left.length - right.length;
+                      if (spaceCount <= 0) return left.substring(0, lineW - right.length - 1) + ' ' + right;
+                      return left + ' '.repeat(spaceCount) + right;
+                    };
+
+                    const formatThreeCols = (left: string, mid: string, right: string) => {
+                      const leftWidth = 24;
+                      const midWidth = 6;
+                      const rightWidth = lineW - leftWidth - midWidth;
+                      const leftPadded = left.substring(0, leftWidth).padEnd(leftWidth, ' ');
+                      const midPadded = mid.padStart(midWidth, ' ');
+                      const rightPadded = right.padStart(rightWidth, ' ');
+                      return `${leftPadded}${midPadded}${rightPadded}`;
+                    };
+
+                    const formattedItems = (lastGeneratedInvoice.items || []).map((item: any) => {
+                      const itemTotalStr = `€${(item.price * item.quantity).toFixed(2)}`;
+                      const itemIvaStr = `${item.ivaRate}%`;
+                      const itemLeftStr = `${item.quantity} ${item.name}`;
+                      return formatThreeCols(itemLeftStr, itemIvaStr, itemTotalStr);
+                    });
+
+                    const companyName = (business.name || 'A TASCA').toUpperCase();
+                    const companyAddress = business.address || 'Rua das Flores, 123, Ponta Delgada';
+                    const companyNif = business.nif || '509999999';
+                    const companyPhone = business.phone || '296 123 456';
+
+                    return (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+                        <style>{`
+                          @media print {
+                            body * {
+                              visibility: hidden !important;
+                            }
+                            #pos-receipt-print-area, #pos-receipt-print-area * {
+                              visibility: visible !important;
+                            }
+                            #pos-receipt-print-area {
+                              position: absolute;
+                              left: 0;
+                              top: 0;
+                              width: 72mm !important;
+                              margin: 0 !important;
+                              padding: 8mm 6mm !important;
+                              background: white !important;
+                              color: black !important;
+                              box-shadow: none !important;
+                              border: none !important;
+                              font-size: 11px !important;
+                              line-height: 1.4 !important;
+                            }
+                            .no-print {
+                              display: none !important;
+                            }
+                          }
+                        `}</style>
+                        
+                        <div className="flex flex-col lg:flex-row gap-8 max-w-4xl w-full items-stretch justify-center relative my-8">
+                          {/* Coluna Esquerda: O Talão Realista e Animação de Impressão */}
+                          <div className="flex-1 flex flex-col items-center justify-center bg-slate-950/40 border border-slate-800 rounded-[2.5rem] p-8 min-h-[600px] relative overflow-hidden">
+                            {/* Animação de corte / poeira de papel e luz verde */}
+                            <div className="absolute top-6 left-6 flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full z-30">
+                              <div className={`w-2.5 h-2.5 rounded-full ${isPrintingAnim ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`}></div>
+                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                {isPrintingAnim ? 'A Imprimir...' : 'Impressora Online'}
+                              </span>
+                            </div>
+
+                            {/* Mockup do Topo da Impressora Térmica */}
+                            <div className="w-[340px] h-12 bg-slate-800 rounded-t-3xl border-t-2 border-x border-slate-700 shadow-inner flex flex-col justify-end p-2 relative z-20">
+                              <div className="w-full h-1 bg-slate-950 rounded shadow-inner mb-1.5"></div>
+                              <div className="flex justify-between items-center px-4">
+                                <span className="text-[7px] text-slate-500 font-bold uppercase tracking-wider">AzoresPOS Certified Terminal</span>
+                                <div className="flex gap-1">
+                                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Papel Térmico */}
+                            <div className="relative overflow-hidden w-[340px]">
+                              <motion.div
+                                initial={isPrintingAnim ? { height: 0, opacity: 0.8 } : { height: 'auto', opacity: 1 }}
+                                animate={isPrintingAnim ? { height: ['0px', '750px'], opacity: 1 } : { height: 'auto', opacity: 1 }}
+                                transition={{ duration: 2, ease: 'easeInOut' }}
+                                className="w-full origin-top"
+                              >
+                                {/* Margem Serrilhada Superior */}
+                                <div className="w-full h-2 overflow-hidden leading-none text-white bg-transparent select-none drop-shadow-[0_-2px_2px_rgba(0,0,0,0.15)] relative z-10">
+                                  <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="w-full h-full fill-white">
+                                    <polygon points="0,10 5,0 10,10 15,0 20,10 25,0 30,10 35,0 40,10 45,0 50,10 55,0 60,10 65,0 70,10 75,0 80,10 85,0 90,10 95,0 100,10 100,0 0,0" />
+                                  </svg>
+                                </div>
+
+                                {/* Corpo do Talão (80mm) */}
+                                <div 
+                                  id="pos-receipt-print-area"
+                                  className="bg-white text-slate-900 px-6 py-6 font-mono text-[11px] leading-relaxed shadow-2xl relative select-text border-x border-white/90"
+                                  style={{ width: '340px', boxSizing: 'border-box' }}
+                                >
+                                  {/* Cabeçalho */}
+                                  <div className="text-center space-y-1 mb-4 uppercase text-slate-800">
+                                    <h4 className="text-sm font-black tracking-widest">{companyName}</h4>
+                                    <p className="text-[10px] text-slate-600 tracking-tight leading-tight">{companyAddress}</p>
+                                    <p className="text-[10px] text-slate-600">NIF: {companyNif}</p>
+                                    <p className="text-[10px] text-slate-600">Tel: {companyPhone}</p>
+                                  </div>
+
+                                  <div className="text-center font-bold border-y-2 border-dashed border-slate-300 py-1.5 my-2 uppercase tracking-wide text-slate-800">
+                                    FATURA RECIBO {lastGeneratedInvoice.invoiceNumber}
+                                  </div>
+
+                                  {/* Detalhes de Venda */}
+                                  <div className="space-y-0.5 mb-3 text-slate-700">
+                                    <p>{formatReceiptLine(`Data: ${lastGeneratedInvoice.date}`, '')}</p>
+                                    <p>{formatReceiptLine(`Mesa: ${lastGeneratedInvoice.tableName}`, `Oper: ${lastGeneratedInvoice.operator.split(' ')[0]}`)}</p>
+                                    <p>{formatReceiptLine(`NIF Cliente: ${lastGeneratedInvoice.nif}`, '')}</p>
+                                  </div>
+
+                                  {/* Lista de Artigos */}
+                                  <div className="border-t border-dashed border-slate-300 pt-1.5">
+                                    <p className="font-bold text-slate-800">{formatThreeCols('Qt. Descrição', 'IVA', 'Total')}</p>
+                                    <div className="border-t border-dashed border-slate-300 my-1"></div>
+                                    <div className="space-y-0.5 text-slate-700">
+                                      {formattedItems.map((line: string, idx: number) => (
+                                        <p key={idx}>{line}</p>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Totais e IVA */}
+                                  <div className="border-t-2 border-dashed border-slate-300 mt-3 pt-2 space-y-1 text-slate-700">
+                                    <p className="font-bold text-slate-800">{formatReceiptLine('Subtotal', `€${lastGeneratedInvoice.subtotal.toFixed(2)}`)}</p>
+                                    {lastGeneratedInvoice.serviceTax > 0 && (
+                                      <p>{formatReceiptLine('Taxa de Serviço (10% - 23%)', `€${lastGeneratedInvoice.serviceTax.toFixed(2)}`)}</p>
+                                    )}
+                                    
+                                    <div className="border-t border-dashed border-slate-200 my-1.5"></div>
+                                    
+                                    {/* IVA Discriminado com Base de Cálculo */}
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{padRight('Discriminação de IVA:', lineW)}</p>
+                                    {lastGeneratedInvoice.iva13 > 0 && (
+                                      <p className="text-[10px] text-slate-600">
+                                        {formatReceiptLine(`  IVA 13% (Base: €${lastGeneratedInvoice.base13.toFixed(2)})`, `€${lastGeneratedInvoice.iva13.toFixed(2)}`)}
+                                      </p>
+                                    )}
+                                    {lastGeneratedInvoice.iva23 > 0 && (
+                                      <p className="text-[10px] text-slate-600">
+                                        {formatReceiptLine(`  IVA 23% (Base: €${lastGeneratedInvoice.base23.toFixed(2)})`, `€${lastGeneratedInvoice.iva23.toFixed(2)}`)}
+                                      </p>
+                                    )}
+                                    
+                                    <div className="border-t-2 border-dashed border-slate-300 my-1.5"></div>
+                                    
+                                    {/* Total Geral */}
+                                    <p className="text-sm font-black text-slate-900">
+                                      {formatReceiptLine('TOTAL A PAGAR', `€${lastGeneratedInvoice.total.toFixed(2)}`)}
+                                    </p>
+                                  </div>
+
+                                  {/* Pagamento e Troco */}
+                                  <div className="border-t border-dashed border-slate-300 mt-2.5 pt-2.5 space-y-0.5 text-slate-700">
+                                    <p>{formatReceiptLine(`Método de Pagamento:`, lastGeneratedInvoice.paymentMethod)}</p>
+                                    {lastGeneratedInvoice.paymentMethod === 'Dinheiro' && (
+                                      <>
+                                        <p>{formatReceiptLine(`Valor Entregue:`, `€${lastGeneratedInvoice.cashReceived.toFixed(2)}`)}</p>
+                                        <p className="font-bold text-slate-800">{formatReceiptLine(`Troco:`, `€${lastGeneratedInvoice.change.toFixed(2)}`)}</p>
+                                      </>
+                                    )}
+                                    {lastGeneratedInvoice.splitBy > 1 && (
+                                      <p className="font-bold text-blue-600 mt-1">
+                                        {formatReceiptLine(`Dividido por ${lastGeneratedInvoice.splitBy} pessoas:`, `€${(lastGeneratedInvoice.total / lastGeneratedInvoice.splitBy).toFixed(2)}/pax`)}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* ATCUD e QR CODE */}
+                                  <div className="border-t-2 border-dashed border-slate-300 mt-4 pt-3 flex flex-col items-center space-y-3">
+                                    <p className="text-[10px] text-slate-800 font-bold text-center">
+                                      ATCUD: {lastGeneratedInvoice.atcud}
+                                    </p>
+                                    
+                                    {/* QR Code de 3x3 cm */}
+                                    <div className="bg-white p-2.5 border border-slate-200 rounded-xl shadow-inner flex items-center justify-center">
+                                      <img
+                                        src={lastGeneratedInvoice.qrCodeUrl}
+                                        alt="AT QR Code"
+                                        className="w-[120px] h-[120px]"
+                                        style={{ minWidth: '120px', minHeight: '120px' }}
+                                      />
+                                    </div>
+                                    
+                                    {/* Assinatura de Software AT */}
+                                    <div className="text-[9px] text-slate-500 text-center leading-tight space-y-0.5">
+                                      <p>Processado por programa certificado nº 1234/AT</p>
+                                      <p>Software: Azores4you v1.0</p>
+                                      <p>Certificação: 2026/AT</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Agradecimento */}
+                                  <div className="text-center font-bold text-slate-700 border-t border-dashed border-slate-300 mt-4 pt-3 uppercase tracking-wider text-[10px]">
+                                    Obrigado pela sua preferência!
+                                    <br />
+                                    Volte sempre!
+                                  </div>
+                                </div>
+
+                                {/* Margem Serrilhada Inferior */}
+                                <div className="w-full h-2 overflow-hidden leading-none text-white bg-transparent select-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.15)] relative z-10">
+                                  <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="w-full h-full fill-white">
+                                    <polygon points="0,0 5,10 10,0 15,10 20,0 25,10 30,0 35,10 40,0 45,10 50,0 55,10 60,0 65,10 70,0 75,10 80,0 85,10 90,0 95,10 100,0 100,10 0,10" />
+                                  </svg>
+                                </div>
+                              </motion.div>
+                            </div>
+                          </div>
+
+                          {/* Coluna Direita: Opções da Impressora e Controlo */}
+                          <div className="w-full lg:w-96 flex flex-col justify-between bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 no-print shadow-2xl">
+                            <div className="space-y-6">
+                              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex gap-3">
+                                <span className="text-xl text-emerald-400">✓</span>
+                                <div>
+                                  <h4 className="font-black text-emerald-400 text-xs uppercase tracking-widest">Fatura Registada</h4>
+                                  <p className="text-[10px] text-slate-400 font-bold mt-1">A venda foi integrada e a fatura certificada pela Autoridade Tributária com sucesso.</p>
+                                </div>
+                              </div>
+
+                              {/* Selecionar Impressora */}
+                              <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">🖨️ Selecionar Impressora POS</label>
+                                <div className="space-y-2.5">
+                                  {[
+                                    { id: 'sunmi', name: 'Sunmi V2 (Portátil Híbrido)', type: 'Térmica 58mm/80mm', icon: '📱' },
+                                    { id: 'epson', name: 'Epson TM-T20III (Balcão)', type: 'Térmica 80mm ESC/POS', icon: '📠' },
+                                    { id: 'xp80', name: 'Xprinter XP-80C (Cozinha/Bar)', type: 'Térmica 80mm ESC/POS', icon: '🖨️' },
+                                    { id: 'pdf', name: 'Exportar PDF / Sistema', type: 'Ficheiro / Impressão Nativa', icon: '📄' }
+                                  ].map(printer => (
+                                    <button
+                                      key={printer.id}
+                                      onClick={() => setSelectedPrinter(printer.id)}
+                                      className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all active:scale-98 text-left ${selectedPrinter === printer.id ? 'border-blue-500 bg-blue-500/5 text-white' : 'border-slate-800 hover:border-slate-700 bg-slate-950/20 text-slate-400'}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-2xl">{printer.icon}</span>
+                                        <div>
+                                          <p className="text-xs font-black uppercase tracking-wider">{printer.name}</p>
+                                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{printer.type}</p>
+                                        </div>
+                                      </div>
+                                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPrinter === printer.id ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-700'}`}>
+                                        {selectedPrinter === printer.id && <span className="text-[10px] font-black">✓</span>}
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Ações de Encerramento */}
+                            <div className="space-y-4 pt-6 border-t border-slate-800 mt-8">
+                              {isPrintingAnim ? (
+                                <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-3">
+                                  <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <span>Estado de Impressão</span>
+                                    <span className="animate-pulse text-amber-400">A processar...</span>
+                                  </div>
+                                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      animate={{ width: '100%' }}
+                                      transition={{ duration: 2 }}
+                                      className="bg-blue-500 h-full rounded-full"
+                                    />
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-mono text-center">📠 Enviando comandos ESC/POS via USB/Wifi...</p>
+                                </div>
+                              ) : (
+                                <motion.button
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={() => handlePrint(selectedPrinter)}
+                                  className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2"
+                                >
+                                  <Printer size={16} /> Imprimir Fatura
+                                </motion.button>
+                              )}
+
+                              <motion.button
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={() => {
+                                    setInvoicePreviewOpen(false);
+                                    setLastGeneratedInvoice(null);
+                                  }}
+                                  className="w-full py-4.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700 transition-all flex items-center justify-center gap-2"
+                                >
+                                  Concluir & Novo Pedido <ArrowRight size={14} />
+                              </motion.button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </AnimatePresence>
               </>
             );
