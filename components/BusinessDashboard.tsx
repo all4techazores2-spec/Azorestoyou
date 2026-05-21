@@ -5486,9 +5486,9 @@ ${items.map((it, i) => `        <Line>
   );
 };
 
-// ─────────────────────────────────────────────────────────────
-// BUSINESS BOTTOM NAV — barra mobile para o painel de negócio
-// ─────────────────────────────────────────────────────────────
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// BUSINESS BOTTOM NAV \u2014 barra mobile para o painel de neg\u00f3cio
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 interface BusinessBottomNavProps {
   activeTab: string;
   onTab: (tab: string) => void;
@@ -5500,58 +5500,162 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
   const [showStockModal, setShowStockModal] = useState(false);
   const [scanMode, setScanMode] = useState<'qr' | 'barcode' | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [scannedData, setScannedData] = useState<{ code: string; name: string; quantity: number; price: number } | null>(null);
+  const [scannedData, setScannedData] = useState<{ code: string; name: string; price: number } | null>(null);
   const [inputQty, setInputQty] = useState(1);
-  // Usar input file para compatibilidade iOS (getUserMedia não funciona no iOS Safari sem HTTPS nativo)
+  const [cameraError, setCameraError] = useState(false);
+  const [scanStatus, setScanStatus] = useState('A procurar c\u00f3digo...');
+
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
+  const rafRef = React.useRef<number | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const simulateScan = (code: string | null, mode: 'qr' | 'barcode' | null) => {
-    const mockCode = code || (mode === 'qr'
-      ? 'QR-' + Math.random().toString(36).slice(2, 8).toUpperCase()
-      : '590' + String(Math.floor(Math.random() * 1000000000)).padStart(9, '0'));
-    const mockProducts = [
-      { code: mockCode, name: 'Azeite Extra Virgem 500ml', quantity: 0, price: 4.99 },
-      { code: mockCode, name: 'Cerveja Açores 33cl', quantity: 0, price: 1.20 },
-      { code: mockCode, name: 'Água Mineral 1.5L', quantity: 0, price: 0.65 },
-      { code: mockCode, name: 'Vinho Branco Açoriano', quantity: 0, price: 8.50 },
-    ];
-    const picked = mockProducts[Math.floor(Math.random() * mockProducts.length)];
-    setScannedData({ ...picked, code: mockCode });
-    setInputQty(1);
+  // \u2500 Para o stream de v\u00eddeo e o loop de scan
+  const stopCamera = React.useCallback(() => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
     setScanning(false);
-  };
+  }, []);
 
-  const handleFileCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) { setScanning(false); return; }
-    setScanning(true);
+  // \u2500 Processa o resultado do scan (QR real ou simula\u00e7\u00e3o)
+  const processScanResult = React.useCallback((rawCode: string) => {
+    stopCamera();
+    // Tenta fazer parse de JSON (produto completo no QR)
+    let name = '';
+    let price = 0;
     try {
-      // Tenta BarcodeDetector API (disponível no Chrome/Android)
-      if ('BarcodeDetector' in window) {
+      const parsed = JSON.parse(rawCode);
+      name = parsed.name || parsed.produto || parsed.product || '';
+      price = parseFloat(parsed.price || parsed.preco || parsed.valor || 0);
+    } catch { /* n\u00e3o \u00e9 JSON */ }
+
+    // Sem JSON: usa o c\u00f3digo como refer\u00eancia e procura no stock existente
+    if (!name) {
+      const found = (business.products || []).find((p: any) =>
+        p.barcode === rawCode || p.sku === rawCode || String(p.id) === rawCode
+      );
+      if (found) { name = found.name; price = found.price || 0; }
+      else { name = `Produto ${rawCode.slice(-6)}`; price = 0; }
+    }
+
+    setScannedData({ code: rawCode, name, price });
+    setInputQty(1);
+  }, [business.products, stopCamera]);
+
+  // \u2500 Loop de leitura de frames com jsQR (tempo real)
+  const scanFrame = React.useCallback(async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState < 2) {
+      rafRef.current = requestAnimationFrame(scanFrame);
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // Importa jsQR dinamicamente
+    try {
+      const jsQR = (await import('jsqr')).default;
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+      if (code) {
+        processScanResult(code.data);
+        return;
+      }
+    } catch { /* continua */ }
+
+    // Tenta BarcodeDetector API (Chrome/Android) para c\u00f3digos de barras
+    if ('BarcodeDetector' in window) {
+      try {
         const detector = new (window as any).BarcodeDetector({
-          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e']
+          formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a']
         });
+        const barcodes = await detector.detect(video);
+        if (barcodes.length > 0) { processScanResult(barcodes[0].rawValue); return; }
+      } catch { /* continua */ }
+    }
+
+    setScanStatus('A procurar c\u00f3digo... Aponte a c\u00e2mara para o QR');
+    rafRef.current = requestAnimationFrame(scanFrame);
+  }, [processScanResult]);
+
+  // \u2500 Inicia camera getUserMedia (tempo real)
+  const startLiveCamera = React.useCallback(async () => {
+    setCameraError(false);
+    setScanStatus('A iniciar c\u00e2mara...');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setScanning(true);
+      setScanStatus('A procurar c\u00f3digo... Aponte para o QR');
+      rafRef.current = requestAnimationFrame(scanFrame);
+    } catch {
+      // Fallback iOS: usa input file
+      setCameraError(true);
+      setScanning(false);
+      fileInputRef.current?.click();
+    }
+  }, [scanFrame]);
+
+  // \u2500 Fallback: foto com input file (iOS)
+  const handleFileCapture = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setScanMode(null); return; }
+    setScanning(true);
+    setScanStatus('A processar imagem...');
+    try {
+      if ('BarcodeDetector' in window) {
+        const detector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'code_128'] });
         const bitmap = await createImageBitmap(file);
         const barcodes = await detector.detect(bitmap);
-        if (barcodes.length > 0) {
-          simulateScan(barcodes[0].rawValue, scanMode);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          return;
-        }
+        if (barcodes.length > 0) { processScanResult(barcodes[0].rawValue); return; }
       }
-      // Fallback: simula leitura
-      setTimeout(() => simulateScan(null, scanMode), 600);
-    } catch {
-      simulateScan(null, scanMode);
-    }
+      // jsQR sobre a imagem capturada
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const jsQR = (await import('jsqr')).default;
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) { processScanResult(code.data); }
+        else { processScanResult('DEMO-' + Math.random().toString(36).slice(2,8).toUpperCase()); }
+        URL.revokeObjectURL(img.src);
+      };
+    } catch { processScanResult('DEMO-' + Math.random().toString(36).slice(2,8).toUpperCase()); }
     if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [processScanResult]);
+
+  const openScanner = (mode: 'qr' | 'barcode') => {
+    setScanMode(mode);
+    setCameraError(false);
+    setScannedData(null);
+    setInputQty(1);
+    startLiveCamera();
   };
 
-  const openCamera = (mode: 'qr' | 'barcode') => {
-    setScanMode(mode);
-    setScanning(true);
-    // Dispara input file (abre câmara nativa iOS/Android)
-    setTimeout(() => fileInputRef.current?.click(), 100);
+  const closeAll = () => {
+    stopCamera();
+    setScannedData(null);
+    setScanMode(null);
+    setCameraError(false);
+    setShowStockModal(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const confirmAddStock = () => {
@@ -5561,28 +5665,11 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
     if (idx >= 0) {
       products[idx] = { ...products[idx], stock: (products[idx].stock || 0) + inputQty };
     } else {
-      products.push({
-        id: `prod_${Date.now()}`,
-        name: scannedData.name,
-        price: scannedData.price,
-        stock: inputQty,
-        barcode: scannedData.code,
-        category: 'Geral'
-      });
+      products.push({ id: `prod_${Date.now()}`, name: scannedData.name, price: scannedData.price, stock: inputQty, barcode: scannedData.code, category: 'Geral' });
     }
     onUpdateBusiness({ ...business, products });
-    setScannedData(null);
-    setScanMode(null);
-    setShowStockModal(false);
-    alert(`✅ Stock atualizado! +${inputQty} unidade(s) de "${scannedData.name}"`);
-  };
-
-  const closeAll = () => {
-    setScannedData(null);
-    setScanMode(null);
-    setScanning(false);
-    setShowStockModal(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setScannedData(null); setScanMode(null); setShowStockModal(false);
+    alert(`\u2705 Stock atualizado! +${inputQty} un. de "${scannedData.name}"`);
   };
 
   const navItems = [
@@ -5595,41 +5682,25 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
 
   return (
     <>
-      {/* Input file escondido — abre câmara nativa iOS/Android */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileCapture}
-      />
+      {/* Input file escondido \u2014 fallback iOS */}
+      <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileCapture} />
+      {/* Canvas escondido para processar frames */}
+      <canvas ref={canvasRef} className="hidden" />
 
       {/* BOTTOM NAV BAR */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-[90] pb-safe">
         <div className="flex justify-around items-center h-20 px-2 relative">
           {navItems.map(item => {
-            if (item.isCentral) {
-              return (
-                <div key="central" className="flex-1 flex justify-center -mt-10">
-                  <button
-                    onClick={() => setShowStockModal(true)}
-                    className="w-16 h-16 bg-orange-500 rounded-full shadow-[0_10px_25px_rgba(249,115,22,0.4)] flex flex-col items-center justify-center border-4 border-white active:scale-90 transition-all group"
-                  >
-                    <PackagePlus size={24} className="text-white group-hover:scale-110 transition-transform" />
-                  </button>
-                </div>
-              );
-            }
+            if (item.isCentral) return (
+              <div key="central" className="flex-1 flex justify-center -mt-10">
+                <button onClick={() => setShowStockModal(true)} className="w-16 h-16 bg-orange-500 rounded-full shadow-[0_10px_25px_rgba(249,115,22,0.4)] flex flex-col items-center justify-center border-4 border-white active:scale-90 transition-all group">
+                  <PackagePlus size={24} className="text-white group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+            );
             const isActive = activeTab === item.id;
             return (
-              <button
-                key={item.id}
-                onClick={() => onTab(item.id)}
-                className={`flex flex-col items-center justify-center flex-1 transition-all active:scale-90 ${
-                  isActive ? 'text-orange-500' : 'text-slate-300 hover:text-slate-500'
-                }`}
-              >
+              <button key={item.id} onClick={() => onTab(item.id)} className={`flex flex-col items-center justify-center flex-1 transition-all active:scale-90 ${isActive ? 'text-orange-500' : 'text-slate-300 hover:text-slate-500'}`}>
                 {item.icon}
                 <span className="text-[9px] font-black uppercase tracking-tight mt-1">{item.label}</span>
                 {isActive && <div className="w-1 h-1 rounded-full bg-orange-500 mt-0.5" />}
@@ -5637,142 +5708,174 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
             );
           })}
         </div>
-        {/* Label do botão central */}
         <div className="absolute bottom-3 left-0 right-0 pointer-events-none flex justify-center">
           <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Produtos</span>
         </div>
       </div>
 
-      {/* STOCK ENTRY MODAL */}
+      {/* STOCK SCANNER MODAL */}
       <AnimatePresence>
         {showStockModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-end"
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-end"
             onClick={(e) => { if (e.target === e.currentTarget) closeAll(); }}
           >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="w-full bg-white rounded-t-[2.5rem] overflow-hidden shadow-2xl"
+              className="w-full bg-white rounded-t-[2.5rem] overflow-hidden shadow-2xl max-h-[92vh] flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center">
                     <PackagePlus size={20} className="text-orange-500" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entrada de Stock</p>
-                    <h3 className="text-base font-black text-slate-800">Adicionar Produto</h3>
+                    <h3 className="text-base font-black text-slate-800">
+                      {!scanMode ? 'Adicionar Produto' : scanMode === 'qr' ? 'Ler QR Code' : 'Ler C\u00f3digo de Barras'}
+                    </h3>
                   </div>
                 </div>
-                <button onClick={closeAll} className="p-2 bg-slate-100 rounded-xl text-slate-400 hover:bg-slate-200 transition-all">
-                  <X size={20} />
-                </button>
+                <button onClick={closeAll} className="p-2 bg-slate-100 rounded-xl text-slate-400 hover:bg-slate-200 transition-all"><X size={20} /></button>
               </div>
 
-              <div className="p-6 space-y-4">
-                {/* Step 1 – escolher modo */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+
+                {/* STEP 1 \u2014 escolher modo */}
                 {!scanMode && !scannedData && (
                   <>
                     <p className="text-sm font-bold text-slate-500 text-center mb-6">Como deseja identificar o produto?</p>
                     <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => openCamera('qr')}
-                        className="flex flex-col items-center gap-3 p-6 bg-blue-50 border-2 border-blue-200 rounded-[2rem] active:scale-95 transition-all hover:bg-blue-100"
-                      >
+                      <button onClick={() => openScanner('qr')}
+                        className="flex flex-col items-center gap-3 p-6 bg-blue-50 border-2 border-blue-200 rounded-[2rem] active:scale-95 transition-all">
                         <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
                           <QrCode size={28} className="text-white" />
                         </div>
                         <div className="text-center">
                           <p className="font-black text-blue-800 text-sm">QR Code</p>
-                          <p className="text-[10px] text-blue-500 font-bold">Câmara nativa</p>
+                          <p className="text-[10px] text-blue-500 font-bold">Leitura instant\u00e2nea</p>
                         </div>
                       </button>
-                      <button
-                        onClick={() => openCamera('barcode')}
-                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] active:scale-95 transition-all hover:bg-emerald-100"
-                      >
+                      <button onClick={() => openScanner('barcode')}
+                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] active:scale-95 transition-all">
                         <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/30">
                           <ScanLine size={28} className="text-white" />
                         </div>
                         <div className="text-center">
-                          <p className="font-black text-emerald-800 text-sm">Código de Barras</p>
-                          <p className="text-[10px] text-emerald-600 font-bold">Câmara nativa</p>
+                          <p className="font-black text-emerald-800 text-sm">C\u00f3digo de Barras</p>
+                          <p className="text-[10px] text-emerald-600 font-bold">Leitura instant\u00e2nea</p>
                         </div>
                       </button>
                     </div>
-                    <p className="text-[10px] text-slate-400 text-center font-bold mt-4">📷 Abre a câmara do telemóvel automaticamente</p>
+                    <p className="text-[10px] text-slate-400 text-center font-bold">\ud83d\udcf7 C\u00e2mara abre automaticamente em tempo real</p>
                   </>
                 )}
 
-                {/* Step 2 – a processar foto */}
-                {scanMode && scanning && (
-                  <div className="flex flex-col items-center gap-6 py-8">
-                    <div className="relative w-20 h-20">
-                      <div className="w-20 h-20 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {scanMode === 'qr' ? <QrCode size={28} className="text-orange-500" /> : <ScanLine size={28} className="text-orange-500" />}
+                {/* STEP 2 \u2014 scanner ao vivo */}
+                {scanMode && !scannedData && (
+                  <div className="flex flex-col items-center gap-4">
+                    {/* Viewfinder */}
+                    <div className="relative w-full rounded-3xl overflow-hidden bg-slate-900 shadow-2xl" style={{ aspectRatio: '4/3' }}>
+                      <video ref={videoRef} className="w-full h-full object-cover" playsInline muted autoPlay />
+                      {/* Overlay com canto animados */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="relative w-52 h-52">
+                          {/* Cantos */}
+                          <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
+                            className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-orange-400 rounded-tl-2xl" />
+                          <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-orange-400 rounded-tr-2xl" />
+                          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-orange-400 rounded-bl-2xl" />
+                          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-orange-400 rounded-br-2xl" />
+                          {/* Linha scanner */}
+                          <motion.div
+                            animate={{ y: [-90, 90, -90] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            className="absolute left-2 right-2 h-0.5 bg-orange-400 shadow-[0_0_12px_rgba(249,115,22,0.9)]"
+                            style={{ top: '50%' }}
+                          />
+                        </div>
                       </div>
+                      {/* Status bar */}
+                      <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+                        <div className="bg-black/70 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest backdrop-blur-sm flex items-center gap-2">
+                          <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }}
+                            className="w-2 h-2 rounded-full bg-orange-400" />
+                          {scanStatus}
+                        </div>
+                      </div>
+                      {/* Erro de c\u00e2mara */}
+                      {cameraError && (
+                        <div className="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-4">
+                          <Camera size={40} className="text-slate-500" />
+                          <p className="text-white text-sm font-black">C\u00e2mara n\u00e3o dispon\u00edvel</p>
+                          <button onClick={() => fileInputRef.current?.click()}
+                            className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-black text-sm active:scale-95 transition-all">
+                            Usar Galeria de Fotos
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-center">
-                      <p className="font-black text-slate-700 text-sm">A processar imagem...</p>
-                      <p className="text-[10px] text-slate-400 font-bold mt-1">A identificar o código</p>
-                    </div>
-                    <button onClick={closeAll} className="text-slate-400 text-sm font-bold underline">
-                      Cancelar
+                    <button onClick={() => { stopCamera(); setScanMode(null); }}
+                      className="text-slate-400 text-sm font-bold underline py-2">
+                      Cancelar leitura
                     </button>
                   </div>
                 )}
 
-                {/* Step 3 – dados lidos, confirmar */}
+                {/* STEP 3 \u2014 dados lidos, confirmar */}
                 {scannedData && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+                    {/* Badge c\u00f3digo lido */}
                     <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
                         <CheckCircle size={18} className="text-white" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Código lido com sucesso</p>
-                        <p className="text-xs font-black text-emerald-800">{scannedData.code}</p>
+                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">C\u00f3digo lido</p>
+                        <p className="text-xs font-black text-emerald-800 break-all">{scannedData.code}</p>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Produto</span>
-                        <span className="text-sm font-black text-slate-800">{scannedData.name}</span>
+                    {/* Dados produto \u2014 editável */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nome do Produto</label>
+                        <input
+                          type="text"
+                          value={scannedData.name}
+                          onChange={e => setScannedData(d => d ? { ...d, name: e.target.value } : d)}
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-sm text-slate-800 focus:ring-2 focus:ring-orange-400 outline-none"
+                        />
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Unit.</span>
-                        <span className="text-sm font-black text-emerald-600">€{scannedData.price.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-200">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quantidade a Adicionar</span>
-                        <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl overflow-hidden">
-                          <button onClick={() => setInputQty(q => Math.max(1, q - 1))} className="px-3 py-2 text-slate-400 hover:bg-slate-100 font-black text-lg">−</button>
-                          <span className="px-3 font-black text-slate-800 min-w-[32px] text-center">{inputQty}</span>
-                          <button onClick={() => setInputQty(q => q + 1)} className="px-3 py-2 text-slate-400 hover:bg-slate-100 font-black text-lg">+</button>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pre\u00e7o (€)</label>
+                          <input
+                            type="number" step="0.01" min="0"
+                            value={scannedData.price}
+                            onChange={e => setScannedData(d => d ? { ...d, price: parseFloat(e.target.value) || 0 } : d)}
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-sm text-emerald-600 focus:ring-2 focus:ring-orange-400 outline-none"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Qtd a Adicionar</label>
+                          <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden h-[46px]">
+                            <button onClick={() => setInputQty(q => Math.max(1, q - 1))} className="px-4 py-3 text-slate-400 hover:bg-slate-100 font-black text-lg">-</button>
+                            <span className="flex-1 text-center font-black text-slate-800">{inputQty}</span>
+                            <button onClick={() => setInputQty(q => q + 1)} className="px-4 py-3 text-slate-400 hover:bg-slate-100 font-black text-lg">+</button>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <button
-                        onClick={() => { setScannedData(null); setScanMode(null); }}
-                        className="py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95"
-                      >
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <button onClick={() => { setScannedData(null); setScanMode(null); }}
+                        className="py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
                         Voltar
                       </button>
-                      <button
-                        onClick={confirmAddStock}
-                        className="py-4 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
-                      >
+                      <button onClick={confirmAddStock}
+                        className="py-4 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/30 active:scale-95 transition-all flex items-center justify-center gap-2">
                         <CheckCircle size={16} /> Confirmar
                       </button>
                     </div>
