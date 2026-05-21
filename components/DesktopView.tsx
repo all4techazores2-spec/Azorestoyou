@@ -96,7 +96,7 @@ export const DesktopFooter: React.FC = () => {
       <div className="max-w-7xl mx-auto px-8 grid grid-cols-12 gap-12 mb-24">
         <div className="col-span-4">
           <div className="flex items-center gap-3 mb-8">
-            <AzoresLogo size={48} className="bg-white p-1 rounded-2xl" />
+            <AzoresLogo size={56} />
             <span className="text-3xl font-black tracking-tighter">Azorestoyou</span>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed mb-10 max-w-sm">

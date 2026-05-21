@@ -15,8 +15,7 @@ const AzoresLogo: React.FC<AzoresLogoProps> = ({ className = "", size = 40 }) =>
       style={{ 
         width: size, 
         height: size, 
-        objectFit: 'contain',
-        borderRadius: size > 40 ? '1rem' : '0.5rem' // Adiciona um pouco de arredondamento se for grande
+        objectFit: 'contain'
       }}
     />
   );

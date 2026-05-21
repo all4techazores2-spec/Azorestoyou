@@ -1920,9 +1920,7 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center cursor-pointer" onClick={goHome}>
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm mr-2 border border-slate-100 overflow-hidden">
-                <AzoresLogo size={32} />
-              </div>
+              <AzoresLogo size={44} className="mr-2" />
               <span className="font-extrabold text-xl tracking-tight text-slate-800">
                 Azores<span className="text-emerald-600 font-black">toyou</span>
               </span>
