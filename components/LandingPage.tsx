@@ -120,9 +120,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
       {/* Main Content */}
       <div className={`relative z-10 flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in zoom-in duration-700 ${showAuthModal ? 'blur-sm brightness-50' : ''} transition-all`}>
         
-        <div className="mb-4">
-          <div className="mx-auto flex items-center justify-center mb-4">
-            <AzoresLogo size={100} />
+        <div className="mb-0">
+          <div className="mx-auto flex items-center justify-center mb-0">
+            <AzoresLogo size={190} />
           </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white lg:text-slate-900 tracking-tight drop-shadow-lg lg:drop-shadow-none">
             Azores<span className="text-green-400 lg:text-green-600">toyou</span>
