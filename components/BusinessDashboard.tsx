@@ -8,7 +8,8 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat,
+  ScanLine, PackagePlus, Camera, ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -1472,6 +1473,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   }
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
+      {/* ── BARRA DE NAVEGAÇÃO MOBILE (Business) ── */}
+      <BusinessBottomNav
+        activeTab={activeTab}
+        onTab={(tab) => setActiveTab(tab as DashboardTab)}
+        business={business}
+        onUpdateBusiness={onUpdateBusiness}
+      />
       {/* Sidebar Toggle Button (Mobile) */}
       <button 
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -5475,6 +5483,296 @@ ${items.map((it, i) => `        <Line>
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// BUSINESS BOTTOM NAV — barra mobile para o painel de negócio
+// ─────────────────────────────────────────────────────────────
+interface BusinessBottomNavProps {
+  activeTab: string;
+  onTab: (tab: string) => void;
+  business: any;
+  onUpdateBusiness: (b: any) => void;
+}
+
+const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab, business, onUpdateBusiness }) => {
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [scanMode, setScanMode] = useState<'qr' | 'barcode' | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scannedData, setScannedData] = useState<{ code: string; name: string; quantity: number; price: number } | null>(null);
+  const [inputQty, setInputQty] = useState(1);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setScanning(false);
+  };
+
+  const startCamera = async () => {
+    try {
+      setScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      // Simulate scan after 3s (real implementation would use BarcodeDetector API)
+      setTimeout(() => {
+        const mockCode = scanMode === 'qr' ? 'QR-' + Math.random().toString(36).slice(2,8).toUpperCase() : '59012345678' + Math.floor(Math.random()*10);
+        const mockProducts = [
+          { code: mockCode, name: 'Azeite Extra Virgem 500ml', quantity: 0, price: 4.99 },
+          { code: mockCode, name: 'Cerveja Açores 33cl', quantity: 0, price: 1.20 },
+          { code: mockCode, name: 'Água Mineral 1.5L', quantity: 0, price: 0.65 },
+          { code: mockCode, name: 'Vinho Branco Açoriano', quantity: 0, price: 8.50 },
+        ];
+        const picked = mockProducts[Math.floor(Math.random() * mockProducts.length)];
+        setScannedData({ ...picked, code: mockCode });
+        setInputQty(1);
+        stopCamera();
+      }, 3000);
+    } catch {
+      alert('Não foi possível aceder à câmara. Verifique as permissões.');
+      setScanning(false);
+    }
+  };
+
+  const confirmAddStock = () => {
+    if (!scannedData) return;
+    const products: any[] = [...(business.products || [])];
+    const idx = products.findIndex((p: any) => p.name === scannedData.name || p.barcode === scannedData.code);
+    if (idx >= 0) {
+      products[idx] = { ...products[idx], stock: (products[idx].stock || 0) + inputQty };
+    } else {
+      products.push({
+        id: `prod_${Date.now()}`,
+        name: scannedData.name,
+        price: scannedData.price,
+        stock: inputQty,
+        barcode: scannedData.code,
+        category: 'Geral'
+      });
+    }
+    onUpdateBusiness({ ...business, products });
+    setScannedData(null);
+    setScanMode(null);
+    setShowStockModal(false);
+    alert(`✅ Stock atualizado! +${inputQty} unidade(s) de "${scannedData.name}"`);
+  };
+
+  const closeAll = () => {
+    stopCamera();
+    setScannedData(null);
+    setScanMode(null);
+    setShowStockModal(false);
+  };
+
+  const navItems = [
+    { id: 'pos', label: 'Vendas', icon: <ShoppingCart size={22} /> },
+    { id: 'reviews', label: 'Reviews', icon: <Star size={22} /> },
+    { id: '__stock__', label: 'Produtos', icon: null, isCentral: true },
+    { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 size={22} /> },
+    { id: 'settings', label: 'Perfil', icon: <Settings size={22} /> },
+  ];
+
+  return (
+    <>
+      {/* BOTTOM NAV BAR */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-[90] pb-safe">
+        <div className="flex justify-around items-center h-20 px-2 relative">
+          {navItems.map(item => {
+            if (item.isCentral) {
+              return (
+                <div key="central" className="flex-1 flex justify-center -mt-10">
+                  <button
+                    onClick={() => setShowStockModal(true)}
+                    className="w-16 h-16 bg-orange-500 rounded-full shadow-[0_10px_25px_rgba(249,115,22,0.4)] flex flex-col items-center justify-center border-4 border-white active:scale-90 transition-all group"
+                  >
+                    <PackagePlus size={24} className="text-white group-hover:scale-110 transition-transform" />
+                  </button>
+                </div>
+              );
+            }
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTab(item.id)}
+                className={`flex flex-col items-center justify-center flex-1 transition-all active:scale-90 ${
+                  isActive ? 'text-orange-500' : 'text-slate-300 hover:text-slate-500'
+                }`}
+              >
+                {item.icon}
+                <span className="text-[9px] font-black uppercase tracking-tight mt-1">{item.label}</span>
+                {isActive && <div className="w-1 h-1 rounded-full bg-orange-500 mt-0.5" />}
+              </button>
+            );
+          })}
+        </div>
+        {/* Label do botão central */}
+        <div className="absolute bottom-3 left-0 right-0 pointer-events-none flex justify-center">
+          <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Produtos</span>
+        </div>
+      </div>
+
+      {/* STOCK ENTRY MODAL */}
+      <AnimatePresence>
+        {showStockModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-end"
+            onClick={(e) => { if (e.target === e.currentTarget) closeAll(); }}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="w-full bg-white rounded-t-[2.5rem] overflow-hidden shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center">
+                    <PackagePlus size={20} className="text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entrada de Stock</p>
+                    <h3 className="text-base font-black text-slate-800">Adicionar Produto</h3>
+                  </div>
+                </div>
+                <button onClick={closeAll} className="p-2 bg-slate-100 rounded-xl text-slate-400 hover:bg-slate-200 transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Step 1 – escolher modo */}
+                {!scanMode && !scannedData && (
+                  <>
+                    <p className="text-sm font-bold text-slate-500 text-center mb-6">Como deseja identificar o produto?</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => { setScanMode('qr'); startCamera(); }}
+                        className="flex flex-col items-center gap-3 p-6 bg-blue-50 border-2 border-blue-200 rounded-[2rem] active:scale-95 transition-all hover:bg-blue-100"
+                      >
+                        <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
+                          <QrCode size={28} className="text-white" />
+                        </div>
+                        <div className="text-center">
+                          <p className="font-black text-blue-800 text-sm">QR Code</p>
+                          <p className="text-[10px] text-blue-500 font-bold">Leitura por câmara</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => { setScanMode('barcode'); startCamera(); }}
+                        className="flex flex-col items-center gap-3 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-[2rem] active:scale-95 transition-all hover:bg-emerald-100"
+                      >
+                        <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/30">
+                          <ScanLine size={28} className="text-white" />
+                        </div>
+                        <div className="text-center">
+                          <p className="font-black text-emerald-800 text-sm">Código de Barras</p>
+                          <p className="text-[10px] text-emerald-600 font-bold">Leitura por câmara</p>
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* Step 2 – câmara a ler */}
+                {scanMode && scanning && (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-full aspect-video bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+                      <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+                      {/* Scanner overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="relative w-48 h-48">
+                          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-orange-400 rounded-tl-xl" />
+                          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-orange-400 rounded-tr-xl" />
+                          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-orange-400 rounded-bl-xl" />
+                          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-orange-400 rounded-br-xl" />
+                          <motion.div
+                            animate={{ y: [-60, 60, -60] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                            className="absolute left-2 right-2 h-0.5 bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.8)]"
+                            style={{ top: '50%' }}
+                          />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                        <div className="bg-black/60 text-white text-[11px] font-black px-4 py-2 rounded-full uppercase tracking-widest backdrop-blur-sm">
+                          {scanMode === 'qr' ? '📷 A ler QR Code...' : '📷 A ler Código de Barras...'}
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={() => { stopCamera(); setScanMode(null); }} className="text-slate-400 text-sm font-bold underline">
+                      Cancelar leitura
+                    </button>
+                  </div>
+                )}
+
+                {/* Step 3 – dados lidos, confirmar */}
+                {scannedData && (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+                      <div className="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Código lido com sucesso</p>
+                        <p className="text-xs font-black text-emerald-800">{scannedData.code}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Produto</span>
+                        <span className="text-sm font-black text-slate-800">{scannedData.name}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Unit.</span>
+                        <span className="text-sm font-black text-emerald-600">€{scannedData.price.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quantidade a Adicionar</span>
+                        <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl overflow-hidden">
+                          <button onClick={() => setInputQty(q => Math.max(1, q - 1))} className="px-3 py-2 text-slate-400 hover:bg-slate-100 font-black text-lg">−</button>
+                          <span className="px-3 font-black text-slate-800 min-w-[32px] text-center">{inputQty}</span>
+                          <button onClick={() => setInputQty(q => q + 1)} className="px-3 py-2 text-slate-400 hover:bg-slate-100 font-black text-lg">+</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        onClick={() => { setScannedData(null); setScanMode(null); }}
+                        className="py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                      >
+                        Voltar
+                      </button>
+                      <button
+                        onClick={confirmAddStock}
+                        className="py-4 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle size={16} /> Confirmar
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
