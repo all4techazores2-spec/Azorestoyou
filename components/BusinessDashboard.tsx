@@ -519,7 +519,26 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       return;
     }
     
-    alert(`🛎️ Venda finalizada e fatura emitida: €${(posTotal * 1.10).toFixed(2).replace('.', ',')}`);
+    // ── Registar a venda no histórico (salesHistory) ──
+    const saleRecord = {
+      id: `sale_${Date.now()}`,
+      date: new Date().toISOString(),
+      tableName: selectedTableId !== null
+        ? `Mesa #${tables.find(t => String(t.id) === String(selectedTableId))?.number ?? selectedTableId}`
+        : 'Balcão',
+      customerName: 'Consumidor Final',
+      total: posTotal * 1.10,
+      items: posCart.map(i => ({
+        name: i.product.name,
+        price: i.product.price,
+        quantity: i.quantity,
+        category: i.product.category || ''
+      }))
+    };
+    const existingSalesHistory: any[] = (business as any).salesHistory || [];
+    const updatedSalesHistory = [...existingSalesHistory, saleRecord];
+
+    alert(`✅ Venda registada! €${(posTotal * 1.10).toFixed(2).replace('.', ',')} — Receita atualizada no dashboard.`);
     
     if (selectedTableId !== null) {
       const updatedTables = tables.map(t => {
@@ -548,10 +567,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       onUpdateBusiness({
         ...business,
         tables: updatedTables,
-        reservations: updatedReservations
-      });
+        reservations: updatedReservations,
+        salesHistory: updatedSalesHistory
+      } as any);
       
       setSelectedTableId(null);
+    } else {
+      // Venda rápida / balcão — só atualiza o salesHistory
+      onUpdateBusiness({
+        ...business,
+        salesHistory: updatedSalesHistory
+      } as any);
     }
     
     setPosCart([]);
@@ -2533,10 +2559,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <motion.button
                             whileTap={{ scale: 0.97 }}
                             onClick={() => {
+                              // Gravar a venda antes de limpar
+                              handleFinalizeSale(false);
                               setPosPaymentModal(null);
                               setPosNif('');
                               setPosCashReceived('');
-                              setPosCart([]);
                               setPosSplitBy(1);
                             }}
                             className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
