@@ -627,6 +627,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     console.log(msg);
   };
 
+  // ── ADMIN LIVE CLOCK ──
+  const [adminNow, setAdminNow] = useState(new Date());
+  useEffect(() => {
+    const clockTick = setInterval(() => setAdminNow(new Date()), 1000);
+    return () => clearInterval(clockTick);
+  }, []);
+  const adminTimeStr = adminNow.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const adminDateStr = adminNow.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const adminDateCapital = adminDateStr.charAt(0).toUpperCase() + adminDateStr.slice(1);
+  const adminHours = adminNow.getHours();
+  const adminGreeting = adminHours < 12 ? 'Bom Dia' : adminHours < 19 ? 'Boa Tarde' : 'Boa Noite';
+  const adminGreetEmoji = adminHours < 12 ? '☀️' : adminHours < 19 ? '🌤️' : '🌙';
+
   const handleSyncAndCompress = async (forceSelectedOnly: boolean = false) => {
     if (!onFullSync) return;
     
@@ -2795,51 +2808,100 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* DASHBOARD VIEW */}
           {activeTab === 'dashboard' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+
+               {/* ── LIVE CLOCK BANNER ── */}
+               <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[3rem] p-7 overflow-hidden shadow-2xl shadow-slate-900/30">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+                 <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                   <div className="flex-1">
+                     <div className="flex items-center gap-3 mb-2">
+                       <span className="text-2xl">{adminGreetEmoji}</span>
+                       <p className="text-white/60 text-sm font-black uppercase tracking-[0.2em]">{adminGreeting}, Admin</p>
+                     </div>
+                     <p className="text-white/40 text-xs font-bold">{adminDateCapital}</p>
+                     <div className="flex items-center gap-3 mt-3">
+                       <span className="bg-white/10 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">📍 Açores</span>
+                       <span className="bg-white/10 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">🛡️ Super Admin</span>
+                     </div>
+                   </div>
+                   <div className="text-center flex flex-col items-center">
+                     <p className="font-mono font-black text-white" style={{ fontSize: 'clamp(2.5rem, 5vw, 3.8rem)', letterSpacing: '0.05em', textShadow: '0 0 40px rgba(59,130,246,0.4)' }}>{adminTimeStr}</p>
+                     <div className="flex items-center justify-center gap-2 mt-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                       <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">Ao Vivo</p>
+                     </div>
+                   </div>
+                   <div className="flex-1 flex justify-end">
+                     <div className="grid grid-cols-2 gap-3">
+                       {[
+                         { label: 'Dia', value: adminNow.toLocaleDateString('pt-PT', { weekday: 'short' }).toUpperCase(), color: 'text-blue-400' },
+                         { label: 'Semana', value: `Nº ${Math.ceil(adminNow.getDate()/7)}`, color: 'text-emerald-400' },
+                         { label: 'Mês', value: adminNow.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase(), color: 'text-amber-400' },
+                         { label: 'Ano', value: String(adminNow.getFullYear()), color: 'text-purple-400' },
+                       ].map((s, i) => (
+                         <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
+                           <p className={`font-black text-sm ${s.color}`}>{s.value}</p>
+                           <p className="text-white/30 text-[9px] font-bold uppercase tracking-widest mt-0.5">{s.label}</p>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
                {/* Stats Grid */}
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Cartão 1: Reservas — sincroniza com todas as categorias */}
                   <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Calendar size={64} className="text-blue-600" />
                      </div>
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total de Reservas</p>
                      <p className="text-4xl font-black text-slate-800 tracking-tighter">
-                        {[...restaurants, ...hotels, ...cars, ...activities].reduce((acc, biz) => acc + (biz.reservations?.length || 0), 0)}
+                        {[...restaurants, ...hotels, ...cars, ...activities, ...beauty, ...shops, ...services].reduce((acc, biz) => acc + (biz.reservations?.length || 0), 0)}
                      </p>
-                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-emerald-500 uppercase">
-                        <Plus size={10} /> 12% vs mês anterior
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> Sincronizado em tempo real
                      </div>
                   </div>
+                  {/* Cartão 2: Produtos Vendidos — apenas dados reais */}
                   <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <ShoppingBag size={64} className="text-emerald-600" />
                      </div>
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Produtos Vendidos</p>
                      <p className="text-4xl font-black text-slate-800 tracking-tighter">
-                        {shops.reduce((acc, s) => acc + (s.orders?.length || 0), 0) + 842}
+                        {[...restaurants, ...shops, ...beauty, ...services].reduce((acc, biz) => acc + ((biz as any).salesHistory?.length || (biz as any).orders?.length || 0), 0)}
                      </p>
-                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-emerald-500 uppercase">
-                        <Plus size={10} /> 8% este fim de semana
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Vendas reais acumuladas
                      </div>
                   </div>
+                  {/* Cartão 3: Clientes — dados reais da API */}
                   <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Users size={64} className="text-amber-600" />
                      </div>
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Clientes Registados</p>
-                     <p className="text-4xl font-black text-slate-800 tracking-tighter">{users.length || '1.240'}</p>
-                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-500 uppercase">
-                        {users.filter(u => new Date(u.createdAt).getMonth() === new Date().getMonth()).length || 45} novos este mês
+                     <p className="text-4xl font-black text-slate-800 tracking-tighter">{users.length}</p>
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-slate-400 uppercase">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        {users.filter(u => { try { return new Date(u.createdAt || 0).getMonth() === new Date().getMonth(); } catch { return false; } }).length} novos este mês
                      </div>
                   </div>
+                  {/* Cartão 4: Receita — apenas preços reais */}
                   <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Zap size={64} className="text-purple-600" />
                      </div>
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Receita Total Estimada</p>
                      <p className="text-4xl font-black text-slate-800 tracking-tighter">
-                        {([...restaurants, ...hotels, ...cars, ...activities].reduce((acc, biz) => {
-                          return acc + (biz.reservations?.reduce((sum: number, r: any) => sum + (parseFloat(r.totalPrice) || 0), 0) || 0);
-                        }, 0) + 12450).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                        {[...restaurants, ...hotels, ...cars, ...activities, ...beauty, ...shops, ...services].reduce((acc, biz) => {
+                          const resRev = (biz.reservations || []).reduce((s: number, r: any) => s + (parseFloat(r.totalPrice) || 0), 0);
+                          const saleRev = ((biz as any).salesHistory || []).reduce((s: number, sale: any) => s + (parseFloat(sale.total) || 0), 0);
+                          return acc + resRev + saleRev;
+                        }, 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
                      </p>
                      <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
                         <div className="h-full bg-purple-600 rounded-full" style={{ width: '65%' }}></div>
@@ -2871,12 +2933,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8"
                       >
                          {[
-                           { id: 'restaurants', label: 'Restaurantes', count: restaurants.length, reservations: restaurants.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: restaurants.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 4500, icon: Utensils, color: 'bg-blue-50 text-blue-600' },
-                           { id: 'hotels', label: 'Alojamentos', count: hotels.length, reservations: hotels.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: hotels.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 8200, icon: BedDouble, color: 'bg-indigo-50 text-indigo-600' },
-                           { id: 'cars', label: 'Rentcar', count: cars.length, reservations: cars.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: cars.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 3100, icon: CarIcon, color: 'bg-emerald-50 text-emerald-600' },
-                           { id: 'activities', label: 'Atividades', count: activities.length, reservations: activities.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: activities.reduce((acc, r) => acc + (r.reservations?.reduce((sum: number, res: any) => sum + (parseFloat(res.totalPrice) || 0), 0) || 0), 0) + 1200, icon: Mountain, color: 'bg-amber-50 text-amber-600' },
-                           { id: 'shops', label: 'Lojas', count: shops.length, reservations: shops.reduce((acc, r) => acc + (r.orders?.length || 0), 0), revenue: 840, icon: ShoppingBag, color: 'bg-rose-50 text-rose-600' },
-                           { id: 'beauty', label: 'Beleza', count: beauty.length, reservations: beauty.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: 420, icon: Sparkles, color: 'bg-pink-50 text-pink-600' },
+                           { id: 'restaurants', label: 'Restaurantes', count: restaurants.length, reservations: restaurants.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: restaurants.reduce((acc, r) => acc + (r.reservations || []).reduce((s: number, res: any) => s + (parseFloat(res.totalPrice) || 0), 0) + ((r as any).salesHistory || []).reduce((s: number, sale: any) => s + (parseFloat(sale.total) || 0), 0), 0), icon: Utensils, color: 'bg-blue-50 text-blue-600' },
+                           { id: 'hotels', label: 'Alojamentos', count: hotels.length, reservations: hotels.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: hotels.reduce((acc, r) => acc + (r.reservations || []).reduce((s: number, res: any) => s + (parseFloat(res.totalPrice) || 0), 0), 0), icon: BedDouble, color: 'bg-indigo-50 text-indigo-600' },
+                           { id: 'cars', label: 'Rentcar', count: cars.length, reservations: cars.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: cars.reduce((acc, r) => acc + (r.reservations || []).reduce((s: number, res: any) => s + (parseFloat(res.totalPrice) || 0), 0), 0), icon: CarIcon, color: 'bg-emerald-50 text-emerald-600' },
+                           { id: 'activities', label: 'Atividades', count: activities.length, reservations: activities.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: activities.reduce((acc, r) => acc + (r.reservations || []).reduce((s: number, res: any) => s + (parseFloat(res.totalPrice) || 0), 0), 0), icon: Mountain, color: 'bg-amber-50 text-amber-600' },
+                           { id: 'shops', label: 'Lojas', count: shops.length, reservations: shops.reduce((acc, r) => acc + ((r as any).orders?.length || 0), 0), revenue: shops.reduce((acc, s) => acc + ((s as any).salesHistory || []).reduce((sv: number, sale: any) => sv + (parseFloat(sale.total) || 0), 0), 0), icon: ShoppingBag, color: 'bg-rose-50 text-rose-600' },
+                           { id: 'beauty', label: 'Beleza', count: beauty.length, reservations: beauty.reduce((acc, r) => acc + (r.reservations?.length || 0), 0), revenue: beauty.reduce((acc, b) => acc + (b.reservations || []).reduce((s: number, res: any) => s + (parseFloat(res.totalPrice) || 0), 0) + ((b as any).salesHistory || []).reduce((s: number, sale: any) => s + (parseFloat(sale.total) || 0), 0), 0), icon: Sparkles, color: 'bg-pink-50 text-pink-600' },
                          ].map((cat) => (
                            <motion.div 
                               key={cat.id} 
