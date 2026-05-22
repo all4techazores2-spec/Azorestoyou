@@ -67,18 +67,10 @@ const clearAll = async () => {
             }
         });
 
-        // Limpar reservas dos utilizadores
+        // Limpar totalmente os clientes registados
         if (db.users && Array.isArray(db.users)) {
-            db.users.forEach(user => {
-                if (user.reservations && user.reservations.length > 0) {
-                    totalCleared += user.reservations.length;
-                    user.reservations = [];
-                }
-                if (user.orders && user.orders.length > 0) {
-                    totalCleared += user.orders.length;
-                    user.orders = [];
-                }
-            });
+            totalCleared += db.users.length;
+            db.users = [];
         }
 
         await writeDB(db);
