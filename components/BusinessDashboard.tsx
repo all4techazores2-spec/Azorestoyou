@@ -378,6 +378,26 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [posCart, setPosCart] = useState<{ product: Product, quantity: number }[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<string | number | null>(null);
 
+  // AzoresPOS Enhancements States
+  const [posSearchQuery, setPosSearchQuery] = useState('');
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [posDiscount, setPosDiscount] = useState(0);
+  const [posDiscountType, setPosDiscountType] = useState<'percent' | 'fixed'>('fixed');
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [posNote, setPosNote] = useState('');
+  const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
+  const [showClientsModal, setShowClientsModal] = useState(false);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  
+  // Novo Cliente Form States
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientNif, setNewClientNif] = useState('');
+  const [newClientAddress, setNewClientAddress] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+
   const handleSelectTable = (tableId: string | number | null) => {
     setSelectedTableId(tableId);
     if (!tableId) {
@@ -401,6 +421,56 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       setPosCart([]);
     }
   };
+
+  useEffect(() => {
+    if (activeTab !== 'pos') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
+
+      // Ctrl + K focus search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Buscar produtos"]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.key === 'F4') {
+        e.preventDefault();
+        setShowDiscountModal(true);
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setShowNoteModal(true);
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        setShowClientsModal(true);
+      } else if (e.key === 'F7') {
+        e.preventDefault();
+        handleClearSale();
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        handleDeleteSelectedCartItem();
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        handleFinalizeSale(true);
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handleFinalizeSale(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeTab, posCart, selectedCartItemId, posDiscount, posDiscountType, posNote, selectedClientId]);
 
   useEffect(() => {
     if (selectedTableId !== null) {
@@ -532,8 +602,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (posCart.length === 0) return;
 
     const totalCart = posTotal;
-    const serviceTax = totalCart * 0.10;
-    const finalTotal = totalCart + serviceTax;
+    const discountFactor = totalCart > 0 ? (posTotalAfterDiscount / totalCart) : 1;
 
     // ── Calcular IVA Discriminado (13% e 23%) ──
     let base13 = 0;
@@ -542,7 +611,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     let iva23 = 0;
 
     posCart.forEach(i => {
-      const itemTotal = i.product.price * i.quantity;
+      const itemTotal = (i.product.price * i.quantity) * discountFactor;
       const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
       const rate = isDrink ? 23 : 13;
       const itemBase = itemTotal / (1 + rate / 100);
@@ -558,9 +627,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     });
 
     // IVA da taxa de serviço em Portugal (23%)
-    if (serviceTax > 0) {
-      const sBase = serviceTax / 1.23;
-      const sIva = serviceTax - sBase;
+    if (posServiceTax > 0) {
+      const sBase = posServiceTax / 1.23;
+      const sIva = posServiceTax - sBase;
       base23 += sBase;
       iva23 += sIva;
     }
@@ -578,11 +647,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const formattedDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
     
     // String oficial do QR Code da AT em Portugal
-    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${iva13.toFixed(2)}*I4:${iva23.toFixed(2)}*O:${finalTotal.toFixed(2)}`;
+    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${iva13.toFixed(2)}*I4:${iva23.toFixed(2)}*O:${posFinalTotal.toFixed(2)}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`;
 
-    const received = parseFloat(paymentCashReceived) || finalTotal;
-    const change = Math.max(0, received - finalTotal);
+    const received = parseFloat(paymentCashReceived) || posFinalTotal;
+    const change = Math.max(0, received - posFinalTotal);
 
     const invoiceData = {
       invoiceNumber,
@@ -602,8 +671,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         };
       }),
       subtotal: totalCart,
-      serviceTax,
-      total: finalTotal,
+      discount: posDiscountVal,
+      serviceTax: posServiceTax,
+      total: posFinalTotal,
       nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
       paymentMethod: paymentMethod === 'cash' ? 'Dinheiro' : 'Multibanco',
       cashReceived: received,
@@ -614,7 +684,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       base23,
       iva23,
       atcud: atcudCode,
-      qrCodeUrl
+      qrCodeUrl,
+      note: posNote
     };
 
     // ── Gravar Registo de Venda ──
@@ -623,7 +694,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       date: new Date().toISOString(),
       tableName: invoiceData.tableName,
       customerName: invoiceData.nif,
-      total: finalTotal,
+      total: posFinalTotal,
       items: invoiceData.items.map(it => ({
         name: it.name,
         price: it.price,
@@ -676,7 +747,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setLastGeneratedInvoice(invoiceData);
     setInvoicePreviewOpen(true);
     setPaymentFormOpen(false);
-    setPosCart([]);
+    handleClearSale();
   };
 
   const addToPosCart = (product: Product) => {
@@ -704,6 +775,61 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const posTotal = posCart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+
+  // AzoresPOS dynamic calculations
+  const posDiscountVal = posDiscountType === 'percent' 
+    ? (posTotal * (posDiscount / 100)) 
+    : posDiscount;
+  const posTotalAfterDiscount = Math.max(0, posTotal - posDiscountVal);
+  const posServiceTax = posTotalAfterDiscount * 0.10;
+  const posFinalTotal = posTotalAfterDiscount + posServiceTax;
+
+  const handleClearSale = () => {
+    setPosCart([]);
+    setSelectedCartItemId(null);
+    setPosDiscount(0);
+    setPosNote('');
+    setSelectedClientId(null);
+    setPaymentNif('');
+  };
+
+  const handleDeleteSelectedCartItem = () => {
+    if (selectedCartItemId) {
+      removeFromPosCart(selectedCartItemId);
+      setSelectedCartItemId(null);
+    } else {
+      alert("Por favor, selecione um item da lista no painel lateral direito primeiro para o poder cancelar.");
+    }
+  };
+
+  const handleAddClient = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim()) {
+      alert("Por favor, introduza pelo menos o nome do cliente.");
+      return;
+    }
+    const newClient = {
+      id: 'F_' + Date.now(),
+      name: newClientName,
+      nif: newClientNif || '999999990',
+      address: newClientAddress,
+      phone: newClientPhone,
+      email: newClientEmail,
+      balance: 0,
+      lastVisit: new Date().toISOString().split('T')[0]
+    };
+    const updated = [...fiadoClients, newClient];
+    setFiadoClients(updated);
+    handleUpdate({ fiadoClients: updated });
+    
+    // Auto select this newly created client
+    setSelectedClientId(newClient.id);
+    setPaymentNif(newClient.nif);
+    
+    setShowAddClientModal(false);
+    // Show discount select options
+    setShowClientsModal(true);
+  };
 
   // POS payment & split state
   const [posSplitBy, setPosSplitBy] = useState(1);
@@ -2344,7 +2470,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
             const allCats = ['Todos', ...Array.from(new Set([...availableCategories, ...currentCategories]))].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
 
-            const filtered = posCategory === 'Todos' ? posProducts : posProducts.filter(p => p.category === posCategory);
+            const filteredBySearch = posProducts.filter(p => 
+              p.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||
+              p.category.toLowerCase().includes(posSearchQuery.toLowerCase())
+            );
+
+            const filtered = posCategory === 'Todos' ? filteredBySearch : filteredBySearch.filter(p => p.category === posCategory);
 
             return (
               <>
@@ -2359,6 +2490,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                          type="text" 
                          placeholder="Buscar produtos... (Ctrl + K)" 
                          className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-12 pr-4 font-bold text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                         value={posSearchQuery}
+                         onChange={e => setPosSearchQuery(e.target.value)}
                        />
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-200 text-slate-500 text-[10px] px-1.5 py-0.5 rounded font-black">Ctrl + K</div>
                     </div>
@@ -2381,57 +2514,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           ))}
                        </select>
                     </div>
-                    <button className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all">
+                    <button 
+                      onClick={() => {
+                        setNewClientName('');
+                        setNewClientNif('');
+                        setNewClientAddress('');
+                        setNewClientPhone('');
+                        setNewClientEmail('');
+                        setShowAddClientModal(true);
+                      }}
+                      className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all"
+                    >
                        <Users size={16} className="text-slate-400" />
                        <span className="font-black text-xs uppercase tracking-widest">Cliente +</span>
                     </button>
                   </div>
                 </div>
-
-                {/* MODERN HORIZONTAL TABLE FILTERS */}
-                {!isBeauty && !isShop && tables.length > 0 && (
-                  <div className="bg-white border-b border-slate-100 px-8 py-3.5 flex items-center gap-3 overflow-x-auto custom-scrollbar flex-shrink-0 z-10">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-2 whitespace-nowrap">Filtrar por Mesa:</span>
-                    <button
-                      onClick={() => handleSelectTable(null)}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border flex items-center gap-2 ${
-                        selectedTableId === null
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-950/20'
-                          : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 hover:text-slate-600'
-                      }`}
-                    >
-                      <Users size={12} />
-                      Venda Rápida
-                    </button>
-                    {tables.map(t => {
-                      const isSelected = selectedTableId === t.id || String(selectedTableId) === String(t.id);
-                      const isOccupied = t.status === 'occupied';
-                      const isReserved = t.status === 'reserved';
-                      const hasItems = t.currentTab && t.currentTab.length > 0;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => handleSelectTable(t.id)}
-                          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border flex items-center gap-2.5 relative ${
-                            isSelected
-                              ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
-                              : isOccupied
-                                ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 shadow-sm'
-                                : isReserved
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 shadow-sm'
-                                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-800'
-                          }`}
-                        >
-                          <TableIcon size={12} className={isSelected ? 'text-white' : isOccupied ? 'text-red-500 animate-pulse' : 'text-slate-400'} />
-                          <span>Mesa #{t.number}</span>
-                          {hasItems && (
-                            <span className={`w-2 h-2 rounded-full absolute -top-1 -right-1 border border-white ${isSelected ? 'bg-white' : 'bg-red-500'} animate-pulse shadow-md`} />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
                 <div className="flex flex-1 min-h-0">
                   {/* MAIN CONTENT AREA */}
@@ -2486,13 +2584,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     {/* SHORTCUTS BAR (Rodapé da área central) */}
                     <div className="px-8 py-4 bg-white border-t border-slate-100 grid grid-cols-5 gap-4 flex-shrink-0">
                        {[
-                         { icon: <DollarSign size={18} />, label: 'Desconto', key: 'F4', color: 'text-emerald-600 bg-emerald-50' },
-                         { icon: <Info size={18} />, label: 'Observação', key: 'F5', color: 'text-blue-600 bg-blue-50' },
-                         { icon: <Users size={18} />, label: 'Cliente', key: 'F6', color: 'text-purple-600 bg-purple-50' },
-                         { icon: <X size={18} />, label: 'Cancelar item', key: 'Del', color: 'text-red-600 bg-red-50' },
-                         { icon: <RefreshCw size={18} />, label: 'Limpar venda', key: 'F7', color: 'text-orange-600 bg-orange-50' },
+                         { icon: <DollarSign size={18} />, label: 'Desconto', key: 'F4', color: 'text-emerald-600 bg-emerald-50', action: () => setShowDiscountModal(true) },
+                         { icon: <Info size={18} />, label: 'Observação', key: 'F5', color: 'text-blue-600 bg-blue-50', action: () => setShowNoteModal(true) },
+                         { icon: <Users size={18} />, label: 'Cliente', key: 'F6', color: 'text-purple-600 bg-purple-50', action: () => setShowClientsModal(true) },
+                         { icon: <X size={18} />, label: 'Cancelar item', key: 'Del', color: 'text-red-600 bg-red-50', action: () => handleDeleteSelectedCartItem() },
+                         { icon: <RefreshCw size={18} />, label: 'Limpar venda', key: 'F7', color: 'text-orange-600 bg-orange-50', action: () => handleClearSale() },
                        ].map((btn, i) => (
-                         <button key={i} className="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-slate-50 transition-all border border-slate-100 group">
+                         <button key={i} onClick={btn.action} className="flex flex-col items-center justify-center p-3 rounded-2xl hover:bg-slate-50 transition-all border border-slate-100 group">
                             <div className={`w-10 h-10 ${btn.color} rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
                                {btn.icon}
                             </div>
@@ -2522,35 +2620,52 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <ShoppingBag size={80} className="mb-4" />
                           <p className="text-lg font-black uppercase tracking-widest text-center">Inicie uma venda adicionando produtos</p>
                         </div>
-                      ) : posCart.map((item) => (
-                        <motion.div
-                          key={item.product.id}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex gap-4 group"
-                        >
-                          <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 font-black border border-slate-100 overflow-hidden">
-                             {item.product.image ? <img src={item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
-                          </div>
-                          <div className="flex-1">
-                             <div className="flex justify-between items-start mb-1">
-                               <p className="font-black text-slate-800 text-sm leading-tight">{item.product.name}</p>
-                               <button onClick={() => removeFromPosCart(item.product.id)} className="text-red-400 hover:text-red-600 transition-colors"><X size={14} /></button>
-                             </div>
-                             <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                   <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                                      <button onClick={() => updatePosQuantity(item.product.id, -1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">-</button>
-                                      <span className="px-2 text-xs font-black text-slate-600 min-w-[20px] text-center">{item.quantity}</span>
-                                      <button onClick={() => updatePosQuantity(item.product.id, 1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">+</button>
-                                   </div>
-                                   <span className="text-[10px] font-bold text-slate-400">€{item.product.price.toFixed(2)} / un</span>
-                                </div>
-                                <p className="font-black text-slate-800 text-sm">€{(item.product.price * item.quantity).toFixed(2).replace('.', ',')}</p>
-                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                      ) : posCart.map((item) => {
+                        const isSelected = selectedCartItemId === item.product.id;
+                        return (
+                          <motion.div
+                            key={item.product.id}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            onClick={() => setSelectedCartItemId(isSelected ? null : item.product.id)}
+                            className={`flex gap-4 group p-3 rounded-2xl cursor-pointer transition-all border ${
+                              isSelected 
+                                ? 'bg-red-50 border-red-200 shadow-sm' 
+                                : 'border-transparent hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 font-black border border-slate-100 overflow-hidden flex-shrink-0">
+                               {item.product.image ? <img src={item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                               <div className="flex justify-between items-start mb-1 gap-2">
+                                 <p className="font-black text-slate-800 text-sm leading-tight truncate">{item.product.name}</p>
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     removeFromPosCart(item.product.id);
+                                     if (isSelected) setSelectedCartItemId(null);
+                                   }} 
+                                   className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                                 >
+                                   <X size={14} />
+                                 </button>
+                               </div>
+                               <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-3">
+                                     <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+                                        <button onClick={() => updatePosQuantity(item.product.id, -1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">-</button>
+                                        <span className="px-2 text-xs font-black text-slate-600 min-w-[20px] text-center">{item.quantity}</span>
+                                        <button onClick={() => updatePosQuantity(item.product.id, 1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">+</button>
+                                     </div>
+                                     <span className="text-[10px] font-bold text-slate-400">€{item.product.price.toFixed(2)} / un</span>
+                                  </div>
+                                  <p className="font-black text-slate-800 text-sm">€{(item.product.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                               </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
 
                     <div className="p-8 bg-slate-50/50 border-t border-slate-100 space-y-6">
@@ -2561,17 +2676,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                         </div>
                         <div className="flex justify-between text-xs font-bold text-slate-400">
                           <span>Desconto</span>
-                          <span className="text-orange-500 font-black">- €0,00</span>
+                          <span className="text-orange-500 font-black">- €{posDiscountVal.toFixed(2).replace('.', ',')}</span>
                         </div>
                         <div className="flex justify-between text-xs font-bold text-slate-400">
                           <span>Taxa de serviço (10%)</span>
-                          <span className="text-slate-600 font-black">€{(posTotal * 0.10).toFixed(2).replace('.', ',')}</span>
+                          <span className="text-slate-600 font-black">€{posServiceTax.toFixed(2).replace('.', ',')}</span>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-end">
                         <span className="text-xl font-black text-slate-900 tracking-tighter uppercase">Total</span>
-                        <span className="text-4xl font-black text-emerald-600 tracking-tighter">€{(posTotal * 1.10).toFixed(2).replace('.', ',')}</span>
+                        <span className="text-4xl font-black text-emerald-600 tracking-tighter">€{posFinalTotal.toFixed(2).replace('.', ',')}</span>
                       </div>
 
                       <div className="grid grid-cols-1 gap-3 pt-4">
@@ -2647,7 +2762,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <div className="bg-gradient-to-br from-slate-950 to-slate-900 rounded-[2rem] p-6 border border-slate-800 text-center relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Total a Pagar</p>
-                            <p className="text-5xl font-black text-emerald-400 mt-2 tracking-tighter">€{((posTotal * 1.10)).toFixed(2).replace('.', ',')}</p>
+                            <p className="text-5xl font-black text-emerald-400 mt-2 tracking-tighter">€{posFinalTotal.toFixed(2).replace('.', ',')}</p>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Já inclui 10% de taxa de serviço (IVA 23% incl.)</p>
                           </div>
 
@@ -2679,7 +2794,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             {paymentSplitBy > 1 && (
                               <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 flex justify-between items-center text-xs">
                                 <span className="text-slate-400 font-bold">Valor por pessoa:</span>
-                                <span className="text-blue-400 font-black text-sm">€{((posTotal * 1.10) / paymentSplitBy).toFixed(2).replace('.', ',')} / Pax</span>
+                                <span className="text-blue-400 font-black text-sm">€{(posFinalTotal / paymentSplitBy).toFixed(2).replace('.', ',')} / Pax</span>
                               </div>
                             )}
                           </div>
@@ -2761,7 +2876,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                 type="button"
                                 onClick={() => {
                                   setPaymentMethod('cash');
-                                  setPaymentCashReceived(((posTotal * 1.10)).toFixed(2));
+                                  setPaymentCashReceived(posFinalTotal.toFixed(2));
                                 }}
                                 className={`p-6 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all active:scale-95 ${paymentMethod === 'cash' ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/10' : 'border-slate-800 bg-slate-950/20 text-slate-400 hover:border-slate-700 hover:text-white'}`}
                               >
@@ -2799,12 +2914,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                               </div>
                               {/* Atalhos de Dinheiro */}
                               <div className="flex flex-wrap gap-2">
-                                {[((posTotal * 1.10)), 5, 10, 20, 50, 100].map((val, idx) => {
+                                {[posFinalTotal, 5, 10, 20, 50, 100].map((val, idx) => {
                                   const isExact = idx === 0;
                                   const displayVal = isExact ? 'Exato' : `€${val}`;
                                   const targetVal = val;
                                   
-                                  if (!isExact && val < ((posTotal * 1.10))) return null;
+                                  if (!isExact && val < posFinalTotal) return null;
 
                                   return (
                                     <button
@@ -2819,12 +2934,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                 })}
                               </div>
                               {/* Cálculo de Troco */}
-                              {parseFloat(paymentCashReceived) >= ((posTotal * 1.10)) ? (
+                              {parseFloat(paymentCashReceived) >= posFinalTotal ? (
                                 <div className="pt-4 border-t border-slate-800/80 flex justify-between items-center">
                                   <div>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Troco a dar:</p>
                                     <p className="text-3xl font-black text-emerald-400 tracking-tighter mt-1">
-                                      €{(parseFloat(paymentCashReceived) - ((posTotal * 1.10))).toFixed(2).replace('.', ',')}
+                                      €{(parseFloat(paymentCashReceived) - posFinalTotal).toFixed(2).replace('.', ',')}
                                     </p>
                                   </div>
                                   <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
@@ -2833,7 +2948,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                 </div>
                               ) : parseFloat(paymentCashReceived) > 0 ? (
                                 <div className="pt-2 text-center">
-                                  <p className="text-xs text-amber-500 font-bold">Falta €{(((posTotal * 1.10)) - parseFloat(paymentCashReceived)).toFixed(2)} por liquidar</p>
+                                  <p className="text-xs text-amber-500 font-bold">Falta €{(posFinalTotal - parseFloat(paymentCashReceived)).toFixed(2)} por liquidar</p>
                                 </div>
                               ) : null}
                             </motion.div>
@@ -2845,8 +2960,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                           <motion.button
                             whileTap={{ scale: 0.98 }}
                             onClick={executeConfirmPayment}
-                            disabled={paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < ((posTotal * 1.10)))}
-                            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl transition-all flex items-center justify-center gap-2 ${paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < ((posTotal * 1.10))) ? 'bg-slate-800 text-slate-600 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20'}`}
+                            disabled={paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < posFinalTotal)}
+                            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl transition-all flex items-center justify-center gap-2 ${paymentMethod === 'cash' && (!paymentCashReceived || parseFloat(paymentCashReceived) < posFinalTotal) ? 'bg-slate-800 text-slate-600 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20'}`}
                           >
                             <CheckCircle size={18} /> Confirmar Pagamento & Emitir Fatura
                           </motion.button>
@@ -2995,6 +3110,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                   {/* Totais e IVA */}
                                   <div className="border-t-2 border-dashed border-slate-300 mt-3 pt-2 space-y-1 text-slate-700">
                                     <p className="font-bold text-slate-800">{formatReceiptLine('Subtotal', `€${lastGeneratedInvoice.subtotal.toFixed(2)}`)}</p>
+                                    {lastGeneratedInvoice.discount > 0 && (
+                                      <p className="text-orange-600 font-bold">{formatReceiptLine('Desconto', `-€${lastGeneratedInvoice.discount.toFixed(2)}`)}</p>
+                                    )}
                                     {lastGeneratedInvoice.serviceTax > 0 && (
                                       <p>{formatReceiptLine('Taxa de Serviço (10% - 23%)', `€${lastGeneratedInvoice.serviceTax.toFixed(2)}`)}</p>
                                     )}
@@ -3061,6 +3179,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                       <p>Certificação: 2026/AT</p>
                                     </div>
                                   </div>
+
+                                  {/* Nota / Observações de Rodapé */}
+                                  {lastGeneratedInvoice.note && (
+                                    <div className="border-t border-dashed border-slate-300 mt-4 pt-3 text-[10px] text-slate-600 italic text-center">
+                                      Obs: "{lastGeneratedInvoice.note}"
+                                    </div>
+                                  )}
 
                                   {/* Agradecimento */}
                                   <div className="text-center font-bold text-slate-700 border-t border-dashed border-slate-300 mt-4 pt-3 uppercase tracking-wider text-[10px]">
@@ -3166,6 +3291,410 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       </div>
                     );
                   })()}
+
+                  {/* MODERN DISCOUNT MODAL (F4) */}
+                  {showDiscountModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fade-in">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                          <div>
+                            <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest block">Atalho F4 / Vendas</span>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mt-0.5">Desconto do Pedido</h3>
+                          </div>
+                          <button onClick={() => setShowDiscountModal(false)} className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-all">
+                            <X size={18} />
+                          </button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                          {/* Selector Tipo Desconto */}
+                          <div className="grid grid-cols-2 gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => { setPosDiscountType('fixed'); setPosDiscount(0); }}
+                              className={`py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${posDiscountType === 'fixed' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-600 bg-transparent'}`}
+                            >
+                              Fixo (€)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setPosDiscountType('percent'); setPosDiscount(0); }}
+                              className={`py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${posDiscountType === 'percent' ? 'bg-orange-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-600 bg-transparent'}`}
+                            >
+                              Percentagem (%)
+                            </button>
+                          </div>
+
+                          {/* Campo do Valor */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Valor do Desconto</label>
+                            <div className="relative flex items-center bg-slate-50 border border-slate-100 rounded-2xl p-4 focus-within:ring-2 focus-within:ring-orange-500 transition-all">
+                              <span className="font-black text-slate-400 text-lg mr-2">{posDiscountType === 'fixed' ? '€' : '%'}</span>
+                              <input
+                                type="number"
+                                step="any"
+                                className="w-full bg-transparent font-black text-slate-800 text-2xl focus:outline-none"
+                                value={posDiscount === 0 ? '' : posDiscount}
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  if (posDiscountType === 'percent') {
+                                    setPosDiscount(Math.min(100, Math.max(0, val)));
+                                  } else {
+                                    setPosDiscount(Math.min(posTotal, Math.max(0, val)));
+                                  }
+                                }}
+                                placeholder="0.00"
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+
+                          {/* Presets Rápidos */}
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Atalhos Rápidos</span>
+                            <div className="grid grid-cols-4 gap-2">
+                              {posDiscountType === 'percent' 
+                                ? [5, 10, 15, 20].map(val => (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      onClick={() => setPosDiscount(val)}
+                                      className={`py-2 rounded-xl font-black text-xs transition-all border ${posDiscount === val ? 'bg-orange-55/60 border-orange-200 text-orange-600' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                                    >
+                                      {val}%
+                                    </button>
+                                  ))
+                                : [2.5, 5, 10, 20].map(val => (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      onClick={() => setPosDiscount(Math.min(posTotal, val))}
+                                      className={`py-2 rounded-xl font-black text-xs transition-all border ${posDiscount === val ? 'bg-orange-55/60 border-orange-200 text-orange-600' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                                    >
+                                      €{val}
+                                    </button>
+                                  ))
+                              }
+                            </div>
+                          </div>
+
+                          {/* Resumo do Desconto */}
+                          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex justify-between items-center text-xs font-bold text-slate-500">
+                            <span>Total de Desconto Aplicado:</span>
+                            <span className="text-orange-500 font-black text-sm">- €{posDiscountVal.toFixed(2).replace('.', ',')}</span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowDiscountModal(false)}
+                            className="w-full py-4.5 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-orange-500/20 active:scale-98 transition-all flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle size={16} /> Aplicar Desconto
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* MODERN OBSERVACAO/NOTE MODAL (F5) */}
+                  {showNoteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fade-in">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                          <div>
+                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest block">Atalho F5 / Vendas</span>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mt-0.5">Nota do Pedido</h3>
+                          </div>
+                          <button onClick={() => setShowNoteModal(false)} className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-all">
+                            <X size={18} />
+                          </button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Escrever Nota (Será impressa no talão)</label>
+                            <textarea
+                              className="w-full h-32 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none transition-all"
+                              value={posNote}
+                              onChange={e => setPosNote(e.target.value)}
+                              placeholder="Ex: Mesa de aniversário, Sem talheres, Fatura com logotipo..."
+                              autoFocus
+                            />
+                          </div>
+
+                          {/* Quick tags */}
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Sugestões Rápidas</span>
+                            <div className="flex flex-wrap gap-2">
+                              {['Mesa Aniversário', 'Sem Talheres', 'Cliente VIP', 'Embalar p/ Viagem', 'Bebidas no Fim'].map(tag => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => setPosNote(prev => prev ? `${prev}, ${tag}` : tag)}
+                                  className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-100 rounded-xl text-xs font-bold transition-all"
+                                >
+                                  + {tag}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowNoteModal(false)}
+                            className="w-full py-4.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-blue-600/20 active:scale-98 transition-all flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle size={16} /> Salvar Observação
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* MODERN CLIENTS LIST MODAL (F6) */}
+                  {showClientsModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-fade-in">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                          <div>
+                            <span className="text-[9px] font-black text-purple-500 uppercase tracking-widest block">Atalho F6 / Vendas</span>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mt-0.5">Clientes Registados</h3>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => {
+                                setShowClientsModal(false);
+                                setNewClientName('');
+                                setNewClientNif('');
+                                setNewClientAddress('');
+                                setNewClientPhone('');
+                                setNewClientEmail('');
+                                setShowAddClientModal(true);
+                              }}
+                              className="flex items-center gap-1.5 px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                            >
+                              <Plus size={14} /> Cliente+
+                            </button>
+                            <button onClick={() => setShowClientsModal(false)} className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-all">
+                              <X size={18} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="p-8 space-y-6">
+                          {/* Search Input */}
+                          <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input
+                              type="text"
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 font-bold text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                              placeholder="Pesquisar por nome, NIF ou telemóvel..."
+                              value={clientSearchQuery}
+                              onChange={e => setClientSearchQuery(e.target.value)}
+                              autoFocus
+                            />
+                          </div>
+
+                          {/* Clientes List */}
+                          <div className="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-1">
+                            {fiadoClients.filter(c => 
+                              c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                              (c.nif && c.nif.includes(clientSearchQuery)) ||
+                              (c.phone && c.phone.includes(clientSearchQuery))
+                            ).length === 0 ? (
+                              <div className="py-8 text-center text-slate-400 font-bold text-xs uppercase tracking-wider">
+                                Nenhum cliente encontrado
+                              </div>
+                            ) : (
+                              fiadoClients.filter(c => 
+                                c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                                (c.nif && c.nif.includes(clientSearchQuery)) ||
+                                (c.phone && c.phone.includes(clientSearchQuery))
+                              ).map(client => {
+                                const isSelected = selectedClientId === client.id;
+                                return (
+                                  <div
+                                    key={client.id}
+                                    onClick={() => {
+                                      setSelectedClientId(client.id);
+                                      setPaymentNif(client.nif);
+                                    }}
+                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
+                                      isSelected
+                                        ? 'bg-purple-50 border-purple-200 text-purple-800'
+                                        : 'bg-white border-slate-100 hover:bg-slate-50 text-slate-700'
+                                    }`}
+                                  >
+                                    <div>
+                                      <p className="font-black text-sm">{client.name}</p>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                        NIF: {client.nif} {client.phone ? `| Tel: ${client.phone}` : ''}
+                                      </p>
+                                    </div>
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-purple-600 bg-purple-600 text-white' : 'border-slate-200'}`}>
+                                      {isSelected && <span className="text-[10px] font-black">✓</span>}
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+
+                          {/* Presets Desconto de Grupo */}
+                          {selectedClientId && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 pt-4 border-t border-slate-100">
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Aplicar Desconto de Grupo / Família</span>
+                              <div className="grid grid-cols-4 gap-2">
+                                {[0, 5, 10, 15, 20, 25, 30, 50].map(pct => {
+                                  const label = pct === 0 ? 'Nenhum' : `${pct}%`;
+                                  const isSelected = posDiscountType === 'percent' && posDiscount === pct;
+                                  return (
+                                    <button
+                                      key={pct}
+                                      type="button"
+                                      onClick={() => {
+                                        if (pct === 0) {
+                                          setPosDiscount(0);
+                                          setPosDiscountType('fixed');
+                                        } else {
+                                          setPosDiscount(pct);
+                                          setPosDiscountType('percent');
+                                        }
+                                      }}
+                                      className={`py-2.5 rounded-xl font-black text-xs transition-all border ${
+                                        isSelected 
+                                          ? 'bg-purple-50 border-purple-200 text-purple-700' 
+                                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                      }`}
+                                    >
+                                      {label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedClientId(null);
+                                setPaymentNif('');
+                                setPosDiscount(0);
+                                setPosDiscountType('fixed');
+                                setShowClientsModal(false);
+                              }}
+                              className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+                            >
+                              Limpar Cliente
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowClientsModal(false)}
+                              className="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-purple-500/20 transition-all"
+                            >
+                              Confirmar & Fechar
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* MODERN ADD CLIENT MODAL */}
+                  {showAddClientModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 animate-fade-in">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                          <div>
+                            <span className="text-[9px] font-black text-purple-500 uppercase tracking-widest block">Novo Registo</span>
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mt-0.5">Registar Cliente</h3>
+                          </div>
+                          <button onClick={() => setShowAddClientModal(false)} className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-all">
+                            <X size={18} />
+                          </button>
+                        </div>
+                        <form onSubmit={handleAddClient} className="p-8 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                          {/* Nome (Único obrigatório) */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Nome Completo <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              required
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                              placeholder="Introduza o nome do cliente"
+                              value={newClientName}
+                              onChange={e => setNewClientName(e.target.value)}
+                              autoFocus
+                            />
+                          </div>
+
+                          {/* NIF */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">NIF / Contribuinte (Opcional)</label>
+                            <input
+                              type="text"
+                              maxLength={9}
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none transition-all tracking-widest"
+                              placeholder="999999990"
+                              value={newClientNif}
+                              onChange={e => setNewClientNif(e.target.value.replace(/\D/g, ''))}
+                            />
+                          </div>
+
+                          {/* Telemóvel */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Telemóvel (Opcional)</label>
+                            <input
+                              type="tel"
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                              placeholder="ex: 912 345 678"
+                              value={newClientPhone}
+                              onChange={e => setNewClientPhone(e.target.value)}
+                            />
+                          </div>
+
+                          {/* E-mail */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">E-mail (Opcional)</label>
+                            <input
+                              type="email"
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                              placeholder="cliente@exemplo.com"
+                              value={newClientEmail}
+                              onChange={e => setNewClientEmail(e.target.value)}
+                            />
+                          </div>
+
+                          {/* Morada */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Morada (Opcional)</label>
+                            <input
+                              type="text"
+                              className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                              placeholder="Rua, Número, Código Postal"
+                              value={newClientAddress}
+                              onChange={e => setNewClientAddress(e.target.value)}
+                            />
+                          </div>
+
+                          <div className="pt-4 flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddClientModal(false)}
+                              className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="submit"
+                              className="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-purple-500/20 transition-all"
+                            >
+                              Gravar Cliente
+                            </button>
+                          </div>
+                        </form>
+                      </motion.div>
+                    </div>
+                  )}
                 </AnimatePresence>
               </>
             );
@@ -5316,6 +5845,33 @@ ${items.map((it, i) => `        <Line>
                </div>
                <form onSubmit={saveProductEdit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                   <div className="space-y-4">
+                    <div className="relative">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Foto (URL ou Upload)</label>
+                       <div className="flex gap-2">
+                          <input 
+                            className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                            value={editingProduct.product.image || ''} 
+                            onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, image: e.target.value}})}
+                          />
+                          <label className={`p-4 bg-slate-100 text-slate-600 rounded-2xl cursor-pointer hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center ${isUploading ? 'opacity-50' : ''}`}>
+                             {isUploading ? '...' : <ImageIcon className="w-5 h-5" />}
+                             <input 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={async (e) => {
+                                   const file = e.target.files?.[0];
+                                   if (file) {
+                                      const url = await handleImageUpload(file, 'dish');
+                                      if (url) {
+                                         setEditingProduct({ ...editingProduct, product: { ...editingProduct.product, image: url } });
+                                      }
+                                   }
+                                }}
+                             />
+                          </label>
+                       </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Categoria</label>
