@@ -5798,7 +5798,7 @@ ${items.map((it, i) => `        <Line>
                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                  <div className="flex items-center gap-6">
                                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-[1.5rem] flex items-center justify-center text-xl font-black shadow-inner">
-                                     {res.customerName.charAt(0)}
+                                     {res.customerName?.charAt(0) || 'C'}
                                    </div>
                                    <div className="flex-1">
                                       <p className="text-2xl font-black text-slate-800 tracking-tight">{res.customerName}</p>
@@ -5884,7 +5884,7 @@ ${items.map((it, i) => `        <Line>
                                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black ${
                                            res.status === 'occupied' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
                                          }`}>
-                                           {res.customerName.charAt(0)}
+                                           {res.customerName?.charAt(0) || 'C'}
                                          </div>
                                          <div>
                                             <div className="flex items-center gap-2">
