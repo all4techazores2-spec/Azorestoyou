@@ -1471,16 +1471,86 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const startProductEdit = (idx: number) => {
-    setEditingProduct({ idx, product: { ...products[idx] } });
+    const product = products[idx];
+    const existsInMenu = !isBeauty && !isShop
+      ? (business.dishes || []).some(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase())
+      : isBeauty
+        ? (business.services || []).some(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase())
+        : false;
+
+    setEditingProduct({ 
+      idx, 
+      product: { 
+        ...product, 
+        inMenu: (product as any).inMenu !== undefined ? (product as any).inMenu : existsInMenu 
+      } 
+    });
   };
 
   const saveProductEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingProduct) {
+      const product = editingProduct.product;
       const newProducts = [...products];
-      newProducts[editingProduct.idx] = editingProduct.product;
+      newProducts[editingProduct.idx] = product;
       setProducts(newProducts);
-      handleUpdate({ products: newProducts });
+
+      const updatesToSave: any = { products: newProducts };
+
+      if (!isBeauty && !isShop) {
+        let updatedDishes = [...(business.dishes || [])];
+        const isInMenu = (product as any).inMenu;
+        const dishIdx = updatedDishes.findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+
+        if (isInMenu) {
+          const dishData = {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            image: product.image,
+            category: product.category || 'Ementa'
+          };
+          if (dishIdx !== -1) {
+            updatedDishes[dishIdx] = { ...updatedDishes[dishIdx], ...dishData };
+          } else {
+            updatedDishes.push(dishData);
+          }
+        } else {
+          if (dishIdx !== -1) {
+            updatedDishes = updatedDishes.filter((_, i) => i !== dishIdx);
+          }
+        }
+        updatesToSave.dishes = updatedDishes;
+      } else if (isBeauty) {
+        let updatedServices = [...(business.services || [])];
+        const isInMenu = (product as any).inMenu;
+        const serviceIdx = updatedServices.findIndex(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase());
+
+        if (isInMenu) {
+          const serviceData = {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            image: product.image,
+            category: product.category || 'Estética',
+            duration: 30
+          };
+          if (serviceIdx !== -1) {
+            updatedServices[serviceIdx] = { ...updatedServices[serviceIdx], ...serviceData };
+          } else {
+            updatedServices.push(serviceData);
+          }
+        } else {
+          if (serviceIdx !== -1) {
+            updatedServices = updatedServices.filter((_, i) => i !== serviceIdx);
+          }
+        }
+        updatesToSave.services = updatedServices;
+      }
+
+      handleUpdate(updatesToSave);
       setEditingProduct(null);
     }
   };
@@ -6440,6 +6510,32 @@ ${items.map((it, i) => `        <Line>
                          onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, description: e.target.value}})}
                        />
                     </div>
+
+                    {editingProduct.product.category !== 'Stock Interno' && (
+                      <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex items-center justify-between shadow-sm">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                               <Utensils className="w-5 h-5" />
+                            </div>
+                            <div>
+                               <p className="font-black text-slate-800 text-sm uppercase tracking-wider">Apresentar na Ementa</p>
+                               <p className="text-[10px] text-slate-400 font-medium">Exibir automaticamente este produto no menu do cliente</p>
+                            </div>
+                         </div>
+                         <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={!!(editingProduct.product as any).inMenu}
+                              onChange={e => setEditingProduct({
+                                ...editingProduct, 
+                                product: { ...editingProduct.product, inMenu: e.target.checked }
+                              })}
+                            />
+                            <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                         </label>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-4 pt-4">
                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center justify-between">
