@@ -197,10 +197,11 @@ export const writeDB = async (data) => {
         let retries = 3;
         while (retries > 0) {
             try {
-                await DBModel.findOneAndUpdate(
+                // Bypass Mongoose casting/validation for massive JSON object to fix 30-second hang
+                await DBModel.collection.updateOne(
                     { key: 'master_db' },
-                    { data },
-                    { upsert: true, new: true, maxTimeMS: 30000 }
+                    { $set: { data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                    { upsert: true }
                 );
                 memoryCache = data;
                 lastCacheTime = Date.now();
@@ -260,10 +261,10 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
                 }
             });
             
-            const result = await DBModel.findOneAndUpdate(
+            const result = await DBModel.collection.updateOne(
                 { key: 'master_db' },
-                { $set: { [`data.${key}`]: merged } },
-                { upsert: true, new: true, maxTimeMS: 60000 }
+                { $set: { [`data.${key}`]: merged, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                { upsert: true }
             );
             if (result) {
                 if (memoryCache) { memoryCache[key] = merged; lastCacheTime = Date.now(); }
@@ -273,10 +274,10 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
 
         if (isMongoConnected) {
             const normalizedData = Array.isArray(data) ? data.map(normalizeTrailData) : data;
-            const result = await DBModel.findOneAndUpdate(
+            const result = await DBModel.collection.updateOne(
                 { key: 'master_db' },
-                { $set: { [`data.${key}`]: normalizedData } },
-                { upsert: true, new: true, maxTimeMS: 120000 }
+                { $set: { [`data.${key}`]: normalizedData, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                { upsert: true }
             );
 
             if (result) {
