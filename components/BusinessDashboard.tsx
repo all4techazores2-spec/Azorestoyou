@@ -30,6 +30,52 @@ interface BusinessDashboardProps {
 type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
+
+const getAzoresHolidays = (year) => {
+  const fixed = [
+    { month: 0, day: 1, name: 'Ano Novo' },
+    { month: 3, day: 25, name: 'Dia da Liberdade' },
+    { month: 4, day: 1, name: 'Dia do Trabalhador' },
+    { month: 5, day: 10, name: 'Dia de Portugal' },
+    { month: 7, day: 15, name: 'Assunção de Nossa Senhora' },
+    { month: 9, day: 5, name: 'Implantação da República' },
+    { month: 10, day: 1, name: 'Dia de Todos os Santos' },
+    { month: 11, day: 1, name: 'Restauração da Independência' },
+    { month: 11, day: 8, name: 'Imaculada Conceição' },
+    { month: 11, day: 25, name: 'Natal' }
+  ];
+  
+  let mobile = [];
+  if (year === 2026) {
+    mobile = [
+      { date: '2026-02-17', name: 'Terça-feira de Carnaval' },
+      { date: '2026-04-03', name: 'Sexta-Feira Santa' },
+      { date: '2026-04-05', name: 'Páscoa' },
+      { date: '2026-05-25', name: 'Dia dos Açores (Espírito Santo)' },
+      { date: '2026-06-04', name: 'Corpo de Deus' }
+    ];
+  } else if (year === 2027) {
+    mobile = [
+      { date: '2027-02-09', name: 'Terça-feira de Carnaval' },
+      { date: '2027-03-26', name: 'Sexta-Feira Santa' },
+      { date: '2027-03-28', name: 'Páscoa' },
+      { date: '2027-05-17', name: 'Dia dos Açores (Espírito Santo)' },
+      { date: '2027-05-27', name: 'Corpo de Deus' }
+    ];
+  } else {
+    mobile = [
+      { date: `${year}-05-25`, name: 'Dia dos Açores (Espírito Santo)' }
+    ];
+  }
+  
+  const formattedFixed = fixed.map(h => {
+    const mm = String(h.month + 1).padStart(2, '0');
+    const dd = String(h.day).padStart(2, '0');
+    return { date: `${year}-${mm}-${dd}`, name: h.name };
+  });
+  
+  return [...formattedFixed, ...mobile];
+};
 const BEAUTY_POS_CATEGORIES = ['Cabelo', 'Unhas', 'Estética', 'Massagem', 'Maquilhagem', 'Sobrancelhas', 'Depilação', 'Barba', 'Produtos'];
 const SHOP_POS_CATEGORIES = ['Vestuário', 'Calçado', 'Acessórios', 'Eletrónica', 'Casa', 'Promoções', 'Outros'];
 
@@ -932,6 +978,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
   const [catalogActiveCategory, setCatalogActiveCategory] = useState('Todos');
+  const [calDate, setCalDate] = useState(() => new Date());
   const [updates, setUpdates] = useState<RestaurantUpdate[]>(business.updates || []);
   const [editingUpdate, setEditingUpdate] = useState<{idx: number, update: RestaurantUpdate} | null>(null);
   const [acceptingReservation, setAcceptingReservation] = useState<Reservation | null>(null);
@@ -1135,9 +1182,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     handleUpdate({ staff: updatedStaff });
   };
 
-  const setStaffVacation = (staffId: string, start: string | null, end: string | null) => {
+  const setStaffVacation = (staffId: string, start: string | null, end: string | null, status) => {
     const updatedStaff = staff.map(m => 
-      m.id === staffId ? { ...m, vacationStart: start || undefined, vacationEnd: end || undefined } : m
+      m.id === staffId ? { 
+        ...m, 
+        vacationStart: start || undefined, 
+        vacationEnd: end || undefined,
+        vacationStatus: start ? (status || m.vacationStatus || 'pending') : undefined
+      } : m
     );
     setStaff(updatedStaff);
     handleUpdate({ staff: updatedStaff });
@@ -5498,12 +5550,20 @@ ${items.map((it, i) => `        <Line>
                     <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Equipa</h3>
                     <p className="text-slate-400 text-sm font-medium">Administre os funcionários e acessos ao sistema</p>
                   </div>
-                  <button 
-                    onClick={() => { setEditingStaff(null); setShowAddStaff(true); }}
-                    className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" /> Adicionar Funcionário
-                  </button>
+                  <div className="flex gap-4">
+                     <button 
+                       onClick={() => { setActiveTab('ferias'); }}
+                       className="px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black uppercase text-xs tracking-widest shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                     >
+                        <Calendar className="w-4 h-4 text-blue-600" /> Mapa de Férias
+                     </button>
+                     <button 
+                       onClick={() => { setEditingStaff(null); setShowAddStaff(true); }}
+                       className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                     >
+                       <Plus className="w-4 h-4" /> Adicionar Funcionário
+                     </button>
+                  </div>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -5663,94 +5723,326 @@ ${items.map((it, i) => `        <Line>
             </motion.div>
           )}
 
-          {activeTab === 'ferias' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-5xl">
-               <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Mapa de Férias</h3>
-                    <p className="text-slate-400 text-sm font-medium">Gestão de períodos de descanso da equipa</p>
+          {activeTab === 'ferias' && (() => {
+            const currentYear = calDate.getFullYear();
+            const currentMonth = calDate.getMonth();
+            const monthNames = [
+              'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            
+            const holidays = getAzoresHolidays(currentYear);
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1);
+            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            const daysArray = [];
+            for (let i = 0; i < startOffset; i++) {
+              daysArray.push(null);
+            }
+            for (let i = 1; i <= totalDays; i++) {
+              daysArray.push(i);
+            }
+            
+            const formatDateStr = (d) => {
+              return `${currentYear}-\ ${String(currentMonth + 1).padStart(2, '0')}-\ ${String(d).padStart(2, '0')}`.replace(/\s+/g, '');
+            };
+            
+            const pendingVacations = staff.filter(m => m.vacationStart && (!m.vacationStatus || m.vacationStatus === 'pending'));
+            
+            return (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-5xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => setActiveTab('staff_list')}
+                      className="p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-2xl transition-all shadow-sm border border-slate-100 flex items-center justify-center gap-2 font-black text-xs uppercase"
+                    >
+                      ← Voltar à Equipa
+                    </button>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Mapa de Férias</h3>
+                      <p className="text-slate-400 text-sm font-medium">Gestão e aprovação de férias da equipa</p>
+                    </div>
                   </div>
-               </div>
+                </div>
 
-               <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-slate-50">
-                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Funcionário</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Início</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Fim</th>
-                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
-                          <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50">
-                        {staff.map((member) => (
-                          <tr key={member.id} className="group">
-                            <td className="px-6 py-6">
-                               <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm">{member.name.charAt(0)}</div>
-                                  <div>
-                                     <p className="font-bold text-slate-800">{member.name}</p>
-                                     <p className="text-[10px] font-bold text-slate-400 uppercase">{member.role}</p>
-                                  </div>
-                               </div>
-                            </td>
-                            <td className="px-6 py-6">
-                               <input 
-                                 type="date" 
-                                 className="bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                                 defaultValue={member.vacationStart || ''}
-                                 onChange={(e) => setStaffVacation(member.id, e.target.value, member.vacationEnd || null)}
-                               />
-                            </td>
-                            <td className="px-6 py-6">
-                               <input 
-                                 type="date" 
-                                 className="bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                                 defaultValue={member.vacationEnd || ''}
-                                 onChange={(e) => setStaffVacation(member.id, member.vacationStart || null, e.target.value)}
-                               />
-                            </td>
-                            <td className="px-6 py-6">
-                               {member.vacationStart ? (
-                                 <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">Programadas</span>
-                               ) : (
-                                 <span className="px-3 py-1 bg-slate-50 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">Sem Marcação</span>
-                               )}
-                            </td>
-                            <td className="px-6 py-6 text-right">
-                               <button 
-                                 onClick={() => setStaffVacation(member.id, null, null)}
-                                 className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                                 title="Limpar Férias"
-                               >
-                                 <Trash2 size={16} />
-                               </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                  <div className="flex justify-between items-center bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                    <button 
+                      onClick={() => setCalDate(new Date(currentYear, currentMonth - 1, 1))}
+                      className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-sm text-slate-600 font-bold"
+                    >
+                      ◀ Anterior
+                    </button>
+                    <h4 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                      {monthNames[currentMonth]} {currentYear}
+                    </h4>
+                    <button 
+                      onClick={() => setCalDate(new Date(currentYear, currentMonth + 1, 1))}
+                      className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-sm text-slate-600 font-bold"
+                    >
+                      Seguinte ▶
+                    </button>
                   </div>
-               </div>
 
-               {/* Legend/Info */}
-               <div className="mt-8 p-6 bg-blue-50 rounded-3xl border border-blue-100 flex gap-4 items-start">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-900/20">
-                     <Info size={20} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-blue-900 uppercase tracking-tighter">Nota Informativa</p>
-                    <p className="text-xs text-blue-800/70 font-medium leading-relaxed mt-1">
-                      As datas marcadas aqui serão refletidas no estado do funcionário em todo o dashboard. 
-                      Funcionários de férias não podem dar entrada no relógio de ponto e aparecem com o badge "De Férias" na lista de equipa.
-                    </p>
-                  </div>
-               </div>
-            </motion.div>
-          )}
+                  <div className="grid grid-cols-7 gap-2">
+                    {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map(wd => (
+                      <div key={wd} className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        {wd}
+                      </div>
+                    ))}
 
+                    {daysArray.map((day, idx) => {
+                      if (day === null) {
+                        return <div key={`empty-${idx}`} className="bg-slate-50/30 border border-transparent rounded-2xl min-h-[90px] opacity-30"></div>;
+                      }
+
+                      const dateStr = formatDateStr(day);
+                      const holiday = holidays.find(h => h.date === dateStr);
+                      const activeVacations = staff.filter(m => m.vacationStart && m.vacationEnd && dateStr >= m.vacationStart && dateStr <= m.vacationEnd);
+
+                      return (
+                        <div 
+                          key={`day-${day}`} 
+                          className={`min-h-[100px] border border-slate-100 p-3 flex flex-col justify-between bg-white hover:bg-slate-50/50 transition-all rounded-2xl relative ${
+                            holiday ? 'ring-2 ring-red-100 bg-red-50/10' : ''
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className={`text-xs font-black ${holiday ? 'text-red-500 font-black' : 'text-slate-700'}`}>
+                              {day}
+                            </span>
+                            {holiday && (
+                              <span 
+                                title={holiday.name} 
+                                className="w-2.5 h-2.5 bg-red-500 rounded-full flex-shrink-0 animate-pulse cursor-help"
+                              ></span>
+                            )}
+                          </div>
+
+                          <div className="space-y-1 mt-2">
+                            {holiday && (
+                              <p className="text-[7px] font-black text-red-600 uppercase tracking-wider leading-tight truncate" title={holiday.name}>
+                                🎉 {holiday.name}
+                              </p>
+                            )}
+                            {activeVacations.map(m => (
+                              <div 
+                                key={m.id} 
+                                className={`text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center justify-between gap-1 ${
+                                  m.vacationStatus === 'approved' ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' :
+                                  m.vacationStatus === 'rejected' ? 'bg-red-50 border border-red-100 text-red-700' :
+                                  'bg-amber-50 border border-amber-100 text-amber-700 animate-pulse'
+                                }`}
+                              >
+                                <span className="truncate">{m.name.split(' ')[0]}</span>
+                                <span className="text-[6px]">
+                                  {m.vacationStatus === 'approved' ? '✓' : m.vacationStatus === 'rejected' ? '✗' : '?'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                      📥 Pedidos de Férias Pendentes ({pendingVacations.length})
+                    </h4>
+
+                    <div className="space-y-4">
+                      {pendingVacations.map(m => (
+                        <div key={m.id} className="bg-slate-50 border border-slate-100 p-5 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-lg transition-all duration-300">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-xs uppercase">{m.name.charAt(0)}</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">{m.name}</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{m.role === 'waiter' ? 'Empregado Mesa' : m.role === 'chef' ? 'Cozinheiro' : 'Gerente'}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-600">
+                              <span>📅 {m.vacationStart}</span>
+                              <span className="text-slate-300">até</span>
+                              <span>{m.vacationEnd || '...'}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <button
+                              onClick={() => setStaffVacation(m.id, m.vacationStart || null, m.vacationEnd || null, 'approved')}
+                              className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                            >
+                              Aceitar
+                            </button>
+                            <button
+                              onClick={() => setStaffVacation(m.id, m.vacationStart || null, m.vacationEnd || null, 'rejected')}
+                              className="flex-1 sm:flex-initial px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-500/10 active:scale-95"
+                            >
+                              Reprovar
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {pendingVacations.length === 0 && (
+                        <div className="py-12 text-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl">
+                          <p className="text-xs font-black uppercase tracking-widest">Nenhum pedido pendente</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-6">
+                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">
+                        🌴 Feriados nos Açores ({monthNames[currentMonth]})
+                      </h4>
+                      <div className="space-y-2">
+                        {holidays
+                          .filter(h => {
+                            const hMonth = parseInt(h.date.split('-')[1]) - 1;
+                            return hMonth === currentMonth;
+                          })
+                          .map(h => (
+                            <div key={h.date} className="flex justify-between items-center text-xs p-3 bg-red-50/30 rounded-2xl border border-red-100/50">
+                              <span className="font-black text-red-500">{h.date.split('-')[2]} de {monthNames[currentMonth]}</span>
+                              <span className="font-bold text-slate-600">{h.name}</span>
+                            </div>
+                          ))}
+                        {holidays.filter(h => {
+                          const hMonth = parseInt(h.date.split('-')[1]) - 1;
+                          return hMonth === currentMonth;
+                        }).length === 0 && (
+                          <p className="text-xs text-slate-400 font-medium italic text-center py-2">Sem feriados registados este mês.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                      📅 Agendar Novas Férias
+                    </h4>
+                    
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const staffId = formData.get('staffId');
+                        const start = formData.get('start');
+                        const end = formData.get('end');
+                        const status = formData.get('status');
+                        
+                        if (!staffId || !start || !end) {
+                          alert('Por favor, preencha todos os campos!');
+                          return;
+                        }
+                        
+                        setStaffVacation(staffId, start, end, status);
+                        alert('📅 Férias agendadas com sucesso!');
+                        e.currentTarget.reset();
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Funcionário</label>
+                        <select 
+                          name="staffId" 
+                          required
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                        >
+                          <option value="">Selecionar Funcionário...</option>
+                          {staff.map(m => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Data de Início</label>
+                          <input 
+                            type="date" 
+                            name="start" 
+                            required
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Data de Fim</label>
+                          <input 
+                            type="date" 
+                            name="end" 
+                            required
+                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Estado Inicial</label>
+                        <select 
+                          name="status" 
+                          required
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                        >
+                          <option value="approved">Aprovadas (Confirmadas)</option>
+                          <option value="pending">Pendentes de Aprovação</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all mt-4"
+                      >
+                        Agendar Período
+                      </button>
+                    </form>
+
+                    <div className="border-t border-slate-100 pt-6 space-y-4">
+                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                        👥 Férias Agendadas
+                      </h4>
+                      <div className="space-y-3 max-h-[250px] overflow-y-auto custom-scrollbar">
+                        {staff
+                          .filter(m => m.vacationStart)
+                          .map(m => (
+                            <div key={m.id} className="flex justify-between items-center text-xs p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                              <div>
+                                <p className="font-black text-slate-700">{m.name}</p>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">📅 {m.vacationStart} a {m.vacationEnd}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                                  m.vacationStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                  m.vacationStatus === 'rejected' ? 'bg-red-100 text-red-700' :
+                                  'bg-amber-100 text-amber-700 animate-pulse'
+                                }`}>
+                                  {m.vacationStatus === 'approved' ? 'Aprovada' : m.vacationStatus === 'rejected' ? 'Reprovada' : 'Pendente'}
+                                </span>
+                                <button
+                                  onClick={() => setStaffVacation(m.id, null, null)}
+                                  className="text-red-400 hover:text-red-600 transition-colors p-1"
+                                  title="Remover Férias"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        {staff.filter(m => m.vacationStart).length === 0 && (
+                          <p className="text-xs text-slate-400 font-medium italic text-center py-2">Sem férias agendadas atualmente.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
       </main>
 
