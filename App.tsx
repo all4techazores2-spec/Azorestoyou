@@ -1552,7 +1552,12 @@ const App: React.FC = () => {
                       🍽️ Mais Itens
                     </button>
                     <button
-                      onClick={() => setGuestOrderSent(false)}
+                      onClick={() => {
+                        setGuestOrderSent(false);
+                        if (guestRestaurantId && guestTableId) {
+                          handleTableAction(guestRestaurantId, String(guestTableId), 'calling_waiter');
+                        }
+                      }}
                       className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
                       🔔 Chamar Staff
@@ -1759,6 +1764,7 @@ const App: React.FC = () => {
             language={language}
             isStaff={isStaff}
             staffRole={staffRole || undefined}
+            staffEmail={userProfile?.email}
             onLogout={() => { 
               setIsAuthenticated(false); 
               setIsBusiness(false); 

@@ -25,6 +25,7 @@ interface BusinessDashboardProps {
   isStaff?: boolean;
   staffRole?: string;
   onForceRefresh?: () => void;
+  staffEmail?: string;
 }
 
 type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
@@ -257,7 +258,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   language = 'pt',
   isStaff = false,
   staffRole,
-  onForceRefresh
+  onForceRefresh,
+  staffEmail
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
@@ -948,6 +950,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   ]);
 
   const lastLocalUpdateRef = React.useRef<number>(0);
+  const [assignStaffTableTarget, setAssignStaffTableTarget] = useState<any | null>(null);
 
   // Sincronização em Tempo Real: Quando o servidor envia dados novos via App.tsx, 
   // nós atualizamos os estados locais do dashboard.
@@ -961,6 +964,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
     if (business.reservations) setReservations(business.reservations);
     if (business.kitchenOrders) setKitchenOrders(business.kitchenOrders);
+    if (business.staff) setStaff(business.staff);
     // Também atualizar produtos e mesas se mudarem no Super Admin
     if (business.products) setProducts(business.products);
     if (business.tables) setTables(business.tables);
@@ -1989,6 +1993,57 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         </header>
 
         <div className="p-4 md:p-8 pb-32">
+          {/* Waiter Pending Notification Banner */}
+          {isStaff && (() => {
+            const currentStaffMember = staff.find(s => s.email === staffEmail);
+            const pendingNotifs = currentStaffMember?.notifications?.filter((n: any) => n.status === 'pending') || [];
+            return pendingNotifs.map((notif: any) => (
+              <motion.div 
+                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white p-5 rounded-3xl shadow-xl shadow-amber-500/20 flex items-center justify-between border-2 border-amber-300 mb-6 animate-pulse"
+                key={notif.id}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Bell size={20} className="text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-black text-xs uppercase tracking-widest leading-none">🛎️ Chamada de Mesa Pendente</p>
+                    <p className="text-[10px] opacity-90 font-bold uppercase mt-1">A Mesa #{notif.tableNumber} está a chamar staff!</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    const updatedStaff = staff.map(s => {
+                      if (s.id === currentStaffMember.id) {
+                        return {
+                          ...s,
+                          notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id)
+                        };
+                      }
+                      return s;
+                    });
+                    const updatedTables = tables.map(t => {
+                      if (t.id === notif.tableId || String(t.id) === String(notif.tableId)) {
+                        return { ...t, waiterId: currentStaffMember.id, alertStatus: 'none' as const };
+                      }
+                      return t;
+                    });
+                    setTables(updatedTables);
+                    setStaff(updatedStaff);
+                    handleUpdate({ staff: updatedStaff, tables: updatedTables });
+                    alert(`✅ Aceitou o pedido! Mesa #${notif.tableNumber} está atribuída a si.`);
+                  }}
+                  className="px-5 py-2 bg-white text-amber-700 hover:bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md"
+                >
+                  Aceitar
+                </button>
+              </motion.div>
+            ));
+          })()}
+
           {activeTab === 'tables' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                {isBeauty ? (
@@ -2345,6 +2400,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setHoveredTableId(hoveredTableId === table.id || String(hoveredTableId) === String(table.id) ? null : table.id);
+                                  } else if (table.alertStatus === 'calling_waiter') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setAssignStaffTableTarget(table);
                                   } else {
                                     toggleTableStatus(table.id);
                                   }
@@ -2385,15 +2444,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                      'LIVRE'}
                                   </div>
 
-                                  {/* Pulsing alert badge for new remote orders */}
-                                  {(table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
-                                    <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-6 w-6 bg-gradient-to-tr from-red-500 to-rose-600 border-2 border-white shadow-lg flex items-center justify-center text-[9px] font-black text-white">
-                                        !
-                                      </span>
-                                    </div>
-                                  )}
+                                 {/* Pulsing alert badge for new remote orders & waiter calls */}
+                                 {table.alertStatus && table.alertStatus !== 'none' && (
+                                   <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
+                                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                                       table.alertStatus === 'calling_waiter' ? 'bg-amber-400' :
+                                       table.alertStatus === 'waiting_bill' ? 'bg-indigo-400' : 'bg-red-400'
+                                     }`}></span>
+                                     <span className={`relative inline-flex rounded-full h-6 w-6 border-2 border-white shadow-lg flex items-center justify-center text-[9px] font-black text-white ${
+                                       table.alertStatus === 'calling_waiter' ? 'bg-gradient-to-tr from-amber-500 to-yellow-600' :
+                                       table.alertStatus === 'waiting_bill' ? 'bg-gradient-to-tr from-indigo-500 to-blue-600' : 'bg-gradient-to-tr from-red-500 to-rose-600'
+                                     }`}>
+                                       {table.alertStatus === 'calling_waiter' ? <Bell size={10} /> :
+                                        table.alertStatus === 'waiting_bill' ? <Receipt size={10} /> : '!'}
+                                     </span>
+                                   </div>
+                                 )}
                               </motion.button>
 
                               {/* Delete table button — top left, visible on hover */}
@@ -2701,7 +2767,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                            >
                              <div className="aspect-square bg-slate-100 relative overflow-hidden">
                                {product.image ? (
-                                 <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                 <img src={product.image.startsWith('/') ? `${API_BASE_URL}${product.image}` : product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                ) : (
                                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                    <Utensils size={40} className="mb-2 opacity-20" />
@@ -2796,7 +2862,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                             }`}
                           >
                             <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 font-black border border-slate-100 overflow-hidden flex-shrink-0">
-                               {item.product.image ? <img src={item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
+                               {item.product.image ? <img src={item.product.image.startsWith('/') ? `${API_BASE_URL}${item.product.image}` : item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
                             </div>
                             <div className="flex-1 min-w-0">
                                <div className="flex justify-between items-start mb-1 gap-2">
@@ -7612,6 +7678,143 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                   </motion.div>
                 )}
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ATRIBUIR STAFF MODAL */}
+      <AnimatePresence>
+        {assignStaffTableTarget && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
+            >
+              <button 
+                onClick={() => setAssignStaffTableTarget(null)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center">
+                  <Bell size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Atribuir Mesa #{assignStaffTableTarget.number}</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Selecione um funcionário disponível</p>
+                </div>
+              </div>
+
+              <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar mb-6 select-none">
+                {(() => {
+                  const waiters = staff.filter(s => s.role === 'waiter' || s.role === 'manager');
+                  const waiterAssignments = new Map<string, number>();
+                  tables.forEach(t => {
+                    if (t.waiterId && t.status === 'occupied') {
+                      waiterAssignments.set(String(t.waiterId), t.number);
+                    }
+                  });
+
+                  const availableWaiters = waiters.filter(w => !waiterAssignments.has(String(w.id)));
+                  const busyWaiters = waiters.filter(w => waiterAssignments.has(String(w.id)));
+
+                  const isAllBusy = availableWaiters.length === 0;
+                  const displayList = isAllBusy ? busyWaiters : availableWaiters;
+
+                  if (waiters.length === 0) {
+                    return (
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest text-center py-8">Nenhum funcionário cadastrado na equipa</p>
+                    );
+                  }
+
+                  return displayList.map(waiter => {
+                    const isBusy = waiterAssignments.has(String(waiter.id));
+                    const assignedTableNum = waiterAssignments.get(String(waiter.id));
+                    return (
+                      <button
+                        key={waiter.id}
+                        onClick={() => {
+                          if (!isBusy) {
+                            // Direct assignment (Available waiter)
+                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id, alertStatus: 'none' as const } : t);
+                            setTables(updatedTables);
+                            handleUpdate({ tables: updatedTables });
+                            setAssignStaffTableTarget(null);
+                            alert(`✅ Mesa #${assignStaffTableTarget.number} atribuída diretamente a ${waiter.name}!`);
+                          } else {
+                            // Indirect notification (Busy waiter)
+                            const updatedStaff = staff.map(s => {
+                              if (s.id === waiter.id) {
+                                const newNotif = {
+                                  id: `NOTIF_${Date.now()}`,
+                                  type: 'calling_waiter' as const,
+                                  tableId: assignStaffTableTarget.id,
+                                  tableNumber: assignStaffTableTarget.number,
+                                  status: 'pending' as const,
+                                  timestamp: new Date().toISOString()
+                                };
+                                return {
+                                  ...s,
+                                  notifications: [...(s.notifications || []), newNotif]
+                                };
+                              }
+                              return s;
+                            });
+                            // Keep table waiterId for sync
+                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id } : t);
+                            setTables(updatedTables);
+                            setStaff(updatedStaff);
+                            handleUpdate({ staff: updatedStaff, tables: updatedTables });
+                            setAssignStaffTableTarget(null);
+                            alert(`📩 Mesa #${assignStaffTableTarget.number} tem chamada pendente enviada para a dashboard de ${waiter.name}!`);
+                          }
+                        }}
+                        className="w-full p-4 bg-slate-50 border border-slate-100 hover:border-blue-200 rounded-3xl hover:bg-slate-50/50 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer shadow-sm relative overflow-hidden"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${waiter.name}`} alt={waiter.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-slate-800 leading-tight">{waiter.name}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{waiter.role === 'manager' ? 'Gerente' : 'Empregado de Mesa'}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isBusy ? (
+                            <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
+                              Ocupado na Mesa #{assignedTableNum}
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                              Disponível
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+
+              {staff.filter(s => s.role === 'waiter' || s.role === 'manager').length > 0 && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-[10px] font-medium text-blue-700 leading-relaxed text-center">
+                  💡 {tables.some(t => t.waiterId && t.status === 'occupied') 
+                    ? "Se todos estiverem ocupados, ao selecionar um funcionário, este receberá um alerta pendente na sua dashboard para aceitar." 
+                    : "Os funcionários livres disponíveis são priorizados no topo. Ao clicar, a mesa é atribuída diretamente."}
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
