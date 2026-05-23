@@ -947,9 +947,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     { id: 'K1', tableId: 'T2', status: 'preparing', timestamp: new Date().toISOString(), items: business.dishes && business.dishes.length > 0 ? [{ dish: business.dishes[0], quantity: 2 }] : [] },
   ]);
 
+  const lastLocalUpdateRef = React.useRef<number>(0);
+
   // Sincronização em Tempo Real: Quando o servidor envia dados novos via App.tsx, 
   // nós atualizamos os estados locais do dashboard.
   useEffect(() => {
+    // Evitar que atualizações locais frescas (últimos 4 segundos) sejam sobrepostas
+    // por dados temporariamente antigos vindos das consultas de polling em segundo plano.
+    const timeSinceLastLocalUpdate = Date.now() - lastLocalUpdateRef.current;
+    if (timeSinceLastLocalUpdate < 4000) {
+      console.log("⏳ Local update is fresh. Ignoring background sync to prevent flickering.");
+      return;
+    }
     if (business.reservations) setReservations(business.reservations);
     if (business.kitchenOrders) setKitchenOrders(business.kitchenOrders);
     // Também atualizar produtos e mesas se mudarem no Super Admin
@@ -1208,6 +1217,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const pendingCount = reservations.filter(r => r.status === 'pending' || r.status === 'pendente').length;
 
   const handleUpdate = (updated: Partial<Restaurant>) => {
+    lastLocalUpdateRef.current = Date.now();
     onUpdateBusiness({ ...business, ...updated });
   };
 
@@ -2546,7 +2556,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                                    <button 
                                      onClick={() => {
                                         const nextStatus = statusGroup.id === 'pending' ? 'preparing' : statusGroup.id === 'preparing' ? 'ready' : 'delivered';
-                                        const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus} : o);
+                                        const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus, timestamp: new Date().toISOString()} : o);
                                         setKitchenOrders(updatedOrders);
                                         handleUpdate({ kitchenOrders: updatedOrders });
                                      }}
@@ -3345,7 +3355,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
                               {/* Selecionar Impressora */}
                               <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">🖨️ Selecionar Impressora POS</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block block">🖨️ Selecionar Impressora POS</label>
                                 <div className="space-y-2.5">
                                   {[
                                     { id: 'sunmi', name: 'Sunmi V2 (Portátil Híbrido)', type: 'Térmica 58mm/80mm', icon: '📱' },
@@ -5301,7 +5311,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'pending_admin' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'sent_to_kitchen' as const } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'sent_to_kitchen' as const, timestamp: new Date().toISOString() } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
@@ -5313,7 +5323,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'sent_to_kitchen' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'preparing' as const } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'preparing' as const, timestamp: new Date().toISOString() } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
@@ -5325,7 +5335,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'preparing' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'ready' as const } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'ready' as const, timestamp: new Date().toISOString() } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
