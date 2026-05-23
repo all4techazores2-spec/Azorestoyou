@@ -273,17 +273,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
   const isRestaurant = !isBeauty && !isShop && !isService && !isHotel && !isRentCar;
 
-  // Procurar funcionário logado na lista de equipa do negócio
-  const staffList = business.staff || [];
-  const currentUserEmail = staffEmail || '';
-  const loggedInStaff = currentUserEmail ? (staffList as any[]).find(s => s.email?.toLowerCase() === currentUserEmail.toLowerCase()) : null;
-
-  const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
-  const displayRole = loggedInStaff 
-    ? (loggedInStaff.role === 'chef' || loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
-    : 'Gerente Geral';
-  
-  const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
+  // Procurar funcionário logado na lista de equipa (movido para baixo)
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
     isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') : 
@@ -1277,6 +1267,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [selectedStaff, setSelectedStaff] = useState<any | null>(null);
   const [showAddSupplier, setShowAddSupplier] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any | null>(null);
+
+  // Procurar funcionário logado na lista de equipa do negócio (derivado do estado local staff para resiliência a polling)
+  const staffList = staff || [];
+  const currentUserEmail = staffEmail || '';
+  const loggedInStaff = currentUserEmail ? (staffList as any[]).find(s => s.email?.toLowerCase() === currentUserEmail.toLowerCase()) : null;
+
+  const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
+  const displayRole = loggedInStaff 
+    ? (loggedInStaff.role === 'chef' || loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
+    : 'Gerente Geral';
+  
+  const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
 
   // Fiado (restaurant credit/tab per client)
   // Cash Drawer State
