@@ -856,7 +856,7 @@ const App: React.FC = () => {
         .then(res => res.json())
         .then(async userData => {
           if (userData) {
-            const finalName = name || userData.name || 'Cliente Viajante';
+            const finalName = name || userData.profile?.name || userData.name || 'Cliente Viajante';
             setUserProfile({
               email: userData.email,
               name: finalName,
@@ -867,12 +867,21 @@ const App: React.FC = () => {
             setMyReservations(userData.reservations || []);
 
             // Se for novo registo (passámos o nome) ou o nome no servidor estiver vazio, atualizar
-            if (name && (!userData.name || userData.name === 'Cliente Viajante')) {
+            const hasDefaultName = !userData.profile?.name || userData.profile.name === 'Cliente Viajante' || userData.profile.name === email.split('@')[0];
+            if (name && hasDefaultName) {
                try {
                  await fetch(`${API_BASE_URL}/api/users/${email}`, {
                    method: 'PUT',
                    headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ name: name })
+                   body: JSON.stringify({ 
+                     ...userData,
+                     name: name,
+                     profile: {
+                       ...(userData.profile || {}),
+                       name: name,
+                       avatar: userData.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+                     }
+                   })
                  });
                  console.log("✅ Nome do utilizador atualizado no servidor");
                } catch (e) {
