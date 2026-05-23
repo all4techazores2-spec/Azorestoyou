@@ -700,8 +700,8 @@ app.post('/api/reservations', async (req, res) => {
             if (!user.reservations) user.reservations = [];
             user.reservations.push({ ...reservation, businessName: business.name });
             
-            console.log("💾 Persisting reservation to Database asynchronously...");
-            writeDB(db).catch(err => console.error("Async DB write error:", err));
+            console.log("💾 Persisting reservation to Database...");
+            await writeDB(db);
             console.log(`🎉 Reservation [${reservation.id}] successfully created!`);
             res.status(201).json(reservation);
         } else {
