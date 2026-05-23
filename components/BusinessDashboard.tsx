@@ -280,13 +280,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
   const displayRole = loggedInStaff 
-    ? (loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
+    ? (loggedInStaff.role === 'chef' || loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
     : 'Gerente Geral';
   
   const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    isStaff ? (staffRole === 'cook' ? 'kitchen' : 'pos') : 
+    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'pos') : 
     isShop ? 'pos' : 
     isBeauty ? 'pos' : 'tables'
   );
