@@ -931,6 +931,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
+  const [catalogActiveCategory, setCatalogActiveCategory] = useState('Todos');
   const [updates, setUpdates] = useState<RestaurantUpdate[]>(business.updates || []);
   const [editingUpdate, setEditingUpdate] = useState<{idx: number, update: RestaurantUpdate} | null>(null);
   const [acceptingReservation, setAcceptingReservation] = useState<Reservation | null>(null);
@@ -1576,15 +1577,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   // Products Handlers
   const addProduct = () => {
+    const defaultCategory = catalogActiveCategory === 'Todos' ? 'Bebidas' : catalogActiveCategory;
+    const isInternal = defaultCategory === 'Stock Interno';
     const newProduct: Product = { 
       id: `P${Date.now()}`, 
-      name: 'Novo Produto', 
-      description: '', 
+      name: isInternal ? 'Novo Item de Stock Interno' : 'Novo Produto', 
+      description: isInternal ? 'Item para logística e stock interno' : '', 
       price: 0, 
-      category: 'Bebidas', 
+      category: defaultCategory, 
       image: '',
-      stock: 0,
-      minStock: 5,
+      stock: isInternal ? 50 : 0,
+      minStock: isInternal ? 10 : 5,
       purchasePrice: 0,
       supplierId: ''
     };
@@ -2456,7 +2459,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {activeTab === 'pos' && (() => {
             const posProducts = [
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
-              ...(products || []).map(p => ({ ...p })),
+              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
                 !(business.services || []).some(s => s.name === ms.name) &&
                 !(products || []).some(p => p.name === ms.name)
@@ -2599,6 +2602,29 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                          </button>
                        ))}
                     </div>
+                    
+                    {/* POS FOOTER BAR */}
+                    <div className="bg-white border-t border-slate-100 px-8 py-3 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+                       <div className="flex items-center gap-8">
+                          <div className="flex items-center gap-2">
+                             <span className="text-slate-300">Caixa:</span>
+                             <span className="text-slate-600">CAIXA 01</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <span className="text-slate-300">Atendente:</span>
+                             <span className="text-slate-600">GUSTAVO PEREIRA</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <span className="text-slate-300">Turno:</span>
+                             <span className="text-slate-600">MANHÃ</span>
+                          </div>
+                          <div className="flex items-center gap-2 border-l border-slate-200 pl-8">
+                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                             <span className="text-emerald-600">Online</span>
+                             <RefreshCw size={12} className="hover:rotate-180 transition-transform duration-500 cursor-pointer ml-1 text-slate-400 hover:text-slate-600" />
+                          </div>
+                       </div>
+                    </div>
                   </div>
 
                   {/* RIGHT SIDEBAR: TICKET */}
@@ -2707,30 +2733,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* POS FOOTER BAR */}
-                <div className="bg-white border-t border-slate-100 px-8 py-3 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
-                   <div className="flex items-center gap-8">
-                      <div className="flex items-center gap-2">
-                         <span className="text-slate-300">Caixa:</span>
-                         <span className="text-slate-600">CAIXA 01</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <span className="text-slate-300">Atendente:</span>
-                         <span className="text-slate-600">GUSTAVO PEREIRA</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <span className="text-slate-300">Turno:</span>
-                         <span className="text-slate-600">MANHÃ</span>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                         <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                         <span className="text-emerald-600">Online</span>
-                      </div>
-                      <RefreshCw size={14} className="hover:rotate-180 transition-transform duration-500 cursor-pointer" />
-                   </div>
-                </div>
               </motion.div>
 
                 {/* NIF + Payment Modal */}
@@ -4427,7 +4429,24 @@ ${items.map((it, i) => `        <Line>
                   </button>
                </div>
 
-               <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+                              {/* Categories Filter Bar */}
+               <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-3 -mx-2 px-2 flex-shrink-0">
+                  {['Todos', ...(isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES), 'Stock Interno'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setCatalogActiveCategory(cat)}
+                      className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                        catalogActiveCategory === cat 
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' 
+                          : 'bg-white text-slate-400 border-slate-200 hover:border-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+               </div>
+
+<div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -4439,17 +4458,21 @@ ${items.map((it, i) => `        <Line>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 font-sans">
-                        {products.map((product, idx) => {
-                          const isLowStock = (product.stock || 0) <= (product.minStock || 0);
-                          return (
-                           <tr key={idx} className={`hover:bg-slate-50/50 transition-colors group ${isLowStock ? 'bg-red-50/30' : ''}`}>
+                        {products
+                          .filter(p => catalogActiveCategory === 'Todos' || p.category === catalogActiveCategory)
+                          .map((product) => {
+                            const originalIdx = products.findIndex(p => p.id === product.id);
+                            const isLowStock = (product.stock || 0) <= (product.minStock || 0);
+                            return (
+                           <tr key={product.id} className={`hover:bg-slate-50/50 transition-colors group ${isLowStock ? 'bg-red-50/30' : ''}`}>
                               <td className="px-8 py-6">
                                  <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform relative">
                                        {product.category === 'Cafetaria' && <Coffee className="w-5 h-5"/>}
                                        {product.category === 'Vinhos' && <Wine className="w-5 h-5"/>}
                                        {product.category === 'Bebidas' && <Beer className="w-5 h-5"/>}
-                                       {!['Cafetaria', 'Vinhos', 'Bebidas'].includes(product.category) && <ShoppingBag className="w-5 h-5"/>}
+                                       {product.category === 'Stock Interno' && <Package className="w-5 h-5"/>}
+                                       {!['Cafetaria', 'Vinhos', 'Bebidas', 'Stock Interno'].includes(product.category) && <ShoppingBag className="w-5 h-5"/>}
                                        {isLowStock && (
                                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg shadow-red-500/30">!</div>
                                        )}
@@ -4507,8 +4530,8 @@ ${items.map((it, i) => `        <Line>
                                         <Send size={14} />
                                       </button>
                                     )}
-                                    <button onClick={() => startProductEdit(idx)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4"/></button>
-                                    <button onClick={() => removeProduct(idx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                    <button onClick={() => startProductEdit(originalIdx)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4"/></button>
+                                    <button onClick={() => removeProduct(originalIdx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
                                  </div>
                               </td>
                            </tr>
@@ -5880,7 +5903,7 @@ ${items.map((it, i) => `        <Line>
                           value={editingProduct.product.category}
                           onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, category: e.target.value}})}
                         >
-                            {['Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos', 'Aperitivos', 'Bolos', 'Gelados', 'Entradas', 'Sopas'].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            {['Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos', 'Aperitivos', 'Bolos', 'Gelados', 'Entradas', 'Sopas', 'Stock Interno'].map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
                       </div>
                       <div>
