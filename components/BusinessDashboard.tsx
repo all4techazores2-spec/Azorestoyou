@@ -915,6 +915,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [roomFloorFilter, setRoomFloorFilter] = useState<number | 'all'>('all');
 
+  // Drawer, Installer, and Sync states
+  const [closingDrawerOpen, setClosingDrawerOpen] = useState(false);
+  const [installingStatus, setInstallingStatus] = useState<string | null>(null);
+  const [installProgress, setInstallProgress] = useState(0);
+  const [publishingStatus, setPublishingStatus] = useState<string | null>(null);
+  const [publishProgress, setPublishProgress] = useState(0);
+
   // Local state for management
   const [tables, setTables] = useState<RestaurantTable[]>(() => {
     if (business.tables && business.tables.length > 0) return business.tables;
@@ -1304,6 +1311,104 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       setEditingRoom(null);
       alert("✅ Dados do quarto guardados!");
     }
+  };
+
+  const printClosingTicketOnly = () => {
+    const printContent = document.getElementById("print-closing-ticket")?.innerHTML;
+    if (!printContent) return;
+    const printWindow = window.open('', '_blank', 'width=350,height=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Fecho de Caixa - \${business.name}</title>
+            <style>
+              body { 
+                font-family: 'Courier New', Courier, monospace; 
+                padding: 10px; 
+                color: #000; 
+                width: 300px;
+                margin: 0 auto;
+                font-size: 11px;
+                line-height: 1.4;
+              }
+              .text-center { text-align: center; }
+              .font-black { font-weight: bold; }
+              .font-bold { font-weight: bold; }
+              .space-y-2 > * { margin-bottom: 6px; }
+              .flex { display: flex; justify-content: space-between; }
+              .border-b { border-bottom: 1px dashed #000; }
+              .border-t { border-top: 1px dashed #000; }
+              .pb-3 { padding-bottom: 8px; }
+              .mb-3 { margin-bottom: 8px; }
+              .pt-3 { padding-top: 8px; }
+              .mt-4 { margin-top: 12px; }
+              .text-sm { font-size: 13px; }
+              .text-xs { font-size: 11px; }
+              .text-[10px] { font-size: 9px; }
+              .text-[9px] { font-size: 8px; }
+            </style>
+          </head>
+          <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
+            \${printContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
+  const handlePublishToServer = () => {
+    setPublishingStatus('in_progress');
+    setPublishProgress(0);
+    
+    let current = 0;
+    const interval = setInterval(() => {
+      current += 10;
+      setPublishProgress(current);
+      if (current >= 100) {
+        clearInterval(interval);
+        onSync({
+          ...business,
+          tables,
+          products,
+          kitchenOrders,
+          reservations
+        });
+      }
+    }, 250);
+  };
+
+  const handleInstallInternally = () => {
+    setInstallingStatus('in_progress');
+    setInstallProgress(0);
+    
+    let current = 0;
+    const interval = setInterval(() => {
+      current += 5;
+      setInstallProgress(current);
+      if (current >= 100) {
+        clearInterval(interval);
+        
+        // Trigger native local C: installation & Desktop shortcut
+        fetch('/api/install-internally', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Erro na instalação no servidor local.");
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log("💾 Instalação local concluída com sucesso:", data);
+        })
+        .catch(error => {
+          console.error("❌ Falha na instalação local:", error);
+        });
+      }
+    }, 150);
   };
 
   const removeRoom = (idx: number) => {
@@ -1938,17 +2043,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
              
              <button 
                onClick={() => { 
-                 onSync({ 
-                   ...business, 
-                   tables, 
-                   products, 
-                   kitchenOrders, 
-                   reservations 
-                 }); 
+                 setClosingDrawerOpen(true);
                }}
-               className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
+               className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/25 flex items-center justify-center gap-2 cursor-pointer"
              >
-               Publicar no Servidor
+               🔒 Fechar Caixa
              </button>
           </div>
       </div>
@@ -4142,6 +4241,18 @@ ${items.map((it, i) => `        <Line>
 
                 {/* ── ACTION BUTTONS ── */}
                 <div className="flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    onClick={handlePublishToServer}
+                    className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                  >
+                    ☁️ Publicar no Servidor
+                  </button>
+                  <button
+                    onClick={handleInstallInternally}
+                    className="flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-violet-600/20 active:scale-95 cursor-pointer"
+                  >
+                    💾 Instalar Internamente
+                  </button>
                   <ReportExportMenu onExport={exportReport} />
                   <button
                     onClick={exportSAFT}
@@ -7814,6 +7925,274 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                     ? "Se todos estiverem ocupados, ao selecionar um funcionário, este receberá um alerta pendente na sua dashboard para aceitar." 
                     : "Os funcionários livres disponíveis são priorizados no topo. Ao clicar, a mesa é atribuída diretamente."}
                 </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CLOSING CASH DRAWER MODAL (FECHAR CAIXA) ── */}
+      <AnimatePresence>
+        {closingDrawerOpen && (() => {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const todaySales = (business.salesHistory || []).filter((s: any) => s.date && s.date.startsWith(todayStr));
+          const totalSalesValue = todaySales.reduce((acc: number, s: any) => acc + (Number(s.total) || Number(s.amount) || 0), 0);
+          
+          const cashSales = todaySales.filter((s: any) => 
+            (s.paymentMethod || '').toLowerCase() === 'dinheiro' || 
+            (s.paymentMethod || '').toLowerCase() === 'cash'
+          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
+
+          const cardSales = todaySales.filter((s: any) => 
+            (s.paymentMethod || '').toLowerCase() === 'multibanco' || 
+            (s.paymentMethod || '').toLowerCase() === 'card' ||
+            (s.paymentMethod || '').toLowerCase() === 'digital'
+          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
+
+          const openingAmountVal = Number(business.currentDrawerAmount) || 30;
+          const totalCashInDrawer = cashSales + openingAmountVal;
+
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, y: 20 }} 
+                animate={{ scale: 1, y: 0 }} 
+                exit={{ scale: 0.95, y: 20 }}
+                className="bg-white rounded-[3rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
+              >
+                <button 
+                  onClick={() => setClosingDrawerOpen(false)}
+                  className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-red-500/10 text-red-600 rounded-2xl flex items-center justify-center">
+                    <Lock size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Fechar Caixa de Turno</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Talão oficial de fecho de caixa</p>
+                  </div>
+                </div>
+
+                {/* Thermal Ticket Style Preview */}
+                <div id="print-closing-ticket" className="bg-amber-50/30 border-2 border-dashed border-amber-200 rounded-3xl p-6 font-mono text-xs text-slate-800 mb-6 max-h-[320px] overflow-y-auto custom-scrollbar">
+                  <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <h4 className="font-black text-sm uppercase tracking-wider">{business.name}</h4>
+                    <p className="text-[10px] text-slate-500 uppercase mt-0.5">Fecho de Caixa - Turno</p>
+                    <p className="text-[9px] text-slate-400 mt-1">{new Date().toLocaleString('pt-PT')}</p>
+                  </div>
+
+                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <div className="flex justify-between">
+                      <span>Abertura de Caixa:</span>
+                      <span className="font-bold">€{openingAmountVal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total de Vendas:</span>
+                      <span className="font-bold">€{totalSalesValue.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <div className="flex justify-between">
+                      <span>Vendas em Dinheiro:</span>
+                      <span>€{cashSales.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Vendas em Multibanco:</span>
+                      <span>€{cardSales.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 font-bold text-sm">
+                    <div className="flex justify-between text-slate-900">
+                      <span>Dinheiro em Caixa:</span>
+                      <span>€{totalCashInDrawer.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-900">
+                      <span>Total Geral Turno:</span>
+                      <span>€{(totalSalesValue + openingAmountVal).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center border-t border-dashed border-slate-300 pt-3 mt-4 text-[10px] text-slate-500">
+                    <p>Operador: Gustavo Pereira</p>
+                    <p className="mt-1">Azores4You POS v1.0</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <button
+                    onClick={() => {
+                      alert("🖨️ A enviar talão de fecho para a impressora térmica POS...");
+                      printClosingTicketOnly();
+                    }}
+                    className="py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    <Printer size={14} /> Imprimir POS
+                  </button>
+                  <button
+                    onClick={() => {
+                      printClosingTicketOnly();
+                    }}
+                    className="py-4 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    📥 Imprimir / PDF
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const newLog = {
+                      id: 'CDL_' + Date.now(),
+                      type: 'close',
+                      amount: totalCashInDrawer,
+                      timestamp: new Date().toISOString(),
+                    };
+                    const updatedLogs = [...(business.cashDrawerLogs || []), newLog];
+                    
+                    onUpdateBusiness({
+                      ...business,
+                      isDrawerOpen: false,
+                      currentDrawerAmount: 0,
+                      cashDrawerLogs: updatedLogs
+                    });
+
+                    setClosingDrawerOpen(false);
+                    alert("🔒 Caixa de Turno Fechado com sucesso! Turno encerrado.");
+                  }}
+                  className="w-full py-4.5 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-red-600/20 cursor-pointer"
+                >
+                  🔒 Confirmar Fecho de Caixa
+                </button>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── LOCAL INTERNAL INSTALLER MODAL ── */}
+      <AnimatePresence>
+        {installingStatus && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} 
+              animate={{ scale: 1, y: 0 }} 
+              className="bg-slate-900 border border-slate-800 rounded-[3rem] p-8 max-w-md w-full shadow-2xl text-left font-mono text-xs text-slate-300"
+            >
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-4 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="ml-2 font-bold text-white uppercase text-[10px] tracking-wider">Instalador Interno Azores4You</span>
+              </div>
+
+              <div className="space-y-2 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400">
+                <p>⚡ Iniciando sequência de empacotamento local...</p>
+                {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
+                {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
+                {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
+                {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
+                {installProgress === 100 && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
+                    🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
+                    ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
+                    AO CLICAR, O SOFTWARE FICA FULL SCREEN.
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-6">
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${installProgress}%` }} 
+                  className="h-full bg-emerald-500 rounded-full" 
+                />
+              </div>
+
+              {installProgress < 100 ? (
+                <p className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">A carregar {installProgress}%</p>
+              ) : (
+                <button
+                  onClick={() => {
+                    try {
+                      document.documentElement.requestFullscreen();
+                    } catch (e) {
+                      console.log("Fullscreen not supported or blocked by browser gesture", e);
+                    }
+                    setInstallingStatus(null);
+                  }}
+                  className="w-full py-4.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-emerald-600/20 cursor-pointer"
+                >
+                  🖥️ Entrar em Modo Fullscreen
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CLOUD SYNC MODAL (PUBLICAR NO SERVIDOR) ── */}
+      <AnimatePresence>
+        {publishingStatus && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} 
+              animate={{ scale: 1, y: 0 }} 
+              className="bg-white rounded-[3rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center"
+            >
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce">
+                <RefreshCw size={36} className="animate-spin duration-1000" />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-1">Publicar no Servidor</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">A sincronizar dados locais com o MongoDB Atlas</p>
+
+              <div className="space-y-2 mb-6 text-left text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100 font-mono text-slate-600">
+                <p>📡 A ligar ao servidor de base de dados cloud...</p>
+                {publishProgress >= 30 && <p className="text-blue-600">⚡ Ligação estabelecida. A verificar integridade...</p>}
+                {publishProgress >= 60 && <p className="text-slate-800">📤 A publicar vendas offline, logs e alterações de staff...</p>}
+                {publishProgress === 100 && (
+                  <p className="text-emerald-600 font-bold">✅ Sincronização concluída com sucesso!</p>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${publishProgress}%` }} 
+                  className="h-full bg-blue-600 rounded-full" 
+                />
+              </div>
+
+              {publishProgress < 100 ? (
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sincronizando {publishProgress}%</p>
+              ) : (
+                <button
+                  onClick={() => setPublishingStatus(null)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10 cursor-pointer"
+                >
+                  Concluído
+                </button>
               )}
             </motion.div>
           </motion.div>

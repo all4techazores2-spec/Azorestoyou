@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
+import { exec } from 'child_process';
 import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -211,6 +212,72 @@ ALL_KEYS.forEach(key => {
                 res.status(500).json({ error: err.message });
             }
         });
+    }
+});
+
+// --- NATIVE LOCAL INSTALLATION ENDPOINT ---
+app.post('/api/install-internally', async (req, res) => {
+    try {
+        const localDir = 'C:\\Azores4You';
+        
+        // 1. Create the C:\Azores4You directory if it doesn't exist
+        if (!fs.existsSync(localDir)) {
+            fs.mkdirSync(localDir, { recursive: true });
+        }
+        
+        // 2. Copy production files ('dist', 'db.json', 'package.json', 'server.js', 'db.js', '.env')
+        const itemsToCopy = ['dist', 'db.json', 'package.json', 'server.js', 'db.js', '.env'];
+        itemsToCopy.forEach(item => {
+            const srcPath = path.join(__dirname, item);
+            const destPath = path.join(localDir, item);
+            if (fs.existsSync(srcPath)) {
+                try {
+                    fs.cpSync(srcPath, destPath, { recursive: true });
+                } catch (copyErr) {
+                    console.warn(`Could not copy ${item}:`, copyErr.message);
+                }
+            }
+        });
+        
+        // 3. Write start_pos.bat launcher in C:\Azores4You (forces fullscreen and app mode in Edge/Chrome)
+        const startScriptPath = path.join(localDir, 'start_pos.bat');
+        const batContent = `@echo off\nstart msedge.exe --start-fullscreen --app=http://localhost:5173/\nexit\n`;
+        fs.writeFileSync(startScriptPath, batContent, 'utf-8');
+        
+        // 4. Create desktop shortcut using PowerShell
+        const desktopPath = path.join(process.env.USERPROFILE || 'C:\\Users\\PC', 'Desktop');
+        const shortcutPath = path.join(desktopPath, 'Azores4You.lnk');
+        
+        const psCommand = `
+            $WshShell = New-Object -ComObject WScript.Shell;
+            $Shortcut = $WshShell.CreateShortcut("${shortcutPath.replace(/\\/g, '\\\\')}");
+            $Shortcut.TargetPath = "${startScriptPath.replace(/\\/g, '\\\\')}";
+            $Shortcut.IconLocation = "shell32.dll,14";
+            $Shortcut.Description = "Azores4You POS";
+            $Shortcut.Save();
+        `;
+        
+        const tempPsFile = path.join(localDir, 'create_shortcut.ps1');
+        fs.writeFileSync(tempPsFile, psCommand, 'utf-8');
+        
+        exec(`powershell -ExecutionPolicy Bypass -File "${tempPsFile}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Error creating desktop shortcut:", error);
+                return res.status(500).json({ error: "Failed to create desktop shortcut", details: error.message });
+            }
+            // Cleanup temp script
+            try { fs.unlinkSync(tempPsFile); } catch(e){}
+            
+            res.json({ 
+                success: true, 
+                message: "Instalado com sucesso no disco local C: e atalho criado no Ambiente de Trabalho!",
+                localFolder: localDir,
+                shortcut: shortcutPath
+            });
+        });
+    } catch (err) {
+        console.error("Internal install endpoint failed:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -440,6 +507,81 @@ app.get('/api/cars/:id', async (req, res) => {
     const car = db.cars.find(c => c.id === req.params.id);
     if (car) res.json(car);
     else res.status(404).send("Car not found");
+});
+
+// --- REVIEWS ---
+app.post('/api/restaurants/:id/reviews', async (req, res) => {
+    const { id } = req.params;
+    const reviewData = req.body;
+    try {
+        const db = await readDB(true);
+        let business = null;
+        let category = null;
+        
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key]) {
+                const b = db[key].find(item => item.id === id || String(item.id) === String(id));
+                if (b) { business = b; category = key; }
+            }
+        });
+
+        if (!business) {
+            return res.status(404).send("Business not found");
+        }
+
+        if (!business.reviews_list) {
+            business.reviews_list = [];
+        }
+
+        // Check if this reservation or purchase has already been reviewed
+        const alreadyReviewed = business.reviews_list.some(r => r.reservationId === reviewData.reservationId);
+        if (alreadyReviewed) {
+            return res.status(400).json({ error: "Esta reserva/compra já foi avaliada." });
+        }
+
+        const newReview = {
+            id: `REV_${Date.now()}`,
+            reservationId: reviewData.reservationId,
+            rating: Number(reviewData.rating) || 5,
+            comment: reviewData.comment || '',
+            customerName: reviewData.customerName || 'Cliente',
+            customerEmail: reviewData.customerEmail,
+            date: new Date().toISOString(),
+            approved: false // Starts as unapproved / pending approval
+        };
+
+        business.reviews_list.push(newReview);
+
+        // Update local reservations state if applicable
+        if (db.users) {
+            db.users.forEach(user => {
+                if (user.reservations) {
+                    const rIdx = user.reservations.findIndex(r => r.id === reviewData.reservationId);
+                    if (rIdx !== -1) {
+                        user.reservations[rIdx].reviewed = true;
+                        user.reservations[rIdx].rating = newReview.rating;
+                        user.reservations[rIdx].reviewNote = newReview.comment;
+                    }
+                }
+            });
+        }
+
+        if (business.reservations) {
+            const rIdx = business.reservations.findIndex(r => r.id === reviewData.reservationId);
+            if (rIdx !== -1) {
+                business.reservations[rIdx].reviewed = true;
+                business.reservations[rIdx].rating = newReview.rating;
+                business.reservations[rIdx].reviewNote = newReview.comment;
+            }
+        }
+
+        await writeDB(db);
+        console.log(`⭐ New unapproved review registered for business ${id} reservation ${reviewData.reservationId}`);
+        res.status(201).json(newReview);
+    } catch (err) {
+        console.error("❌ Error registering review:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // --- RESERVATIONS ---
