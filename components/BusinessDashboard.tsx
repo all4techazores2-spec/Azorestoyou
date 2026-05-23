@@ -286,7 +286,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'pos') : 
+    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') : 
     isShop ? 'pos' : 
     isBeauty ? 'pos' : 'tables'
   );
@@ -302,6 +302,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [showRequestVacationModal, setShowRequestVacationModal] = useState(false);
   const [vacationStartDate, setVacationStartDate] = useState('');
   const [vacationEndDate, setVacationEndDate] = useState('');
+  const [showScheduleCalendar, setShowScheduleCalendar] = useState(false);
+  const [scheduleCalDate, setScheduleCalDate] = useState(new Date());
   
   // Custom Area and Table States
   const [hoveredTableId, setHoveredTableId] = useState<string | number | null>(null);
@@ -459,6 +461,162 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     } catch (e) {
       return '0h 0m';
     }
+  };
+
+  const renderScheduleCalendarModal = () => {
+    if (!showScheduleCalendar || !loggedInStaff) return null;
+    
+    const currentYear = scheduleCalDate.getFullYear();
+    const currentMonth = scheduleCalDate.getMonth();
+    const monthNames = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    
+    const holidays = getAzoresHolidays(currentYear);
+    
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1);
+    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const daysArray = [];
+    for (let i = 0; i < startOffset; i++) {
+      daysArray.push(null);
+    }
+    for (let i = 1; i <= totalDays; i++) {
+      daysArray.push(i);
+    }
+    
+    const formatDateStr = (d: number) => {
+      return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    };
+
+    const sStart = loggedInStaff.shiftStart || '08:00';
+    const sEnd = loggedInStaff.shiftEnd || '17:00';
+    const pStart = loggedInStaff.pauseStart || '12:00';
+    const pEnd = loggedInStaff.pauseEnd || '13:00';
+
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans animate-in fade-in zoom-in-95 duration-300">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-slate-900 border border-white/10 p-6 rounded-[2.5rem] max-w-lg w-full relative shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+            <div className="text-left">
+              <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                📅 Calendário de Turno
+              </h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Consulte o seu horário e feriados</p>
+            </div>
+            <button 
+              onClick={() => setShowScheduleCalendar(false)}
+              className="p-2 bg-white/10 text-white hover:bg-white/20 rounded-full transition-all"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Month Navigator */}
+          <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5 mb-4">
+            <button 
+              onClick={() => setScheduleCalDate(new Date(currentYear, currentMonth - 1, 1))}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all shadow-sm font-bold text-xs"
+            >
+              ◀ Ant.
+            </button>
+            <h4 className="text-xs font-black text-white uppercase tracking-widest">
+              {monthNames[currentMonth]} {currentYear}
+            </h4>
+            <button 
+              onClick={() => setScheduleCalDate(new Date(currentYear, currentMonth + 1, 1))}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all shadow-sm font-bold text-xs"
+            >
+              Seg. ▶
+            </button>
+          </div>
+
+          {/* Grid of Days */}
+          <div className="grid grid-cols-7 gap-1.5 overflow-y-auto flex-1 pr-1 pb-4">
+            {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map(wd => (
+              <div key={wd} className="py-2 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                {wd}
+              </div>
+            ))}
+
+            {daysArray.map((day, idx) => {
+              if (day === null) {
+                return <div key={`empty-${idx}`} className="bg-white/5 border border-transparent rounded-xl min-h-[65px] opacity-25"></div>;
+              }
+
+              const dateStr = formatDateStr(day);
+              const holiday = holidays.find(h => h.date === dateStr);
+              
+              // Check if weekend
+              const dateObj = new Date(currentYear, currentMonth, day);
+              const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+              return (
+                <div 
+                  key={`day-${day}`} 
+                  className={`min-h-[70px] border p-2 flex flex-col justify-between transition-all rounded-xl relative ${
+                    holiday ? 'bg-red-500/10 border-red-500/30' :
+                    isWeekend ? 'bg-white/5 border-white/5' :
+                    'bg-white/[0.03] border-white/10'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className={`text-[10px] font-black ${holiday ? 'text-red-400' : 'text-slate-300'}`}>
+                      {day}
+                    </span>
+                    {holiday && (
+                      <span 
+                        title={holiday.name} 
+                        className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0 animate-pulse"
+                      ></span>
+                    )}
+                  </div>
+
+                  <div className="mt-1 space-y-1">
+                    {holiday ? (
+                      <p className="text-[6px] font-black text-red-400 uppercase tracking-tight leading-none truncate" title={holiday.name}>
+                        🎉 {holiday.name}
+                      </p>
+                    ) : isWeekend ? (
+                      <p className="text-[6px] font-black text-slate-500 uppercase tracking-tight leading-none text-left">
+                        Folga
+                      </p>
+                    ) : (
+                      <div className="space-y-0.5 text-left">
+                        <p className="text-[7px] font-bold text-emerald-400 leading-none">
+                          {sStart}
+                        </p>
+                        <p className="text-[7px] font-bold text-slate-300 leading-none">
+                          {sEnd}
+                        </p>
+                        <p className="text-[5px] text-slate-500 leading-none truncate">
+                          Pausa: {pStart}-{pEnd}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer Legend */}
+          <div className="pt-4 border-t border-white/5 flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-white/5 border border-white/10 block"></span> Trabalho</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-500/10 border border-red-500/20 block"></span> Feriado</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-white/5 border border-transparent block opacity-30"></span> Descanso</span>
+          </div>
+        </motion.div>
+      </div>
+    );
   };
   
   // POS State
@@ -2811,6 +2969,249 @@ return t;
                    </div>
                  </>
                )}
+            </motion.div>
+          )}
+
+          {activeTab === 'atendimentos' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+              <div className="text-center sm:text-left">
+                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Pedidos & Chamadas</h3>
+                <p className="text-slate-400 text-sm font-medium">Aceite chamadas de clientes e consulte o histórico</p>
+              </div>
+
+              {loggedInStaff?.role !== 'waiter' ? (
+                <div className="bg-white border border-slate-100 rounded-[2rem] p-8 text-center shadow-sm">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                    <ChefHat size={32} />
+                  </div>
+                  <p className="text-slate-700 font-bold text-sm">Função: Cozinha 🍳</p>
+                  <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                    Esta secção é dedicada ao atendimento de mesas no salão. Como Cozinheiro(a), o seu foco principal é no Monitor de Cozinha!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* SECÇÃO 1: PEDIDOS DE CHAMADA ATIVOS (PENDENTES) */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-2">
+                      🔔 Chamadas de Mesa Ativas ({(() => {
+                        const pendingNotifs = loggedInStaff?.notifications?.filter((n: any) => n.status === 'pending') || [];
+                        return pendingNotifs.length;
+                      })()})
+                    </h4>
+
+                    {(() => {
+                      const pendingNotifs = loggedInStaff?.notifications?.filter((n: any) => n.status === 'pending') || [];
+                      if (pendingNotifs.length === 0) {
+                        return (
+                          <div className="bg-white border border-slate-100 rounded-[2rem] p-6 text-center shadow-sm py-8">
+                            <div className="w-10 h-10 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <Bell size={20} />
+                            </div>
+                            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Nenhuma chamada pendente</p>
+                            <p className="text-slate-400 text-[9px] mt-1 leading-normal">Os chamamentos dos clientes aparecerão aqui em tempo real.</p>
+                          </div>
+                        );
+                      }
+
+                      return pendingNotifs.map((notif: any) => (
+                        <motion.div 
+                          key={notif.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white p-5 rounded-[2rem] shadow-xl shadow-amber-500/20 border-2 border-amber-300 space-y-4 text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center animate-bounce">
+                              <Bell size={20} className="text-white" />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-black text-xs uppercase tracking-widest leading-none">🛎️ Chamada Pendente</p>
+                              <p className="text-[10px] opacity-90 font-bold uppercase mt-1">A Mesa #{notif.tableNumber} está a solicitar staff!</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const updatedStaff = staff.map(s => {
+                                if (s.id === loggedInStaff.id) {
+                                  const currentAttendances = s.attendances || [];
+                                  const newAttendance = {
+                                    tableNumber: notif.tableNumber,
+                                    time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+                                    date: new Date().toLocaleDateString('pt-PT')
+                                  };
+                                  return {
+                                    ...s,
+                                    notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id),
+                                    attendances: [newAttendance, ...currentAttendances]
+                                  };
+                                }
+                                return s;
+                              });
+                              const updatedTables = tables.map(t => {
+                                if (t.id === notif.tableId || String(t.id) === String(notif.tableId)) {
+                                  return { ...t, waiterId: loggedInStaff.id, alertStatus: 'none' as const };
+                                }
+                                return t;
+                              });
+                              setTables(updatedTables);
+                              setStaff(updatedStaff);
+                              handleUpdate({ staff: updatedStaff, tables: updatedTables });
+                              alert(`✅ Chamada aceite! Dirija-se à Mesa #${notif.tableNumber}.`);
+                            }}
+                            className="w-full py-3 bg-white text-amber-700 hover:bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md active:scale-95 font-bold"
+                          >
+                            Aceitar & Ir à Mesa
+                          </button>
+                        </motion.div>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* SECÇÃO 2: HISTÓRICO DE ATENDIMENTOS */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-2">
+                      ✓ Histórico de Atendimentos Realizados ({(loggedInStaff.attendances || []).length})
+                    </h4>
+
+                    <div className="space-y-3">
+                      {(loggedInStaff.attendances || []).map((att: any, idx: number) => (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          key={idx}
+                          className="bg-white border border-slate-100 p-5 rounded-2xl flex justify-between items-center hover:shadow-md transition-all duration-300"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center font-bold text-sm border border-emerald-100 shadow-sm">
+                              #{att.tableNumber}
+                            </div>
+                            <div className="text-left">
+                              <p className="text-xs font-black text-slate-800">Mesa #{att.tableNumber} Atendida</p>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                📅 {att.date} às {att.time}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[8px] font-black uppercase tracking-wider">
+                            Concluído
+                          </span>
+                        </motion.div>
+                      ))}
+
+                      {(!loggedInStaff.attendances || loggedInStaff.attendances.length === 0) && (
+                        <div className="bg-white border border-slate-100 rounded-[2rem] p-8 text-center shadow-sm">
+                          <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <CheckCircle size={24} />
+                          </div>
+                          <p className="text-slate-500 font-bold text-xs">Ainda não realizou atendimentos de mesas hoje.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'details' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+              <div className="text-center sm:text-left">
+                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">O Meu Painel Pessoal</h3>
+                <p className="text-slate-400 text-sm font-medium">Controlo de horas, presença e férias</p>
+              </div>
+
+              {/* Grid de Estatísticas */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Horas Trabalhadas */}
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
+                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
+                  <Clock size={16} className="mx-auto mb-2 text-blue-200" />
+                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Horas Trab.</p>
+                  <p className="text-lg font-black mt-1">
+                    {(loggedInStaff?.attendanceLogs || []).reduce((acc: number, log: any) => acc + (log.totalHours || 0), 0).toFixed(1)}h
+                  </p>
+                </div>
+
+                {/* Férias Gozadas */}
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
+                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
+                  <CheckCircle size={16} className="mx-auto mb-2 text-emerald-200" />
+                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Férias Gozadas</p>
+                  <p className="text-lg font-black mt-1">{loggedInStaff?.vacationDaysGozados ?? 0} dias</p>
+                </div>
+
+                {/* Férias Disponíveis */}
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
+                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
+                  <Calendar size={16} className="mx-auto mb-2 text-amber-200" />
+                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Disp. Gozar</p>
+                  <p className="text-lg font-black mt-1">{loggedInStaff?.vacationDaysPorGozar ?? 22} dias</p>
+                </div>
+              </div>
+
+              {/* Informações de Turno */}
+              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  ⏱️ O Meu Turno Configurado
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Horário Turno</p>
+                    <p className="text-sm font-bold text-slate-700 mt-1">{loggedInStaff?.shiftStart || '08:00'} - {loggedInStaff?.shiftEnd || '17:00'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Intervalo Pausa</p>
+                    <p className="text-sm font-bold text-slate-700 mt-1">{loggedInStaff?.pauseStart || '12:00'} - {loggedInStaff?.pauseEnd || '13:00'}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowScheduleCalendar(true)}
+                  className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
+                >
+                  <Calendar size={14} className="text-slate-500" /> Ver Horário Semanal/Mensal
+                </button>
+              </div>
+
+              {/* Estado do Pedido de Férias */}
+              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm space-y-4">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  🏖️ Estado das Minhas Férias
+                </h4>
+                {loggedInStaff?.vacationStart ? (
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Período Marcado</span>
+                      <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border ${
+                        loggedInStaff.vacationStatus === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                        loggedInStaff.vacationStatus === 'rejected' ? 'bg-rose-50 border-rose-200 text-rose-700' :
+                        'bg-amber-50 border-amber-200 text-amber-700 animate-pulse'
+                      }`}>
+                        {loggedInStaff.vacationStatus === 'approved' ? 'Aprovado ✓' :
+                         loggedInStaff.vacationStatus === 'rejected' ? 'Recusado ✗' :
+                         'Pendente Aprovação...'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-700">
+                      📅 {loggedInStaff.vacationStart} até {loggedInStaff.vacationEnd || 'N/A'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center text-slate-400 text-[10px] font-semibold py-6">
+                    Não tem nenhuma marcação de férias ativa ou pendente.
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowRequestVacationModal(true)}
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Calendar size={14} /> Solicitar Período de Férias
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -8227,6 +8628,11 @@ ${items.map((it, i) => `        <Line>
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
+      {/* ── POPUP DO CALENDÁRIO DE HORÁRIO DO FUNCIONÁRIO ── */}
+      <AnimatePresence>
+        {showScheduleCalendar && renderScheduleCalendarModal()}
       </AnimatePresence>
     </div>
   );
