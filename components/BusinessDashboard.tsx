@@ -9,7 +9,7 @@ import {
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat,
-  ScanLine, PackagePlus, Camera, ShoppingCart
+  ScanLine, PackagePlus, Camera, ShoppingCart, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -28,7 +28,7 @@ interface BusinessDashboardProps {
   staffEmail?: string;
 }
 
-type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
+type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers' | 'atendimentos' | 'details';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
 
@@ -297,6 +297,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [walkInTableId, setWalkInTableId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   
+  // Staff Ponto & Vacation Modals States
+  const [showClockOutPopup, setShowClockOutPopup] = useState(false);
+  const [showRequestVacationModal, setShowRequestVacationModal] = useState(false);
+  const [vacationStartDate, setVacationStartDate] = useState('');
+  const [vacationEndDate, setVacationEndDate] = useState('');
+  
   // Custom Area and Table States
   const [hoveredTableId, setHoveredTableId] = useState<string | number | null>(null);
   const [activeArea, setActiveArea] = useState<string>('Geral');
@@ -432,6 +438,28 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const getCurrentShiftDuration = () => {
+    if (!loggedInStaff || !loggedInStaff.attendanceLogs || loggedInStaff.attendanceLogs.length === 0) return '0h 0m';
+    const lastLog = loggedInStaff.attendanceLogs[loggedInStaff.attendanceLogs.length - 1];
+    if (lastLog.clockOut) return '0h 0m';
+    
+    try {
+      const [hIn, mIn] = lastLog.clockIn.split(':').map(Number);
+      const now = new Date();
+      const hOut = now.getHours();
+      const mOut = now.getMinutes();
+      
+      let diffMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
+      if (diffMinutes < 0) diffMinutes = 0;
+      
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      return `${hours}h ${minutes}m`;
+    } catch (e) {
+      return '0h 0m';
+    }
+  };
   
   // POS State
   const [posCategory, setPosCategory] = useState<string>('Pratos');
@@ -1058,23 +1086,31 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         { date: '25/04/2026', clockIn: '10:00', clockOut: '15:00', totalHours: 5 },
         { date: '26/04/2026', clockIn: '10:05', clockOut: '15:15', totalHours: 5.17 },
         { date: '27/04/2026', clockIn: '09:50' }
-      ]
+      ],
+      shiftStart: '08:00', pauseStart: '12:00', pauseEnd: '13:00', shiftEnd: '17:00',
+      vacationDaysGozados: 5, vacationDaysPorGozar: 17, attendances: []
     },
     { 
       id: 'STF_2', name: 'Carlos Bettencourt', role: 'chef', email: 'carlos@restaurante.pt', phone: '+351 917 333 444', password: 'chef456', 
       onDuty: true, attendanceLogs: [
         { date: '27/04/2026', clockIn: '08:00' }
-      ]
+      ],
+      shiftStart: '08:00', pauseStart: '12:00', pauseEnd: '13:00', shiftEnd: '17:00',
+      vacationDaysGozados: 0, vacationDaysPorGozar: 22, attendances: []
     },
     { 
       id: 'STF_3', name: 'Margarida Lima', role: 'waiter', email: 'margarida@restaurante.pt', phone: '+351 918 555 666', password: 'pass789', 
-      onDuty: false, vacationStart: '2026-04-20', vacationEnd: '2026-05-04' 
+      onDuty: false, vacationStart: '2026-04-20', vacationEnd: '2026-05-04',
+      shiftStart: '09:00', pauseStart: '13:00', pauseEnd: '14:00', shiftEnd: '18:00',
+      vacationDaysGozados: 10, vacationDaysPorGozar: 12, attendances: []
     },
     { 
       id: 'STF_4', name: 'Rui Silveira', role: 'manager', email: 'rui@restaurante.pt', phone: '+351 919 777 888', password: 'mgr001', 
       onDuty: true, attendanceLogs: [
         { date: '27/04/2026', clockIn: '09:00' }
-      ]
+      ],
+      shiftStart: '09:00', pauseStart: '13:00', pauseEnd: '14:00', shiftEnd: '18:00',
+      vacationDaysGozados: 2, vacationDaysPorGozar: 20, attendances: []
     },
   ];
   const [staff, setStaff] = useState<any[]>(Array.isArray(business.staff) && business.staff.length > 0 ? business.staff : MOCK_STAFF_BASE);
@@ -1146,12 +1182,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
     const newMember = {
+      ...(editingStaff || {}),
       id: editingStaff?.id || 'STF_' + Date.now(),
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       password: formData.get('password') as string,
       phone: formData.get('phone') as string,
       role: formData.get('role') as any,
+      shiftStart: formData.get('shiftStart') as string || '08:00',
+      pauseStart: formData.get('pauseStart') as string || '12:00',
+      pauseEnd: formData.get('pauseEnd') as string || '13:00',
+      shiftEnd: formData.get('shiftEnd') as string || '17:00',
+      vacationDaysGozados: parseInt(formData.get('vacationDaysGozados') as string || '0', 10),
+      vacationDaysPorGozar: parseInt(formData.get('vacationDaysPorGozar') as string || '22', 10),
+      attendances: editingStaff?.attendances || []
     };
 
     let updatedStaff;
@@ -1924,6 +1968,79 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
+  if (isStaff && loggedInStaff && !loggedInStaff.onDuty) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden font-sans">
+        {/* Animated decorative blobs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+
+        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden z-10 flex flex-col items-center text-center">
+          {/* Top Logo / Decorative Icon */}
+          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-3xl flex items-center justify-center mb-6 shadow-inner relative group">
+            <Clock size={36} className="text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
+
+          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-1">
+            Registo de Ponto
+          </h2>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">
+            Azores<span className="text-green-400">Toyou</span> Staff
+          </p>
+
+          {/* Operator Profile Card */}
+          <div className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl flex items-center gap-4 mb-6 text-left">
+            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
+              <img 
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} 
+                alt="Avatar" 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+            <div>
+              <p className="text-white font-black text-sm leading-none">{displayName}</p>
+              <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest mt-1.5 leading-none">{displayRole}</p>
+              <p className="text-[9px] text-slate-400 font-medium mt-1 leading-none">
+                Turno: {loggedInStaff.shiftStart || '08:00'} - {loggedInStaff.shiftEnd || '17:00'}
+              </p>
+            </div>
+          </div>
+
+          {/* Large Clock Display */}
+          <div className="bg-black/20 border border-white/5 py-6 px-8 rounded-3xl w-full mb-8">
+            <p className="font-mono text-4xl font-black tracking-widest text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+              {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-2 leading-none">
+              {currentTime.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+
+          {/* Clock In Button */}
+          <button
+            onClick={() => toggleStaffDuty(loggedInStaff.id)}
+            className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-emerald-400/20 group flex items-center justify-center gap-2"
+          >
+            <Play size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            Entrar ao Serviço
+          </button>
+
+          {/* Logout Button */}
+          <button
+            onClick={onLogout}
+            className="mt-6 text-[10px] font-black text-slate-500 hover:text-rose-400 uppercase tracking-widest flex items-center gap-2 transition-colors active:scale-95"
+          >
+            <LogOut size={12} /> Sair do Sistema
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!isDrawerOpen) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -1976,20 +2093,30 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   }
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
-      {/* ── BARRA DE NAVEGAÇÃO MOBILE (Business) ── */}
-      <BusinessBottomNav
-        activeTab={activeTab}
-        onTab={(tab) => setActiveTab(tab as DashboardTab)}
-        business={business}
-        onUpdateBusiness={onUpdateBusiness}
-      />
+      {/* ── BARRA DE NAVEGAÇÃO MOBILE ── */}
+      {isStaff ? (
+        <StaffBottomNav
+          activeTab={activeTab}
+          onTab={(tab) => setActiveTab(tab as DashboardTab)}
+          onSair={() => setShowClockOutPopup(true)}
+        />
+      ) : (
+        <BusinessBottomNav
+          activeTab={activeTab}
+          onTab={(tab) => setActiveTab(tab as DashboardTab)}
+          business={business}
+          onUpdateBusiness={onUpdateBusiness}
+        />
+      )}
       {/* Sidebar Toggle Button (Mobile) */}
-      <button 
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all"
-      >
-        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {!isStaff && (
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all"
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      )}
 
       <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* ... existing sidebar content ... */}
@@ -2068,39 +2195,77 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       <main className="flex-1 lg:ml-80 min-h-screen flex flex-col relative overflow-hidden">
         {/* Top Header - Estilo Foto 2 */}
         <header className="sticky top-0 bg-white border-b border-slate-100 h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
-            <div className="flex items-center gap-2 md:gap-6">
-               <button 
-                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                 className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
-               >
-                  <Menu size={20} />
-               </button>
-               <div>
-                  <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
-                     Olá, {displayName.split(' ')[0]}! 👋
-                  </h2>
-                  <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
-               </div>
-            </div>
+            {isStaff ? (
+              // ── CABEÇALHO PARA STAFF (RELÓGIO CENTRADO E DADOS DO PERFIL) ──
+              <div className="flex-1 flex justify-between items-center w-full">
+                {/* Lado Esquerdo: Avatar & Nome do Operador (Oculto em Mobile Pequeno) */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200">
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-slate-800 font-black text-xs leading-none">{displayName}</p>
+                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 leading-none">{displayRole}</p>
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-2 md:gap-6">
-               <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
-                  <Calendar size={18} className="text-blue-500" />
-                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
-                     {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
-                  </span>
-               </div>
+                {/* Centro: Relógio Digital Ticking e Data Atual (Sempre visível e centralizado) */}
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <p className="font-mono font-black text-slate-800 text-lg md:text-2xl tracking-widest leading-none">
+                    {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </p>
+                  <p className="text-[8px] md:text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1 leading-none">
+                    {currentTime.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </p>
+                </div>
 
-               <div className="flex items-center gap-2 md:gap-3">
-                  <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
-                     <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                  </button>
-                  <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
-                     <Bell size={18} />
-                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
-                  </button>
-               </div>
-            </div>
+                {/* Lado Direito: Botão Sair / Logout */}
+                <button 
+                  onClick={() => setShowClockOutPopup(true)} 
+                  className="p-2 md:p-3 bg-red-50 text-red-500 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all group flex items-center gap-1.5 font-black text-[9px] uppercase tracking-widest cursor-pointer shadow-sm border border-red-100"
+                >
+                  <LogOut size={14} className="group-hover:scale-110 transition-transform" />
+                  <span>Sair</span>
+                </button>
+              </div>
+            ) : (
+              // ── CABEÇALHO PADRÃO DO NEGÓCIO (Dono / Admin) ──
+              <>
+                <div className="flex items-center gap-2 md:gap-6">
+                   <button 
+                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                     className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
+                   >
+                      <Menu size={20} />
+                   </button>
+                   <div>
+                      <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
+                         Olá, {displayName.split(' ')[0]}! 👋
+                      </h2>
+                      <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
+                   </div>
+                </div>
+
+                <div className="flex items-center gap-2 md:gap-6">
+                   <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                      <Calendar size={18} className="text-blue-500" />
+                      <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
+                         {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
+                      </span>
+                   </div>
+
+                   <div className="flex items-center gap-2 md:gap-3">
+                      <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
+                         <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                      </button>
+                      <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
+                         <Bell size={18} />
+                         <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+                      </button>
+                   </div>
+                </div>
+              </>
+            )}
         </header>
 
         <div className="p-4 md:p-8 pb-32">
@@ -2129,9 +2294,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                   onClick={() => {
                     const updatedStaff = staff.map(s => {
                       if (s.id === currentStaffMember.id) {
+                        const currentAttendances = s.attendances || [];
+                        const newAttendance = {
+                          tableNumber: notif.tableNumber,
+                          time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+                          date: new Date().toLocaleDateString('pt-PT')
+                        };
                         return {
                           ...s,
-                          notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id)
+                          notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id),
+                          attendances: [newAttendance, ...currentAttendances]
                         };
                       }
                       return s;
@@ -2140,7 +2312,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       if (t.id === notif.tableId || String(t.id) === String(notif.tableId)) {
                         return { ...t, waiterId: currentStaffMember.id, alertStatus: 'none' as const };
                       }
-                      return t;
+return t;
                     });
                     setTables(updatedTables);
                     setStaff(updatedStaff);
@@ -6990,6 +7162,84 @@ ${items.map((it, i) => `        <Line>
                           </select>
                        </div>
                     </div>
+                    {/* Horário de Trabalho & Pausa */}
+                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">⏱️ Horário de Trabalho & Pausa</h4>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Hora Entrada</label>
+                             <input 
+                               name="shiftStart"
+                               type="time"
+                               defaultValue={editingStaff?.shiftStart || '08:00'}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Hora Saída</label>
+                             <input 
+                               name="shiftEnd"
+                               type="time"
+                               defaultValue={editingStaff?.shiftEnd || '17:00'}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Pausa (Início)</label>
+                             <input 
+                               name="pauseStart"
+                               type="time"
+                               defaultValue={editingStaff?.pauseStart || '12:00'}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Pausa (Fim)</label>
+                             <input 
+                               name="pauseEnd"
+                               type="time"
+                               defaultValue={editingStaff?.pauseEnd || '13:00'}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                       </div>
+                    </div>
+                    {/* Gestão de Férias */}
+                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">🏖️ Gestão de Férias</h4>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Dias Gozados</label>
+                             <input 
+                               name="vacationDaysGozados"
+                               type="number"
+                               min="0"
+                               max="30"
+                               defaultValue={editingStaff?.vacationDaysGozados ?? 0}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                          <div>
+                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Dias por Gozar</label>
+                             <input 
+                               name="vacationDaysPorGozar"
+                               type="number"
+                               min="0"
+                               max="30"
+                               defaultValue={editingStaff?.vacationDaysPorGozar ?? 22}
+                               required
+                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
+                             />
+                          </div>
+                       </div>
+                    </div>
                   </div>
 
                   <div className="pt-4">
@@ -7806,6 +8056,178 @@ ${items.map((it, i) => `        <Line>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── POPUP DE CONFIRMAÇÃO DE PICADA DE SAÍDA ── */}
+      <AnimatePresence>
+        {showClockOutPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans animate-in fade-in zoom-in-95 duration-300">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-slate-900 border border-white/10 p-6 rounded-[2rem] max-w-sm w-full relative text-center shadow-2xl overflow-hidden"
+            >
+              {/* Decorative background gradients */}
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-rose-500 rounded-full blur-[40px] opacity-30 pointer-events-none"></div>
+
+              <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <LogOut size={28} className="text-rose-400" />
+              </div>
+
+              <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
+                Terminar Turno & Sair
+              </h3>
+              
+              <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                Tem a certeza que deseja registar a sua saída de ponto e terminar a sua sessão?
+              </p>
+
+              {/* Session Summary Card */}
+              {loggedInStaff && (
+                <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl text-left space-y-3 mb-6">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-slate-400 uppercase tracking-wider">Turno de Entrada:</span>
+                    <span className="font-bold text-white">
+                      {(() => {
+                        if (!loggedInStaff.attendanceLogs || loggedInStaff.attendanceLogs.length === 0) return '--:--';
+                        const lastLog = loggedInStaff.attendanceLogs[loggedInStaff.attendanceLogs.length - 1];
+                        return lastLog.clockOut ? '--:--' : lastLog.clockIn;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-slate-400 uppercase tracking-wider">Hora de Saída:</span>
+                    <span className="font-bold text-emerald-400">
+                      {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] pt-2 border-t border-white/5">
+                    <span className="font-bold text-slate-400 uppercase tracking-wider">Duração Estimada:</span>
+                    <span className="font-black text-blue-400">{getCurrentShiftDuration()}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    if (loggedInStaff) {
+                      toggleStaffDuty(loggedInStaff.id);
+                    }
+                    setShowClockOutPopup(false);
+                    onLogout();
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-rose-500/20 border border-rose-400/20"
+                >
+                  Picar Saída & Sair
+                </button>
+                <button
+                  onClick={() => setShowClockOutPopup(false)}
+                  className="w-full py-4 bg-slate-800 text-slate-300 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all cursor-pointer active:scale-95 border border-white/5"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── POPUP DE SOLICITAÇÃO DE FÉRIAS ── */}
+      <AnimatePresence>
+        {showRequestVacationModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-slate-900 border border-white/10 p-6 rounded-[2rem] max-w-sm w-full relative text-left shadow-2xl overflow-hidden"
+            >
+              {/* Decorative background gradients */}
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500 rounded-full blur-[40px] opacity-30 pointer-events-none"></div>
+
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                  Pedir Férias
+                </h3>
+                <button 
+                  onClick={() => setShowRequestVacationModal(false)}
+                  className="p-2 bg-white/10 text-white hover:bg-white/20 rounded-full transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!vacationStartDate || !vacationEndDate) {
+                  alert('Por favor selecione ambas as datas.');
+                  return;
+                }
+                
+                const updatedStaff = staff.map(s => {
+                  if (s.id === loggedInStaff?.id) {
+                    return {
+                      ...s,
+                      vacationStart: vacationStartDate,
+                      vacationEnd: vacationEndDate,
+                      vacationStatus: 'pending'
+                    };
+                  }
+                  return s;
+                });
+                
+                setStaff(updatedStaff);
+                handleUpdate({ staff: updatedStaff });
+                setShowRequestVacationModal(false);
+                setVacationStartDate('');
+                setVacationEndDate('');
+                alert('Pedido de férias enviado com sucesso para aprovação do gerente! 📅');
+              }} className="space-y-4">
+                <div>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Data Início</label>
+                  <input 
+                    type="date"
+                    required
+                    value={vacationStartDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setVacationStartDate(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 font-bold text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Data Fim</label>
+                  <input 
+                    type="date"
+                    required
+                    value={vacationEndDate}
+                    min={vacationStartDate || new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setVacationEndDate(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 font-bold text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/20 border border-blue-400/20"
+                  >
+                    Enviar Pedido
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestVacationModal(false)}
+                    className="px-5 py-4 bg-slate-800 text-slate-300 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all cursor-pointer active:scale-95 border border-white/5"
+                  >
+                    Voltar
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -7813,6 +8235,46 @@ ${items.map((it, i) => `        <Line>
 // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 // BUSINESS BOTTOM NAV \u2014 barra mobile para o painel de neg\u00f3cio
 // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+interface StaffBottomNavProps {
+  activeTab: string;
+  onTab: (tab: string) => void;
+  onSair: () => void;
+}
+
+const StaffBottomNav: React.FC<StaffBottomNavProps> = ({ activeTab, onTab, onSair }) => {
+  const staffNavItems = [
+    { id: 'atendimentos', label: 'Atendimentos', icon: <CheckCircle size={22} /> },
+    { id: 'tables', label: 'Mesas', icon: <TableIcon size={22} /> },
+    { id: 'details', label: 'Detalhes', icon: <Users size={22} /> },
+    { id: 'sair', label: 'Sair', icon: <LogOut size={22} className="text-rose-500" />, isSair: true },
+  ];
+
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.3)] z-[90] pb-safe rounded-t-[2rem]">
+      <div className="flex justify-around items-center h-20 px-2 relative">
+        {staffNavItems.map(item => {
+          const isActive = activeTab === item.id;
+          return (
+            <button 
+              key={item.id} 
+              onClick={() => item.isSair ? onSair() : onTab(item.id)} 
+              className={`flex flex-col items-center justify-center flex-1 transition-all active:scale-90 ${
+                isActive ? 'text-blue-500' : 'text-slate-500 hover:text-slate-400'
+              }`}
+            >
+              <div className="p-1 rounded-xl transition-all">
+                {item.icon}
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-tight mt-0.5">{item.label}</span>
+              {isActive && <div className="w-1 h-1 rounded-full bg-blue-500 mt-0.5" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 interface BusinessBottomNavProps {
   activeTab: string;
   onTab: (tab: string) => void;

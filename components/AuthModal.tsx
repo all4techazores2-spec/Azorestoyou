@@ -79,6 +79,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
         s.password === normalizedPassword
       );
       if (staffMember) {
+        // Verificar horário de trabalho robusto (com tolerância de 30 minutos)
+        try {
+          const now = new Date();
+          const curMin = now.getHours() * 60 + now.getMinutes();
+          
+          const sStart = staffMember.shiftStart || '08:00';
+          const sEnd = staffMember.shiftEnd || '17:00';
+          
+          const [hStart, mStart] = sStart.split(':').map(Number);
+          const [hEnd, mEnd] = sEnd.split(':').map(Number);
+          
+          const startMin = hStart * 60 + mStart;
+          const endMin = hEnd * 60 + mEnd;
+          
+          // Se estiver fora do horário (com 30 minutos de tolerância)
+          if (curMin < startMin - 30 || curMin > endMin + 30) {
+            setIsLoading(false);
+            setError(`Acesso Bloqueado: O seu horário de trabalho é das ${sStart} às ${sEnd}. Por favor, inicie sessão dentro do seu horário de serviço.`);
+            return;
+          }
+        } catch (e) {
+          // Fallback seguro caso as horas estejam mal formatadas
+        }
+
         setIsLoading(false);
         onSuccess(false, b.id, normalizedEmail, staffMember.role);
         return;
