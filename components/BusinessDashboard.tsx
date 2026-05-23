@@ -7389,6 +7389,411 @@ ${items.map((it, i) => `        <Line>
           </div>
         )}
       </AnimatePresence>
+
+      {/* ATRIBUIR STAFF MODAL */}
+      <AnimatePresence>
+        {assignStaffTableTarget && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
+            >
+              <button 
+                onClick={() => setAssignStaffTableTarget(null)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center">
+                  <Bell size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Atribuir Mesa #{assignStaffTableTarget.number}</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Selecione um funcionário disponível</p>
+                </div>
+              </div>
+
+              <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar mb-6 select-none">
+                {(() => {
+                  const waiters = staff.filter(s => s.role === 'waiter' || s.role === 'manager');
+                  const waiterAssignments = new Map<string, number>();
+                  tables.forEach(t => {
+                    if (t.waiterId && t.status === 'occupied') {
+                      waiterAssignments.set(String(t.waiterId), t.number);
+                    }
+                  });
+
+                  const availableWaiters = waiters.filter(w => !waiterAssignments.has(String(w.id)));
+                  const busyWaiters = waiters.filter(w => waiterAssignments.has(String(w.id)));
+
+                  const isAllBusy = availableWaiters.length === 0;
+                  const displayList = isAllBusy ? busyWaiters : availableWaiters;
+
+                  if (waiters.length === 0) {
+                    return (
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest text-center py-8">Nenhum funcionário cadastrado na equipa</p>
+                    );
+                  }
+
+                  return displayList.map(waiter => {
+                    const isBusy = waiterAssignments.has(String(waiter.id));
+                    const assignedTableNum = waiterAssignments.get(String(waiter.id));
+                    return (
+                      <button
+                        key={waiter.id}
+                        onClick={() => {
+                          if (!isBusy) {
+                            // Direct assignment (Available waiter)
+                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id, alertStatus: 'none' as const } : t);
+                            setTables(updatedTables);
+                            handleUpdate({ tables: updatedTables });
+                            setAssignStaffTableTarget(null);
+                            alert(`✅ Mesa #${assignStaffTableTarget.number} atribuída diretamente a ${waiter.name}!`);
+                          } else {
+                            // Indirect notification (Busy waiter)
+                            const updatedStaff = staff.map(s => {
+                              if (s.id === waiter.id) {
+                                const newNotif = {
+                                  id: `NOTIF_${Date.now()}`,
+                                  type: 'calling_waiter' as const,
+                                  tableId: assignStaffTableTarget.id,
+                                  tableNumber: assignStaffTableTarget.number,
+                                  status: 'pending' as const,
+                                  timestamp: new Date().toISOString()
+                                };
+                                return {
+                                  ...s,
+                                  notifications: [...(s.notifications || []), newNotif]
+                                };
+                              }
+                              return s;
+                            });
+                            // Keep table waiterId for sync
+                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id } : t);
+                            setTables(updatedTables);
+                            setStaff(updatedStaff);
+                            handleUpdate({ staff: updatedStaff, tables: updatedTables });
+                            setAssignStaffTableTarget(null);
+                            alert(`📩 Mesa #${assignStaffTableTarget.number} tem chamada pendente enviada para a dashboard de ${waiter.name}!`);
+                          }
+                        }}
+                        className="w-full p-4 bg-slate-50 border border-slate-100 hover:border-blue-200 rounded-3xl hover:bg-slate-50/50 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer shadow-sm relative overflow-hidden"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${waiter.name}`} alt={waiter.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-slate-800 leading-tight">{waiter.name}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{waiter.role === 'manager' ? 'Gerente' : 'Empregado de Mesa'}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isBusy ? (
+                            <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
+                              Ocupado na Mesa #{assignedTableNum}
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                              Disponível
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+
+              {staff.filter(s => s.role === 'waiter' || s.role === 'manager').length > 0 && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-[10px] font-medium text-blue-700 leading-relaxed text-center">
+                  💡 {tables.some(t => t.waiterId && t.status === 'occupied') 
+                    ? "Se todos estiverem ocupados, ao selecionar um funcionário, este receberá um alerta pendente na sua dashboard para aceitar." 
+                    : "Os funcionários livres disponíveis são priorizados no topo. Ao clicar, a mesa é atribuída diretamente."}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CLOSING CASH DRAWER MODAL (FECHAR CAIXA) ── */}
+      <AnimatePresence>
+        {closingDrawerOpen && (() => {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const todaySales = (business.salesHistory || []).filter((s: any) => s.date && s.date.startsWith(todayStr));
+          const totalSalesValue = todaySales.reduce((acc: number, s: any) => acc + (Number(s.total) || Number(s.amount) || 0), 0);
+          
+          const cashSales = todaySales.filter((s: any) => 
+            (s.paymentMethod || '').toLowerCase() === 'dinheiro' || 
+            (s.paymentMethod || '').toLowerCase() === 'cash'
+          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
+
+          const cardSales = todaySales.filter((s: any) => 
+            (s.paymentMethod || '').toLowerCase() === 'multibanco' || 
+            (s.paymentMethod || '').toLowerCase() === 'card' ||
+            (s.paymentMethod || '').toLowerCase() === 'digital'
+          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
+
+          const openingAmountVal = Number(business.currentDrawerAmount) || 30;
+          const totalCashInDrawer = cashSales + openingAmountVal;
+
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, y: 20 }} 
+                animate={{ scale: 1, y: 0 }} 
+                exit={{ scale: 0.95, y: 20 }}
+                className="bg-white rounded-[3rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
+              >
+                <button 
+                  onClick={() => setClosingDrawerOpen(false)}
+                  className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-red-500/10 text-red-600 rounded-2xl flex items-center justify-center">
+                    <Lock size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Fechar Caixa de Turno</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Talão oficial de fecho de caixa</p>
+                  </div>
+                </div>
+
+                {/* Thermal Ticket Style Preview */}
+                <div id="print-closing-ticket" className="bg-amber-50/30 border-2 border-dashed border-amber-200 rounded-3xl p-6 font-mono text-xs text-slate-800 mb-6 max-h-[320px] overflow-y-auto custom-scrollbar">
+                  <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <h4 className="font-black text-sm uppercase tracking-wider">{business.name}</h4>
+                    <p className="text-[10px] text-slate-500 uppercase mt-0.5">Fecho de Caixa - Turno</p>
+                    <p className="text-[9px] text-slate-400 mt-1">{new Date().toLocaleString('pt-PT')}</p>
+                  </div>
+
+                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <div className="flex justify-between">
+                      <span>Abertura de Caixa:</span>
+                      <span className="font-bold">€{openingAmountVal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total de Vendas:</span>
+                      <span className="font-bold">€{totalSalesValue.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <div className="flex justify-between">
+                      <span>Vendas em Dinheiro:</span>
+                      <span>€{cashSales.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Vendas em Multibanco:</span>
+                      <span>€{cardSales.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 font-bold text-sm">
+                    <div className="flex justify-between text-slate-900">
+                      <span>Dinheiro em Caixa:</span>
+                      <span>€{totalCashInDrawer.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-900">
+                      <span>Total Geral Turno:</span>
+                      <span>€{(totalSalesValue + openingAmountVal).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center border-t border-dashed border-slate-300 pt-3 mt-4 text-[10px] text-slate-500">
+                    <p>Operador: Gustavo Pereira</p>
+                    <p className="mt-1">Azores4You POS v1.0</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <button
+                    onClick={() => {
+                      alert("🖨️ A enviar talão de fecho para a impressora térmica POS...");
+                      printClosingTicketOnly();
+                    }}
+                    className="py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    <Printer size={14} /> Imprimir POS
+                  </button>
+                  <button
+                    onClick={() => {
+                      printClosingTicketOnly();
+                    }}
+                    className="py-4 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    📥 Imprimir / PDF
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const newLog = {
+                      id: 'CDL_' + Date.now(),
+                      type: 'close',
+                      amount: totalCashInDrawer,
+                      timestamp: new Date().toISOString(),
+                    };
+                    const updatedLogs = [...(business.cashDrawerLogs || []), newLog];
+                    
+                    onUpdateBusiness({
+                      ...business,
+                      isDrawerOpen: false,
+                      currentDrawerAmount: 0,
+                      cashDrawerLogs: updatedLogs
+                    });
+
+                    setClosingDrawerOpen(false);
+                    alert("🔒 Caixa de Turno Fechado com sucesso! Turno encerrado.");
+                  }}
+                  className="w-full py-4.5 bg-red-600 hover:bg-red-50 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-red-600/20 cursor-pointer"
+                >
+                  🔒 Confirmar Fecho de Caixa
+                </button>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── LOCAL INTERNAL INSTALLER MODAL ── */}
+      <AnimatePresence>
+        {installingStatus && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} 
+              animate={{ scale: 1, y: 0 }} 
+              className="bg-slate-900 border border-slate-800 rounded-[3rem] p-8 max-w-md w-full shadow-2xl text-left font-mono text-xs text-slate-300"
+            >
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-4 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="ml-2 font-bold text-white uppercase text-[10px] tracking-wider">Instalador Interno Azores4You</span>
+              </div>
+
+              <div className="space-y-2 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400">
+                <p>⚡ Iniciando sequência de empacotamento local...</p>
+                {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
+                {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
+                {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
+                {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
+                {installProgress === 100 && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
+                    🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
+                    ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
+                    AO CLICAR, O SOFTWARE FICA FULL SCREEN.
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-6">
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${installProgress}%` }} 
+                  className="h-full bg-emerald-500 rounded-full" 
+                />
+              </div>
+
+              {installProgress < 100 ? (
+                <p className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">A carregar {installProgress}%</p>
+              ) : (
+                <button
+                  onClick={() => {
+                    try {
+                      document.documentElement.requestFullscreen();
+                    } catch (e) {
+                      console.log("Fullscreen not supported or blocked by browser gesture", e);
+                    }
+                    setInstallingStatus(null);
+                  }}
+                  className="w-full py-4.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-emerald-600/20 cursor-pointer"
+                >
+                  🖥️ Entrar em Modo Fullscreen
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CLOUD SYNC MODAL (PUBLICAR NO SERVIDOR) ── */}
+      <AnimatePresence>
+        {publishingStatus && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} 
+              animate={{ scale: 1, y: 0 }} 
+              className="bg-white rounded-[3rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center"
+            >
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce">
+                <RefreshCw size={36} className="animate-spin duration-1000" />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-1">Publicar no Servidor</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">A sincronizar dados locais com o MongoDB Atlas</p>
+
+              <div className="space-y-2 mb-6 text-left text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100 font-mono text-slate-600">
+                <p>📡 A ligar ao servidor de base de dados cloud...</p>
+                {publishProgress >= 30 && <p className="text-blue-600">⚡ Ligação estabelecida. A verificar integridade...</p>}
+                {publishProgress >= 60 && <p className="text-slate-800">📤 A publicar vendas offline, logs e alterações de staff...</p>}
+                {publishProgress === 100 && (
+                  <p className="text-emerald-600 font-bold">✅ Sincronização concluída com sucesso!</p>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: `${publishProgress}%` }} 
+                  className="h-full bg-blue-600 rounded-full" 
+                />
+              </div>
+
+              {publishProgress < 100 ? (
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sincronizando {publishProgress}%</p>
+              ) : (
+                <button
+                  onClick={() => setPublishingStatus(null)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10 cursor-pointer"
+                >
+                  Concluído
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
