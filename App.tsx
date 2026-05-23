@@ -389,16 +389,22 @@ const App: React.FC = () => {
       }
 
       let emptyCount = 0;
+      let errorCount = 0;
       let completedCount = 0;
 
       keysToFetch.forEach(key => {
         const bypass = (specificKeys && specificKeys.length > 0) ? '&bypassCache=true' : '';
         fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`)
-          .then(r => r.ok ? r.json() : [])
+          .then(r => {
+            if (!r.ok) {
+              throw new Error(`HTTP ${r.status} ${r.statusText}`);
+            }
+            return r.json();
+          })
           .then(data => {
              completedCount++;
              if (Array.isArray(data) && data.length === 0) emptyCount++;
-                           const setter = setterMap[key];
+             const setter = setterMap[key];
               if (setter && Array.isArray(data)) {
                 let normalized = data.map(normalizeBusiness);
                 if (key === 'marketplace_ads') {
@@ -419,13 +425,22 @@ const App: React.FC = () => {
                 }
               }
              if (completedCount === keysToFetch.length) {
-                if (emptyCount === keysToFetch.length && retries > 0) {
+                const totalFailures = emptyCount + errorCount;
+                if (totalFailures === keysToFetch.length && retries > 0) {
                    setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
                 }
              }
           })
-          .catch(() => {
+          .catch(err => {
+             console.warn(`⚠️ Fetch failed for [${key}] (preserving local state):`, err.message || err);
              completedCount++;
+             errorCount++;
+             if (completedCount === keysToFetch.length) {
+                const totalFailures = emptyCount + errorCount;
+                if (totalFailures === keysToFetch.length && retries > 0) {
+                   setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
+                }
+             }
           });
       });
 
