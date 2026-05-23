@@ -157,8 +157,17 @@ export const readDB = async (bypassCache = false) => {
             return memoryCache || DEFAULT_DB;
         }
     } else if (getMongoURI()) {
-        // MongoDB URI exists but not yet connected - return cache or default
-        return memoryCache || DEFAULT_DB;
+        // MongoDB URI exists but not yet connected - return cache or fallback to local JSON
+        if (memoryCache) return memoryCache;
+        try {
+            if (fs.existsSync(dbPath)) {
+                const data = fs.readFileSync(dbPath, 'utf8');
+                return { ...DEFAULT_DB, ...JSON.parse(data) };
+            }
+        } catch (err) {
+            console.error("⚠️ Fallback local JSON read failed:", err.message);
+        }
+        return DEFAULT_DB;
     } else {
         // Local JSON fallback
         try {
@@ -196,8 +205,15 @@ export const writeDB = async (data) => {
             }
         }
     } else if (getMongoURI()) {
-        console.error("❌ Cannot write: MongoDB is configured but not connected.");
-        throw new Error("MongoDB not connected");
+        console.warn("⚠️ MongoDB is configured but not connected. Writing to local JSON fallback.");
+        try {
+            fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+            memoryCache = data;
+            lastCacheTime = Date.now();
+        } catch (err) {
+            console.error("Error writing fallback db.json:", err);
+            throw err;
+        }
     } else {
         // Local JSON fallback
         try {
