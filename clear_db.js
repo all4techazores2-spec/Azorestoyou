@@ -2,8 +2,8 @@ import { readDB, writeDB, connectDB } from './db.js';
 
 async function run() {
     await connectDB();
-    await new Promise(r => setTimeout(r, 2000)); // allow mongo to connect
-    const db = await readDB(true);
+    await new Promise(r => setTimeout(r, 2000)); // wait for mongo to connect
+    const db = await readDB(true); // bypass cache
     Object.keys(db).forEach(k => {
         if(Array.isArray(db[k])) {
             db[k].forEach(b => {
