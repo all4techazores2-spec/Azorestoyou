@@ -1153,7 +1153,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     // Evitar que atualizações locais frescas (últimos 4 segundos) sejam sobrepostas
     // por dados temporariamente antigos vindos das consultas de polling em segundo plano.
     const timeSinceLastLocalUpdate = Date.now() - lastLocalUpdateRef.current;
-    if (timeSinceLastLocalUpdate < 4000) {
+    if (timeSinceLastLocalUpdate < 8000) {
       console.log("⏳ Local update is fresh. Ignoring background sync to prevent flickering.");
       return;
     }
@@ -1388,7 +1388,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           // Clock In
           newLogs.push({
             date: new Date().toLocaleDateString('pt-PT'),
-            clockIn: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+            clockIn: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+            status: 'present'
           });
         } else {
           // Clock Out
@@ -1396,6 +1397,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             const lastLog = { ...newLogs[newLogs.length - 1] };
             if (!lastLog.clockOut) {
               lastLog.clockOut = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+              lastLog.status = 'present'; // Ensure status is marked as present on clock-out
               
               // Simple hour calculation
               try {
@@ -8514,11 +8516,13 @@ ${items.map((it, i) => `        <Line>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {
-                    if (loggedInStaff) {
+                    if (loggedInStaff && loggedInStaff.onDuty) {
                       toggleStaffDuty(loggedInStaff.id);
                     }
                     setShowClockOutPopup(false);
-                    onLogout();
+                    setTimeout(() => {
+                      onLogout();
+                    }, 500);
                   }}
                   className="w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-rose-500/20 border border-rose-400/20"
                 >

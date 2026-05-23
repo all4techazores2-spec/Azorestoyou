@@ -49,6 +49,17 @@ export const connectDB = async () => {
                 mongoError = null;
                 console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
 
+                // Warmup query to wake up the cluster and Mongoose caches
+                (async () => {
+                    try {
+                        console.log("🔥 Running Database Warmup Query...");
+                        await DBModel.findOne({ key: 'master_db' }).lean().maxTimeMS(60000);
+                        console.log("🔥 Database Warmup completed successfully!");
+                    } catch (wErr) {
+                        console.warn("⚠️ Warmup query warning:", wErr.message);
+                    }
+                })();
+
                 mongoose.connection.on('disconnected', () => {
                     isMongoConnected = false;
                     console.warn("⚠️ MongoDB disconnected. A reconectar em 10s...");

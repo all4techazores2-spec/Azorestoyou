@@ -75,8 +75,15 @@ const ALL_BUSINESS_COLLECTIONS = [
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+    try {
+        // Query database (bypass cache) to keep MongoDB Atlas active
+        await readDB(true);
+        res.json({ status: 'ok', database: 'active', uptime: process.uptime(), timestamp: new Date().toISOString() });
+    } catch (err) {
+        console.warn("⚠️ Health check DB warning:", err.message);
+        res.json({ status: 'degraded', database: 'error', error: err.message, uptime: process.uptime(), timestamp: new Date().toISOString() });
+    }
 });
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
@@ -586,48 +593,74 @@ app.post('/api/restaurants/:id/reviews', async (req, res) => {
 
 // --- RESERVATIONS ---
 app.post('/api/reservations', async (req, res) => {
-    const db = await readDB(true);
-    const { businessId, businessType, customerEmail } = req.body;
-    const reservation = { ...req.body, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
-    
-    const typeMap = { 
-        'restaurant': 'restaurants', 
-        'beauty': 'beauty', 
-        'shop': 'shops', 
-        'office': 'offices', 
-        'service': 'services',
-        'hotel': 'hotels',
-        'al': 'hotels',
-        'car': 'cars'
-    };
-    const key = typeMap[businessType] || 'restaurants';
-    const business = db[key]?.find(b => b.id === businessId);
+    console.log("📥 RECEIVED reservation request:", req.body);
+    try {
+        const db = await readDB(true);
+        const { businessId, businessType, customerEmail } = req.body;
+        
+        // Handle empty/undefined email gracefully
+        const targetEmail = customerEmail ? customerEmail.trim() : 'traveler@azorestoyou.com';
+        const cleanEmail = normalizeEmail(targetEmail);
+        
+        const reservation = { 
+            ...req.body, 
+            customerEmail: cleanEmail,
+            id: req.body.id || `RES_${Date.now()}`, 
+            status: 'pending', 
+            createdAt: new Date().toISOString() 
+        };
+        
+        console.log(`🔎 Searching business for category [${businessType}], ID [${businessId}]...`);
+        const typeMap = { 
+            'restaurant': 'restaurants', 
+            'beauty': 'beauty', 
+            'shop': 'shops', 
+            'office': 'offices', 
+            'service': 'services',
+            'hotel': 'hotels',
+            'al': 'hotels',
+            'car': 'cars'
+        };
+        const key = typeMap[businessType] || 'restaurants';
+        const business = db[key]?.find(b => b.id === businessId);
 
-    if (business) {
-        if (!business.reservations) business.reservations = [];
-        business.reservations.push(reservation);
-        
-        let user = db.users.find(u => normalizeEmail(u.email) === normalizeEmail(customerEmail));
-        if (!user) {
-            user = {
-                email: normalizeEmail(customerEmail),
-                role: 'client',
-                credits: 100,
-                reservations: [],
-                profile: {
-                    name: req.body.customerName || customerEmail.split('@')[0],
-                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + customerEmail
-                }
-            };
-            db.users.push(user);
+        if (business) {
+            console.log(`✅ Business found: [${business.name}]. Adding reservation...`);
+            if (!business.reservations) business.reservations = [];
+            business.reservations.push(reservation);
+            
+            if (!db.users) db.users = [];
+            let user = db.users.find(u => normalizeEmail(u.email) === cleanEmail);
+            if (!user) {
+                console.log(`👤 Creating new client profile for email [${cleanEmail}]...`);
+                user = {
+                    email: cleanEmail,
+                    role: 'client',
+                    credits: 100,
+                    reservations: [],
+                    profile: {
+                        name: req.body.customerName || targetEmail.split('@')[0],
+                        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(cleanEmail)
+                    }
+                };
+                db.users.push(user);
+            } else {
+                console.log(`👤 Existing user found: [${user.email}]`);
+            }
+            if (!user.reservations) user.reservations = [];
+            user.reservations.push({ ...reservation, businessName: business.name });
+            
+            console.log("💾 Persisting reservation to Database...");
+            await writeDB(db);
+            console.log(`🎉 Reservation [${reservation.id}] successfully created!`);
+            res.status(201).json(reservation);
+        } else {
+            console.warn(`❌ Business not found for businessId [${businessId}] in collection [${key}]`);
+            res.status(404).send("Business not found");
         }
-        if (!user.reservations) user.reservations = [];
-        user.reservations.push({ ...reservation, businessName: business.name });
-        
-        await writeDB(db);
-        res.status(201).json(reservation);
-    } else {
-        res.status(404).send("Business not found");
+    } catch (err) {
+        console.error("❌ CRITICAL EXCEPTION inside POST /api/reservations:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
