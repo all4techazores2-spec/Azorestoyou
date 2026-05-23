@@ -2514,7 +2514,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           {activeTab === 'pos' && (() => {
             const posProducts = [
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
-              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p })),
+              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
                 !(business.services || []).some(s => s.name === ms.name) &&
                 !(products || []).some(p => p.name === ms.name)
@@ -4542,8 +4542,10 @@ ${items.map((it, i) => `        <Line>
                 {!showInternalStock && selectedCatalogCategory === null && (
                   (() => {
                     const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
-                    const currentCategories = Array.from(new Set(products.map(p => p.category))).filter(c => c !== 'Stock Interno');
-                    const displayCategories = Array.from(new Set([...availableCategories, ...currentCategories])).filter(c => c !== 'Stock Interno');
+                    const currentCategories = Array.from(new Set(products.map(p => p.category)))
+                      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
+                    const displayCategories = Array.from(new Set([...availableCategories, ...currentCategories]))
+                      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
                     
                     return (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2 animate-fadeIn">
