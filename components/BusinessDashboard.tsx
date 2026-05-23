@@ -1655,6 +1655,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const assignReservationToTable = (tableId: string) => {
     if (!acceptingReservation) return;
 
+    // Proteger desincronizações
+    lastLocalUpdateRef.current = Date.now();
+
     // 1. Atualizar o estado da mesa localmente
     const updatedTables = tables.map(t => {
       if (t.id === tableId) {
@@ -1917,6 +1920,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
+    // Proteger desincronizações
+    lastLocalUpdateRef.current = Date.now();
+
     if ((isBeauty || isShop || isHotel) && action === 'accepted') {
       const resObj = reservations.find(r => r.id === id);
       const updatedRes = { ...resObj, status: action, confirmedByRestaurant: true };
@@ -1996,6 +2002,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const deleteReservation = async (id: string) => {
     if (!window.confirm("⚠️ ELIMINAR PERMANENTEMENTE?\nEsta ação não pode ser desfeita e a reserva desaparecerá de todos os registos (Dashboard e Cliente).")) return;
+
+    // Proteger desincronizações
+    lastLocalUpdateRef.current = Date.now();
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/reservations/${id}`, {
@@ -5896,8 +5905,8 @@ ${items.map((it, i) => `        <Line>
                                               }`}>
                                                 {res.status === 'occupied' ? 'Em Mesa' : 'Confirmada'}
                                               </span>
-                                            </div>
-                                            <p className="text-xs text-slate-400 font-bold mt-1">{res.customerPhone} • {res.customerEmail}</p>
+                                              </div>
+                                              <p className="text-xs text-slate-400 font-bold mt-1">{res.customerPhone} • {res.customerEmail}</p>
                                             <div className="flex items-center gap-3 mt-2">
                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
                                                {res.time && <span className="bg-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white tracking-widest">{res.time}</span>}
@@ -5915,14 +5924,19 @@ ${items.map((it, i) => `        <Line>
                                             <button 
                                               onClick={async () => {
                                                 try {
+                                                  lastLocalUpdateRef.current = Date.now();
+                                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'occupied' as const } : r);
+                                                  setReservations(updated);
+                                                  if (res.tableId) {
+                                                    const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'occupied' as const } : t);
+                                                    setTables(updatedTables);
+                                                  }
                                                   const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ status: 'occupied' })
                                                   });
-                                                  if (response.ok) {
-                                                    if (onForceRefresh) onForceRefresh();
-                                                  }
+                                                  if (response.ok && onForceRefresh) onForceRefresh();
                                                 } catch (err) {
                                                   console.error(err);
                                                 }
@@ -5936,27 +5950,19 @@ ${items.map((it, i) => `        <Line>
                                             <button 
                                               onClick={async () => {
                                                 try {
+                                                  lastLocalUpdateRef.current = Date.now();
+                                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'finished' as const } : r);
+                                                  setReservations(updated);
+                                                  if (res.tableId) {
+                                                    const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'available' as const, reservationId: undefined, currentOrder: undefined } : t);
+                                                    setTables(updatedTables);
+                                                  }
                                                   const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ status: 'finished' })
                                                   });
-                                                  if (response.ok) {
-                                                    if (res.tableId) {
-                                                      const updatedRest = { ...business };
-                                                      if (updatedRest.tables) {
-                                                        const tIdx = updatedRest.tables.findIndex(t => t.id === res.tableId);
-                                                        if (tIdx > -1) {
-                                                          updatedRest.tables[tIdx].status = 'free';
-                                                          updatedRest.tables[tIdx].reservationId = undefined;
-                                                          updatedRest.tables[tIdx].currentOrder = undefined;
-                                                          onUpdateBusiness(updatedRest);
-                                                          onSync(updatedRest);
-                                                        }
-                                                      }
-                                                    }
-                                                    if (onForceRefresh) onForceRefresh();
-                                                  }
+                                                  if (response.ok && onForceRefresh) onForceRefresh();
                                                 } catch (err) {
                                                   console.error(err);
                                                 }

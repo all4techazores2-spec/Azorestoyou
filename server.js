@@ -136,7 +136,57 @@ const handleBusinessUpdate = async (req, res) => {
         });
 
         if (targetArray && index !== -1) {
-            targetArray[index] = normalizeTrailData({ ...targetArray[index], ...req.body });
+            const existingItem = targetArray[index];
+            const updatedItem = { ...existingItem, ...req.body };
+
+            // Protect specific real-time server-side collections from being overwritten by stale frontend data
+            if (existingItem.reservations !== undefined) {
+                updatedItem.reservations = existingItem.reservations;
+            }
+            if (existingItem.kitchenOrders !== undefined) {
+                updatedItem.kitchenOrders = existingItem.kitchenOrders;
+            }
+            if (existingItem.tables !== undefined) {
+                if (req.body.tables && Array.isArray(req.body.tables)) {
+                    updatedItem.tables = req.body.tables.map(t => {
+                        const existingTable = existingItem.tables.find(et => et.id === t.id);
+                        if (existingTable) {
+                            return {
+                                ...t,
+                                status: existingTable.status,
+                                customerName: existingTable.customerName,
+                                reservationTime: existingTable.reservationTime,
+                                currentTab: existingTable.currentTab,
+                                pendingOrderItems: existingTable.pendingOrderItems,
+                                alertStatus: existingTable.alertStatus
+                            };
+                        }
+                        return t;
+                    });
+                } else {
+                    updatedItem.tables = existingItem.tables;
+                }
+            }
+            if (existingItem.rooms !== undefined) {
+                if (req.body.rooms && Array.isArray(req.body.rooms)) {
+                    updatedItem.rooms = req.body.rooms.map(r => {
+                        const existingRoom = existingItem.rooms.find(er => er.id === r.id);
+                        if (existingRoom) {
+                            return {
+                                ...r,
+                                status: existingRoom.status,
+                                customerName: existingRoom.customerName,
+                                reservationTime: existingRoom.reservationTime
+                            };
+                        }
+                        return r;
+                    });
+                } else {
+                    updatedItem.rooms = existingItem.rooms;
+                }
+            }
+
+            targetArray[index] = normalizeTrailData(updatedItem);
 
             // Sincronizar automaticamente as alterações de reserva com os perfis de utilizador correspondentes
             if (req.body.reservations && Array.isArray(req.body.reservations)) {
