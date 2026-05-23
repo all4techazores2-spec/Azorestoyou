@@ -273,8 +273,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
   const isRestaurant = !isBeauty && !isShop && !isService && !isHotel && !isRentCar;
 
+  // Procurar funcionário logado na lista de equipa do negócio
+  const staffList = business.staff || [];
+  const currentUserEmail = staffEmail || '';
+  const loggedInStaff = currentUserEmail ? (staffList as any[]).find(s => s.email?.toLowerCase() === currentUserEmail.toLowerCase()) : null;
+
+  const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
+  const displayRole = loggedInStaff 
+    ? (loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
+    : 'Gerente Geral';
+  
+  const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
+
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    isStaff ? 'kitchen' : 
+    isStaff ? (staffRole === 'cook' ? 'kitchen' : 'pos') : 
     isShop ? 'pos' : 
     isBeauty ? 'pos' : 'tables'
   );
@@ -2030,11 +2042,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           <div className="p-6 border-t border-white/5 bg-slate-900/50 mt-auto">
              <div className="bg-slate-800/40 p-4 rounded-2xl flex items-center gap-4 mb-4 border border-white/5 shadow-inner">
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30">
-                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo" alt="Avatar" className="w-full h-full object-cover" />
+                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                   <p className="text-white font-black text-xs truncate">Gustavo Pereira</p>
-                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">Gerente Geral</p>
+                   <p className="text-white font-black text-xs truncate">{displayName}</p>
+                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">{displayRole}</p>
                 </div>
                 <button onClick={onLogout} className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
                    <LogOut size={16} />
@@ -2065,7 +2077,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                </button>
                <div>
                   <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
-                     Olá, Gustavo! 👋
+                     Olá, {displayName.split(' ')[0]}! 👋
                   </h2>
                   <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
                </div>
@@ -7620,7 +7632,7 @@ ${items.map((it, i) => `        <Line>
                   </div>
 
                   <div className="text-center border-t border-dashed border-slate-300 pt-3 mt-4 text-[10px] text-slate-500">
-                    <p>Operador: Gustavo Pereira</p>
+                    <p>Operador: {displayName}</p>
                     <p className="mt-1">Azores4You POS v1.0</p>
                   </div>
                 </div>
