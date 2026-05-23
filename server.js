@@ -124,7 +124,7 @@ app.get('/api/debug-db', async (req, res) => {
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         let targetArray = null;
         let index = -1;
         
@@ -321,7 +321,7 @@ app.get('/api/users/:email', async (req, res) => {
 
 app.put('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = await readDB(true);
+    const db = await readDB();
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
         db.users[index] = { ...db.users[index], ...req.body, email };
@@ -378,7 +378,7 @@ app.post('/api/reset-db', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         let totalCleared = 0;
         const summary = {};
 
@@ -521,7 +521,7 @@ app.post('/api/restaurants/:id/reviews', async (req, res) => {
     const { id } = req.params;
     const reviewData = req.body;
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         let business = null;
         let category = null;
         
@@ -595,7 +595,7 @@ app.post('/api/restaurants/:id/reviews', async (req, res) => {
 app.post('/api/reservations', async (req, res) => {
     console.log("📥 RECEIVED reservation request:", req.body);
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         const { businessId, businessType, customerEmail } = req.body;
         
         // Handle empty/undefined email gracefully
@@ -650,8 +650,8 @@ app.post('/api/reservations', async (req, res) => {
             if (!user.reservations) user.reservations = [];
             user.reservations.push({ ...reservation, businessName: business.name });
             
-            console.log("💾 Persisting reservation to Database...");
-            await writeDB(db);
+            console.log("💾 Persisting reservation to Database asynchronously...");
+            writeDB(db).catch(err => console.error("Async DB write error:", err));
             console.log(`🎉 Reservation [${reservation.id}] successfully created!`);
             res.status(201).json(reservation);
         } else {
@@ -667,7 +667,7 @@ app.post('/api/reservations', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS FOR TESTING ---
 app.post('/api/admin/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         
         // 1. Limpar reservas em todos os negócios
         ALL_BUSINESS_COLLECTIONS.forEach(key => {
@@ -716,7 +716,7 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
 
 app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await readDB(true);
+    const db = await readDB();
     let found = false;
 
     // 1. Atualizar nos Negócios
@@ -817,7 +817,7 @@ app.put('/api/reservations/:id', async (req, res) => {
 app.post('/api/reservations/:id/append-order', async (req, res) => {
     const { id } = req.params;
     const { items } = req.body;
-    const db = await readDB(true);
+    const db = await readDB();
     let found = false;
 
     // 1. Procurar a reserva nos Negócios
