@@ -13,8 +13,6 @@ interface TableMenuModalProps {
   onPlaceOrder: (items: OrderItem[]) => void;
 }
 
-const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos'];
-
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Todos': <ShoppingBag size={15} />,
   'Pratos': <Utensils size={15} />,
@@ -69,6 +67,34 @@ const CATEGORY_DETAILS: Record<string, { label: string, desc: string, gradient: 
   }
 };
 
+const getCategoryDetails = (cat: string) => {
+  const details = CATEGORY_DETAILS[cat];
+  if (details) return details;
+  return {
+    label: cat,
+    desc: `Especialidades de ${cat}`,
+    gradient: 'from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20',
+    border: 'border-emerald-500/20 hover:border-emerald-500/40',
+    text: 'text-emerald-400'
+  };
+};
+
+const getCategoryIcon = (cat: string) => {
+  const icon = CATEGORY_ICONS[cat];
+  if (icon) return icon;
+  const lower = cat.toLowerCase();
+  if (lower.includes('bebid') || lower.includes('vinho') || lower.includes('sumo') || lower.includes('refrigerante') || lower.includes('cerveja')) {
+    return <Beer size={15} />;
+  }
+  if (lower.includes('caf') || lower.includes('chá') || lower.includes('quente')) {
+    return <Coffee size={15} />;
+  }
+  if (lower.includes('sobremesa') || lower.includes('doce') || lower.includes('fruta') || lower.includes('bolo') || lower.includes('pudim')) {
+    return <Sparkles size={15} />;
+  }
+  return <Utensils size={15} />;
+};
+
 const TableMenuModal: React.FC<TableMenuModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -86,11 +112,59 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Combine dishes and products
-  const allItems: any[] = [
-    ...(restaurant.dishes || []).map(d => ({ ...d, category: d.category || 'Pratos' })),
-    ...(restaurant.products || []).map(p => ({ ...p, category: p.category || 'Bebidas' }))
-  ];
+  // Combine dishes and products in a unique list by name to avoid repetition
+  const allItems: any[] = (() => {
+    const itemsMap = new Map<string, any>();
+    (restaurant.products || []).forEach(p => {
+      const nameKey = p.name.trim().toLowerCase();
+      if (!nameKey) return;
+      itemsMap.set(nameKey, {
+        ...p,
+        category: p.category ? p.category.trim() : 'Bebidas'
+      });
+    });
+    (restaurant.dishes || []).forEach(d => {
+      const nameKey = d.name.trim().toLowerCase();
+      if (!nameKey) return;
+      if (itemsMap.has(nameKey)) {
+        const existing = itemsMap.get(nameKey);
+        itemsMap.set(nameKey, {
+          ...d,
+          ...existing,
+          category: existing.category || (d as any).category || 'Pratos'
+        });
+      } else {
+        itemsMap.set(nameKey, {
+          ...d,
+          category: (d as any).category || 'Pratos'
+        });
+      }
+    });
+    return Array.from(itemsMap.values());
+  })();
+
+  // Dynamically extract unique categories from allItems
+  const dynamicCategories = React.useMemo(() => {
+    const cats = new Set<string>();
+    allItems.forEach(item => {
+      if (item.category) {
+        const formatted = item.category.trim();
+        if (formatted) {
+          cats.add(formatted);
+        }
+      }
+    });
+    const sortedCats = Array.from(cats).sort((a, b) => {
+      const order = ['Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos'];
+      const indexA = order.indexOf(a);
+      const indexB = order.indexOf(b);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return ['Todos', ...sortedCats];
+  }, [allItems]);
 
   const filteredItems = allItems.filter(item => 
     (activeCategory === 'Todos' || item.category === activeCategory) &&
@@ -184,8 +258,8 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                       <h3 className="text-sm font-black text-slate-300">Escolha uma categoria</h3>
                     </div>
                     <div className="grid grid-cols-3 gap-3 pb-6">
-                      {CATEGORIES.map(cat => {
-                        const details = CATEGORY_DETAILS[cat];
+                      {dynamicCategories.map(cat => {
+                        const details = getCategoryDetails(cat);
                         return (
                           <motion.button
                             whileHover={{ scale: 1.05, y: -2 }}
@@ -198,7 +272,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                             className={`p-4 rounded-2xl border ${details.border} bg-gradient-to-b ${details.gradient} backdrop-blur-md flex flex-col items-center justify-center text-center transition-all duration-300 shadow-md aspect-square gap-2.5 cursor-pointer`}
                           >
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-slate-950/60 ${details.text} border border-white/5 shrink-0`}>
-                              {React.cloneElement(CATEGORY_ICONS[cat] as React.ReactElement, { size: 20 })}
+                              {React.cloneElement(getCategoryIcon(cat) as React.ReactElement, { size: 20 })}
                             </div>
                             <span className="text-[9px] font-black uppercase tracking-wider text-white block truncate w-full leading-none">
                               {cat === 'Todos' ? 'Ementa' : cat}
@@ -249,20 +323,22 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                                  <div className="absolute top-2.5 left-2.5 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-black text-orange-400 z-10 border border-white/5">
                                    €{item.price.toFixed(2)}
                                  </div>
-
-                                 <div className="space-y-2">
-                                    <div className="h-24 bg-slate-950/50 rounded-2xl overflow-hidden flex items-center justify-center relative">
-                                       {item.image ? (
-                                          <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                       ) : (
-                                          <Utensils className="text-slate-700 w-6 h-6" />
-                                       )}
-                                    </div>
-                                    <div className="px-0.5">
-                                      <h3 className="font-bold text-slate-200 text-[11px] leading-tight line-clamp-1">{item.name}</h3>
-                                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.category}</p>
-                                    </div>
-                                 </div>
+                                  <div 
+                                    onClick={() => updateQuantity(item, 1)}
+                                    className="space-y-2 cursor-pointer active:scale-[0.98] transition-transform select-none"
+                                  >
+                                     <div className="h-24 bg-slate-950/50 rounded-2xl overflow-hidden flex items-center justify-center relative">
+                                        {item.image ? (
+                                           <img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        ) : (
+                                           <Utensils className="text-slate-700 w-6 h-6" />
+                                        )}
+                                     </div>
+                                     <div className="px-0.5">
+                                       <h3 className="font-bold text-slate-200 text-[11px] leading-tight line-clamp-1">{item.name}</h3>
+                                       <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{item.category}</p>
+                                     </div>
+                                  </div>
 
                                  <div className="mt-3">
                                     {cartItem ? (
