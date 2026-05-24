@@ -107,7 +107,7 @@ app.get('/api/db-diagnostics', (req, res) => {
 // Debug endpoint to check DB contents
 app.get('/api/debug-db', async (req, res) => {
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         const stats = {};
         Object.keys(db).forEach(k => {
             if (Array.isArray(db[k])) stats[k] = db[k].length;
@@ -130,7 +130,7 @@ app.get('/api/debug-db', async (req, res) => {
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         let targetArray = null;
         let index = -1;
         
@@ -356,7 +356,7 @@ const seedIfNeeded = async () => {
 // --- AUTH & USERS ---
 app.get('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = await readDB();
+    const db = await readDB(true);
     let user = db.users.find(u => normalizeEmail(u.email) === email);
     if (!user) {
         user = { 
@@ -377,7 +377,7 @@ app.get('/api/users/:email', async (req, res) => {
 
 app.put('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = await readDB();
+    const db = await readDB(true);
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
         db.users[index] = { ...db.users[index], ...req.body, email };
@@ -407,7 +407,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 // Full Sync for Admin Dashboard
 app.post('/api/full-sync', async (req, res) => {
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         const updatedData = req.body;
         
         // Mantemos dados essenciais que não vêm no full-sync (ex: logs ou contadores se houvessem)
@@ -434,7 +434,7 @@ app.post('/api/reset-db', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         let totalCleared = 0;
         const summary = {};
 
@@ -545,12 +545,12 @@ app.get('/api/env-check', (req, res) => {
 
 // Aliases para compatibilidade
 app.get('/api/posts', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.posts || []);
 });
 
 app.post('/api/posts', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
     db.posts.unshift(newPost);
     await writeDB(db);
@@ -559,14 +559,14 @@ app.post('/api/posts', async (req, res) => {
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
 app.get('/api/hotels/:id', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     const hotel = db.hotels.find(h => h.id === req.params.id);
     if (hotel) res.json(hotel);
     else res.status(404).send("Hotel not found");
 });
 
 app.get('/api/cars/:id', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     const car = db.cars.find(c => c.id === req.params.id);
     if (car) res.json(car);
     else res.status(404).send("Car not found");
@@ -577,7 +577,7 @@ app.post('/api/restaurants/:id/reviews', async (req, res) => {
     const { id } = req.params;
     const reviewData = req.body;
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         let business = null;
         let category = null;
         
@@ -651,7 +651,7 @@ app.post('/api/restaurants/:id/reviews', async (req, res) => {
 app.post('/api/reservations', async (req, res) => {
     console.log("📥 RECEIVED reservation request:", req.body);
     try {
-        const db = await readDB();
+        const db = await readDB(true); // Bypass cache to ensure we append to the latest DB state
         const { businessId, businessType, customerEmail } = req.body;
         
         // Handle empty/undefined email gracefully
@@ -723,7 +723,7 @@ app.post('/api/reservations', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS FOR TESTING ---
 app.post('/api/admin/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB();
+        const db = await readDB(true);
         
         // 1. Limpar reservas em todos os negócios
         ALL_BUSINESS_COLLECTIONS.forEach(key => {
@@ -772,7 +772,7 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
 
 app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await readDB();
+    const db = await readDB(true);
     let found = false;
 
     // 1. Atualizar nos Negócios
@@ -873,7 +873,7 @@ app.put('/api/reservations/:id', async (req, res) => {
 app.post('/api/reservations/:id/append-order', async (req, res) => {
     const { id } = req.params;
     const { items } = req.body;
-    const db = await readDB();
+    const db = await readDB(true);
     let found = false;
 
     // 1. Procurar a reserva nos Negócios
@@ -937,7 +937,7 @@ app.post('/api/reservations/:id/append-order', async (req, res) => {
 
 app.delete('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await readDB();
+    const db = await readDB(true);
     let found = false;
 
     // 1. Remover dos Negócios (Todas as Categorias)
@@ -972,12 +972,12 @@ app.delete('/api/reservations/:id', async (req, res) => {
 
 // --- COMMUNITY ---
 app.get('/api/community/posts', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.posts || []);
 });
 
 app.post('/api/community/posts', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
     db.posts.unshift(newPost);
     await writeDB(db);
@@ -986,23 +986,23 @@ app.post('/api/community/posts', async (req, res) => {
 
 // --- MISC ---
 app.get('/api/bus-schedules', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.busSchedules || []);
 });
 app.get('/api/activities', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.activities || []);
 });
 app.get('/api/flights', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.flights || []);
 });
 app.get('/api/hotels', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.hotels || []);
 });
 app.get('/api/cars', async (req, res) => {
-    const db = await readDB();
+    const db = await readDB(true);
     res.json(db.cars || []);
 });
 
