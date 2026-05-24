@@ -701,11 +701,12 @@ const App: React.FC = () => {
         }
       };
 
-      // Debounce para não sobrecarregar o servidor
+      // Só sincroniza quando os dados de perfil (telefone/avatar/créditos) mudam.
+      // REMOVIDO myReservations das dependências para evitar PUT request a cada 2 segundos!
       const timer = setTimeout(syncUser, 2000);
       return () => clearTimeout(timer);
     }
-  }, [userCredits, userProfile, myReservations, isAuthenticated, isAdmin, isBusiness]);
+  }, [userCredits, userProfile.phone, userProfile.avatar, isAuthenticated, isAdmin, isBusiness]);
 
   const toggleFavoriteRestaurant = (id: string) => {
     setFavoriteRestaurantIds(prev => 

@@ -153,12 +153,12 @@ const handleBusinessUpdate = async (req, res) => {
                         if (existingTable) {
                             return {
                                 ...t,
-                                status: existingTable.status,
-                                customerName: existingTable.customerName,
-                                reservationTime: existingTable.reservationTime,
-                                currentTab: existingTable.currentTab,
-                                pendingOrderItems: existingTable.pendingOrderItems,
-                                alertStatus: existingTable.alertStatus
+                                status: t.status || existingTable.status,
+                                customerName: t.customerName !== undefined ? t.customerName : existingTable.customerName,
+                                reservationTime: t.reservationTime !== undefined ? t.reservationTime : existingTable.reservationTime,
+                                currentTab: t.currentTab || existingTable.currentTab,
+                                pendingOrderItems: t.pendingOrderItems || existingTable.pendingOrderItems,
+                                alertStatus: t.alertStatus || existingTable.alertStatus
                             };
                         }
                         return t;

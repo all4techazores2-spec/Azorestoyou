@@ -173,7 +173,8 @@ export const readDB = async (bypassCache = false) => {
         try {
             if (fs.existsSync(dbPath)) {
                 const data = fs.readFileSync(dbPath, 'utf8');
-                return { ...DEFAULT_DB, ...JSON.parse(data) };
+                memoryCache = { ...DEFAULT_DB, ...JSON.parse(data) };
+                return memoryCache;
             }
         } catch (err) {
             console.error("⚠️ Fallback local JSON read failed:", err.message);
@@ -181,10 +182,12 @@ export const readDB = async (bypassCache = false) => {
         return DEFAULT_DB;
     } else {
         // Local JSON fallback
+        if (memoryCache) return memoryCache;
         try {
             if (!fs.existsSync(dbPath)) return DEFAULT_DB;
             const data = fs.readFileSync(dbPath, 'utf8');
-            return { ...DEFAULT_DB, ...JSON.parse(data) };
+            memoryCache = { ...DEFAULT_DB, ...JSON.parse(data) };
+            return memoryCache;
         } catch (err) {
             console.error("Error reading db.json:", err);
             return DEFAULT_DB;
