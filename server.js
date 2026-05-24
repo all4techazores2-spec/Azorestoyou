@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
+import { exec } from 'child_process';
 import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -74,8 +75,15 @@ const ALL_BUSINESS_COLLECTIONS = [
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+    try {
+        // Query database (bypass cache) to keep MongoDB Atlas active
+        await readDB(true);
+        res.json({ status: 'ok', database: 'active', uptime: process.uptime(), timestamp: new Date().toISOString() });
+    } catch (err) {
+        console.warn("⚠️ Health check DB warning:", err.message);
+        res.json({ status: 'degraded', database: 'error', error: err.message, uptime: process.uptime(), timestamp: new Date().toISOString() });
+    }
 });
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
@@ -116,7 +124,7 @@ app.get('/api/debug-db', async (req, res) => {
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         let targetArray = null;
         let index = -1;
         
@@ -128,7 +136,57 @@ const handleBusinessUpdate = async (req, res) => {
         });
 
         if (targetArray && index !== -1) {
-            targetArray[index] = normalizeTrailData({ ...targetArray[index], ...req.body });
+            const existingItem = targetArray[index];
+            const updatedItem = { ...existingItem, ...req.body };
+
+            // Protect specific real-time server-side collections from being overwritten by stale frontend data
+            if (existingItem.reservations !== undefined) {
+                updatedItem.reservations = existingItem.reservations;
+            }
+            if (existingItem.kitchenOrders !== undefined) {
+                updatedItem.kitchenOrders = existingItem.kitchenOrders;
+            }
+            if (existingItem.tables !== undefined) {
+                if (req.body.tables && Array.isArray(req.body.tables)) {
+                    updatedItem.tables = req.body.tables.map(t => {
+                        const existingTable = existingItem.tables.find(et => et.id === t.id);
+                        if (existingTable) {
+                            return {
+                                ...t,
+                                status: existingTable.status,
+                                customerName: existingTable.customerName,
+                                reservationTime: existingTable.reservationTime,
+                                currentTab: existingTable.currentTab,
+                                pendingOrderItems: existingTable.pendingOrderItems,
+                                alertStatus: existingTable.alertStatus
+                            };
+                        }
+                        return t;
+                    });
+                } else {
+                    updatedItem.tables = existingItem.tables;
+                }
+            }
+            if (existingItem.rooms !== undefined) {
+                if (req.body.rooms && Array.isArray(req.body.rooms)) {
+                    updatedItem.rooms = req.body.rooms.map(r => {
+                        const existingRoom = existingItem.rooms.find(er => er.id === r.id);
+                        if (existingRoom) {
+                            return {
+                                ...r,
+                                status: existingRoom.status,
+                                customerName: existingRoom.customerName,
+                                reservationTime: existingRoom.reservationTime
+                            };
+                        }
+                        return r;
+                    });
+                } else {
+                    updatedItem.rooms = existingItem.rooms;
+                }
+            }
+
+            targetArray[index] = normalizeTrailData(updatedItem);
 
             // Sincronizar automaticamente as alterações de reserva com os perfis de utilizador correspondentes
             if (req.body.reservations && Array.isArray(req.body.reservations)) {
@@ -214,6 +272,72 @@ ALL_KEYS.forEach(key => {
     }
 });
 
+// --- NATIVE LOCAL INSTALLATION ENDPOINT ---
+app.post('/api/install-internally', async (req, res) => {
+    try {
+        const localDir = 'C:\\Azores4You';
+        
+        // 1. Create the C:\Azores4You directory if it doesn't exist
+        if (!fs.existsSync(localDir)) {
+            fs.mkdirSync(localDir, { recursive: true });
+        }
+        
+        // 2. Copy production files ('dist', 'db.json', 'package.json', 'server.js', 'db.js', '.env')
+        const itemsToCopy = ['dist', 'db.json', 'package.json', 'server.js', 'db.js', '.env'];
+        itemsToCopy.forEach(item => {
+            const srcPath = path.join(__dirname, item);
+            const destPath = path.join(localDir, item);
+            if (fs.existsSync(srcPath)) {
+                try {
+                    fs.cpSync(srcPath, destPath, { recursive: true });
+                } catch (copyErr) {
+                    console.warn(`Could not copy ${item}:`, copyErr.message);
+                }
+            }
+        });
+        
+        // 3. Write start_pos.bat launcher in C:\Azores4You (forces fullscreen and app mode in Edge/Chrome)
+        const startScriptPath = path.join(localDir, 'start_pos.bat');
+        const batContent = `@echo off\nstart msedge.exe --start-fullscreen --app=http://localhost:5173/\nexit\n`;
+        fs.writeFileSync(startScriptPath, batContent, 'utf-8');
+        
+        // 4. Create desktop shortcut using PowerShell
+        const desktopPath = path.join(process.env.USERPROFILE || 'C:\\Users\\PC', 'Desktop');
+        const shortcutPath = path.join(desktopPath, 'Azores4You.lnk');
+        
+        const psCommand = `
+            $WshShell = New-Object -ComObject WScript.Shell;
+            $Shortcut = $WshShell.CreateShortcut("${shortcutPath.replace(/\\/g, '\\\\')}");
+            $Shortcut.TargetPath = "${startScriptPath.replace(/\\/g, '\\\\')}";
+            $Shortcut.IconLocation = "shell32.dll,14";
+            $Shortcut.Description = "Azores4You POS";
+            $Shortcut.Save();
+        `;
+        
+        const tempPsFile = path.join(localDir, 'create_shortcut.ps1');
+        fs.writeFileSync(tempPsFile, psCommand, 'utf-8');
+        
+        exec(`powershell -ExecutionPolicy Bypass -File "${tempPsFile}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Error creating desktop shortcut:", error);
+                return res.status(500).json({ error: "Failed to create desktop shortcut", details: error.message });
+            }
+            // Cleanup temp script
+            try { fs.unlinkSync(tempPsFile); } catch(e){}
+            
+            res.json({ 
+                success: true, 
+                message: "Instalado com sucesso no disco local C: e atalho criado no Ambiente de Trabalho!",
+                localFolder: localDir,
+                shortcut: shortcutPath
+            });
+        });
+    } catch (err) {
+        console.error("Internal install endpoint failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- STATIC FILES AFTER API ---
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -247,7 +371,7 @@ app.get('/api/users/:email', async (req, res) => {
 
 app.put('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const db = await readDB(true);
+    const db = await readDB();
     const index = db.users.findIndex(u => normalizeEmail(u.email) === email);
     if (index !== -1) {
         db.users[index] = { ...db.users[index], ...req.body, email };
@@ -304,7 +428,7 @@ app.post('/api/reset-db', async (req, res) => {
 // --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         let totalCleared = 0;
         const summary = {};
 
@@ -442,57 +566,158 @@ app.get('/api/cars/:id', async (req, res) => {
     else res.status(404).send("Car not found");
 });
 
+// --- REVIEWS ---
+app.post('/api/restaurants/:id/reviews', async (req, res) => {
+    const { id } = req.params;
+    const reviewData = req.body;
+    try {
+        const db = await readDB();
+        let business = null;
+        let category = null;
+        
+        ALL_BUSINESS_COLLECTIONS.forEach(key => {
+            if (db[key]) {
+                const b = db[key].find(item => item.id === id || String(item.id) === String(id));
+                if (b) { business = b; category = key; }
+            }
+        });
+
+        if (!business) {
+            return res.status(404).send("Business not found");
+        }
+
+        if (!business.reviews_list) {
+            business.reviews_list = [];
+        }
+
+        // Check if this reservation or purchase has already been reviewed
+        const alreadyReviewed = business.reviews_list.some(r => r.reservationId === reviewData.reservationId);
+        if (alreadyReviewed) {
+            return res.status(400).json({ error: "Esta reserva/compra já foi avaliada." });
+        }
+
+        const newReview = {
+            id: `REV_${Date.now()}`,
+            reservationId: reviewData.reservationId,
+            rating: Number(reviewData.rating) || 5,
+            comment: reviewData.comment || '',
+            customerName: reviewData.customerName || 'Cliente',
+            customerEmail: reviewData.customerEmail,
+            date: new Date().toISOString(),
+            approved: false // Starts as unapproved / pending approval
+        };
+
+        business.reviews_list.push(newReview);
+
+        // Update local reservations state if applicable
+        if (db.users) {
+            db.users.forEach(user => {
+                if (user.reservations) {
+                    const rIdx = user.reservations.findIndex(r => r.id === reviewData.reservationId);
+                    if (rIdx !== -1) {
+                        user.reservations[rIdx].reviewed = true;
+                        user.reservations[rIdx].rating = newReview.rating;
+                        user.reservations[rIdx].reviewNote = newReview.comment;
+                    }
+                }
+            });
+        }
+
+        if (business.reservations) {
+            const rIdx = business.reservations.findIndex(r => r.id === reviewData.reservationId);
+            if (rIdx !== -1) {
+                business.reservations[rIdx].reviewed = true;
+                business.reservations[rIdx].rating = newReview.rating;
+                business.reservations[rIdx].reviewNote = newReview.comment;
+            }
+        }
+
+        await writeDB(db);
+        console.log(`⭐ New unapproved review registered for business ${id} reservation ${reviewData.reservationId}`);
+        res.status(201).json(newReview);
+    } catch (err) {
+        console.error("❌ Error registering review:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- RESERVATIONS ---
 app.post('/api/reservations', async (req, res) => {
-    const db = await readDB(true);
-    const { businessId, businessType, customerEmail } = req.body;
-    const reservation = { ...req.body, id: `RES_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
-    
-    const typeMap = { 
-        'restaurant': 'restaurants', 
-        'beauty': 'beauty', 
-        'shop': 'shops', 
-        'office': 'offices', 
-        'service': 'services',
-        'hotel': 'hotels',
-        'al': 'hotels',
-        'car': 'cars'
-    };
-    const key = typeMap[businessType] || 'restaurants';
-    const business = db[key]?.find(b => b.id === businessId);
+    console.log("📥 RECEIVED reservation request:", req.body);
+    try {
+        const db = await readDB();
+        const { businessId, businessType, customerEmail } = req.body;
+        
+        // Handle empty/undefined email gracefully
+        const targetEmail = customerEmail ? customerEmail.trim() : 'traveler@azorestoyou.com';
+        const cleanEmail = normalizeEmail(targetEmail);
+        
+        const reservation = { 
+            ...req.body, 
+            customerEmail: cleanEmail,
+            id: req.body.id || `RES_${Date.now()}`, 
+            status: 'pending', 
+            createdAt: new Date().toISOString() 
+        };
+        
+        console.log(`🔎 Searching business for category [${businessType}], ID [${businessId}]...`);
+        const typeMap = { 
+            'restaurant': 'restaurants', 
+            'beauty': 'beauty', 
+            'shop': 'shops', 
+            'office': 'offices', 
+            'service': 'services',
+            'hotel': 'hotels',
+            'al': 'hotels',
+            'car': 'cars'
+        };
+        const key = typeMap[businessType] || 'restaurants';
+        const business = db[key]?.find(b => b.id === businessId);
 
-    if (business) {
-        if (!business.reservations) business.reservations = [];
-        business.reservations.push(reservation);
-        
-        let user = db.users.find(u => normalizeEmail(u.email) === normalizeEmail(customerEmail));
-        if (!user) {
-            user = {
-                email: normalizeEmail(customerEmail),
-                role: 'client',
-                credits: 100,
-                reservations: [],
-                profile: {
-                    name: req.body.customerName || customerEmail.split('@')[0],
-                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + customerEmail
-                }
-            };
-            db.users.push(user);
+        if (business) {
+            console.log(`✅ Business found: [${business.name}]. Adding reservation...`);
+            if (!business.reservations) business.reservations = [];
+            business.reservations.push(reservation);
+            
+            if (!db.users) db.users = [];
+            let user = db.users.find(u => normalizeEmail(u.email) === cleanEmail);
+            if (!user) {
+                console.log(`👤 Creating new client profile for email [${cleanEmail}]...`);
+                user = {
+                    email: cleanEmail,
+                    role: 'client',
+                    credits: 100,
+                    reservations: [],
+                    profile: {
+                        name: req.body.customerName || targetEmail.split('@')[0],
+                        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(cleanEmail)
+                    }
+                };
+                db.users.push(user);
+            } else {
+                console.log(`👤 Existing user found: [${user.email}]`);
+            }
+            if (!user.reservations) user.reservations = [];
+            user.reservations.push({ ...reservation, businessName: business.name });
+            
+            console.log("💾 Persisting reservation to Database...");
+            await writeDB(db);
+            console.log(`🎉 Reservation [${reservation.id}] successfully created!`);
+            res.status(201).json(reservation);
+        } else {
+            console.warn(`❌ Business not found for businessId [${businessId}] in collection [${key}]`);
+            res.status(404).send("Business not found");
         }
-        if (!user.reservations) user.reservations = [];
-        user.reservations.push({ ...reservation, businessName: business.name });
-        
-        await writeDB(db);
-        res.status(201).json(reservation);
-    } else {
-        res.status(404).send("Business not found");
+    } catch (err) {
+        console.error("❌ CRITICAL EXCEPTION inside POST /api/reservations:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
 // --- CLEAR ALL RESERVATIONS FOR TESTING ---
 app.post('/api/admin/clear-reservations', async (req, res) => {
     try {
-        const db = await readDB(true);
+        const db = await readDB();
         
         // 1. Limpar reservas em todos os negócios
         ALL_BUSINESS_COLLECTIONS.forEach(key => {
@@ -541,7 +766,7 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
 
 app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
-    const db = await readDB(true);
+    const db = await readDB();
     let found = false;
 
     // 1. Atualizar nos Negócios
@@ -642,7 +867,7 @@ app.put('/api/reservations/:id', async (req, res) => {
 app.post('/api/reservations/:id/append-order', async (req, res) => {
     const { id } = req.params;
     const { items } = req.body;
-    const db = await readDB(true);
+    const db = await readDB();
     let found = false;
 
     // 1. Procurar a reserva nos Negócios

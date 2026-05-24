@@ -49,6 +49,17 @@ export const connectDB = async () => {
                 mongoError = null;
                 console.log("✅ DATABASE STATUS: Connected to MongoDB Atlas");
 
+                // Warmup query to wake up the cluster and Mongoose caches
+                (async () => {
+                    try {
+                        console.log("🔥 Running Database Warmup Query...");
+                        await DBModel.findOne({ key: 'master_db' }).lean().maxTimeMS(60000);
+                        console.log("🔥 Database Warmup completed successfully!");
+                    } catch (wErr) {
+                        console.warn("⚠️ Warmup query warning:", wErr.message);
+                    }
+                })();
+
                 mongoose.connection.on('disconnected', () => {
                     isMongoConnected = false;
                     console.warn("⚠️ MongoDB disconnected. A reconectar em 10s...");
@@ -157,8 +168,17 @@ export const readDB = async (bypassCache = false) => {
             return memoryCache || DEFAULT_DB;
         }
     } else if (getMongoURI()) {
-        // MongoDB URI exists but not yet connected - return cache or default
-        return memoryCache || DEFAULT_DB;
+        // MongoDB URI exists but not yet connected - return cache or fallback to local JSON
+        if (memoryCache) return memoryCache;
+        try {
+            if (fs.existsSync(dbPath)) {
+                const data = fs.readFileSync(dbPath, 'utf8');
+                return { ...DEFAULT_DB, ...JSON.parse(data) };
+            }
+        } catch (err) {
+            console.error("⚠️ Fallback local JSON read failed:", err.message);
+        }
+        return DEFAULT_DB;
     } else {
         // Local JSON fallback
         try {
@@ -177,10 +197,11 @@ export const writeDB = async (data) => {
         let retries = 3;
         while (retries > 0) {
             try {
-                await DBModel.findOneAndUpdate(
+                // Bypass Mongoose casting/validation for massive JSON object to fix 30-second hang
+                await DBModel.collection.updateOne(
                     { key: 'master_db' },
-                    { data },
-                    { upsert: true, new: true, maxTimeMS: 30000 }
+                    { $set: { data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                    { upsert: true }
                 );
                 memoryCache = data;
                 lastCacheTime = Date.now();
@@ -196,8 +217,15 @@ export const writeDB = async (data) => {
             }
         }
     } else if (getMongoURI()) {
-        console.error("❌ Cannot write: MongoDB is configured but not connected.");
-        throw new Error("MongoDB not connected");
+        console.warn("⚠️ MongoDB is configured but not connected. Writing to local JSON fallback.");
+        try {
+            fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+            memoryCache = data;
+            lastCacheTime = Date.now();
+        } catch (err) {
+            console.error("Error writing fallback db.json:", err);
+            throw err;
+        }
     } else {
         // Local JSON fallback
         try {
@@ -233,10 +261,10 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
                 }
             });
             
-            const result = await DBModel.findOneAndUpdate(
+            const result = await DBModel.collection.updateOne(
                 { key: 'master_db' },
-                { $set: { [`data.${key}`]: merged } },
-                { upsert: true, new: true, maxTimeMS: 60000 }
+                { $set: { [`data.${key}`]: merged, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                { upsert: true }
             );
             if (result) {
                 if (memoryCache) { memoryCache[key] = merged; lastCacheTime = Date.now(); }
@@ -246,10 +274,10 @@ export const updateCollection = async (key, data, mode = 'overwrite') => {
 
         if (isMongoConnected) {
             const normalizedData = Array.isArray(data) ? data.map(normalizeTrailData) : data;
-            const result = await DBModel.findOneAndUpdate(
+            const result = await DBModel.collection.updateOne(
                 { key: 'master_db' },
-                { $set: { [`data.${key}`]: normalizedData } },
-                { upsert: true, new: true, maxTimeMS: 120000 }
+                { $set: { [`data.${key}`]: normalizedData, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                { upsert: true }
             );
 
             if (result) {

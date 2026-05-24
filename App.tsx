@@ -389,16 +389,22 @@ const App: React.FC = () => {
       }
 
       let emptyCount = 0;
+      let errorCount = 0;
       let completedCount = 0;
 
       keysToFetch.forEach(key => {
         const bypass = (specificKeys && specificKeys.length > 0) ? '&bypassCache=true' : '';
         fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`)
-          .then(r => r.ok ? r.json() : [])
+          .then(r => {
+            if (!r.ok) {
+              throw new Error(`HTTP ${r.status} ${r.statusText}`);
+            }
+            return r.json();
+          })
           .then(data => {
              completedCount++;
              if (Array.isArray(data) && data.length === 0) emptyCount++;
-                           const setter = setterMap[key];
+             const setter = setterMap[key];
               if (setter && Array.isArray(data)) {
                 let normalized = data.map(normalizeBusiness);
                 if (key === 'marketplace_ads') {
@@ -419,13 +425,22 @@ const App: React.FC = () => {
                 }
               }
              if (completedCount === keysToFetch.length) {
-                if (emptyCount === keysToFetch.length && retries > 0) {
+                const totalFailures = emptyCount + errorCount;
+                if (totalFailures === keysToFetch.length && retries > 0) {
                    setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
                 }
              }
           })
-          .catch(() => {
+          .catch(err => {
+             console.warn(`⚠️ Fetch failed for [${key}] (preserving local state):`, err.message || err);
              completedCount++;
+             errorCount++;
+             if (completedCount === keysToFetch.length) {
+                const totalFailures = emptyCount + errorCount;
+                if (totalFailures === keysToFetch.length && retries > 0) {
+                   setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
+                }
+             }
           });
       });
 
@@ -856,7 +871,7 @@ const App: React.FC = () => {
         .then(res => res.json())
         .then(async userData => {
           if (userData) {
-            const finalName = name || userData.name || 'Cliente Viajante';
+            const finalName = name || userData.profile?.name || userData.name || 'Cliente Viajante';
             setUserProfile({
               email: userData.email,
               name: finalName,
@@ -867,12 +882,21 @@ const App: React.FC = () => {
             setMyReservations(userData.reservations || []);
 
             // Se for novo registo (passámos o nome) ou o nome no servidor estiver vazio, atualizar
-            if (name && (!userData.name || userData.name === 'Cliente Viajante')) {
+            const hasDefaultName = !userData.profile?.name || userData.profile.name === 'Cliente Viajante' || userData.profile.name === email.split('@')[0];
+            if (name && hasDefaultName) {
                try {
                  await fetch(`${API_BASE_URL}/api/users/${email}`, {
                    method: 'PUT',
                    headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ name: name })
+                   body: JSON.stringify({ 
+                     ...userData,
+                     name: name,
+                     profile: {
+                       ...(userData.profile || {}),
+                       name: name,
+                       avatar: userData.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+                     }
+                   })
                  });
                  console.log("✅ Nome do utilizador atualizado no servidor");
                } catch (e) {
@@ -1543,7 +1567,12 @@ const App: React.FC = () => {
                       🍽️ Mais Itens
                     </button>
                     <button
-                      onClick={() => setGuestOrderSent(false)}
+                      onClick={() => {
+                        setGuestOrderSent(false);
+                        if (guestRestaurantId && guestTableId) {
+                          handleTableAction(guestRestaurantId, String(guestTableId), 'calling_waiter');
+                        }
+                      }}
                       className="py-4 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
                       🔔 Chamar Staff
@@ -1750,6 +1779,7 @@ const App: React.FC = () => {
             language={language}
             isStaff={isStaff}
             staffRole={staffRole || undefined}
+            staffEmail={userProfile?.email}
             onLogout={() => { 
               setIsAuthenticated(false); 
               setIsBusiness(false); 
