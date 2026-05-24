@@ -64,6 +64,12 @@ app.use((req, res, next) => {
     next();
 });
 
+// Desativar cache para todas as chamadas de API (evita desincronizações através do Cloudflare/Navegador)
+app.use('/api', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    next();
+});
+
 const ALL_BUSINESS_COLLECTIONS = [
     'restaurants', 'beauty', 'shops', 'services', 'offices', 
     'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
