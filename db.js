@@ -320,17 +320,132 @@ export const resetDB = async () => {
 };
 
 // --- DATA NORMALIZATION HELPERS ---
-/**
- * Ensures advanced trail fields are preserved and correctly structured.
- * Specifically handles 'climaSimulado' and 'pontosInteresse' for trails and POIs.
- */
-export const normalizeTrailData = (item) => {
-    if (item.type === 'trail' || item.type === 'poi') {
+
+export const normalizeRestaurantData = (item) => {
+    // Apenas aplica se for restaurante (identificado por businessType === 'restaurant' ou ID que começa com R)
+    if (item && (item.businessType === 'restaurant' || (item.id && (item.id.startsWith('R') || item.id === 'R_2020')))) {
+        // 1. Credenciais administrativas por omissão
+        const adminEmail = item.adminEmail || `${item.id.toLowerCase()}@azores4you.com`;
+        const adminPassword = item.adminPassword || 'admin';
+
+        // 2. Mapa de 12 mesas estruturado e limpo
+        let tables = item.tables;
+        if (!tables || !Array.isArray(tables) || tables.length < 12) {
+            tables = [
+                { id: "T1", number: 1, seats: 1 },
+                { id: "T2", number: 2, seats: 1 },
+                { id: "T3", number: 3, seats: 2 },
+                { id: "T4", number: 4, seats: 6 },
+                { id: "T5", number: 5, seats: 2 },
+                { id: "T6", number: 6, seats: 4 },
+                { id: "T7", number: 7, seats: 4, area: "Explanada", x: 100, y: 100 },
+                { id: "T8", number: 8, seats: 4, area: "Explanada", x: 100, y: 100 },
+                { id: "T9", number: 9, seats: 4, area: "Explanada", x: 100, y: 100 },
+                { id: "T10", number: 10, seats: 4, area: "Explanada", x: 100, y: 100 },
+                { id: "T11", number: 11, seats: 4, area: "Explanada", x: 100, y: 100 },
+                { id: "T12", number: 12, seats: 4, area: "Explanada", x: 100, y: 100 }
+            ].map(t => ({
+                ...t,
+                status: "available",
+                alertStatus: "none",
+                currentTab: [],
+                pendingOrderItems: [],
+                currentOrder: null,
+                customerName: null,
+                reservationTime: null,
+                occupiedBy: null,
+                occupiedSince: null
+            }));
+        } else {
+            // Garantir que as mesas existentes têm os campos dinâmicos inicializados
+            tables = tables.map(t => ({
+                status: "available",
+                alertStatus: "none",
+                currentTab: [],
+                pendingOrderItems: [],
+                currentOrder: null,
+                customerName: null,
+                reservationTime: null,
+                occupiedBy: null,
+                occupiedSince: null,
+                ...t
+            }));
+        }
+
+        // 3. Catálogo de pratos de menu (dishes) por omissão
+        let dishes = item.dishes;
+        if (!dishes || !Array.isArray(dishes) || dishes.length === 0) {
+            dishes = [
+                { id: `P_${item.id}_bife`, name: "Bife da Casa", price: 18, category: "Pratos", image: "/imagens/restaurantes/default.jpg", description: "Especialidade regional recomendada" },
+                { id: `P_${item.id}_polvo`, name: "Polvo à Lagareiro", price: 22, category: "Pratos", image: "/imagens/restaurantes/default.jpg", description: "Especialidade regional recomendada" },
+                { id: `P_${item.id}_mousse`, name: "Mousse de Chocolate", price: 4, category: "Sobremesas", image: "/imagens/restaurantes/default.jpg" },
+                { id: `P_${item.id}_pudim`, name: "Pudim Caseiro", price: 4.5, image: "/imagens/restaurantes/default.jpg", category: "Sobremesas" }
+            ];
+        }
+
+        // 4. Catálogo de stock interno (products) por omissão
+        let products = item.products;
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            products = [
+                { id: `P_${item.id}_bife`, name: "Bife da Casa", price: 18, category: "Pratos", stock: 10, minStock: 5, image: "/imagens/restaurantes/default.jpg" },
+                { id: `P_${item.id}_polvo`, name: "Polvo à Lagareiro", price: 22, category: "Pratos", stock: 10, minStock: 5, image: "/imagens/restaurantes/default.jpg" },
+                { id: `P_${item.id}_superbock`, name: "Superbock", price: 1.8, category: "Bebidas", stock: 24, minStock: 5, image: "/imagens/default.jpg", inMenu: false },
+                { id: `P_${item.id}_cocacola`, name: "Coca-Cola", price: 2, category: "Bebidas", stock: 24, minStock: 5, image: "/imagens/default.jpg", inMenu: false },
+                { id: `P_${item.id}_cafe`, name: "Café", price: 0.6, category: "Cafetaria", stock: 50, minStock: 10, image: "/imagens/default.jpg" },
+                { id: `P_${item.id}_cha`, name: "Chá", price: 1.2, category: "Cafetaria", stock: 30, minStock: 5, image: "/imagens/default.jpg", inMenu: false },
+                { id: `P_${item.id}_pudim`, name: "Pudim Caseiro", price: 4.5, category: "Sobremesas", stock: 10, minStock: 2, image: "/imagens/default.jpg", inMenu: true },
+                { id: `P_${item.id}_mousse`, name: "Mousse de Chocolate", price: 4, category: "Sobremesas", stock: 10, minStock: 2, image: "/imagens/default.jpg", inMenu: true }
+            ];
+        }
+
+        // 5. Staff por omissão para POS
+        let staff = item.staff;
+        if (!staff || !Array.isArray(staff) || staff.length === 0) {
+            staff = [
+                { id: `STF_${item.id}_1`, name: "Chefe de Cozinha", email: `chef@${item.id.toLowerCase()}.pt`, password: "admin", role: "waiter", onDuty: true },
+                { id: `STF_${item.id}_2`, name: "Empregado de Mesa", email: `waiter@${item.id.toLowerCase()}.pt`, password: "admin", role: "waiter", onDuty: true },
+                { id: `STF_${item.id}_3`, name: "Gerente", email: `manager@${item.id.toLowerCase()}.pt`, password: "admin", role: "waiter", onDuty: true }
+            ];
+        }
+
         return {
             ...item,
-            climaSimulado: item.climaSimulado || { condicao: "Céu Limpo", temperatura: 20 },
-            pontosInteresse: Array.isArray(item.pontosInteresse) ? item.pontosInteresse : []
+            adminEmail,
+            adminPassword,
+            tables,
+            dishes,
+            products,
+            staff,
+            reservations: item.reservations || [],
+            kitchenOrders: item.kitchenOrders || [],
+            fiadoClients: item.fiadoClients || [],
+            cashDrawerLogs: item.cashDrawerLogs || [],
+            isDrawerOpen: item.isDrawerOpen || false,
+            currentDrawerAmount: item.currentDrawerAmount || 0,
+            businessType: 'restaurant'
         };
     }
     return item;
 };
+
+export const normalizeItemData = (item) => {
+    let normalized = item;
+    if (normalized && (normalized.type === 'trail' || normalized.type === 'poi')) {
+        normalized = {
+            ...normalized,
+            climaSimulado: normalized.climaSimulado || { condicao: "Céu Limpo", temperatura: 20 },
+            pontosInteresse: Array.isArray(normalized.pontosInteresse) ? normalized.pontosInteresse : []
+        };
+    }
+    normalized = normalizeRestaurantData(normalized);
+    return normalized;
+};
+
+/**
+ * Ensures advanced trail/restaurant fields are preserved and correctly structured.
+ * Maintained under original name for full compatibility with server.js imports.
+ */
+export const normalizeTrailData = (item) => {
+    return normalizeItemData(item);
+};
+
