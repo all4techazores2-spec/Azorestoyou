@@ -5,11 +5,6 @@ import mongoose from 'mongoose';
 const mongoURI = 'mongodb://all4techazores2_db_user:azorestoyou@ac-3pnfstw-shard-00-00.5bkexpa.mongodb.net:27017,ac-3pnfstw-shard-00-01.5bkexpa.mongodb.net:27017,ac-3pnfstw-shard-00-02.5bkexpa.mongodb.net:27017/master_db?ssl=true&replicaSet=atlas-tidfjh-shard-0&authSource=admin&appName=Cluster0';
 
 async function performBackup() {
-  if (process.env.RENDER === 'true' || process.env.CI === 'true') {
-    console.log("⏭️ Ambiente de Build/CI detetado (Render). Ignorando backup automático para evitar esperas.");
-    process.exit(0);
-  }
-
   try {
     const localBackupDir = path.join(process.cwd(), 'backups');
     const desktopBackupDir = 'c:\\Users\\PC\\Desktop\\bakups';
@@ -43,10 +38,7 @@ async function performBackup() {
 
     // 2. Backup da base de dados da Nuvem (MongoDB Atlas)
     console.log('  🌐 A ligar ao MongoDB Atlas para extrair backup da nuvem...');
-    await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000
-    });
+    await mongoose.connect(mongoURI);
     
     const dbSchema = new mongoose.Schema({
       key: { type: String, unique: true },

@@ -9,7 +9,7 @@ import {
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat,
-  ScanLine, PackagePlus, Camera, ShoppingCart, Play
+  ScanLine, PackagePlus, Camera, ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -25,58 +25,11 @@ interface BusinessDashboardProps {
   isStaff?: boolean;
   staffRole?: string;
   onForceRefresh?: () => void;
-  staffEmail?: string;
 }
 
-type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers' | 'atendimentos' | 'details';
+type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
-
-const getAzoresHolidays = (year) => {
-  const fixed = [
-    { month: 0, day: 1, name: 'Ano Novo' },
-    { month: 3, day: 25, name: 'Dia da Liberdade' },
-    { month: 4, day: 1, name: 'Dia do Trabalhador' },
-    { month: 5, day: 10, name: 'Dia de Portugal' },
-    { month: 7, day: 15, name: 'Assunção de Nossa Senhora' },
-    { month: 9, day: 5, name: 'Implantação da República' },
-    { month: 10, day: 1, name: 'Dia de Todos os Santos' },
-    { month: 11, day: 1, name: 'Restauração da Independência' },
-    { month: 11, day: 8, name: 'Imaculada Conceição' },
-    { month: 11, day: 25, name: 'Natal' }
-  ];
-  
-  let mobile = [];
-  if (year === 2026) {
-    mobile = [
-      { date: '2026-02-17', name: 'Terça-feira de Carnaval' },
-      { date: '2026-04-03', name: 'Sexta-Feira Santa' },
-      { date: '2026-04-05', name: 'Páscoa' },
-      { date: '2026-05-25', name: 'Dia dos Açores (Espírito Santo)' },
-      { date: '2026-06-04', name: 'Corpo de Deus' }
-    ];
-  } else if (year === 2027) {
-    mobile = [
-      { date: '2027-02-09', name: 'Terça-feira de Carnaval' },
-      { date: '2027-03-26', name: 'Sexta-Feira Santa' },
-      { date: '2027-03-28', name: 'Páscoa' },
-      { date: '2027-05-17', name: 'Dia dos Açores (Espírito Santo)' },
-      { date: '2027-05-27', name: 'Corpo de Deus' }
-    ];
-  } else {
-    mobile = [
-      { date: `${year}-05-25`, name: 'Dia dos Açores (Espírito Santo)' }
-    ];
-  }
-  
-  const formattedFixed = fixed.map(h => {
-    const mm = String(h.month + 1).padStart(2, '0');
-    const dd = String(h.day).padStart(2, '0');
-    return { date: `${year}-${mm}-${dd}`, name: h.name };
-  });
-  
-  return [...formattedFixed, ...mobile];
-};
 const BEAUTY_POS_CATEGORIES = ['Cabelo', 'Unhas', 'Estética', 'Massagem', 'Maquilhagem', 'Sobrancelhas', 'Depilação', 'Barba', 'Produtos'];
 const SHOP_POS_CATEGORIES = ['Vestuário', 'Calçado', 'Acessórios', 'Eletrónica', 'Casa', 'Promoções', 'Outros'];
 
@@ -258,8 +211,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   language = 'pt',
   isStaff = false,
   staffRole,
-  onForceRefresh,
-  staffEmail
+  onForceRefresh
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
@@ -273,10 +225,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
   const isRestaurant = !isBeauty && !isShop && !isService && !isHotel && !isRentCar;
 
-  // Procurar funcionário logado na lista de equipa (movido para baixo)
-
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') : 
+    isStaff ? 'kitchen' : 
     isShop ? 'pos' : 
     isBeauty ? 'pos' : 'tables'
   );
@@ -286,14 +236,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [walkInTableId, setWalkInTableId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
-  // Staff Ponto & Vacation Modals States
-  const [showClockOutPopup, setShowClockOutPopup] = useState(false);
-  const [showRequestVacationModal, setShowRequestVacationModal] = useState(false);
-  const [vacationStartDate, setVacationStartDate] = useState('');
-  const [vacationEndDate, setVacationEndDate] = useState('');
-  const [showScheduleCalendar, setShowScheduleCalendar] = useState(false);
-  const [scheduleCalDate, setScheduleCalDate] = useState(new Date());
   
   // Custom Area and Table States
   const [hoveredTableId, setHoveredTableId] = useState<string | number | null>(null);
@@ -430,184 +372,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  const getCurrentShiftDuration = () => {
-    if (!loggedInStaff || !loggedInStaff.attendanceLogs || loggedInStaff.attendanceLogs.length === 0) return '0h 0m';
-    const lastLog = loggedInStaff.attendanceLogs[loggedInStaff.attendanceLogs.length - 1];
-    if (lastLog.clockOut) return '0h 0m';
-    
-    try {
-      const [hIn, mIn] = lastLog.clockIn.split(':').map(Number);
-      const now = new Date();
-      const hOut = now.getHours();
-      const mOut = now.getMinutes();
-      
-      let diffMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
-      if (diffMinutes < 0) diffMinutes = 0;
-      
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      return `${hours}h ${minutes}m`;
-    } catch (e) {
-      return '0h 0m';
-    }
-  };
-
-  const renderScheduleCalendarModal = () => {
-    if (!showScheduleCalendar || !loggedInStaff) return null;
-    
-    const currentYear = scheduleCalDate.getFullYear();
-    const currentMonth = scheduleCalDate.getMonth();
-    const monthNames = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    
-    const holidays = getAzoresHolidays(currentYear);
-    
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1);
-    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    const daysArray = [];
-    for (let i = 0; i < startOffset; i++) {
-      daysArray.push(null);
-    }
-    for (let i = 1; i <= totalDays; i++) {
-      daysArray.push(i);
-    }
-    
-    const formatDateStr = (d: number) => {
-      return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    };
-
-    const sStart = loggedInStaff.shiftStart || '08:00';
-    const sEnd = loggedInStaff.shiftEnd || '17:00';
-    const pStart = loggedInStaff.pauseStart || '12:00';
-    const pEnd = loggedInStaff.pauseEnd || '13:00';
-
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans animate-in fade-in zoom-in-95 duration-300">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-slate-900 border border-white/10 p-6 rounded-[2.5rem] max-w-lg w-full relative shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
-            <div className="text-left">
-              <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
-                📅 Calendário de Turno
-              </h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Consulte o seu horário e feriados</p>
-            </div>
-            <button 
-              onClick={() => setShowScheduleCalendar(false)}
-              className="p-2 bg-white/10 text-white hover:bg-white/20 rounded-full transition-all"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* Month Navigator */}
-          <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/5 mb-4">
-            <button 
-              onClick={() => setScheduleCalDate(new Date(currentYear, currentMonth - 1, 1))}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all shadow-sm font-bold text-xs"
-            >
-              ◀ Ant.
-            </button>
-            <h4 className="text-xs font-black text-white uppercase tracking-widest">
-              {monthNames[currentMonth]} {currentYear}
-            </h4>
-            <button 
-              onClick={() => setScheduleCalDate(new Date(currentYear, currentMonth + 1, 1))}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all shadow-sm font-bold text-xs"
-            >
-              Seg. ▶
-            </button>
-          </div>
-
-          {/* Grid of Days */}
-          <div className="grid grid-cols-7 gap-1.5 overflow-y-auto flex-1 pr-1 pb-4">
-            {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map(wd => (
-              <div key={wd} className="py-2 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                {wd}
-              </div>
-            ))}
-
-            {daysArray.map((day, idx) => {
-              if (day === null) {
-                return <div key={`empty-${idx}`} className="bg-white/5 border border-transparent rounded-xl min-h-[65px] opacity-25"></div>;
-              }
-
-              const dateStr = formatDateStr(day);
-              const holiday = holidays.find(h => h.date === dateStr);
-              
-              // Check if weekend
-              const dateObj = new Date(currentYear, currentMonth, day);
-              const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-
-              return (
-                <div 
-                  key={`day-${day}`} 
-                  className={`min-h-[70px] border p-2 flex flex-col justify-between transition-all rounded-xl relative ${
-                    holiday ? 'bg-red-500/10 border-red-500/30' :
-                    isWeekend ? 'bg-white/5 border-white/5' :
-                    'bg-white/[0.03] border-white/10'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <span className={`text-[10px] font-black ${holiday ? 'text-red-400' : 'text-slate-300'}`}>
-                      {day}
-                    </span>
-                    {holiday && (
-                      <span 
-                        title={holiday.name} 
-                        className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0 animate-pulse"
-                      ></span>
-                    )}
-                  </div>
-
-                  <div className="mt-1 space-y-1">
-                    {holiday ? (
-                      <p className="text-[6px] font-black text-red-400 uppercase tracking-tight leading-none truncate" title={holiday.name}>
-                        🎉 {holiday.name}
-                      </p>
-                    ) : isWeekend ? (
-                      <p className="text-[6px] font-black text-slate-500 uppercase tracking-tight leading-none text-left">
-                        Folga
-                      </p>
-                    ) : (
-                      <div className="space-y-0.5 text-left">
-                        <p className="text-[7px] font-bold text-emerald-400 leading-none">
-                          {sStart}
-                        </p>
-                        <p className="text-[7px] font-bold text-slate-300 leading-none">
-                          {sEnd}
-                        </p>
-                        <p className="text-[5px] text-slate-500 leading-none truncate">
-                          Pausa: {pStart}-{pEnd}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Footer Legend */}
-          <div className="pt-4 border-t border-white/5 flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-white/5 border border-white/10 block"></span> Trabalho</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-500/10 border border-red-500/20 block"></span> Feriado</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-white/5 border border-transparent block opacity-30"></span> Descanso</span>
-          </div>
-        </motion.div>
-      </div>
-    );
-  };
   
   // POS State
   const [posCategory, setPosCategory] = useState<string>('Pratos');
@@ -1103,13 +867,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [roomFloorFilter, setRoomFloorFilter] = useState<number | 'all'>('all');
 
-  // Drawer, Installer, and Sync states
-  const [closingDrawerOpen, setClosingDrawerOpen] = useState(false);
-  const [installingStatus, setInstallingStatus] = useState<string | null>(null);
-  const [installProgress, setInstallProgress] = useState(0);
-  const [publishingStatus, setPublishingStatus] = useState<string | null>(null);
-  const [publishProgress, setPublishProgress] = useState(0);
-
   // Local state for management
   const [tables, setTables] = useState<RestaurantTable[]>(() => {
     if (business.tables && business.tables.length > 0) return business.tables;
@@ -1144,22 +901,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     { id: 'K1', tableId: 'T2', status: 'preparing', timestamp: new Date().toISOString(), items: business.dishes && business.dishes.length > 0 ? [{ dish: business.dishes[0], quantity: 2 }] : [] },
   ]);
 
-  const lastLocalUpdateRef = React.useRef<number>(0);
-  const [assignStaffTableTarget, setAssignStaffTableTarget] = useState<any | null>(null);
-
   // Sincronização em Tempo Real: Quando o servidor envia dados novos via App.tsx, 
   // nós atualizamos os estados locais do dashboard.
   useEffect(() => {
-    // Evitar que atualizações locais frescas (últimos 4 segundos) sejam sobrepostas
-    // por dados temporariamente antigos vindos das consultas de polling em segundo plano.
-    const timeSinceLastLocalUpdate = Date.now() - lastLocalUpdateRef.current;
-    if (timeSinceLastLocalUpdate < 8000) {
-      console.log("⏳ Local update is fresh. Ignoring background sync to prevent flickering.");
-      return;
-    }
     if (business.reservations) setReservations(business.reservations);
     if (business.kitchenOrders) setKitchenOrders(business.kitchenOrders);
-    if (business.staff) setStaff(business.staff);
     // Também atualizar produtos e mesas se mudarem no Super Admin
     if (business.products) setProducts(business.products);
     if (business.tables) setTables(business.tables);
@@ -1185,9 +931,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [products, setProducts] = useState<Product[]>(business.products || []);
-  const [selectedCatalogCategory, setSelectedCatalogCategory] = useState(null);
-  const [showInternalStock, setShowInternalStock] = useState(false);
-  const [calDate, setCalDate] = useState(() => new Date());
+  const [catalogActiveCategory, setCatalogActiveCategory] = useState('Todos');
   const [updates, setUpdates] = useState<RestaurantUpdate[]>(business.updates || []);
   const [editingUpdate, setEditingUpdate] = useState<{idx: number, update: RestaurantUpdate} | null>(null);
   const [acceptingReservation, setAcceptingReservation] = useState<Reservation | null>(null);
@@ -1234,31 +978,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         { date: '25/04/2026', clockIn: '10:00', clockOut: '15:00', totalHours: 5 },
         { date: '26/04/2026', clockIn: '10:05', clockOut: '15:15', totalHours: 5.17 },
         { date: '27/04/2026', clockIn: '09:50' }
-      ],
-      shiftStart: '08:00', pauseStart: '12:00', pauseEnd: '13:00', shiftEnd: '17:00',
-      vacationDaysGozados: 5, vacationDaysPorGozar: 17, attendances: []
+      ]
     },
     { 
       id: 'STF_2', name: 'Carlos Bettencourt', role: 'chef', email: 'carlos@restaurante.pt', phone: '+351 917 333 444', password: 'chef456', 
       onDuty: true, attendanceLogs: [
         { date: '27/04/2026', clockIn: '08:00' }
-      ],
-      shiftStart: '08:00', pauseStart: '12:00', pauseEnd: '13:00', shiftEnd: '17:00',
-      vacationDaysGozados: 0, vacationDaysPorGozar: 22, attendances: []
+      ]
     },
     { 
       id: 'STF_3', name: 'Margarida Lima', role: 'waiter', email: 'margarida@restaurante.pt', phone: '+351 918 555 666', password: 'pass789', 
-      onDuty: false, vacationStart: '2026-04-20', vacationEnd: '2026-05-04',
-      shiftStart: '09:00', pauseStart: '13:00', pauseEnd: '14:00', shiftEnd: '18:00',
-      vacationDaysGozados: 10, vacationDaysPorGozar: 12, attendances: []
+      onDuty: false, vacationStart: '2026-04-20', vacationEnd: '2026-05-04' 
     },
     { 
       id: 'STF_4', name: 'Rui Silveira', role: 'manager', email: 'rui@restaurante.pt', phone: '+351 919 777 888', password: 'mgr001', 
       onDuty: true, attendanceLogs: [
         { date: '27/04/2026', clockIn: '09:00' }
-      ],
-      shiftStart: '09:00', pauseStart: '13:00', pauseEnd: '14:00', shiftEnd: '18:00',
-      vacationDaysGozados: 2, vacationDaysPorGozar: 20, attendances: []
+      ]
     },
   ];
   const [staff, setStaff] = useState<any[]>(Array.isArray(business.staff) && business.staff.length > 0 ? business.staff : MOCK_STAFF_BASE);
@@ -1267,18 +1003,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [selectedStaff, setSelectedStaff] = useState<any | null>(null);
   const [showAddSupplier, setShowAddSupplier] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any | null>(null);
-
-  // Procurar funcionário logado na lista de equipa do negócio (derivado do estado local staff para resiliência a polling)
-  const staffList = staff || [];
-  const currentUserEmail = staffEmail || '';
-  const loggedInStaff = currentUserEmail ? (staffList as any[]).find(s => s.email?.toLowerCase() === currentUserEmail.toLowerCase()) : null;
-
-  const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
-  const displayRole = loggedInStaff 
-    ? (loggedInStaff.role === 'chef' || loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
-    : 'Gerente Geral';
-  
-  const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
 
   // Fiado (restaurant credit/tab per client)
   // Cash Drawer State
@@ -1342,20 +1066,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
     const newMember = {
-      ...(editingStaff || {}),
       id: editingStaff?.id || 'STF_' + Date.now(),
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       password: formData.get('password') as string,
       phone: formData.get('phone') as string,
       role: formData.get('role') as any,
-      shiftStart: formData.get('shiftStart') as string || '08:00',
-      pauseStart: formData.get('pauseStart') as string || '12:00',
-      pauseEnd: formData.get('pauseEnd') as string || '13:00',
-      shiftEnd: formData.get('shiftEnd') as string || '17:00',
-      vacationDaysGozados: parseInt(formData.get('vacationDaysGozados') as string || '0', 10),
-      vacationDaysPorGozar: parseInt(formData.get('vacationDaysPorGozar') as string || '22', 10),
-      attendances: editingStaff?.attendances || []
     };
 
     let updatedStaff;
@@ -1388,8 +1104,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           // Clock In
           newLogs.push({
             date: new Date().toLocaleDateString('pt-PT'),
-            clockIn: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-            status: 'present'
+            clockIn: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
           });
         } else {
           // Clock Out
@@ -1397,7 +1112,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             const lastLog = { ...newLogs[newLogs.length - 1] };
             if (!lastLog.clockOut) {
               lastLog.clockOut = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-              lastLog.status = 'present'; // Ensure status is marked as present on clock-out
               
               // Simple hour calculation
               try {
@@ -1421,14 +1135,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     handleUpdate({ staff: updatedStaff });
   };
 
-  const setStaffVacation = (staffId: string, start: string | null, end: string | null, status) => {
+  const setStaffVacation = (staffId: string, start: string | null, end: string | null) => {
     const updatedStaff = staff.map(m => 
-      m.id === staffId ? { 
-        ...m, 
-        vacationStart: start || undefined, 
-        vacationEnd: end || undefined,
-        vacationStatus: start ? (status || m.vacationStatus || 'pending') : undefined
-      } : m
+      m.id === staffId ? { ...m, vacationStart: start || undefined, vacationEnd: end || undefined } : m
     );
     setStaff(updatedStaff);
     handleUpdate({ staff: updatedStaff });
@@ -1446,7 +1155,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const pendingCount = reservations.filter(r => r.status === 'pending' || r.status === 'pendente').length;
 
   const handleUpdate = (updated: Partial<Restaurant>) => {
-    lastLocalUpdateRef.current = Date.now();
     onUpdateBusiness({ ...business, ...updated });
   };
 
@@ -1531,104 +1239,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
-  const printClosingTicketOnly = () => {
-    const printContent = document.getElementById("print-closing-ticket")?.innerHTML;
-    if (!printContent) return;
-    const printWindow = window.open('', '_blank', 'width=350,height=600');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Fecho de Caixa - \${business.name}</title>
-            <style>
-              body { 
-                font-family: 'Courier New', Courier, monospace; 
-                padding: 10px; 
-                color: #000; 
-                width: 300px;
-                margin: 0 auto;
-                font-size: 11px;
-                line-height: 1.4;
-              }
-              .text-center { text-align: center; }
-              .font-black { font-weight: bold; }
-              .font-bold { font-weight: bold; }
-              .space-y-2 > * { margin-bottom: 6px; }
-              .flex { display: flex; justify-content: space-between; }
-              .border-b { border-bottom: 1px dashed #000; }
-              .border-t { border-top: 1px dashed #000; }
-              .pb-3 { padding-bottom: 8px; }
-              .mb-3 { margin-bottom: 8px; }
-              .pt-3 { padding-top: 8px; }
-              .mt-4 { margin-top: 12px; }
-              .text-sm { font-size: 13px; }
-              .text-xs { font-size: 11px; }
-              .text-[10px] { font-size: 9px; }
-              .text-[9px] { font-size: 8px; }
-            </style>
-          </head>
-          <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
-            \${printContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
-  };
-
-  const handlePublishToServer = () => {
-    setPublishingStatus('in_progress');
-    setPublishProgress(0);
-    
-    let current = 0;
-    const interval = setInterval(() => {
-      current += 10;
-      setPublishProgress(current);
-      if (current >= 100) {
-        clearInterval(interval);
-        onSync({
-          ...business,
-          tables,
-          products,
-          kitchenOrders,
-          reservations
-        });
-      }
-    }, 250);
-  };
-
-  const handleInstallInternally = () => {
-    setInstallingStatus('in_progress');
-    setInstallProgress(0);
-    
-    let current = 0;
-    const interval = setInterval(() => {
-      current += 5;
-      setInstallProgress(current);
-      if (current >= 100) {
-        clearInterval(interval);
-        
-        // Trigger native local C: installation & Desktop shortcut
-        fetch('/api/install-internally', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("Erro na instalação no servidor local.");
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log("💾 Instalação local concluída com sucesso:", data);
-        })
-        .catch(error => {
-          console.error("❌ Falha na instalação local:", error);
-        });
-      }
-    }, 150);
-  };
-
   const removeRoom = (idx: number) => {
     if (window.confirm("Deseja remover este quarto permanentemente?")) {
       const newTables = tables.filter((_, i) => i !== idx);
@@ -1654,9 +1264,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const assignReservationToTable = (tableId: string) => {
     if (!acceptingReservation) return;
-
-    // Proteger desincronizações
-    lastLocalUpdateRef.current = Date.now();
 
     // 1. Atualizar o estado da mesa localmente
     const updatedTables = tables.map(t => {
@@ -1811,86 +1418,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const startProductEdit = (idx: number) => {
-    const product = products[idx];
-    const existsInMenu = !isBeauty && !isShop
-      ? (business.dishes || []).some(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase())
-      : isBeauty
-        ? (business.services || []).some(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase())
-        : false;
-
-    setEditingProduct({ 
-      idx, 
-      product: { 
-        ...product, 
-        inMenu: (product as any).inMenu !== undefined ? (product as any).inMenu : existsInMenu 
-      } 
-    });
+    setEditingProduct({ idx, product: { ...products[idx] } });
   };
 
   const saveProductEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingProduct) {
-      const product = editingProduct.product;
       const newProducts = [...products];
-      newProducts[editingProduct.idx] = product;
+      newProducts[editingProduct.idx] = editingProduct.product;
       setProducts(newProducts);
-
-      const updatesToSave: any = { products: newProducts };
-
-      if (!isBeauty && !isShop) {
-        let updatedDishes = [...(business.dishes || [])];
-        const isInMenu = (product as any).inMenu;
-        const dishIdx = updatedDishes.findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
-
-        if (isInMenu) {
-          const dishData = {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            image: product.image,
-            category: product.category || 'Ementa'
-          };
-          if (dishIdx !== -1) {
-            updatedDishes[dishIdx] = { ...updatedDishes[dishIdx], ...dishData };
-          } else {
-            updatedDishes.push(dishData);
-          }
-        } else {
-          if (dishIdx !== -1) {
-            updatedDishes = updatedDishes.filter((_, i) => i !== dishIdx);
-          }
-        }
-        updatesToSave.dishes = updatedDishes;
-      } else if (isBeauty) {
-        let updatedServices = [...(business.services || [])];
-        const isInMenu = (product as any).inMenu;
-        const serviceIdx = updatedServices.findIndex(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase());
-
-        if (isInMenu) {
-          const serviceData = {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            image: product.image,
-            category: product.category || 'Estética',
-            duration: 30
-          };
-          if (serviceIdx !== -1) {
-            updatedServices[serviceIdx] = { ...updatedServices[serviceIdx], ...serviceData };
-          } else {
-            updatedServices.push(serviceData);
-          }
-        } else {
-          if (serviceIdx !== -1) {
-            updatedServices = updatedServices.filter((_, i) => i !== serviceIdx);
-          }
-        }
-        updatesToSave.services = updatedServices;
-      }
-
-      handleUpdate(updatesToSave);
+      handleUpdate({ products: newProducts });
       setEditingProduct(null);
     }
   };
@@ -1920,9 +1457,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const handleReservationAction = (id: string, action: 'accepted' | 'cancelled', tableId?: string) => {
-    // Proteger desincronizações
-    lastLocalUpdateRef.current = Date.now();
-
     if ((isBeauty || isShop || isHotel) && action === 'accepted') {
       const resObj = reservations.find(r => r.id === id);
       const updatedRes = { ...resObj, status: action, confirmedByRestaurant: true };
@@ -2003,9 +1537,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const deleteReservation = async (id: string) => {
     if (!window.confirm("⚠️ ELIMINAR PERMANENTEMENTE?\nEsta ação não pode ser desfeita e a reserva desaparecerá de todos os registos (Dashboard e Cliente).")) return;
 
-    // Proteger desincronizações
-    lastLocalUpdateRef.current = Date.now();
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/reservations/${id}`, {
         method: 'DELETE',
@@ -2046,9 +1577,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   // Products Handlers
   const addProduct = () => {
-    const defaultCategory = showInternalStock 
-      ? 'Stock Interno' 
-      : (selectedCatalogCategory || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas'));
+    const defaultCategory = catalogActiveCategory === 'Todos' ? 'Bebidas' : catalogActiveCategory;
     const isInternal = defaultCategory === 'Stock Interno';
     const newProduct: Product = { 
       id: `P${Date.now()}`, 
@@ -2139,79 +1668,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
-  if (isStaff && loggedInStaff && !loggedInStaff.onDuty) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden font-sans">
-        {/* Animated decorative blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
-
-        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden z-10 flex flex-col items-center text-center">
-          {/* Top Logo / Decorative Icon */}
-          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-3xl flex items-center justify-center mb-6 shadow-inner relative group">
-            <Clock size={36} className="text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-          </div>
-
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-1">
-            Registo de Ponto
-          </h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">
-            Azores<span className="text-green-400">Toyou</span> Staff
-          </p>
-
-          {/* Operator Profile Card */}
-          <div className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl flex items-center gap-4 mb-6 text-left">
-            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-slate-800">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} 
-                alt="Avatar" 
-                className="w-full h-full object-cover" 
-              />
-            </div>
-            <div>
-              <p className="text-white font-black text-sm leading-none">{displayName}</p>
-              <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest mt-1.5 leading-none">{displayRole}</p>
-              <p className="text-[9px] text-slate-400 font-medium mt-1 leading-none">
-                Turno: {loggedInStaff.shiftStart || '08:00'} - {loggedInStaff.shiftEnd || '17:00'}
-              </p>
-            </div>
-          </div>
-
-          {/* Large Clock Display */}
-          <div className="bg-black/20 border border-white/5 py-6 px-8 rounded-3xl w-full mb-8">
-            <p className="font-mono text-4xl font-black tracking-widest text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-              {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </p>
-            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-2 leading-none">
-              {currentTime.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-          </div>
-
-          {/* Clock In Button */}
-          <button
-            onClick={() => toggleStaffDuty(loggedInStaff.id)}
-            className="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-emerald-400/20 group flex items-center justify-center gap-2"
-          >
-            <Play size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            Entrar ao Serviço
-          </button>
-
-          {/* Logout Button */}
-          <button
-            onClick={onLogout}
-            className="mt-6 text-[10px] font-black text-slate-500 hover:text-rose-400 uppercase tracking-widest flex items-center gap-2 transition-colors active:scale-95"
-          >
-            <LogOut size={12} /> Sair do Sistema
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (!isDrawerOpen) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -2264,30 +1720,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   }
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
-      {/* ── BARRA DE NAVEGAÇÃO MOBILE ── */}
-      {isStaff ? (
-        <StaffBottomNav
-          activeTab={activeTab}
-          onTab={(tab) => setActiveTab(tab as DashboardTab)}
-          onSair={() => setShowClockOutPopup(true)}
-        />
-      ) : (
-        <BusinessBottomNav
-          activeTab={activeTab}
-          onTab={(tab) => setActiveTab(tab as DashboardTab)}
-          business={business}
-          onUpdateBusiness={onUpdateBusiness}
-        />
-      )}
+      {/* ── BARRA DE NAVEGAÇÃO MOBILE (Business) ── */}
+      <BusinessBottomNav
+        activeTab={activeTab}
+        onTab={(tab) => setActiveTab(tab as DashboardTab)}
+        business={business}
+        onUpdateBusiness={onUpdateBusiness}
+      />
       {/* Sidebar Toggle Button (Mobile) */}
-      {!isStaff && (
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all"
-        >
-          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      )}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all"
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
 
       <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* ... existing sidebar content ... */}
@@ -2340,11 +1786,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           <div className="p-6 border-t border-white/5 bg-slate-900/50 mt-auto">
              <div className="bg-slate-800/40 p-4 rounded-2xl flex items-center gap-4 mb-4 border border-white/5 shadow-inner">
                 <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30">
-                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
+                   <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo" alt="Avatar" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                   <p className="text-white font-black text-xs truncate">{displayName}</p>
-                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">{displayRole}</p>
+                   <p className="text-white font-black text-xs truncate">Gustavo Pereira</p>
+                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">Gerente Geral</p>
                 </div>
                 <button onClick={onLogout} className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
                    <LogOut size={16} />
@@ -2353,11 +1799,17 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
              
              <button 
                onClick={() => { 
-                 setClosingDrawerOpen(true);
+                 onSync({ 
+                   ...business, 
+                   tables, 
+                   products, 
+                   kitchenOrders, 
+                   reservations 
+                 }); 
                }}
-               className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/25 flex items-center justify-center gap-2 cursor-pointer"
+               className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-emerald-500/20"
              >
-               🔒 Fechar Caixa
+               Publicar no Servidor
              </button>
           </div>
       </div>
@@ -2366,138 +1818,42 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       <main className="flex-1 lg:ml-80 min-h-screen flex flex-col relative overflow-hidden">
         {/* Top Header - Estilo Foto 2 */}
         <header className="sticky top-0 bg-white border-b border-slate-100 h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
-            {isStaff ? (
-              // ── CABEÇALHO PARA STAFF (RELÓGIO CENTRADO E DADOS DO PERFIL) ──
-              <div className="flex-1 flex justify-between items-center w-full">
-                {/* Lado Esquerdo: Avatar & Nome do Operador (Oculto em Mobile Pequeno) */}
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-slate-800 font-black text-xs leading-none">{displayName}</p>
-                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 leading-none">{displayRole}</p>
-                  </div>
-                </div>
+            <div className="flex items-center gap-2 md:gap-6">
+               <button 
+                 onClick={() => setSidebarOpen(!sidebarOpen)}
+                 className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
+               >
+                  <Menu size={20} />
+               </button>
+               <div>
+                  <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
+                     Olá, Gustavo! 👋
+                  </h2>
+                  <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
+               </div>
+            </div>
 
-                {/* Centro: Relógio Digital Ticking e Data Atual (Sempre visível e centralizado) */}
-                <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <p className="font-mono font-black text-slate-800 text-lg md:text-2xl tracking-widest leading-none">
-                    {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </p>
-                  <p className="text-[8px] md:text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1 leading-none">
-                    {currentTime.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  </p>
-                </div>
+            <div className="flex items-center gap-2 md:gap-6">
+               <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                  <Calendar size={18} className="text-blue-500" />
+                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
+                     {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
+                  </span>
+               </div>
 
-                {/* Lado Direito: Botão Sair / Logout */}
-                <button 
-                  onClick={() => setShowClockOutPopup(true)} 
-                  className="p-2 md:p-3 bg-red-50 text-red-500 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all group flex items-center gap-1.5 font-black text-[9px] uppercase tracking-widest cursor-pointer shadow-sm border border-red-100"
-                >
-                  <LogOut size={14} className="group-hover:scale-110 transition-transform" />
-                  <span>Sair</span>
-                </button>
-              </div>
-            ) : (
-              // ── CABEÇALHO PADRÃO DO NEGÓCIO (Dono / Admin) ──
-              <>
-                <div className="flex items-center gap-2 md:gap-6">
-                   <button 
-                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                     className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
-                   >
-                      <Menu size={20} />
-                   </button>
-                   <div>
-                      <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
-                         Olá, {displayName.split(' ')[0]}! 👋
-                      </h2>
-                      <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
-                   </div>
-                </div>
-
-                <div className="flex items-center gap-2 md:gap-6">
-                   <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
-                      <Calendar size={18} className="text-blue-500" />
-                      <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
-                         {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
-                      </span>
-                   </div>
-
-                   <div className="flex items-center gap-2 md:gap-3">
-                      <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
-                         <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                      </button>
-                      <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
-                         <Bell size={18} />
-                         <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
-                      </button>
-                   </div>
-                </div>
-              </>
-            )}
+               <div className="flex items-center gap-2 md:gap-3">
+                  <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
+                     <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                  </button>
+                  <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
+                     <Bell size={18} />
+                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+                  </button>
+               </div>
+            </div>
         </header>
 
         <div className="p-4 md:p-8 pb-32">
-          {/* Waiter Pending Notification Banner */}
-          {isStaff && (() => {
-            const currentStaffMember = staff.find(s => s.email === staffEmail);
-            const pendingNotifs = currentStaffMember?.notifications?.filter((n: any) => n.status === 'pending') || [];
-            return pendingNotifs.map((notif: any) => (
-              <motion.div 
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white p-5 rounded-3xl shadow-xl shadow-amber-500/20 flex items-center justify-between border-2 border-amber-300 mb-6 animate-pulse"
-                key={notif.id}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Bell size={20} className="text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-black text-xs uppercase tracking-widest leading-none">🛎️ Chamada de Mesa Pendente</p>
-                    <p className="text-[10px] opacity-90 font-bold uppercase mt-1">A Mesa #{notif.tableNumber} está a chamar staff!</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => {
-                    const updatedStaff = staff.map(s => {
-                      if (s.id === currentStaffMember.id) {
-                        const currentAttendances = s.attendances || [];
-                        const newAttendance = {
-                          tableNumber: notif.tableNumber,
-                          time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-                          date: new Date().toLocaleDateString('pt-PT')
-                        };
-                        return {
-                          ...s,
-                          notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id),
-                          attendances: [newAttendance, ...currentAttendances]
-                        };
-                      }
-                      return s;
-                    });
-                    const updatedTables = tables.map(t => {
-                      if (t.id === notif.tableId || String(t.id) === String(notif.tableId)) {
-                        return { ...t, waiterId: currentStaffMember.id, alertStatus: 'none' as const };
-                      }
-return t;
-                    });
-                    setTables(updatedTables);
-                    setStaff(updatedStaff);
-                    handleUpdate({ staff: updatedStaff, tables: updatedTables });
-                    alert(`✅ Aceitou o pedido! Mesa #${notif.tableNumber} está atribuída a si.`);
-                  }}
-                  className="px-5 py-2 bg-white text-amber-700 hover:bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md"
-                >
-                  Aceitar
-                </button>
-              </motion.div>
-            ));
-          })()}
-
           {activeTab === 'tables' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                {isBeauty ? (
@@ -2854,10 +2210,6 @@ return t;
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setHoveredTableId(hoveredTableId === table.id || String(hoveredTableId) === String(table.id) ? null : table.id);
-                                  } else if (table.alertStatus === 'calling_waiter') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setAssignStaffTableTarget(table);
                                   } else {
                                     toggleTableStatus(table.id);
                                   }
@@ -2898,22 +2250,15 @@ return t;
                                      'LIVRE'}
                                   </div>
 
-                                 {/* Pulsing alert badge for new remote orders & waiter calls */}
-                                 {table.alertStatus && table.alertStatus !== 'none' && (
-                                   <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
-                                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                                       table.alertStatus === 'calling_waiter' ? 'bg-amber-400' :
-                                       table.alertStatus === 'waiting_bill' ? 'bg-indigo-400' : 'bg-red-400'
-                                     }`}></span>
-                                     <span className={`relative inline-flex rounded-full h-6 w-6 border-2 border-white shadow-lg flex items-center justify-center text-[9px] font-black text-white ${
-                                       table.alertStatus === 'calling_waiter' ? 'bg-gradient-to-tr from-amber-500 to-yellow-600' :
-                                       table.alertStatus === 'waiting_bill' ? 'bg-gradient-to-tr from-indigo-500 to-blue-600' : 'bg-gradient-to-tr from-red-500 to-rose-600'
-                                     }`}>
-                                       {table.alertStatus === 'calling_waiter' ? <Bell size={10} /> :
-                                        table.alertStatus === 'waiting_bill' ? <Receipt size={10} /> : '!'}
-                                     </span>
-                                   </div>
-                                 )}
+                                  {/* Pulsing alert badge for new remote orders */}
+                                  {(table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
+                                    <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-6 w-6 bg-gradient-to-tr from-red-500 to-rose-600 border-2 border-white shadow-lg flex items-center justify-center text-[9px] font-black text-white">
+                                        !
+                                      </span>
+                                    </div>
+                                  )}
                               </motion.button>
 
                               {/* Delete table button — top left, visible on hover */}
@@ -2982,249 +2327,6 @@ return t;
                    </div>
                  </>
                )}
-            </motion.div>
-          )}
-
-          {activeTab === 'atendimentos' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-              <div className="text-center sm:text-left">
-                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Pedidos & Chamadas</h3>
-                <p className="text-slate-400 text-sm font-medium">Aceite chamadas de clientes e consulte o histórico</p>
-              </div>
-
-              {loggedInStaff?.role !== 'waiter' ? (
-                <div className="bg-white border border-slate-100 rounded-[2rem] p-8 text-center shadow-sm">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                    <ChefHat size={32} />
-                  </div>
-                  <p className="text-slate-700 font-bold text-sm">Função: Cozinha 🍳</p>
-                  <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-                    Esta secção é dedicada ao atendimento de mesas no salão. Como Cozinheiro(a), o seu foco principal é no Monitor de Cozinha!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* SECÇÃO 1: PEDIDOS DE CHAMADA ATIVOS (PENDENTES) */}
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-2">
-                      🔔 Chamadas de Mesa Ativas ({(() => {
-                        const pendingNotifs = loggedInStaff?.notifications?.filter((n: any) => n.status === 'pending') || [];
-                        return pendingNotifs.length;
-                      })()})
-                    </h4>
-
-                    {(() => {
-                      const pendingNotifs = loggedInStaff?.notifications?.filter((n: any) => n.status === 'pending') || [];
-                      if (pendingNotifs.length === 0) {
-                        return (
-                          <div className="bg-white border border-slate-100 rounded-[2rem] p-6 text-center shadow-sm py-8">
-                            <div className="w-10 h-10 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <Bell size={20} />
-                            </div>
-                            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Nenhuma chamada pendente</p>
-                            <p className="text-slate-400 text-[9px] mt-1 leading-normal">Os chamamentos dos clientes aparecerão aqui em tempo real.</p>
-                          </div>
-                        );
-                      }
-
-                      return pendingNotifs.map((notif: any) => (
-                        <motion.div 
-                          key={notif.id}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white p-5 rounded-[2rem] shadow-xl shadow-amber-500/20 border-2 border-amber-300 space-y-4 text-left"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center animate-bounce">
-                              <Bell size={20} className="text-white" />
-                            </div>
-                            <div className="text-left">
-                              <p className="font-black text-xs uppercase tracking-widest leading-none">🛎️ Chamada Pendente</p>
-                              <p className="text-[10px] opacity-90 font-bold uppercase mt-1">A Mesa #{notif.tableNumber} está a solicitar staff!</p>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => {
-                              const updatedStaff = staff.map(s => {
-                                if (s.id === loggedInStaff.id) {
-                                  const currentAttendances = s.attendances || [];
-                                  const newAttendance = {
-                                    tableNumber: notif.tableNumber,
-                                    time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-                                    date: new Date().toLocaleDateString('pt-PT')
-                                  };
-                                  return {
-                                    ...s,
-                                    notifications: (s.notifications || []).filter((n: any) => n.id !== notif.id),
-                                    attendances: [newAttendance, ...currentAttendances]
-                                  };
-                                }
-                                return s;
-                              });
-                              const updatedTables = tables.map(t => {
-                                if (t.id === notif.tableId || String(t.id) === String(notif.tableId)) {
-                                  return { ...t, waiterId: loggedInStaff.id, alertStatus: 'none' as const };
-                                }
-                                return t;
-                              });
-                              setTables(updatedTables);
-                              setStaff(updatedStaff);
-                              handleUpdate({ staff: updatedStaff, tables: updatedTables });
-                              alert(`✅ Chamada aceite! Dirija-se à Mesa #${notif.tableNumber}.`);
-                            }}
-                            className="w-full py-3 bg-white text-amber-700 hover:bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md active:scale-95 font-bold"
-                          >
-                            Aceitar & Ir à Mesa
-                          </button>
-                        </motion.div>
-                      ));
-                    })()}
-                  </div>
-
-                  {/* SECÇÃO 2: HISTÓRICO DE ATENDIMENTOS */}
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 ml-2">
-                      ✓ Histórico de Atendimentos Realizados ({(loggedInStaff.attendances || []).length})
-                    </h4>
-
-                    <div className="space-y-3">
-                      {(loggedInStaff.attendances || []).map((att: any, idx: number) => (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          key={idx}
-                          className="bg-white border border-slate-100 p-5 rounded-2xl flex justify-between items-center hover:shadow-md transition-all duration-300"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center font-bold text-sm border border-emerald-100 shadow-sm">
-                              #{att.tableNumber}
-                            </div>
-                            <div className="text-left">
-                              <p className="text-xs font-black text-slate-800">Mesa #{att.tableNumber} Atendida</p>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                                📅 {att.date} às {att.time}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[8px] font-black uppercase tracking-wider">
-                            Concluído
-                          </span>
-                        </motion.div>
-                      ))}
-
-                      {(!loggedInStaff.attendances || loggedInStaff.attendances.length === 0) && (
-                        <div className="bg-white border border-slate-100 rounded-[2rem] p-8 text-center shadow-sm">
-                          <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <CheckCircle size={24} />
-                          </div>
-                          <p className="text-slate-500 font-bold text-xs">Ainda não realizou atendimentos de mesas hoje.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'details' && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-              <div className="text-center sm:text-left">
-                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">O Meu Painel Pessoal</h3>
-                <p className="text-slate-400 text-sm font-medium">Controlo de horas, presença e férias</p>
-              </div>
-
-              {/* Grid de Estatísticas */}
-              <div className="grid grid-cols-3 gap-3">
-                {/* Horas Trabalhadas */}
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
-                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
-                  <Clock size={16} className="mx-auto mb-2 text-blue-200" />
-                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Horas Trab.</p>
-                  <p className="text-lg font-black mt-1">
-                    {(loggedInStaff?.attendanceLogs || []).reduce((acc: number, log: any) => acc + (log.totalHours || 0), 0).toFixed(1)}h
-                  </p>
-                </div>
-
-                {/* Férias Gozadas */}
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
-                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
-                  <CheckCircle size={16} className="mx-auto mb-2 text-emerald-200" />
-                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Férias Gozadas</p>
-                  <p className="text-lg font-black mt-1">{loggedInStaff?.vacationDaysGozados ?? 0} dias</p>
-                </div>
-
-                {/* Férias Disponíveis */}
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-[2rem] p-4 text-center shadow-md relative overflow-hidden group">
-                  <div className="absolute -right-3 -top-3 w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform"></div>
-                  <Calendar size={16} className="mx-auto mb-2 text-amber-200" />
-                  <p className="text-[7px] font-black uppercase tracking-widest opacity-80">Disp. Gozar</p>
-                  <p className="text-lg font-black mt-1">{loggedInStaff?.vacationDaysPorGozar ?? 22} dias</p>
-                </div>
-              </div>
-
-              {/* Informações de Turno */}
-              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  ⏱️ O Meu Turno Configurado
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Horário Turno</p>
-                    <p className="text-sm font-bold text-slate-700 mt-1">{loggedInStaff?.shiftStart || '08:00'} - {loggedInStaff?.shiftEnd || '17:00'}</p>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Intervalo Pausa</p>
-                    <p className="text-sm font-bold text-slate-700 mt-1">{loggedInStaff?.pauseStart || '12:00'} - {loggedInStaff?.pauseEnd || '13:00'}</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowScheduleCalendar(true)}
-                  className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-200"
-                >
-                  <Calendar size={14} className="text-slate-500" /> Ver Horário Semanal/Mensal
-                </button>
-              </div>
-
-              {/* Estado do Pedido de Férias */}
-              <div className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm space-y-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  🏖️ Estado das Minhas Férias
-                </h4>
-                {loggedInStaff?.vacationStart ? (
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Período Marcado</span>
-                      <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border ${
-                        loggedInStaff.vacationStatus === 'approved' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                        loggedInStaff.vacationStatus === 'rejected' ? 'bg-rose-50 border-rose-200 text-rose-700' :
-                        'bg-amber-50 border-amber-200 text-amber-700 animate-pulse'
-                      }`}>
-                        {loggedInStaff.vacationStatus === 'approved' ? 'Aprovado ✓' :
-                         loggedInStaff.vacationStatus === 'rejected' ? 'Recusado ✗' :
-                         'Pendente Aprovação...'}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-slate-700">
-                      📅 {loggedInStaff.vacationStart} até {loggedInStaff.vacationEnd || 'N/A'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center text-slate-400 text-[10px] font-semibold py-6">
-                    Não tem nenhuma marcação de férias ativa ou pendente.
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setShowRequestVacationModal(true)}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Calendar size={14} /> Solicitar Período de Férias
-                </button>
-              </div>
             </motion.div>
           )}
 
@@ -3319,7 +2421,7 @@ return t;
                                    <button 
                                      onClick={() => {
                                         const nextStatus = statusGroup.id === 'pending' ? 'preparing' : statusGroup.id === 'preparing' ? 'ready' : 'delivered';
-                                        const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus, timestamp: new Date().toISOString()} : o);
+                                        const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus} : o);
                                         setKitchenOrders(updatedOrders);
                                         handleUpdate({ kitchenOrders: updatedOrders });
                                      }}
@@ -3357,7 +2459,7 @@ return t;
           {activeTab === 'pos' && (() => {
             const posProducts = [
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
-              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
+              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
                 !(business.services || []).some(s => s.name === ms.name) &&
                 !(products || []).some(p => p.name === ms.name)
@@ -3464,7 +2566,7 @@ return t;
                            >
                              <div className="aspect-square bg-slate-100 relative overflow-hidden">
                                {product.image ? (
-                                 <img src={product.image.startsWith('/') ? `${API_BASE_URL}${product.image}` : product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                 <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                ) : (
                                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                    <Utensils size={40} className="mb-2 opacity-20" />
@@ -3559,7 +2661,7 @@ return t;
                             }`}
                           >
                             <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 font-black border border-slate-100 overflow-hidden flex-shrink-0">
-                               {item.product.image ? <img src={item.product.image.startsWith('/') ? `${API_BASE_URL}${item.product.image}` : item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
+                               {item.product.image ? <img src={item.product.image} className="w-full h-full object-cover" /> : <ShoppingBag size={20} />}
                             </div>
                             <div className="flex-1 min-w-0">
                                <div className="flex justify-between items-start mb-1 gap-2">
@@ -4118,7 +3220,7 @@ return t;
 
                               {/* Selecionar Impressora */}
                               <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block block">🖨️ Selecionar Impressora POS</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">🖨️ Selecionar Impressora POS</label>
                                 <div className="space-y-2.5">
                                   {[
                                     { id: 'sunmi', name: 'Sunmi V2 (Portátil Híbrido)', type: 'Térmica 58mm/80mm', icon: '📱' },
@@ -4839,18 +3941,6 @@ ${items.map((it, i) => `        <Line>
 
                 {/* ── ACTION BUTTONS ── */}
                 <div className="flex flex-wrap items-center justify-end gap-3">
-                  <button
-                    onClick={handlePublishToServer}
-                    className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-emerald-600/20 active:scale-95 cursor-pointer"
-                  >
-                    ☁️ Publicar no Servidor
-                  </button>
-                  <button
-                    onClick={handleInstallInternally}
-                    className="flex items-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-violet-600/20 active:scale-95 cursor-pointer"
-                  >
-                    💾 Instalar Internamente
-                  </button>
                   <ReportExportMenu onExport={exportReport} />
                   <button
                     onClick={exportSAFT}
@@ -5328,296 +4418,130 @@ ${items.map((it, i) => `        <Line>
           )}
 
           {activeTab === 'products' && (
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                   <div>
-                     <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Catálogo de Produtos</h3>
-                     <p className="text-slate-400 text-sm font-medium">Bebidas, Cafetaria e Suplementos</p>
-                   </div>
-                   <div className="flex items-center gap-3 w-full md:w-auto">
-                     <button 
-                       onClick={() => {
-                         setShowInternalStock(!showInternalStock);
-                         setSelectedCatalogCategory(null);
-                       }} 
-                       className={`px-5 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center gap-2 border ${
-                         showInternalStock 
-                           ? 'bg-amber-500 text-white border-amber-500 shadow-xl shadow-amber-500/20 hover:bg-amber-600 hover:scale-105 active:scale-95' 
-                           : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:scale-105 active:scale-95'
-                       }`}
-                     >
-                       <Package className="w-4 h-4" /> Stock Interno
-                     </button>
-                     <button onClick={addProduct} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                       <Plus className="w-4 h-4" /> Novo Produto
-                     </button>
-                   </div>
-                </div>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Catálogo de Produtos</h3>
+                    <p className="text-slate-400 text-sm font-medium">Bebidas, Cafetaria e Suplementos</p>
+                  </div>
+                  <button onClick={addProduct} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> Novo Produto
+                  </button>
+               </div>
 
-                {showInternalStock && (
-                  <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-3xl p-6 shadow-sm animate-fadeIn">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
-                        <Package className="w-6 h-6 animate-pulse" />
-                      </div>
-                      <div>
-                        <h4 className="font-black text-slate-800 text-base uppercase tracking-wider">Visualizando Stock Interno</h4>
-                        <p className="text-xs text-slate-500 font-medium">Gestão de batatas, hortaliças, legumes, guardanapos e consumíveis logísticos.</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setShowInternalStock(false)}
-                      className="px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:text-slate-800 transition-all shadow-sm"
+                              {/* Categories Filter Bar */}
+               <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-3 -mx-2 px-2 flex-shrink-0">
+                  {['Todos', ...(isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES), 'Stock Interno'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setCatalogActiveCategory(cat)}
+                      className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                        catalogActiveCategory === cat 
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' 
+                          : 'bg-white text-slate-400 border-slate-200 hover:border-slate-400 hover:text-slate-700'
+                      }`}
                     >
-                      ← Fechar
+                      {cat}
                     </button>
-                  </div>
-                )}
+                  ))}
+               </div>
 
-                {!showInternalStock && selectedCatalogCategory !== null && (
-                  <div className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-3xl p-6 shadow-sm animate-fadeIn">
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => setSelectedCatalogCategory(null)}
-                        className="p-3 bg-white text-slate-600 rounded-2xl hover:text-slate-900 border border-slate-200 hover:scale-105 active:scale-95 transition-all flex items-center justify-center font-black text-xs uppercase tracking-widest gap-2 shadow-sm"
-                      >
-                        ← Voltar
-                      </button>
-                      <div>
-                        <h4 className="font-black text-slate-800 text-base uppercase tracking-wider">{selectedCatalogCategory}</h4>
-                        <p className="text-xs text-slate-400 font-medium">Produtos registados sob a categoria {selectedCatalogCategory}</p>
-                      </div>
-                    </div>
-                    <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-black uppercase tracking-wider border border-blue-100/50">
-                      {products.filter(p => p.category === selectedCatalogCategory).length} itens
-                    </div>
-                  </div>
-                )}
+<div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-slate-50">
+                          <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Info</th>
+                          <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Stock / Min</th>
+                          <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">P. Compra / Venda</th>
+                          <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 font-sans">
+                        {products
+                          .filter(p => catalogActiveCategory === 'Todos' || p.category === catalogActiveCategory)
+                          .map((product) => {
+                            const originalIdx = products.findIndex(p => p.id === product.id);
+                            const isLowStock = (product.stock || 0) <= (product.minStock || 0);
+                            return (
+                           <tr key={product.id} className={`hover:bg-slate-50/50 transition-colors group ${isLowStock ? 'bg-red-50/30' : ''}`}>
+                              <td className="px-8 py-6">
+                                 <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform relative">
+                                       {product.category === 'Cafetaria' && <Coffee className="w-5 h-5"/>}
+                                       {product.category === 'Vinhos' && <Wine className="w-5 h-5"/>}
+                                       {product.category === 'Bebidas' && <Beer className="w-5 h-5"/>}
+                                       {product.category === 'Stock Interno' && <Package className="w-5 h-5"/>}
+                                       {!['Cafetaria', 'Vinhos', 'Bebidas', 'Stock Interno'].includes(product.category) && <ShoppingBag className="w-5 h-5"/>}
+                                       {isLowStock && (
+                                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg shadow-red-500/30">!</div>
+                                       )}
+                                    </div>
+                                    <div>
+                                       <p className="font-black text-slate-800">{product.name}</p>
+                                       <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase tracking-widest">{product.category}</span>
+                                    </div>
+                                 </div>
+                              </td>
+                              <td className="px-8 py-6">
+                                 <div className="flex items-center gap-2">
+                                    <span className={`text-lg font-black ${isLowStock ? 'text-red-500' : 'text-slate-800'}`}>{product.stock || 0}</span>
+                                    <span className="text-slate-300">/</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.minStock || 0}</span>
+                                 </div>
+                                 {isLowStock && (
+                                   <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-1">Stock Mínimo Atingido</p>
+                                 )}
+                              </td>
+                              <td className="px-8 py-6">
+                                 <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Compra: <span className="text-slate-600 font-black">€{(product.purchasePrice || 0).toFixed(2)}</span></p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Venda: <span className="text-blue-600 font-black">€{(product.price || 0).toFixed(2)}</span></p>
+                                 </div>
+                              </td>
+                              <td className="px-8 py-6 text-right">
+                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {isLowStock && (
+                                      <button 
+                                        onClick={() => {
+                                          const qty = prompt(`Quantas unidades de ${product.name} deseja encomendar?`, String((product.minStock || 10) * 2));
+                                          if (!qty) return;
+                                          const quantity = parseInt(qty);
+                                          if (isNaN(quantity) || quantity <= 0) return;
 
-                {!showInternalStock && selectedCatalogCategory === null && (
-                  (() => {
-                    const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
-                    const currentCategories = Array.from(new Set(products.map(p => p.category)))
-                      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
-                    const displayCategories = Array.from(new Set([...availableCategories, ...currentCategories]))
-                      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
-                    
-                    return (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2 animate-fadeIn">
-                        {displayCategories.map(cat => {
-                          const count = products.filter(p => p.category === cat).length;
-                          
-                          const lower = cat.toLowerCase();
-                          let cardStyle = { 
-                            gradient: 'from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-200/50 border-slate-200/60 shadow-slate-100', 
-                            iconColor: 'text-slate-600', 
-                            iconBg: 'bg-slate-100', 
-                            glow: 'group-hover:shadow-slate-200/50',
-                            Icon: ShoppingBag 
-                          };
-                          
-                          if (lower.includes('vinho')) {
-                            cardStyle = { 
-                              gradient: 'from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 border-purple-100 shadow-purple-100', 
-                              iconColor: 'text-purple-600', 
-                              iconBg: 'bg-purple-100', 
-                              glow: 'group-hover:shadow-purple-500/10',
-                              Icon: Wine 
-                            };
-                          } else if (lower.includes('bebida') || lower.includes('cerveja')) {
-                            cardStyle = { 
-                              gradient: 'from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-amber-100 shadow-amber-100', 
-                              iconColor: 'text-amber-600', 
-                              iconBg: 'bg-amber-100', 
-                              glow: 'group-hover:shadow-amber-500/10',
-                              Icon: Beer 
-                            };
-                          } else if (lower.includes('prato') || lower.includes('carne') || lower.includes('peixe')) {
-                            cardStyle = { 
-                              gradient: 'from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100 border-rose-100 shadow-rose-100', 
-                              iconColor: 'text-rose-600', 
-                              iconBg: 'bg-rose-100', 
-                              glow: 'group-hover:shadow-rose-500/10',
-                              Icon: Utensils 
-                            };
-                          } else if (lower.includes('sopa') || lower.includes('entrada') || lower.includes('aperitivo')) {
-                            cardStyle = { 
-                              gradient: 'from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-100 shadow-emerald-100', 
-                              iconColor: 'text-emerald-600', 
-                              iconBg: 'bg-emerald-100', 
-                              glow: 'group-hover:shadow-emerald-500/10',
-                              Icon: ChefHat 
-                            };
-                          } else if (lower.includes('cafet') || lower.includes('bolo') || lower.includes('sobremesa') || lower.includes('gelado')) {
-                            cardStyle = { 
-                              gradient: 'from-cyan-50 to-blue-50 hover:from-cyan-100 hover:to-blue-100 border-cyan-100 shadow-cyan-100', 
-                              iconColor: 'text-cyan-600', 
-                              iconBg: 'bg-cyan-100', 
-                              glow: 'group-hover:shadow-cyan-500/10',
-                              Icon: Coffee 
-                            };
-                          } else if (lower.includes('cabelo') || lower.includes('barba')) {
-                            cardStyle = { 
-                              gradient: 'from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-100 shadow-blue-100', 
-                              iconColor: 'text-blue-600', 
-                              iconBg: 'bg-blue-100', 
-                              glow: 'group-hover:shadow-blue-500/10',
-                              Icon: Scissors 
-                            };
-                          } else if (lower.includes('unha') || lower.includes('estét') || lower.includes('massag') || lower.includes('maquilh') || lower.includes('sobran') || lower.includes('depil')) {
-                            cardStyle = { 
-                              gradient: 'from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 border-pink-100 shadow-pink-100', 
-                              iconColor: 'text-pink-600', 
-                              iconBg: 'bg-pink-100', 
-                              glow: 'group-hover:shadow-pink-500/10',
-                              Icon: Flower 
-                            };
-                          } else if (lower.includes('vestu') || lower.includes('calça') || lower.includes('acess') || lower.includes('casa') || lower.includes('promo')) {
-                            cardStyle = { 
-                              gradient: 'from-violet-50 to-fuchsia-50 hover:from-violet-100 hover:to-fuchsia-100 border-violet-100 shadow-violet-100', 
-                              iconColor: 'text-violet-600', 
-                              iconBg: 'bg-violet-100', 
-                              glow: 'group-hover:shadow-violet-500/10',
-                              Icon: ShoppingBag 
-                            };
-                          }
-                          
-                          const { gradient, iconBg, iconColor, glow, Icon } = cardStyle;
-                          
-                          return (
-                            <motion.div
-                              key={cat}
-                              whileHover={{ y: -6, scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => setSelectedCatalogCategory(cat)}
-                              className={`cursor-pointer rounded-[2rem] border p-8 flex flex-col justify-between transition-all duration-300 bg-gradient-to-br ${gradient} shadow-md hover:shadow-xl ${glow} group`}
-                            >
-                              <div className="flex justify-between items-start mb-6">
-                                <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center ${iconColor} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                                  <Icon className="w-7 h-7" />
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all duration-300" />
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-black text-slate-800 tracking-tight mb-1 group-hover:text-slate-900 transition-colors">{cat}</h4>
-                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
-                                  {count === 1 ? '1 Produto' : `${count} Produtos`}
-                                </p>
-                              </div>
-                            </motion.div>
+                                          const order = {
+                                            id: 'ORD_' + Date.now(),
+                                            supplierId: product.supplierId || 'DEFAULT',
+                                            restaurantId: business.id,
+                                            restaurantName: business.name,
+                                            items: [{ productId: product.id, quantity, price: product.purchasePrice || 0 }],
+                                            status: 'pending' as const,
+                                            total: (product.purchasePrice || 0) * quantity,
+                                            createdAt: new Date().toISOString()
+                                          };
+                                          const updatedOrders = [...supplierOrders, order];
+                                          setSupplierOrders(updatedOrders);
+                                          handleUpdate({ supplierOrders: updatedOrders });
+                                          alert(`📦 Pedido de ${quantity} unidades gerado para fornecedor!`);
+                                        }}
+                                        className="p-2 bg-blue-600 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-blue-900/20"
+                                        title="Pedir ao Fornecedor"
+                                      >
+                                        <Send size={14} />
+                                      </button>
+                                    )}
+                                    <button onClick={() => startProductEdit(originalIdx)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4"/></button>
+                                    <button onClick={() => removeProduct(originalIdx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                 </div>
+                              </td>
+                           </tr>
                           );
                         })}
-                      </div>
-                    );
-                  })()
-                )}
-
-                {(showInternalStock || selectedCatalogCategory !== null) && (
-                  <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm animate-fadeIn">
-                     <div className="overflow-x-auto">
-                       <table className="w-full">
-                         <thead>
-                           <tr className="bg-slate-50">
-                             <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Info</th>
-                             <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Stock / Min</th>
-                             <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">P. Compra / Venda</th>
-                             <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ações</th>
-                           </tr>
-                         </thead>
-                         <tbody className="divide-y divide-slate-50 font-sans">
-                           {products
-                             .filter(p => showInternalStock ? p.category === 'Stock Interno' : p.category === selectedCatalogCategory)
-                             .map((product) => {
-                               const originalIdx = products.findIndex(p => p.id === product.id);
-                               const isLowStock = (product.stock || 0) <= (product.minStock || 0);
-                               return (
-                              <tr key={product.id} className={`hover:bg-slate-50/50 transition-colors group ${isLowStock ? 'bg-red-50/30' : ''}`}>
-                                 <td className="px-8 py-6">
-                                    <div className="flex items-center gap-4">
-                                       <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 flex-shrink-0 group-hover:scale-110 transition-transform relative">
-                                          {product.category === 'Cafetaria' && <Coffee className="w-5 h-5"/>}
-                                          {product.category === 'Vinhos' && <Wine className="w-5 h-5"/>}
-                                          {product.category === 'Bebidas' && <Beer className="w-5 h-5"/>}
-                                          {product.category === 'Stock Interno' && <Package className="w-5 h-5"/>}
-                                          {!['Cafetaria', 'Vinhos', 'Bebidas', 'Stock Interno'].includes(product.category) && <ShoppingBag className="w-5 h-5"/>}
-                                          {isLowStock && (
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-black animate-bounce shadow-lg shadow-red-500/30">!</div>
-                                          )}
-                                       </div>
-                                       <div>
-                                          <p className="font-black text-slate-800">{product.name}</p>
-                                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase tracking-widest">{product.category}</span>
-                                       </div>
-                                    </div>
-                                 </td>
-                                 <td className="px-8 py-6">
-                                    <div className="flex items-center gap-2">
-                                       <span className={`text-lg font-black ${isLowStock ? 'text-red-500' : 'text-slate-800'}`}>{product.stock || 0}</span>
-                                       <span className="text-slate-300">/</span>
-                                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.minStock || 0}</span>
-                                    </div>
-                                    {isLowStock && (
-                                      <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-1">Stock Mínimo Atingido</p>
-                                    )}
-                                 </td>
-                                 <td className="px-8 py-6">
-                                    <div className="space-y-1">
-                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Compra: <span className="text-slate-600 font-black">€{(product.purchasePrice || 0).toFixed(2)}</span></p>
-                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Venda: <span className="text-blue-600 font-black">€{(product.price || 0).toFixed(2)}</span></p>
-                                    </div>
-                                 </td>
-                                 <td className="px-8 py-6 text-right">
-                                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                       {isLowStock && (
-                                         <button 
-                                           onClick={() => {
-                                             const qty = prompt(`Quantas unidades de ${product.name} deseja encomendar?`, String((product.minStock || 10) * 2));
-                                             if (!qty) return;
-                                             const quantity = parseInt(qty);
-                                             if (isNaN(quantity) || quantity <= 0) return;
-
-                                             const order = {
-                                               id: 'ORD_' + Date.now(),
-                                               supplierId: product.supplierId || 'DEFAULT',
-                                               restaurantId: business.id,
-                                               restaurantName: business.name,
-                                               items: [{ productId: product.id, quantity, price: product.purchasePrice || 0 }],
-                                               status: 'pending' as const,
-                                               total: (product.purchasePrice || 0) * quantity,
-                                               createdAt: new Date().toISOString()
-                                             };
-                                             const updatedOrders = [...supplierOrders, order];
-                                             setSupplierOrders(updatedOrders);
-                                             handleUpdate({ supplierOrders: updatedOrders });
-                                             alert(`📦 Pedido de ${quantity} unidades gerado para fornecedor!`);
-                                           }}
-                                           className="p-2 bg-blue-600 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-blue-900/20"
-                                           title="Pedir ao Fornecedor"
-                                         >
-                                           <Send size={14} />
-                                         </button>
-                                       )}
-                                       <button onClick={() => startProductEdit(originalIdx)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4"/></button>
-                                       <button onClick={() => removeProduct(originalIdx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
-                                    </div>
-                                 </td>
-                              </tr>
-                             );
-                           })}
-                           {products.filter(p => showInternalStock ? p.category === 'Stock Interno' : p.category === selectedCatalogCategory).length === 0 && (
-                             <tr>
-                               <td colSpan={4} className="py-20 text-center">
-                                 <Package className="w-12 h-12 mx-auto mb-4 text-slate-200" />
-                                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Nenhum produto encontrado nesta categoria.</p>
-                               </td>
-                             </tr>
-                           )}
-                         </tbody>
-                       </table>
-                     </div>
+                      </tbody>
+                    </table>
                   </div>
-                )}
-             </motion.div>
+               </div>
+            </motion.div>
           )}
 
           {activeTab === 'suppliers' && (
@@ -5807,7 +4731,7 @@ ${items.map((it, i) => `        <Line>
                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                  <div className="flex items-center gap-6">
                                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-[1.5rem] flex items-center justify-center text-xl font-black shadow-inner">
-                                     {res.customerName?.charAt(0) || 'C'}
+                                     {res.customerName.charAt(0)}
                                    </div>
                                    <div className="flex-1">
                                       <p className="text-2xl font-black text-slate-800 tracking-tight">{res.customerName}</p>
@@ -5893,7 +4817,7 @@ ${items.map((it, i) => `        <Line>
                                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black ${
                                            res.status === 'occupied' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
                                          }`}>
-                                           {res.customerName?.charAt(0) || 'C'}
+                                           {res.customerName.charAt(0)}
                                          </div>
                                          <div>
                                             <div className="flex items-center gap-2">
@@ -5905,8 +4829,8 @@ ${items.map((it, i) => `        <Line>
                                               }`}>
                                                 {res.status === 'occupied' ? 'Em Mesa' : 'Confirmada'}
                                               </span>
-                                              </div>
-                                              <p className="text-xs text-slate-400 font-bold mt-1">{res.customerPhone} • {res.customerEmail}</p>
+                                            </div>
+                                            <p className="text-xs text-slate-400 font-bold mt-1">{res.customerPhone} • {res.customerEmail}</p>
                                             <div className="flex items-center gap-3 mt-2">
                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
                                                {res.time && <span className="bg-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white tracking-widest">{res.time}</span>}
@@ -5924,19 +4848,14 @@ ${items.map((it, i) => `        <Line>
                                             <button 
                                               onClick={async () => {
                                                 try {
-                                                  lastLocalUpdateRef.current = Date.now();
-                                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'occupied' as const } : r);
-                                                  setReservations(updated);
-                                                  if (res.tableId) {
-                                                    const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'occupied' as const } : t);
-                                                    setTables(updatedTables);
-                                                  }
                                                   const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ status: 'occupied' })
                                                   });
-                                                  if (response.ok && onForceRefresh) onForceRefresh();
+                                                  if (response.ok) {
+                                                    if (onForceRefresh) onForceRefresh();
+                                                  }
                                                 } catch (err) {
                                                   console.error(err);
                                                 }
@@ -5950,19 +4869,27 @@ ${items.map((it, i) => `        <Line>
                                             <button 
                                               onClick={async () => {
                                                 try {
-                                                  lastLocalUpdateRef.current = Date.now();
-                                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'finished' as const } : r);
-                                                  setReservations(updated);
-                                                  if (res.tableId) {
-                                                    const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'available' as const, reservationId: undefined, currentOrder: undefined } : t);
-                                                    setTables(updatedTables);
-                                                  }
                                                   const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
                                                     method: 'PUT',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ status: 'finished' })
                                                   });
-                                                  if (response.ok && onForceRefresh) onForceRefresh();
+                                                  if (response.ok) {
+                                                    if (res.tableId) {
+                                                      const updatedRest = { ...business };
+                                                      if (updatedRest.tables) {
+                                                        const tIdx = updatedRest.tables.findIndex(t => t.id === res.tableId);
+                                                        if (tIdx > -1) {
+                                                          updatedRest.tables[tIdx].status = 'free';
+                                                          updatedRest.tables[tIdx].reservationId = undefined;
+                                                          updatedRest.tables[tIdx].currentOrder = undefined;
+                                                          onUpdateBusiness(updatedRest);
+                                                          onSync(updatedRest);
+                                                        }
+                                                      }
+                                                    }
+                                                    if (onForceRefresh) onForceRefresh();
+                                                  }
                                                 } catch (err) {
                                                   console.error(err);
                                                 }
@@ -6083,7 +5010,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'pending_admin' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'sent_to_kitchen' as const, timestamp: new Date().toISOString() } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'sent_to_kitchen' as const } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
@@ -6095,7 +5022,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'sent_to_kitchen' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'preparing' as const, timestamp: new Date().toISOString() } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'preparing' as const } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
@@ -6107,7 +5034,7 @@ ${items.map((it, i) => `        <Line>
                                             {order.status === 'preparing' && (
                                               <button 
                                                 onClick={() => {
-                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'ready' as const, timestamp: new Date().toISOString() } : o);
+                                                  const updatedOrders = kitchenOrders.map(o => o.id === order.id ? { ...o, status: 'ready' as const } : o);
                                                   setKitchenOrders(updatedOrders);
                                                   handleUpdate({ kitchenOrders: updatedOrders });
                                                 }}
@@ -6571,20 +5498,12 @@ ${items.map((it, i) => `        <Line>
                     <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Gestão de Equipa</h3>
                     <p className="text-slate-400 text-sm font-medium">Administre os funcionários e acessos ao sistema</p>
                   </div>
-                  <div className="flex gap-4">
-                     <button 
-                       onClick={() => { setActiveTab('ferias'); }}
-                       className="px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black uppercase text-xs tracking-widest shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
-                     >
-                        <Calendar className="w-4 h-4 text-blue-600" /> Mapa de Férias
-                     </button>
-                     <button 
-                       onClick={() => { setEditingStaff(null); setShowAddStaff(true); }}
-                       className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                     >
-                       <Plus className="w-4 h-4" /> Adicionar Funcionário
-                     </button>
-                  </div>
+                  <button 
+                    onClick={() => { setEditingStaff(null); setShowAddStaff(true); }}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Adicionar Funcionário
+                  </button>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -6744,326 +5663,94 @@ ${items.map((it, i) => `        <Line>
             </motion.div>
           )}
 
-          {activeTab === 'ferias' && (() => {
-            const currentYear = calDate.getFullYear();
-            const currentMonth = calDate.getMonth();
-            const monthNames = [
-              'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-            ];
-            
-            const holidays = getAzoresHolidays(currentYear);
-            
-            const firstDay = new Date(currentYear, currentMonth, 1);
-            const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1);
-            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            const daysArray = [];
-            for (let i = 0; i < startOffset; i++) {
-              daysArray.push(null);
-            }
-            for (let i = 1; i <= totalDays; i++) {
-              daysArray.push(i);
-            }
-            
-            const formatDateStr = (d) => {
-              return `${currentYear}-\ ${String(currentMonth + 1).padStart(2, '0')}-\ ${String(d).padStart(2, '0')}`.replace(/\s+/g, '');
-            };
-            
-            const pendingVacations = staff.filter(m => m.vacationStart && (!m.vacationStatus || m.vacationStatus === 'pending'));
-            
-            return (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-5xl">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex items-center gap-4">
-                    <button 
-                      onClick={() => setActiveTab('staff_list')}
-                      className="p-3 bg-white text-slate-800 hover:bg-slate-100 rounded-2xl transition-all shadow-sm border border-slate-100 flex items-center justify-center gap-2 font-black text-xs uppercase"
-                    >
-                      ← Voltar à Equipa
-                    </button>
-                    <div>
-                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Mapa de Férias</h3>
-                      <p className="text-slate-400 text-sm font-medium">Gestão e aprovação de férias da equipa</p>
-                    </div>
+          {activeTab === 'ferias' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 max-w-5xl">
+               <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Mapa de Férias</h3>
+                    <p className="text-slate-400 text-sm font-medium">Gestão de períodos de descanso da equipa</p>
                   </div>
-                </div>
+               </div>
 
-                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-                  <div className="flex justify-between items-center bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                    <button 
-                      onClick={() => setCalDate(new Date(currentYear, currentMonth - 1, 1))}
-                      className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-sm text-slate-600 font-bold"
-                    >
-                      ◀ Anterior
-                    </button>
-                    <h4 className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                      {monthNames[currentMonth]} {currentYear}
-                    </h4>
-                    <button 
-                      onClick={() => setCalDate(new Date(currentYear, currentMonth + 1, 1))}
-                      className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-sm text-slate-600 font-bold"
-                    >
-                      Seguinte ▶
-                    </button>
+               <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-50">
+                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Funcionário</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Início</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Fim</th>
+                          <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                          <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {staff.map((member) => (
+                          <tr key={member.id} className="group">
+                            <td className="px-6 py-6">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm">{member.name.charAt(0)}</div>
+                                  <div>
+                                     <p className="font-bold text-slate-800">{member.name}</p>
+                                     <p className="text-[10px] font-bold text-slate-400 uppercase">{member.role}</p>
+                                  </div>
+                               </div>
+                            </td>
+                            <td className="px-6 py-6">
+                               <input 
+                                 type="date" 
+                                 className="bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                 defaultValue={member.vacationStart || ''}
+                                 onChange={(e) => setStaffVacation(member.id, e.target.value, member.vacationEnd || null)}
+                               />
+                            </td>
+                            <td className="px-6 py-6">
+                               <input 
+                                 type="date" 
+                                 className="bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                                 defaultValue={member.vacationEnd || ''}
+                                 onChange={(e) => setStaffVacation(member.id, member.vacationStart || null, e.target.value)}
+                               />
+                            </td>
+                            <td className="px-6 py-6">
+                               {member.vacationStart ? (
+                                 <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">Programadas</span>
+                               ) : (
+                                 <span className="px-3 py-1 bg-slate-50 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest">Sem Marcação</span>
+                               )}
+                            </td>
+                            <td className="px-6 py-6 text-right">
+                               <button 
+                                 onClick={() => setStaffVacation(member.id, null, null)}
+                                 className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                 title="Limpar Férias"
+                               >
+                                 <Trash2 size={16} />
+                               </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+               </div>
 
-                  <div className="grid grid-cols-7 gap-2">
-                    {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map(wd => (
-                      <div key={wd} className="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {wd}
-                      </div>
-                    ))}
-
-                    {daysArray.map((day, idx) => {
-                      if (day === null) {
-                        return <div key={`empty-${idx}`} className="bg-slate-50/30 border border-transparent rounded-2xl min-h-[90px] opacity-30"></div>;
-                      }
-
-                      const dateStr = formatDateStr(day);
-                      const holiday = holidays.find(h => h.date === dateStr);
-                      const activeVacations = staff.filter(m => m.vacationStart && m.vacationEnd && dateStr >= m.vacationStart && dateStr <= m.vacationEnd);
-
-                      return (
-                        <div 
-                          key={`day-${day}`} 
-                          className={`min-h-[100px] border border-slate-100 p-3 flex flex-col justify-between bg-white hover:bg-slate-50/50 transition-all rounded-2xl relative ${
-                            holiday ? 'ring-2 ring-red-100 bg-red-50/10' : ''
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className={`text-xs font-black ${holiday ? 'text-red-500 font-black' : 'text-slate-700'}`}>
-                              {day}
-                            </span>
-                            {holiday && (
-                              <span 
-                                title={holiday.name} 
-                                className="w-2.5 h-2.5 bg-red-500 rounded-full flex-shrink-0 animate-pulse cursor-help"
-                              ></span>
-                            )}
-                          </div>
-
-                          <div className="space-y-1 mt-2">
-                            {holiday && (
-                              <p className="text-[7px] font-black text-red-600 uppercase tracking-wider leading-tight truncate" title={holiday.name}>
-                                🎉 {holiday.name}
-                              </p>
-                            )}
-                            {activeVacations.map(m => (
-                              <div 
-                                key={m.id} 
-                                className={`text-[7px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center justify-between gap-1 ${
-                                  m.vacationStatus === 'approved' ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' :
-                                  m.vacationStatus === 'rejected' ? 'bg-red-50 border border-red-100 text-red-700' :
-                                  'bg-amber-50 border border-amber-100 text-amber-700 animate-pulse'
-                                }`}
-                              >
-                                <span className="truncate">{m.name.split(' ')[0]}</span>
-                                <span className="text-[6px]">
-                                  {m.vacationStatus === 'approved' ? '✓' : m.vacationStatus === 'rejected' ? '✗' : '?'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+               {/* Legend/Info */}
+               <div className="mt-8 p-6 bg-blue-50 rounded-3xl border border-blue-100 flex gap-4 items-start">
+                  <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-900/20">
+                     <Info size={20} />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                      📥 Pedidos de Férias Pendentes ({pendingVacations.length})
-                    </h4>
-
-                    <div className="space-y-4">
-                      {pendingVacations.map(m => (
-                        <div key={m.id} className="bg-slate-50 border border-slate-100 p-5 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-lg transition-all duration-300">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-xs uppercase">{m.name.charAt(0)}</span>
-                              <div>
-                                <p className="text-xs font-black text-slate-800">{m.name}</p>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{m.role === 'waiter' ? 'Empregado Mesa' : m.role === 'chef' ? 'Cozinheiro' : 'Gerente'}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-600">
-                              <span>📅 {m.vacationStart}</span>
-                              <span className="text-slate-300">até</span>
-                              <span>{m.vacationEnd || '...'}</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 w-full sm:w-auto">
-                            <button
-                              onClick={() => setStaffVacation(m.id, m.vacationStart || null, m.vacationEnd || null, 'approved')}
-                              className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
-                            >
-                              Aceitar
-                            </button>
-                            <button
-                              onClick={() => setStaffVacation(m.id, m.vacationStart || null, m.vacationEnd || null, 'rejected')}
-                              className="flex-1 sm:flex-initial px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-500/10 active:scale-95"
-                            >
-                              Reprovar
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {pendingVacations.length === 0 && (
-                        <div className="py-12 text-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl">
-                          <p className="text-xs font-black uppercase tracking-widest">Nenhum pedido pendente</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-slate-100 pt-6">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">
-                        🌴 Feriados nos Açores ({monthNames[currentMonth]})
-                      </h4>
-                      <div className="space-y-2">
-                        {holidays
-                          .filter(h => {
-                            const hMonth = parseInt(h.date.split('-')[1]) - 1;
-                            return hMonth === currentMonth;
-                          })
-                          .map(h => (
-                            <div key={h.date} className="flex justify-between items-center text-xs p-3 bg-red-50/30 rounded-2xl border border-red-100/50">
-                              <span className="font-black text-red-500">{h.date.split('-')[2]} de {monthNames[currentMonth]}</span>
-                              <span className="font-bold text-slate-600">{h.name}</span>
-                            </div>
-                          ))}
-                        {holidays.filter(h => {
-                          const hMonth = parseInt(h.date.split('-')[1]) - 1;
-                          return hMonth === currentMonth;
-                        }).length === 0 && (
-                          <p className="text-xs text-slate-400 font-medium italic text-center py-2">Sem feriados registados este mês.</p>
-                        )}
-                      </div>
-                    </div>
+                  <div>
+                    <p className="text-sm font-black text-blue-900 uppercase tracking-tighter">Nota Informativa</p>
+                    <p className="text-xs text-blue-800/70 font-medium leading-relaxed mt-1">
+                      As datas marcadas aqui serão refletidas no estado do funcionário em todo o dashboard. 
+                      Funcionários de férias não podem dar entrada no relógio de ponto e aparecem com o badge "De Férias" na lista de equipa.
+                    </p>
                   </div>
+               </div>
+            </motion.div>
+          )}
 
-                  <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">
-                      📅 Agendar Novas Férias
-                    </h4>
-                    
-                    <form 
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const staffId = formData.get('staffId');
-                        const start = formData.get('start');
-                        const end = formData.get('end');
-                        const status = formData.get('status');
-                        
-                        if (!staffId || !start || !end) {
-                          alert('Por favor, preencha todos os campos!');
-                          return;
-                        }
-                        
-                        setStaffVacation(staffId, start, end, status);
-                        alert('📅 Férias agendadas com sucesso!');
-                        e.currentTarget.reset();
-                      }}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Funcionário</label>
-                        <select 
-                          name="staffId" 
-                          required
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                        >
-                          <option value="">Selecionar Funcionário...</option>
-                          {staff.map(m => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Data de Início</label>
-                          <input 
-                            type="date" 
-                            name="start" 
-                            required
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Data de Fim</label>
-                          <input 
-                            type="date" 
-                            name="end" 
-                            required
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Estado Inicial</label>
-                        <select 
-                          name="status" 
-                          required
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                        >
-                          <option value="approved">Aprovadas (Confirmadas)</option>
-                          <option value="pending">Pendentes de Aprovação</option>
-                        </select>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all mt-4"
-                      >
-                        Agendar Período
-                      </button>
-                    </form>
-
-                    <div className="border-t border-slate-100 pt-6 space-y-4">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                        👥 Férias Agendadas
-                      </h4>
-                      <div className="space-y-3 max-h-[250px] overflow-y-auto custom-scrollbar">
-                        {staff
-                          .filter(m => m.vacationStart)
-                          .map(m => (
-                            <div key={m.id} className="flex justify-between items-center text-xs p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                              <div>
-                                <p className="font-black text-slate-700">{m.name}</p>
-                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">📅 {m.vacationStart} a {m.vacationEnd}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                                  m.vacationStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                  m.vacationStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                                  'bg-amber-100 text-amber-700 animate-pulse'
-                                }`}>
-                                  {m.vacationStatus === 'approved' ? 'Aprovada' : m.vacationStatus === 'rejected' ? 'Reprovada' : 'Pendente'}
-                                </span>
-                                <button
-                                  onClick={() => setStaffVacation(m.id, null, null)}
-                                  className="text-red-400 hover:text-red-600 transition-colors p-1"
-                                  title="Remover Férias"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        {staff.filter(m => m.vacationStart).length === 0 && (
-                          <p className="text-xs text-slate-400 font-medium italic text-center py-2">Sem férias agendadas atualmente.</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })()}
         </div>
       </main>
 
@@ -7292,32 +5979,6 @@ ${items.map((it, i) => `        <Line>
                          onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, description: e.target.value}})}
                        />
                     </div>
-
-                    {editingProduct.product.category !== 'Stock Interno' && (
-                      <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex items-center justify-between shadow-sm">
-                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
-                               <Utensils className="w-5 h-5" />
-                            </div>
-                            <div>
-                               <p className="font-black text-slate-800 text-sm uppercase tracking-wider">Apresentar na Ementa</p>
-                               <p className="text-[10px] text-slate-400 font-medium">Exibir automaticamente este produto no menu do cliente</p>
-                            </div>
-                         </div>
-                         <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              className="sr-only peer"
-                              checked={!!(editingProduct.product as any).inMenu}
-                              onChange={e => setEditingProduct({
-                                ...editingProduct, 
-                                product: { ...editingProduct.product, inMenu: e.target.checked }
-                              })}
-                            />
-                            <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                         </label>
-                      </div>
-                    )}
                   </div>
                   <div className="flex gap-4 pt-4">
                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center justify-between">
@@ -7571,84 +6232,6 @@ ${items.map((it, i) => `        <Line>
                              <option value="chef">Cozinheiro</option>
                              <option value="manager">Gerente de Turno</option>
                           </select>
-                       </div>
-                    </div>
-                    {/* Horário de Trabalho & Pausa */}
-                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
-                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">⏱️ Horário de Trabalho & Pausa</h4>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Hora Entrada</label>
-                             <input 
-                               name="shiftStart"
-                               type="time"
-                               defaultValue={editingStaff?.shiftStart || '08:00'}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Hora Saída</label>
-                             <input 
-                               name="shiftEnd"
-                               type="time"
-                               defaultValue={editingStaff?.shiftEnd || '17:00'}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Pausa (Início)</label>
-                             <input 
-                               name="pauseStart"
-                               type="time"
-                               defaultValue={editingStaff?.pauseStart || '12:00'}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Pausa (Fim)</label>
-                             <input 
-                               name="pauseEnd"
-                               type="time"
-                               defaultValue={editingStaff?.pauseEnd || '13:00'}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
-                       </div>
-                    </div>
-                    {/* Gestão de Férias */}
-                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
-                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">🏖️ Gestão de Férias</h4>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Dias Gozados</label>
-                             <input 
-                               name="vacationDaysGozados"
-                               type="number"
-                               min="0"
-                               max="30"
-                               defaultValue={editingStaff?.vacationDaysGozados ?? 0}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
-                          <div>
-                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Dias por Gozar</label>
-                             <input 
-                               name="vacationDaysPorGozar"
-                               type="number"
-                               min="0"
-                               max="30"
-                               defaultValue={editingStaff?.vacationDaysPorGozar ?? 22}
-                               required
-                               className="w-full bg-white border border-slate-100 rounded-xl p-3 font-bold text-xs focus:ring-2 focus:ring-blue-500 outline-none" 
-                             />
-                          </div>
                        </div>
                     </div>
                   </div>
@@ -8062,590 +6645,6 @@ ${items.map((it, i) => `        <Line>
           </div>
         )}
       </AnimatePresence>
-
-      {/* ATRIBUIR STAFF MODAL */}
-      <AnimatePresence>
-        {assignStaffTableTarget && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
-            >
-              <button 
-                onClick={() => setAssignStaffTableTarget(null)}
-                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center">
-                  <Bell size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Atribuir Mesa #{assignStaffTableTarget.number}</h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Selecione um funcionário disponível</p>
-                </div>
-              </div>
-
-              <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar mb-6 select-none">
-                {(() => {
-                  const waiters = staff.filter(s => s.role === 'waiter' || s.role === 'manager');
-                  const waiterAssignments = new Map<string, number>();
-                  tables.forEach(t => {
-                    if (t.waiterId && t.status === 'occupied') {
-                      waiterAssignments.set(String(t.waiterId), t.number);
-                    }
-                  });
-
-                  const availableWaiters = waiters.filter(w => !waiterAssignments.has(String(w.id)));
-                  const busyWaiters = waiters.filter(w => waiterAssignments.has(String(w.id)));
-
-                  const isAllBusy = availableWaiters.length === 0;
-                  const displayList = isAllBusy ? busyWaiters : availableWaiters;
-
-                  if (waiters.length === 0) {
-                    return (
-                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest text-center py-8">Nenhum funcionário cadastrado na equipa</p>
-                    );
-                  }
-
-                  return displayList.map(waiter => {
-                    const isBusy = waiterAssignments.has(String(waiter.id));
-                    const assignedTableNum = waiterAssignments.get(String(waiter.id));
-                    return (
-                      <button
-                        key={waiter.id}
-                        onClick={() => {
-                          if (!isBusy) {
-                            // Direct assignment (Available waiter)
-                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id, alertStatus: 'none' as const } : t);
-                            setTables(updatedTables);
-                            handleUpdate({ tables: updatedTables });
-                            setAssignStaffTableTarget(null);
-                            alert(`✅ Mesa #${assignStaffTableTarget.number} atribuída diretamente a ${waiter.name}!`);
-                          } else {
-                            // Indirect notification (Busy waiter)
-                            const updatedStaff = staff.map(s => {
-                              if (s.id === waiter.id) {
-                                const newNotif = {
-                                  id: `NOTIF_${Date.now()}`,
-                                  type: 'calling_waiter' as const,
-                                  tableId: assignStaffTableTarget.id,
-                                  tableNumber: assignStaffTableTarget.number,
-                                  status: 'pending' as const,
-                                  timestamp: new Date().toISOString()
-                                };
-                                return {
-                                  ...s,
-                                  notifications: [...(s.notifications || []), newNotif]
-                                };
-                              }
-                              return s;
-                            });
-                            // Keep table waiterId for sync
-                            const updatedTables = tables.map(t => t.id === assignStaffTableTarget.id ? { ...t, waiterId: waiter.id } : t);
-                            setTables(updatedTables);
-                            setStaff(updatedStaff);
-                            handleUpdate({ staff: updatedStaff, tables: updatedTables });
-                            setAssignStaffTableTarget(null);
-                            alert(`📩 Mesa #${assignStaffTableTarget.number} tem chamada pendente enviada para a dashboard de ${waiter.name}!`);
-                          }
-                        }}
-                        className="w-full p-4 bg-slate-50 border border-slate-100 hover:border-blue-200 rounded-3xl hover:bg-slate-50/50 flex items-center justify-between text-left transition-all active:scale-[0.98] cursor-pointer shadow-sm relative overflow-hidden"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shrink-0">
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${waiter.name}`} alt={waiter.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-sm text-slate-800 leading-tight">{waiter.name}</p>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{waiter.role === 'manager' ? 'Gerente' : 'Empregado de Mesa'}</p>
-                          </div>
-                        </div>
-
-                        <div>
-                          {isBusy ? (
-                            <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-red-100">
-                              Ocupado na Mesa #{assignedTableNum}
-                            </span>
-                          ) : (
-                            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100">
-                              Disponível
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  });
-                })()}
-              </div>
-
-              {staff.filter(s => s.role === 'waiter' || s.role === 'manager').length > 0 && (
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-[10px] font-medium text-blue-700 leading-relaxed text-center">
-                  💡 {tables.some(t => t.waiterId && t.status === 'occupied') 
-                    ? "Se todos estiverem ocupados, ao selecionar um funcionário, este receberá um alerta pendente na sua dashboard para aceitar." 
-                    : "Os funcionários livres disponíveis são priorizados no topo. Ao clicar, a mesa é atribuída diretamente."}
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── CLOSING CASH DRAWER MODAL (FECHAR CAIXA) ── */}
-      <AnimatePresence>
-        {closingDrawerOpen && (() => {
-          const todayStr = new Date().toISOString().split('T')[0];
-          const todaySales = (business.salesHistory || []).filter((s: any) => s.date && s.date.startsWith(todayStr));
-          const totalSalesValue = todaySales.reduce((acc: number, s: any) => acc + (Number(s.total) || Number(s.amount) || 0), 0);
-          
-          const cashSales = todaySales.filter((s: any) => 
-            (s.paymentMethod || '').toLowerCase() === 'dinheiro' || 
-            (s.paymentMethod || '').toLowerCase() === 'cash'
-          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
-
-          const cardSales = todaySales.filter((s: any) => 
-            (s.paymentMethod || '').toLowerCase() === 'multibanco' || 
-            (s.paymentMethod || '').toLowerCase() === 'card' ||
-            (s.paymentMethod || '').toLowerCase() === 'digital'
-          ).reduce((acc: number, s: any) => acc + (Number(s.total) || 0), 0);
-
-          const openingAmountVal = Number(business.currentDrawerAmount) || 30;
-          const totalCashInDrawer = cashSales + openingAmountVal;
-
-          return (
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-            >
-              <motion.div 
-                initial={{ scale: 0.95, y: 20 }} 
-                animate={{ scale: 1, y: 0 }} 
-                exit={{ scale: 0.95, y: 20 }}
-                className="bg-white rounded-[3rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative text-left"
-              >
-                <button 
-                  onClick={() => setClosingDrawerOpen(false)}
-                  className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-red-500/10 text-red-600 rounded-2xl flex items-center justify-center">
-                    <Lock size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Fechar Caixa de Turno</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Talão oficial de fecho de caixa</p>
-                  </div>
-                </div>
-
-                {/* Thermal Ticket Style Preview */}
-                <div id="print-closing-ticket" className="bg-amber-50/30 border-2 border-dashed border-amber-200 rounded-3xl p-6 font-mono text-xs text-slate-800 mb-6 max-h-[320px] overflow-y-auto custom-scrollbar">
-                  <div className="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
-                    <h4 className="font-black text-sm uppercase tracking-wider">{business.name}</h4>
-                    <p className="text-[10px] text-slate-500 uppercase mt-0.5">Fecho de Caixa - Turno</p>
-                    <p className="text-[9px] text-slate-400 mt-1">{new Date().toLocaleString('pt-PT')}</p>
-                  </div>
-
-                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
-                    <div className="flex justify-between">
-                      <span>Abertura de Caixa:</span>
-                      <span className="font-bold">€{openingAmountVal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total de Vendas:</span>
-                      <span className="font-bold">€{totalSalesValue.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3">
-                    <div className="flex justify-between">
-                      <span>Vendas em Dinheiro:</span>
-                      <span>€{cashSales.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Vendas em Multibanco:</span>
-                      <span>€{cardSales.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 font-bold text-sm">
-                    <div className="flex justify-between text-slate-900">
-                      <span>Dinheiro em Caixa:</span>
-                      <span>€{totalCashInDrawer.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-900">
-                      <span>Total Geral Turno:</span>
-                      <span>€{(totalSalesValue + openingAmountVal).toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="text-center border-t border-dashed border-slate-300 pt-3 mt-4 text-[10px] text-slate-500">
-                    <p>Operador: {displayName}</p>
-                    <p className="mt-1">Azores4You POS v1.0</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <button
-                    onClick={() => {
-                      alert("🖨️ A enviar talão de fecho para a impressora térmica POS...");
-                      printClosingTicketOnly();
-                    }}
-                    className="py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-                  >
-                    <Printer size={14} /> Imprimir POS
-                  </button>
-                  <button
-                    onClick={() => {
-                      printClosingTicketOnly();
-                    }}
-                    className="py-4 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-                  >
-                    📥 Imprimir / PDF
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => {
-                    const newLog = {
-                      id: 'CDL_' + Date.now(),
-                      type: 'close',
-                      amount: totalCashInDrawer,
-                      timestamp: new Date().toISOString(),
-                    };
-                    const updatedLogs = [...(business.cashDrawerLogs || []), newLog];
-                    
-                    onUpdateBusiness({
-                      ...business,
-                      isDrawerOpen: false,
-                      currentDrawerAmount: 0,
-                      cashDrawerLogs: updatedLogs
-                    });
-
-                    setClosingDrawerOpen(false);
-                    alert("🔒 Caixa de Turno Fechado com sucesso! Turno encerrado.");
-                  }}
-                  className="w-full py-4.5 bg-red-600 hover:bg-red-50 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-red-600/20 cursor-pointer"
-                >
-                  🔒 Confirmar Fecho de Caixa
-                </button>
-              </motion.div>
-            </motion.div>
-          );
-        })()}
-      </AnimatePresence>
-
-      {/* ── LOCAL INTERNAL INSTALLER MODAL ── */}
-      <AnimatePresence>
-        {installingStatus && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
-              className="bg-slate-900 border border-slate-800 rounded-[3rem] p-8 max-w-md w-full shadow-2xl text-left font-mono text-xs text-slate-300"
-            >
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4 mb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-2 font-bold text-white uppercase text-[10px] tracking-wider">Instalador Interno Azores4You</span>
-              </div>
-
-              <div className="space-y-2 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400">
-                <p>⚡ Iniciando sequência de empacotamento local...</p>
-                {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
-                {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
-                {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
-                {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
-                {installProgress === 100 && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
-                    🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
-                    ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
-                    AO CLICAR, O SOFTWARE FICA FULL SCREEN.
-                  </div>
-                )}
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-6">
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: `${installProgress}%` }} 
-                  className="h-full bg-emerald-500 rounded-full" 
-                />
-              </div>
-
-              {installProgress < 100 ? (
-                <p className="text-right text-[10px] font-bold text-slate-500 uppercase tracking-widest">A carregar {installProgress}%</p>
-              ) : (
-                <button
-                  onClick={() => {
-                    try {
-                      document.documentElement.requestFullscreen();
-                    } catch (e) {
-                      console.log("Fullscreen not supported or blocked by browser gesture", e);
-                    }
-                    setInstallingStatus(null);
-                  }}
-                  className="w-full py-4.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-emerald-600/20 cursor-pointer"
-                >
-                  🖥️ Entrar em Modo Fullscreen
-                </button>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── CLOUD SYNC MODAL (PUBLICAR NO SERVIDOR) ── */}
-      <AnimatePresence>
-        {publishingStatus && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, y: 20 }} 
-              animate={{ scale: 1, y: 0 }} 
-              className="bg-white rounded-[3rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center"
-            >
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce">
-                <RefreshCw size={36} className="animate-spin duration-1000" />
-              </div>
-              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-1">Publicar no Servidor</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">A sincronizar dados locais com o MongoDB Atlas</p>
-
-              <div className="space-y-2 mb-6 text-left text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100 font-mono text-slate-600">
-                <p>📡 A ligar ao servidor de base de dados cloud...</p>
-                {publishProgress >= 30 && <p className="text-blue-600">⚡ Ligação estabelecida. A verificar integridade...</p>}
-                {publishProgress >= 60 && <p className="text-slate-800">📤 A publicar vendas offline, logs e alterações de staff...</p>}
-                {publishProgress === 100 && (
-                  <p className="text-emerald-600 font-bold">✅ Sincronização concluída com sucesso!</p>
-                )}
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: `${publishProgress}%` }} 
-                  className="h-full bg-blue-600 rounded-full" 
-                />
-              </div>
-
-              {publishProgress < 100 ? (
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sincronizando {publishProgress}%</p>
-              ) : (
-                <button
-                  onClick={() => setPublishingStatus(null)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10 cursor-pointer"
-                >
-                  Concluído
-                </button>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── POPUP DE CONFIRMAÇÃO DE PICADA DE SAÍDA ── */}
-      <AnimatePresence>
-        {showClockOutPopup && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans animate-in fade-in zoom-in-95 duration-300">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-slate-900 border border-white/10 p-6 rounded-[2rem] max-w-sm w-full relative text-center shadow-2xl overflow-hidden"
-            >
-              {/* Decorative background gradients */}
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-rose-500 rounded-full blur-[40px] opacity-30 pointer-events-none"></div>
-
-              <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <LogOut size={28} className="text-rose-400" />
-              </div>
-
-              <h3 className="text-lg font-black text-white uppercase tracking-tight mb-2">
-                Terminar Turno & Sair
-              </h3>
-              
-              <p className="text-slate-400 text-xs leading-relaxed mb-6">
-                Tem a certeza que deseja registar a sua saída de ponto e terminar a sua sessão?
-              </p>
-
-              {/* Session Summary Card */}
-              {loggedInStaff && (
-                <div className="bg-white/[0.03] border border-white/5 p-4 rounded-2xl text-left space-y-3 mb-6">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-slate-400 uppercase tracking-wider">Turno de Entrada:</span>
-                    <span className="font-bold text-white">
-                      {(() => {
-                        if (!loggedInStaff.attendanceLogs || loggedInStaff.attendanceLogs.length === 0) return '--:--';
-                        const lastLog = loggedInStaff.attendanceLogs[loggedInStaff.attendanceLogs.length - 1];
-                        return lastLog.clockOut ? '--:--' : lastLog.clockIn;
-                      })()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-slate-400 uppercase tracking-wider">Hora de Saída:</span>
-                    <span className="font-bold text-emerald-400">
-                      {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px] pt-2 border-t border-white/5">
-                    <span className="font-bold text-slate-400 uppercase tracking-wider">Duração Estimada:</span>
-                    <span className="font-black text-blue-400">{getCurrentShiftDuration()}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => {
-                    if (loggedInStaff && loggedInStaff.onDuty) {
-                      toggleStaffDuty(loggedInStaff.id);
-                    }
-                    setShowClockOutPopup(false);
-                    setTimeout(() => {
-                      onLogout();
-                    }, 500);
-                  }}
-                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-rose-500/20 border border-rose-400/20"
-                >
-                  Picar Saída & Sair
-                </button>
-                <button
-                  onClick={() => setShowClockOutPopup(false)}
-                  className="w-full py-4 bg-slate-800 text-slate-300 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all cursor-pointer active:scale-95 border border-white/5"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ── POPUP DE SOLICITAÇÃO DE FÉRIAS ── */}
-      <AnimatePresence>
-        {showRequestVacationModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm font-sans">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-slate-900 border border-white/10 p-6 rounded-[2rem] max-w-sm w-full relative text-left shadow-2xl overflow-hidden"
-            >
-              {/* Decorative background gradients */}
-              <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500 rounded-full blur-[40px] opacity-30 pointer-events-none"></div>
-
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
-                  Pedir Férias
-                </h3>
-                <button 
-                  onClick={() => setShowRequestVacationModal(false)}
-                  className="p-2 bg-white/10 text-white hover:bg-white/20 rounded-full transition-all"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if (!vacationStartDate || !vacationEndDate) {
-                  alert('Por favor selecione ambas as datas.');
-                  return;
-                }
-                
-                const updatedStaff = staff.map(s => {
-                  if (s.id === loggedInStaff?.id) {
-                    return {
-                      ...s,
-                      vacationStart: vacationStartDate,
-                      vacationEnd: vacationEndDate,
-                      vacationStatus: 'pending'
-                    };
-                  }
-                  return s;
-                });
-                
-                setStaff(updatedStaff);
-                handleUpdate({ staff: updatedStaff });
-                setShowRequestVacationModal(false);
-                setVacationStartDate('');
-                setVacationEndDate('');
-                alert('Pedido de férias enviado com sucesso para aprovação do gerente! 📅');
-              }} className="space-y-4">
-                <div>
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Data Início</label>
-                  <input 
-                    type="date"
-                    required
-                    value={vacationStartDate}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setVacationStartDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 font-bold text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none" 
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Data Fim</label>
-                  <input 
-                    type="date"
-                    required
-                    value={vacationEndDate}
-                    min={vacationStartDate || new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setVacationEndDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 font-bold text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none" 
-                  />
-                </div>
-
-                <div className="pt-4 flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-blue-500/20 border border-blue-400/20"
-                  >
-                    Enviar Pedido
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRequestVacationModal(false)}
-                    className="px-5 py-4 bg-slate-800 text-slate-300 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all cursor-pointer active:scale-95 border border-white/5"
-                  >
-                    Voltar
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ── POPUP DO CALENDÁRIO DE HORÁRIO DO FUNCIONÁRIO ── */}
-      <AnimatePresence>
-        {showScheduleCalendar && renderScheduleCalendarModal()}
-      </AnimatePresence>
     </div>
   );
 };
@@ -8653,46 +6652,6 @@ ${items.map((it, i) => `        <Line>
 // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 // BUSINESS BOTTOM NAV \u2014 barra mobile para o painel de neg\u00f3cio
 // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-interface StaffBottomNavProps {
-  activeTab: string;
-  onTab: (tab: string) => void;
-  onSair: () => void;
-}
-
-const StaffBottomNav: React.FC<StaffBottomNavProps> = ({ activeTab, onTab, onSair }) => {
-  const staffNavItems = [
-    { id: 'atendimentos', label: 'Atendimentos', icon: <CheckCircle size={22} /> },
-    { id: 'tables', label: 'Mesas', icon: <TableIcon size={22} /> },
-    { id: 'details', label: 'Detalhes', icon: <Users size={22} /> },
-    { id: 'sair', label: 'Sair', icon: <LogOut size={22} className="text-rose-500" />, isSair: true },
-  ];
-
-  return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.3)] z-[90] pb-safe rounded-t-[2rem]">
-      <div className="flex justify-around items-center h-20 px-2 relative">
-        {staffNavItems.map(item => {
-          const isActive = activeTab === item.id;
-          return (
-            <button 
-              key={item.id} 
-              onClick={() => item.isSair ? onSair() : onTab(item.id)} 
-              className={`flex flex-col items-center justify-center flex-1 transition-all active:scale-90 ${
-                isActive ? 'text-blue-500' : 'text-slate-500 hover:text-slate-400'
-              }`}
-            >
-              <div className="p-1 rounded-xl transition-all">
-                {item.icon}
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-tight mt-0.5">{item.label}</span>
-              {isActive && <div className="w-1 h-1 rounded-full bg-blue-500 mt-0.5" />}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 interface BusinessBottomNavProps {
   activeTab: string;
   onTab: (tab: string) => void;
@@ -9090,10 +7049,8 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
           </motion.div>
         )}
       </AnimatePresence>
-
-          </>
+    </>
   );
 };
-// Trigger fresh build: 2026-05-23T18:16:00Z
 
 export default BusinessDashboard;
