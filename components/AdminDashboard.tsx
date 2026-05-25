@@ -58,6 +58,8 @@ interface AdminDashboardProps {
   cars: Car[];
   busSchedules: BusSchedule[];
   marketplaceAds: any[];
+  marketplaceCategories?: any[];
+  onUpdateMarketplaceCategories?: (list: any[]) => void;
   
   onUpdateRestaurants: (newRestaurants: Restaurant[]) => void;
   onUpdateShops: (newShops: Business[]) => void;
@@ -94,8 +96,8 @@ interface AdminDashboardProps {
 type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], bars = [], events = [], municipal = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [],
-  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateBars, onUpdateEvents, onUpdateMunicipal, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers, onUpdateMarketplaceAds,
+  restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], bars = [], events = [], municipal = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [], marketplaceCategories = [],
+  onUpdateRestaurants, onUpdateShops, onUpdateBeauty, onUpdateServices, onUpdateAutoRepairs, onUpdateAutoElectronics, onUpdateUsedMarket, onUpdateAnimals, onUpdateRealEstate, onUpdateGyms, onUpdateStands, onUpdateOffices, onUpdateITServices, onUpdatePerfumes, onUpdateBars, onUpdateEvents, onUpdateMunicipal, onUpdateActivities, onUpdateFlights, onUpdateHotels, onUpdateCars, onUpdateBusSchedules, onUpdateUsers, onUpdateMarketplaceAds, onUpdateMarketplaceCategories,
   onLogout, onFullSync, dbStatus,
   language = 'pt'
 }) => {
@@ -560,6 +562,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'hotels': updateLocal(hotels, onUpdateHotels); break;
         case 'cars': updateLocal(cars, onUpdateCars); break;
         case 'buses': updateLocal(busSchedules, onUpdateBusSchedules); break;
+        case 'marketplace':
+          if (onUpdateMarketplaceCategories && marketplaceCategories) {
+            updateLocal(marketplaceCategories, onUpdateMarketplaceCategories);
+          }
+          break;
       }
 
       setEditingItem(null);
@@ -678,7 +685,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       { data: events, label: 'events', id: 'events', title: 'Eventos' },
       { data: municipal, label: 'municipal', id: 'municipal', title: 'Serviços Municipais' },
       { data: flights, label: 'flights', id: 'flights', title: 'Voos' },
-      { data: busSchedules, label: 'bus-schedules', id: 'bus-schedules', title: 'Autocarros' }
+      { data: busSchedules, label: 'bus-schedules', id: 'bus-schedules', title: 'Autocarros' },
+      { data: marketplaceCategories || [], label: 'marketplace_categories', id: 'marketplace', title: 'Marketplace (Categorias)' }
     ];
 
     // Filter based on user selection or force selective items
@@ -851,6 +859,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         break;
       case 'buses':
         newItem = { id: `BUS${timestamp}`, company: '', island: 'PDL', origin: '', destination: '', times: [], price: 0, duration: '' };
+        break;
+      case 'marketplace':
+        newItem = { id: `cat_${timestamp}`, label: '', icon: 'ShoppingBag' };
         break;
       case 'suppliers':
         alert('Por favor, adicione fornecedores diretamente no cartão de cada restaurante abaixo.');
@@ -1156,6 +1167,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     switch (activeTab) {
+      case 'marketplace':
+        return (
+          <>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Nome da Categoria</label>
+              <input 
+                type="text" 
+                className="w-full border p-2 rounded-lg" 
+                value={editingItem.label || ''} 
+                onChange={e => setEditingItem({...editingItem, label: e.target.value})} 
+                required 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Ícone</label>
+              <select 
+                className="w-full border p-2 rounded-lg bg-white font-bold" 
+                value={editingItem.icon || 'ShoppingBag'} 
+                onChange={e => setEditingItem({...editingItem, icon: e.target.value})} 
+              >
+                <option value="ShoppingBag">Saco de Compras (ShoppingBag)</option>
+                <option value="Car">Carro (Car)</option>
+                <option value="Home">Casa (Home)</option>
+                <option value="Laptop">Tecnologia (Laptop)</option>
+                <option value="Tag">Etiqueta/Moda (Tag)</option>
+                <option value="Briefcase">Mala/Negócios (Briefcase)</option>
+                <option value="Smartphone">Telemóvel (Smartphone)</option>
+                <option value="Utensils">Restaurante (Utensils)</option>
+                <option value="Mountain">Montanha (Mountain)</option>
+                <option value="BedDouble">Cama (BedDouble)</option>
+                <option value="Plane">Voo (Plane)</option>
+                <option value="Sparkles">Estrelas/Beleza (Sparkles)</option>
+              </select>
+            </div>
+          </>
+        );
       case 'restaurants':
       case 'shops':
       case 'beauty':
@@ -2324,7 +2371,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars': list = cars; break;
       case 'buses': list = busSchedules; break;
       case 'customers': list = users; break;
-      case 'marketplace': list = marketplaceAds; break;
+      case 'marketplace': list = marketplaceCategories || []; break;
       default: list = [];
     }
 
@@ -2341,6 +2388,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (activeTab === 'trails') return item.title || 'Trilho sem nome';
     if (activeTab === 'poi') return item.title || 'Ponto Turístico sem nome';
     if (activeTab === 'cars') return item.name || 'Companhia Rent-a-car';
+    if (activeTab === 'marketplace') return item.label || 'Sem Nome';
     return item.name || item.title || item.model || 'Sem Nome';
   };
 
@@ -3504,7 +3552,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       onClick={startAdd} 
                       className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center gap-2"
                     >
-                      <Plus size={16} /> Novo Registo
+                      <Plus size={16} /> {activeTab === 'marketplace' ? 'Nova Categoria' : 'Novo Registo'}
                     </button>
                   </div>
                 </div>
@@ -3764,7 +3812,7 @@ Av. do Mar, Madalena, Pico
                     </div>
                   )}
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                    {item.description || item.type || item.company || item.address}
+                    {activeTab === 'marketplace' ? `Ícone: ${item.icon || 'ShoppingBag'}` : (item.description || item.type || item.company || item.address)}
                   </p>
                   {activeTab === 'hotels' && item.type && (
                     <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${item.type === 'al' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -3786,7 +3834,7 @@ Av. do Mar, Madalena, Pico
                   )}
 
                   {/* Marketplace Verification Actions (Aprovar / Rejeitar) */}
-                  {activeTab === 'marketplace' && (
+                  {activeTab === 'marketplace' && !item.id?.startsWith('cat_') && !['vehicles', 'real_estate', 'electronics', 'home', 'fashion', 'services', 'fashion_beauty', 'jobs'].includes(item.id) && (
                     <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-2">
                       <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                         <span>Anunciante: {item.userName || 'Cliente'}</span>

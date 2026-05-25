@@ -188,6 +188,7 @@ const App: React.FC = () => {
   const [posts, setPosts] = useState<any[]>(() => loadFromCache('posts', []));
   const [marketplaceAds, setMarketplaceAds] = useState<any[]>(() => loadFromCache('marketplace_ads', []));
   const [marketplaceChats, setMarketplaceChats] = useState<any[]>(() => loadFromCache('marketplace_chats', []));
+  const [marketplaceCategories, setMarketplaceCategories] = useState<any[]>(() => loadFromCache('marketplace_categories', []));
   const [users, setUsers] = useState<any[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -267,6 +268,7 @@ const App: React.FC = () => {
         { key: 'municipal', setter: setMunicipal },
         { key: 'activities', setter: setActivities as Function },
         { key: 'marketplace_ads', setter: setMarketplaceAds },
+        { key: 'marketplace_categories', setter: setMarketplaceCategories },
         { key: 'bus-schedules', setter: setBusSchedules as Function },
         { key: 'flights', setter: setFlights as Function }
       ];
@@ -378,7 +380,7 @@ const App: React.FC = () => {
         'restaurants', 'hotels', 'cars', 'shops', 'beauty', 'services', 
         'offices', 'animals', 'real_estate', 'gyms', 'stands', 
         'auto_repairs', 'auto_electronics', 'used_market', 'it_services', 'perfumes', 'bars', 'events', 'municipal',
-        'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats'
+        'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats', 'marketplace_categories'
       ];
 
       const keysToFetch = specificKeys || endpointKeys;
@@ -389,7 +391,7 @@ const App: React.FC = () => {
         'real_estate': setRealEstate, 'gyms': setGyms, 'stands': setStands, 'auto_repairs': setAutoRepairs,
         'auto_electronics': setAutoElectronics, 'used_market': setUsedMarket, 'it_services': setItServices,
         'perfumes': setPerfumes, 'bars': setBars, 'events': setEvents, 'municipal': setMunicipal, 'activities': setActivities, 'bus-schedules': setBusSchedules, 'flights': setFlights,
-        'posts': setPosts, 'marketplace_ads': setMarketplaceAds, 'marketplace_chats': setMarketplaceChats
+        'posts': setPosts, 'marketplace_ads': setMarketplaceAds, 'marketplace_chats': setMarketplaceChats, 'marketplace_categories': setMarketplaceCategories
       };
 
       // 0. Load from Cache immediately for Offline Support (Apenas no carregamento inicial)
@@ -434,6 +436,20 @@ const App: React.FC = () => {
                     try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
                     return merged;
                   });
+                } else if (key === 'marketplace_categories') {
+                  const merged = normalized.length > 0 ? normalized : [
+                    { id: 'vehicles', label: 'Carros e Motos', icon: 'Car' },
+                    { id: 'real_estate', label: 'Imobiliária', icon: 'Home' },
+                    { id: 'electronics', label: 'Tecnologia', icon: 'Laptop' },
+                    { id: 'home', label: 'Casa e Móveis', icon: 'ShoppingBag' },
+                    { id: 'fashion', label: 'Moda e Acessórios', icon: 'Tag' },
+                    { id: 'services', label: 'Serviços', icon: 'Briefcase' },
+                    { id: 'fashion_beauty', label: 'Beleza e Barbearia', icon: 'Smartphone' },
+                    { id: 'jobs', label: 'Empregos', icon: 'Briefcase' }
+                  ];
+                  setMarketplaceCategories(merged);
+                  setCache(`azores_cache_${key}`, merged);
+                  try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
                 } else {
                   setter(normalized);
                   setCache(`azores_cache_${key}`, normalized);
@@ -1713,6 +1729,8 @@ const App: React.FC = () => {
         onUpdateCars={async (list) => { setCars(list); await fetch(`${API_BASE_URL}/api/cars/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateBusSchedules={async (list) => { setBusSchedules(list); await fetch(`${API_BASE_URL}/api/bus-schedules/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         onUpdateMarketplaceAds={async (list) => { setMarketplaceAds(list); await fetch(`${API_BASE_URL}/api/marketplace_ads/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
+        marketplaceCategories={marketplaceCategories}
+        onUpdateMarketplaceCategories={async (list) => { setMarketplaceCategories(list); await fetch(`${API_BASE_URL}/api/marketplace_categories/bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(list) }); }}
         
         // Status & Logic
         dbStatus={dbStatus}
@@ -2421,6 +2439,7 @@ const App: React.FC = () => {
                     isAuthenticated={isAuthenticated}
                     userProfile={userProfile}
                     ads={marketplaceAds}
+                    categories={marketplaceCategories}
                     onUpdateAds={async (updated) => {
                        setMarketplaceAds(updated);
                        try {

@@ -78,7 +78,7 @@ const ALL_BUSINESS_COLLECTIONS = [
     'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
     'real_estate', 'gyms', 'stands', 'auto_repairs', 
     'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules', 'marketplace_ads', 'marketplace_chats',
-    'bars', 'events', 'municipal'
+    'marketplace_categories', 'bars', 'events', 'municipal'
 ];
 
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts'];

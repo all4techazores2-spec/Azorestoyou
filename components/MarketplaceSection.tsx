@@ -38,6 +38,7 @@ interface MarketplaceSectionProps {
   onToggleFavoriteAd: (id: string) => void;
   showMarketplaceFavorites: boolean;
   onCloseMarketplaceFavorites: () => void;
+  categories?: any[];
 }
 
 const MARKET_CATEGORIES = [
@@ -76,8 +77,33 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
   favoriteAdIds = [],
   onToggleFavoriteAd,
   showMarketplaceFavorites,
-  onCloseMarketplaceFavorites
+  onCloseMarketplaceFavorites,
+  categories
 }) => {
+  const resolvedCategories = [
+    { id: 'all', label: 'Tudo', icon: <ShoppingBag size={20} /> },
+    ...((categories && categories.length > 0) ? categories : MARKET_CATEGORIES.filter(c => c.id !== 'all')).map(cat => {
+      if (cat.icon && typeof cat.icon !== 'string') return cat;
+      let iconNode = <ShoppingBag size={20} />;
+      if (cat.icon === 'Car') iconNode = <Car size={20} />;
+      else if (cat.icon === 'Home') iconNode = <Home size={20} />;
+      else if (cat.icon === 'Laptop') iconNode = <Laptop size={20} />;
+      else if (cat.icon === 'Tag') iconNode = <Tag size={20} />;
+      else if (cat.icon === 'Briefcase') iconNode = <Briefcase size={20} />;
+      else if (cat.icon === 'Smartphone') iconNode = <Smartphone size={20} />;
+      else if (cat.icon === 'Utensils') iconNode = <Utensils size={20} />;
+      else if (cat.icon === 'Mountain') iconNode = <Mountain size={20} />;
+      else if (cat.icon === 'BedDouble') iconNode = <BedDouble size={20} />;
+      else if (cat.icon === 'Plane') iconNode = <Plane size={20} />;
+      else if (cat.icon === 'Sparkles') iconNode = <Sparkles size={20} />;
+      return {
+        id: cat.id,
+        label: cat.label,
+        icon: iconNode
+      };
+    })
+  ];
+
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -457,7 +483,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                 <LayoutGrid size={22} className="group-hover:rotate-90 transition-transform duration-500" />
                 {activeCategory !== 'all' && (
                   <span className="text-[10px] font-black uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded-full max-w-[85px] truncate">
-                    {MARKET_CATEGORIES.find(c => c.id === activeCategory)?.label}
+                    {resolvedCategories.find(c => c.id === activeCategory)?.label}
                   </span>
                 )}
               </button>
@@ -481,7 +507,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filtrar por Categoria</p>
                       </div>
                       <div className="max-h-80 overflow-y-auto no-scrollbar">
-                        {MARKET_CATEGORIES.map((cat) => (
+                        {resolvedCategories.map((cat) => (
                           <button
                             key={cat.id}
                             onClick={() => {
@@ -737,7 +763,7 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
                         value={newAd.category} onChange={e => setNewAd(p => ({ ...p, category: e.target.value }))}
                         className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                       >
-                        {MARKET_CATEGORIES.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                        {resolvedCategories.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                       </select>
                     </div>
                     <div>
