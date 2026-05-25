@@ -144,7 +144,11 @@ const handleBusinessUpdate = async (req, res) => {
                 updatedItem.reservations = existingItem.reservations;
             }
             if (existingItem.kitchenOrders !== undefined) {
-                updatedItem.kitchenOrders = existingItem.kitchenOrders;
+                if (req.body.kitchenOrders && Array.isArray(req.body.kitchenOrders)) {
+                    updatedItem.kitchenOrders = req.body.kitchenOrders;
+                } else {
+                    updatedItem.kitchenOrders = existingItem.kitchenOrders;
+                }
             }
             if (existingItem.tables !== undefined) {
                 if (req.body.tables && Array.isArray(req.body.tables)) {
