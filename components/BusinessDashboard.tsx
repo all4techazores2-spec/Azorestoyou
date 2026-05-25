@@ -1641,7 +1641,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           clearInterval(interval);
           
           // Trigger file download
-          window.location.href = `/api/download-installer?restaurantName=${encodeURIComponent(business.name)}`;
+          window.location.href = `${API_BASE_URL}/api/download-installer?restaurantName=${encodeURIComponent(business.name)}`;
         }
       }, 100);
     } else {
