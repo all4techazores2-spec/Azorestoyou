@@ -94,9 +94,21 @@ export const connectDB = async () => {
 };
 
 export const getDbStatus = () => {
+    const conn = mongoose.connection;
+    let mongoHost = null;
+    if (isMongoConnected && conn) {
+        if (conn.host) {
+            mongoHost = conn.host;
+        } else if (conn.client && conn.client.s && conn.client.s.options && conn.client.s.options.hosts) {
+            mongoHost = conn.client.s.options.hosts.map(h => `${h.host}:${h.port}`).join(',');
+        } else if (conn.client && conn.client.s && conn.client.s.url) {
+            mongoHost = conn.client.s.url.replace(/mongodb(\+srv)?:\/\/[^@]+@/, '').split('/')[0];
+        }
+    }
     return {
         storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : 'Local JSON File (Temporário)',
-        dbName: isMongoConnected && mongoose.connection ? mongoose.connection.name : null,
+        dbName: isMongoConnected && conn ? conn.name : null,
+        dbHost: mongoHost,
         isMongo: isMongoConnected,
         isConfigured: !!getMongoURI(),
         uriFound: !!getMongoURI(),
