@@ -856,14 +856,32 @@ app.put('/api/reservations/:id', async (req, res) => {
                         
                         // SE A RESERVA MUDOU PARA OCCUPIED, ATUALIZAR MESA PARA OCCUPIED
                         if (updatedRes.status === 'occupied' && updatedRes.tableId && biz.tables) {
-                            const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId);
+                            const tableIdx = biz.tables.findIndex(t => t.id === updatedRes.tableId || String(t.id) === String(updatedRes.tableId));
                             if (tableIdx !== -1) {
+                                const foodItems = updatedRes.preOrder || updatedRes.preorder || [];
                                 biz.tables[tableIdx] = {
                                     ...biz.tables[tableIdx],
                                     status: 'occupied',
                                     customerName: updatedRes.customerName,
-                                    reservationTime: updatedRes.time
+                                    reservationTime: updatedRes.time,
+                                    currentTab: foodItems.length > 0 ? [...(biz.tables[tableIdx].currentTab || []), ...foodItems] : (biz.tables[tableIdx].currentTab || [])
                                 };
+
+                                // Criar Kitchen Order se ainda não existir e se tiver itens
+                                if (foodItems.length > 0) {
+                                    if (!biz.kitchenOrders) biz.kitchenOrders = [];
+                                    const hasOrder = biz.kitchenOrders.some(o => o.reservationId === id);
+                                    if (!hasOrder) {
+                                        biz.kitchenOrders.push({
+                                            id: `ORD_${Date.now()}`,
+                                            tableId: updatedRes.tableId,
+                                            reservationId: id,
+                                            items: foodItems,
+                                            status: 'pending_admin',
+                                            timestamp: new Date().toISOString()
+                                        });
+                                    }
+                                }
                             }
                         }
                         

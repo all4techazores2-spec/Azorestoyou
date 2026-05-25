@@ -945,6 +945,7 @@ const App: React.FC = () => {
           r.id === resId ? { ...r, status: 'occupied' as const } : r
         );
         let updatedTables = rest.tables || [];
+        const foodItems = resObj?.preOrder || resObj?.preorder || [];
         if (tableId) {
           const matchingTable = updatedTables.find(t => t.id === tableId || String(t.id) === String(tableId));
           if (matchingTable) tableName = `Mesa #${matchingTable.number}`;
@@ -952,12 +953,35 @@ const App: React.FC = () => {
             ...t,
             status: 'occupied' as const,
             customerName: resObj?.customerName,
-            reservationTime: resObj?.time
+            reservationTime: resObj?.time,
+            currentTab: foodItems.length > 0 ? [...(t.currentTab || []), ...foodItems] : (t.currentTab || [])
           } : t);
         }
-        const updatedKitchenOrders = (rest.kitchenOrders || []).map(order =>
-          order.reservationId === resId ? { ...order, tableId: tableId || order.tableId } : order
-        );
+        let updatedKitchenOrders = rest.kitchenOrders || [];
+        if (foodItems.length > 0) {
+          const hasOrder = updatedKitchenOrders.some(o => o.reservationId === resId);
+          if (!hasOrder) {
+            updatedKitchenOrders = [
+              ...updatedKitchenOrders,
+              {
+                id: `ORD_${Date.now()}`,
+                tableId: tableId,
+                reservationId: resId,
+                items: foodItems,
+                status: 'pending_admin' as const,
+                timestamp: new Date().toISOString()
+              }
+            ];
+          } else {
+            updatedKitchenOrders = updatedKitchenOrders.map(order =>
+              order.reservationId === resId ? { ...order, tableId: tableId || order.tableId } : order
+            );
+          }
+        } else {
+          updatedKitchenOrders = updatedKitchenOrders.map(order =>
+            order.reservationId === resId ? { ...order, tableId: tableId || order.tableId } : order
+          );
+        }
         const updatedRest = { ...rest, tables: updatedTables, reservations: updatedReservations, kitchenOrders: updatedKitchenOrders };
         setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
 
