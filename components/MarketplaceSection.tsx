@@ -189,44 +189,32 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
     }
   }, [ads, approvalAdId]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new window.Image();
-        img.src = reader.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const max_size = 800; // Max size to keep visually pristine while extremely lightweight
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height) {
-            if (width > max_size) {
-              height *= max_size / width;
-              width = max_size;
-            }
-          } else {
-            if (height > max_size) {
-              width *= max_size / height;
-              height = max_size;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Compress to JPEG at 60% quality
-          const compressed = canvas.toDataURL('image/jpeg', 0.6);
-          setNewAd(prev => ({
-            ...prev,
-            images: [...prev.images, compressed]
-          }));
-        };
-      };
-      reader.readAsDataURL(file);
+      setLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) throw new Error('Falha no upload da imagem');
+        const data = await response.json();
+        
+        setNewAd(prev => ({
+          ...prev,
+          images: [...prev.images, data.url]
+        }));
+      } catch (err) {
+        console.error("Erro no upload para Cloudinary:", err);
+        alert("Erro ao carregar a imagem. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

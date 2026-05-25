@@ -1002,16 +1002,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           label: `A processar ficheiro ${count} de ${fileArray.length}...` 
         });
 
-        let finalImage: any = file;
-        // Converter para Base64 para compressão
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
+        // Upload do ficheiro para o backend/Cloudinary
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
+          method: 'POST',
+          body: formData
         });
-
-        // Sempre comprimir e converter para WebP
-        const finalUrl = await compressImage(base64);
+        
+        if (!response.ok) throw new Error('Falha no upload para o servidor');
+        const data = await response.json();
+        const finalUrl = data.url;
 
         // Atualizar estado conforme o tipo
         if (type === 'main') {
