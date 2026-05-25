@@ -439,6 +439,23 @@ app.put('/api/users/:email', async (req, res) => {
     res.json({ success: true });
 });
 
+// --- DEBUG CLOUDINARY STATUS (SECURED & MASKED) ---
+app.get('/api/debug-cloudinary', (req, res) => {
+    const cloudName = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+    const apiKey = (process.env.CLOUDINARY_API_KEY || '').trim();
+    const apiSecret = (process.env.CLOUDINARY_API_SECRET || '').trim();
+    
+    res.json({
+        configured: !!(cloudName && apiKey && apiSecret),
+        cloudName: cloudName ? `${cloudName.substring(0, 3)}...` : 'undefined',
+        apiKey: apiKey ? `${apiKey.substring(0, 3)}...` : 'undefined',
+        apiSecret: apiSecret ? `${apiSecret.substring(0, 3)}...` : 'undefined',
+        rawCloudNameLength: cloudName ? cloudName.length : 0,
+        rawApiKeyLength: apiKey ? apiKey.length : 0,
+        rawApiSecretLength: apiSecret ? apiSecret.length : 0
+    });
+});
+
 // --- MEDIA UPLOAD (CLOUDINARY WEBP OPTIMIZED WITH BASE64 FALLBACK) ---
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
