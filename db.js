@@ -196,6 +196,17 @@ export const readDB = async (bypassCache = false) => {
 };
 
 export const writeDB = async (data) => {
+    // 1. Gravar SEMPRE localmente no db.json para manter o espelhamento
+    try {
+        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+        memoryCache = data;
+        lastCacheTime = Date.now();
+        console.log("📂 Local db.json mirror written successfully.");
+    } catch (err) {
+        console.error("❌ Error writing local db.json mirror:", err.message);
+    }
+
+    // 2. Se o MongoDB estiver configurado e ligado, persistir na Cloud
     if (isMongoConnected) {
         let retries = 3;
         while (retries > 0) {
@@ -206,39 +217,61 @@ export const writeDB = async (data) => {
                     { $set: { data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
                     { upsert: true }
                 );
-                memoryCache = data;
-                lastCacheTime = Date.now();
-                console.log("✅ Data persisted to MongoDB successfully.");
+                console.log("✅ Data persisted to MongoDB successfully (Cloud mirrored).");
                 return;
             } catch (err) {
                 retries--;
                 console.error(`❌ PERSISTENCE ERROR (Retries left: ${retries}):`, err.message);
                 if (retries === 0) {
-                    throw new Error(`MongoDB write failed after multiple attempts: ${err.message}`);
+                    console.warn("⚠️ Cloud write failed after all retries. Local POS remains operational with local db.json.");
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
-                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-    } else if (getMongoURI()) {
-        console.warn("⚠️ MongoDB is configured but not connected. Writing to local JSON fallback.");
-        try {
-            fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-            memoryCache = data;
-            lastCacheTime = Date.now();
-        } catch (err) {
-            console.error("Error writing fallback db.json:", err);
-            throw err;
-        }
     } else {
-        // Local JSON fallback
-        try {
-            fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-            memoryCache = data;
-            lastCacheTime = Date.now();
-        } catch (err) {
-            console.error("Error writing db.json:", err);
-            throw err;
+        console.warn("⚠️ MongoDB not connected. Working in Local JSON Mode (db.json).");
+    }
+};
+
+export const publishLocalToCloud = async () => {
+    try {
+        console.log("☁️ Preparing manual publish to MongoDB Cloud...");
+        // 1. Ler os dados locais mais recentes
+        if (!fs.existsSync(dbPath)) {
+            throw new Error("Local database file (db.json) not found.");
         }
+        const dataStr = fs.readFileSync(dbPath, 'utf8');
+        const localData = JSON.parse(dataStr);
+
+        // 2. Garantir ligação ao MongoDB Atlas
+        if (mongoose.connection.readyState !== 1) {
+            console.log("🔄 MongoDB not connected. Attempting reconnection...");
+            const uri = getMongoURI();
+            if (!uri) throw new Error("No MONGODB_URI configured.");
+            await mongoose.connect(uri, {
+                connectTimeoutMS: 30000,
+                socketTimeoutMS: 60000,
+                serverSelectionTimeoutMS: 30000,
+            });
+            isMongoConnected = true;
+            mongoError = null;
+        }
+
+        // 3. Forçar gravação direta
+        await DBModel.collection.updateOne(
+            { key: 'master_db' },
+            { $set: { data: localData, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+            { upsert: true }
+        );
+        
+        isMongoConnected = true;
+        mongoError = null;
+        console.log("✅ Manual publish completed! MongoDB Cloud is fully updated.");
+        return { success: true, timestamp: new Date().toISOString() };
+    } catch (err) {
+        console.error("❌ Manual publish to Cloud failed:", err.message);
+        throw err;
     }
 };
 

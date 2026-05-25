@@ -1109,6 +1109,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [installProgress, setInstallProgress] = useState(0);
   const [publishingStatus, setPublishingStatus] = useState<string | null>(null);
   const [publishProgress, setPublishProgress] = useState(0);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   // Local state for management
   const [tables, setTables] = useState<RestaurantTable[]>(() => {
@@ -1568,7 +1569,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             </style>
           </head>
           <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
-            \${printContent}
+            ${printContent}
           </body>
         </html>
       `);
@@ -1579,22 +1580,47 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const handlePublishToServer = () => {
     setPublishingStatus('in_progress');
     setPublishProgress(0);
+    setPublishError(null);
     
+    // First, sync any active frontend changes with the local/cloud database
+    onSync({
+      ...business,
+      tables,
+      products,
+      kitchenOrders,
+      reservations
+    });
+
     let current = 0;
     const interval = setInterval(() => {
       current += 10;
-      setPublishProgress(current);
-      if (current >= 100) {
+      if (current >= 80) {
         clearInterval(interval);
-        onSync({
-          ...business,
-          tables,
-          products,
-          kitchenOrders,
-          reservations
+        setPublishProgress(80);
+        
+        // Trigger manual sync from the local server to MongoDB Atlas (Cloud)
+        fetch('/api/publish-to-cloud', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Não foi possível ligar ao MongoDB Cloud. Por favor, verifique a sua ligação à Internet!");
+          }
+          return response.json();
+        })
+        .then(() => {
+          setPublishProgress(100);
+        })
+        .catch(error => {
+          console.error("❌ Erro na publicação para a cloud:", error);
+          setPublishError(error.message || "Falha na sincronização.");
+          setPublishProgress(0);
         });
+      } else {
+        setPublishProgress(current);
       }
-    }, 250);
+    }, 150);
   };
 
   const handleInstallInternally = () => {
@@ -1608,10 +1634,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       if (current >= 100) {
         clearInterval(interval);
         
-        // Trigger native local C: installation & Desktop shortcut
+        // Trigger native local C: installation & Desktop shortcut with restaurant payload
         fetch('/api/install-internally', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurantName: business.name })
         })
         .then(response => {
           if (!response.ok) {
@@ -8429,8 +8456,8 @@ ${items.map((it, i) => `        <Line>
               animate={{ scale: 1, y: 0 }} 
               className="bg-white rounded-[3rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center"
             >
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce">
-                <RefreshCw size={36} className="animate-spin duration-1000" />
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce ${publishError ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
+                <RefreshCw size={36} className={publishError ? "" : "animate-spin duration-1000"} />
               </div>
               <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-1">Publicar no Servidor</h3>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">A sincronizar dados locais com o MongoDB Atlas</p>
@@ -8442,18 +8469,38 @@ ${items.map((it, i) => `        <Line>
                 {publishProgress === 100 && (
                   <p className="text-emerald-600 font-bold">✅ Sincronização concluída com sucesso!</p>
                 )}
+                {publishError && (
+                  <p className="text-rose-600 font-bold">❌ {publishError}</p>
+                )}
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: `${publishProgress}%` }} 
-                  className="h-full bg-blue-600 rounded-full" 
-                />
-              </div>
+              {!publishError && (
+                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mb-4">
+                  <motion.div 
+                    initial={{ width: 0 }} 
+                    animate={{ width: `${publishProgress}%` }} 
+                    className="h-full bg-blue-600 rounded-full" 
+                  />
+                </div>
+              )}
 
-              {publishProgress < 100 ? (
+              {publishError ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePublishToServer}
+                    className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-xl shadow-blue-600/10"
+                  >
+                    Tentar Novamente
+                  </button>
+                  <button
+                    onClick={() => setPublishingStatus(null)}
+                    className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-300 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              ) : publishProgress < 100 ? (
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sincronizando {publishProgress}%</p>
               ) : (
                 <button

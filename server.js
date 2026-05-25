@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
 import { exec } from 'child_process';
-import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData } from './db.js';
+import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData, publishLocalToCloud } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -275,6 +275,7 @@ ALL_KEYS.forEach(key => {
 // --- NATIVE LOCAL INSTALLATION ENDPOINT ---
 app.post('/api/install-internally', async (req, res) => {
     try {
+        const { restaurantName } = req.body;
         const localDir = 'C:\\Azores4You';
         
         // 1. Create the C:\Azores4You directory if it doesn't exist
@@ -296,21 +297,22 @@ app.post('/api/install-internally', async (req, res) => {
             }
         });
         
-        // 3. Write start_pos.bat launcher in C:\Azores4You (forces fullscreen and app mode in Edge/Chrome)
+        // 3. Write start_pos.bat launcher in C:\Azores4You (forces node server to run minimized, kills conflicts, opens MS Edge fullscreen)
         const startScriptPath = path.join(localDir, 'start_pos.bat');
-        const batContent = `@echo off\nstart msedge.exe --start-fullscreen --app=http://localhost:5173/\nexit\n`;
+        const batContent = `@echo off\r\ncd /d C:\\Azores4You\r\ntaskkill /f /im node.exe >nul 2>&1\r\nstart /min node server.js\r\ntimeout /t 3 /nobreak >nul\r\nstart msedge.exe --start-fullscreen --app=http://localhost:3001/\r\nexit\r\n`;
         fs.writeFileSync(startScriptPath, batContent, 'utf-8');
         
         // 4. Create desktop shortcut using PowerShell
+        const sanitizedName = (restaurantName || 'Azores4You').replace(/[^a-zA-Z0-9_\-]/g, '_');
         const desktopPath = path.join(process.env.USERPROFILE || 'C:\\Users\\PC', 'Desktop');
-        const shortcutPath = path.join(desktopPath, 'Azores4You.lnk');
+        const shortcutPath = path.join(desktopPath, `${sanitizedName}_POS.lnk`);
         
         const psCommand = `
             $WshShell = New-Object -ComObject WScript.Shell;
             $Shortcut = $WshShell.CreateShortcut("${shortcutPath.replace(/\\/g, '\\\\')}");
             $Shortcut.TargetPath = "${startScriptPath.replace(/\\/g, '\\\\')}";
             $Shortcut.IconLocation = "shell32.dll,14";
-            $Shortcut.Description = "Azores4You POS";
+            $Shortcut.Description = "${(restaurantName || 'Azores4You').replace(/"/g, '""')} POS";
             $Shortcut.Save();
         `;
         
@@ -327,13 +329,24 @@ app.post('/api/install-internally', async (req, res) => {
             
             res.json({ 
                 success: true, 
-                message: "Instalado com sucesso no disco local C: e atalho criado no Ambiente de Trabalho!",
+                message: `Instalado com sucesso no disco local C: e atalho "${sanitizedName}_POS" criado no Ambiente de Trabalho!`,
                 localFolder: localDir,
                 shortcut: shortcutPath
             });
         });
     } catch (err) {
         console.error("Internal install endpoint failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- MANUAL PUBLISH TO CLOUD ENDPOINT ---
+app.post('/api/publish-to-cloud', async (req, res) => {
+    try {
+        const result = await publishLocalToCloud();
+        res.json(result);
+    } catch (err) {
+        console.error("❌ publish-to-cloud failed:", err);
         res.status(500).json({ error: err.message });
     }
 });
