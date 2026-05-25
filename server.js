@@ -351,6 +351,29 @@ app.post('/api/publish-to-cloud', async (req, res) => {
     }
 });
 
+// --- CLOUD APP PACKAGE DOWNLOAD ---
+app.get('/api/download-app-zip', (req, res) => {
+    const zipPath = path.join(__dirname, 'app_package.zip');
+    if (fs.existsSync(zipPath)) {
+        res.download(zipPath, 'app_package.zip');
+    } else {
+        res.status(404).json({ error: "App package ZIP not found. Run a new build first." });
+    }
+});
+
+// --- CLOUD SETUP LAUNCHER DOWNLOAD ---
+app.get('/api/download-installer', (req, res) => {
+    const { restaurantName } = req.query;
+    const sanitizedName = (restaurantName || 'Azores4You').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    
+    // Dynamic generation of windows setup script
+    const batContent = `@echo off\r\ntitle Instalador Azores4You POS\r\ncolor 0A\r\necho ===================================================\r\necho ⚡ A INICIAR INSTALACAO DO POS LOCAL: ${restaurantName || 'Azores4You'}\r\necho ===================================================\r\necho.\r\necho 📂 1. A criar pasta local C:\\Azores4You...\r\nmkdir C:\\Azores4You >nul 2>&1\r\ncd /d C:\\Azores4You\r\n\r\necho 📥 2. A descarregar ficheiros do POS da Cloud...\r\npowershell -Command "Invoke-WebRequest -Uri 'https://azorestoyou.pt/api/download-app-zip' -OutFile 'app_package.zip'"\r\n\r\necho 📦 3. A extrair ficheiros do POS local...\r\npowershell -Command "Expand-Archive -Path 'app_package.zip' -DestinationPath 'C:\\Azores4You' -Force"\r\ndel app_package.zip\r\n\r\necho 📝 4. A configurar inicializador start_pos.bat...\r\n(\r\necho @echo off\r\necho cd /d C:\\Azores4You\r\necho taskkill /f /im node.exe ^>nul 2^>^&1\r\necho start /min node server.js\r\necho timeout /t 3 /nobreak ^>nul\r\necho start msedge.exe --start-fullscreen --app=http://localhost:3001/\r\necho exit\r\n) > start_pos.bat\r\n\r\necho 🚀 5. A criar atalho personalizado no Ambiente de Trabalho...\r\npowershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\\Desktop\\${sanitizedName}_POS.lnk'); $Shortcut.TargetPath = 'C:\\Azores4You\\start_pos.bat'; $Shortcut.IconLocation = 'shell32.dll,14'; $Shortcut.Description = '${(restaurantName || 'Azores4You').replace(/'/g, '')} POS'; $Shortcut.Save();"\r\n\r\necho.\r\necho ===================================================\r\necho 🎉 INSTALACAO CONCLUIDA COM SUCESSO!\r\necho O atalho \\"${sanitizedName}_POS\\" foi criado no seu Ambiente de Trabalho.\r\necho ===================================================\r\necho.\r\npause\r\nexit\r\n`;
+
+    res.setHeader('Content-Type', 'application/x-bat');
+    res.setHeader('Content-Disposition', `attachment; filename=instalar_pos.bat`);
+    res.send(batContent);
+});
+
 // --- STATIC FILES AFTER API ---
 app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 app.use(express.static(path.join(__dirname, 'dist')));

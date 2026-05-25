@@ -1626,34 +1626,56 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const handleInstallInternally = () => {
     setInstallingStatus('in_progress');
     setInstallProgress(0);
-    
-    let current = 0;
-    const interval = setInterval(() => {
-      current += 5;
-      setInstallProgress(current);
-      if (current >= 100) {
-        clearInterval(interval);
-        
-        // Trigger native local C: installation & Desktop shortcut with restaurant payload
-        fetch('/api/install-internally', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ restaurantName: business.name })
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("Erro na instalação no servidor local.");
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log("💾 Instalação local concluída com sucesso:", data);
-        })
-        .catch(error => {
-          console.error("❌ Falha na instalação local:", error);
-        });
-      }
-    }, 150);
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!isLocal) {
+      // ☁️ CLOUD SITE MODE: Download the custom setup batch file!
+      console.log("☁️ Running on cloud. Downloading installer batch file...");
+      
+      let current = 0;
+      const interval = setInterval(() => {
+        current += 10;
+        setInstallProgress(current);
+        if (current >= 100) {
+          clearInterval(interval);
+          
+          // Trigger file download
+          window.location.href = `/api/download-installer?restaurantName=${encodeURIComponent(business.name)}`;
+        }
+      }, 100);
+    } else {
+      // 🏠 LOCALHOST MODE: Direct local server install
+      console.log("🏠 Running locally. Performing direct server-side install...");
+      
+      let current = 0;
+      const interval = setInterval(() => {
+        current += 5;
+        setInstallProgress(current);
+        if (current >= 100) {
+          clearInterval(interval);
+          
+          // Trigger native local C: installation & Desktop shortcut with restaurant payload
+          fetch('/api/install-internally', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurantName: business.name })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Erro na instalação no servidor local.");
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log("💾 Instalação local concluída com sucesso:", data);
+          })
+          .catch(error => {
+            console.error("❌ Falha na instalação local:", error);
+          });
+        }
+      }, 150);
+    }
   };
 
   const removeRoom = (idx: number) => {
@@ -8403,12 +8425,28 @@ ${items.map((it, i) => `        <Line>
                 {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
                 {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
                 {installProgress === 100 && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
-                    🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
-                    ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
-                    AO CLICAR, O SOFTWARE FICA FULL SCREEN.
-                  </div>
-                )}
+                   (() => {
+                     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                     if (!isLocal) {
+                       return (
+                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed font-sans">
+                           🎉 INSTALADOR PERSONALIZADO DESCARREGADO!<br/>
+                           <span className="text-yellow-400 block mt-2 text-[10px]">👉 Dê dois cliques no ficheiro 'instalar_pos.bat' descarregado na barra de transferências!</span>
+                           <span className="text-slate-300 block mt-2 text-[8px] font-normal leading-normal">
+                             Isso criará a pasta C:\\Azores4You e o atalho personalizado "A_Tasca_POS" no seu Ambiente de Trabalho automaticamente!
+                           </span>
+                         </div>
+                       );
+                     }
+                     return (
+                       <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
+                         🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
+                         ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
+                         AO CLICAR, O SOFTWARE FICA FULL SCREEN.
+                       </div>
+                     );
+                   })()
+                 )}
               </div>
 
               {/* Progress bar */}
