@@ -96,6 +96,7 @@ export const connectDB = async () => {
 export const getDbStatus = () => {
     return {
         storage: isMongoConnected ? 'MongoDB Atlas (Cloud)' : 'Local JSON File (Temporário)',
+        dbName: isMongoConnected && mongoose.connection ? mongoose.connection.name : null,
         isMongo: isMongoConnected,
         isConfigured: !!getMongoURI(),
         uriFound: !!getMongoURI(),
