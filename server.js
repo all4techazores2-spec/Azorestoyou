@@ -439,9 +439,20 @@ app.put('/api/users/:email', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- MEDIA UPLOAD (CLOUDINARY WEBP OPTIMIZED) ---
+// --- MEDIA UPLOAD (CLOUDINARY WEBP OPTIMIZED WITH BASE64 FALLBACK) ---
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    
+    const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME && 
+                                   process.env.CLOUDINARY_API_KEY && 
+                                   process.env.CLOUDINARY_API_SECRET;
+                                   
+    if (!isCloudinaryConfigured) {
+        console.warn("⚠️ Cloudinary environment variables are not configured. Falling back to Base64 storage.");
+        const base64Data = req.file.buffer.toString('base64');
+        const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
+        return res.json({ url: dataUri });
+    }
     
     try {
         console.log(`📸 Initiating Cloudinary upload for: ${req.file.originalname} (${req.file.size} bytes)...`);
@@ -465,8 +476,10 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         console.log(`✅ Cloudinary Upload successful! URL: ${uploadResult.secure_url}`);
         res.json({ url: uploadResult.secure_url });
     } catch (err) {
-        console.error("❌ Cloudinary Upload failed:", err);
-        res.status(500).json({ error: "Failed to upload image to Cloudinary", details: err.message });
+        console.error("❌ Cloudinary Upload failed. Gracefully falling back to Base64 storage:", err);
+        const base64Data = req.file.buffer.toString('base64');
+        const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
+        res.json({ url: dataUri });
     }
 });
 
