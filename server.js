@@ -27,6 +27,15 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // Limite de 5MB por foto
 });
 
+import { v2 as cloudinary } from 'cloudinary';
+
+// Cloudinary Configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -430,19 +439,34 @@ app.put('/api/users/:email', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- MEDIA UPLOAD (BASE64) ---
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// --- MEDIA UPLOAD (CLOUDINARY WEBP OPTIMIZED) ---
+app.post('/api/upload', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     
     try {
-        // Converter buffer para Base64 Data URI
-        const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        console.log(`📸 Initiating Cloudinary upload for: ${req.file.originalname} (${req.file.size} bytes)...`);
         
-        console.log(`📸 Image Uploaded: ${req.file.originalname} (${req.file.size} bytes) converted to Base64`);
-        res.json({ url: base64Image });
+        // Upload buffer directly to Cloudinary and convert automatically to optimized WebP
+        const uploadResult = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'azores4you',
+                    format: 'webp',
+                    transformation: [{ quality: 'auto' }]
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+            uploadStream.end(req.file.buffer);
+        });
+
+        console.log(`✅ Cloudinary Upload successful! URL: ${uploadResult.secure_url}`);
+        res.json({ url: uploadResult.secure_url });
     } catch (err) {
-        console.error("❌ Error converting image to Base64:", err);
-        res.status(500).json({ error: "Failed to process image" });
+        console.error("❌ Cloudinary Upload failed:", err);
+        res.status(500).json({ error: "Failed to upload image to Cloudinary", details: err.message });
     }
 });
 
