@@ -226,6 +226,22 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // --- DETEÇÃO DE POS MODO DIRETO ---
+  // Se o URL tem ?pos=RESTAURANT_ID, entrar diretamente no Dashboard do POS do restaurante
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const posRestId = params.get('pos');
+    if (posRestId) {
+      console.log("⚡ Deteção de POS Direto para o restaurante:", posRestId);
+      setIsBusiness(true);
+      setIsStaff(false);
+      setCurrentBusinessId(posRestId);
+      setHasEnteredApp(true);
+      // Limpar URL params sem recarregar
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
     const loadCaches = async () => {
@@ -1876,6 +1892,14 @@ const App: React.FC = () => {
         </ErrorBoundary>
       );
     } else {
+      if (!isDataLoaded) {
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
+            <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+            <p className="text-emerald-400 font-medium animate-pulse tracking-wider">A carregar POS local...</p>
+          </div>
+        );
+      }
       // Fallback if business ID exists but data is missing in state
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-8 text-center">

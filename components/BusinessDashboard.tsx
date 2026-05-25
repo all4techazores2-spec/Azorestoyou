@@ -1641,7 +1641,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           clearInterval(interval);
           
           // Trigger file download
-          window.location.href = `${API_BASE_URL}/api/download-installer?restaurantName=${encodeURIComponent(business.name)}`;
+          window.location.href = `${API_BASE_URL}/api/download-installer?restaurantName=${encodeURIComponent(business.name)}&restaurantId=${encodeURIComponent(business.id)}`;
         }
       }, 100);
     } else {
@@ -1659,7 +1659,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
           fetch('/api/install-internally', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ restaurantName: business.name })
+            body: JSON.stringify({ restaurantName: business.name, restaurantId: business.id })
           })
           .then(response => {
             if (!response.ok) {
