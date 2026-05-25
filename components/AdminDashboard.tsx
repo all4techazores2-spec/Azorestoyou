@@ -1857,6 +1857,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </select>
             </div>
             {commonInput('Google Maps Link', 'mapUrl', 'text')}
+            {commonInput('Email Público', 'email')}
+            {commonInput('Contacto Telefónico', 'phone')}
+            {commonInput('Email Admin', 'adminEmail')}
+            {commonInput('Password Admin', 'adminPassword')}
             
             {/* Hotel Main Photo */}
             <div className="md:col-span-2">
