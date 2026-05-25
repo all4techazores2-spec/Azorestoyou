@@ -1860,7 +1860,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             
             {/* Hotel Main Photo */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-slate-700 mb-1">Foto de Perfil do Hotel/AL</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">{editingItem.type === 'al' ? 'Foto de Perfil da Casa Toda (AL)' : 'Foto de Perfil do Hotel'}</label>
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -1886,8 +1886,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="md:col-span-2 border-t pt-4 mt-2">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">Galeria Principal (Slider)</h4>
-                  <p className="text-[10px] text-slate-400">Estas fotos aparecerão no carrossel de fotos do hotel</p>
+                  <h4 className="font-bold uppercase text-xs tracking-widest text-slate-500">{editingItem.type === 'al' ? 'Galeria da Casa Toda (AL - Slider)' : 'Galeria Principal (Slider)'}</h4>
+                  <p className="text-[10px] text-slate-400">{editingItem.type === 'al' ? 'Estas fotos aparecerão no carrossel quando o cliente visualizar a Casa Toda' : 'Estas fotos aparecerão no carrossel de fotos do hotel'}</p>
                 </div>
                 <label className={`cursor-pointer px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20'}`}>
                    {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
@@ -1950,7 +1950,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       
                       {/* Room Main Photo */}
                       <div className="md:col-span-2">
-                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Foto de Perfil do Quarto</label>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">{editingItem.type === 'al' ? 'Foto de Perfil do Quarto (Apenas Quarto)' : 'Foto de Perfil do Quarto'}</label>
                         <div className="flex gap-2">
                           <input type="text" className="flex-1 border p-2 rounded-xl text-xs" value={room.image} onChange={e => updateRoom(rIdx, 'image', e.target.value)} placeholder="URL..." />
                           <label className={`cursor-pointer p-2 rounded-xl border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-white border-slate-200 text-blue-600 hover:bg-blue-50'}`}>
@@ -1963,7 +1963,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {/* Room Gallery */}
                       <div className="md:col-span-2">
                         <div className="flex justify-between items-center mb-2">
-                          <label className="block text-[10px] font-black uppercase text-slate-400 ml-2">Galeria do Quarto</label>
+                          <label className="block text-[10px] font-black uppercase text-slate-400 ml-2">{editingItem.type === 'al' ? 'Galeria do Quarto (Apenas Quarto)' : 'Galeria do Quarto'}</label>
                           <label className={`cursor-pointer px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-1 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-md'}`}>
                              {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                              Fotos
