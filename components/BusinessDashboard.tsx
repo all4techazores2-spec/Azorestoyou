@@ -265,8 +265,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // Detetar automaticamente o endereço do backend
   // API_BASE_URL centralized in config.ts
 
-  const bType = (business.businessType || (business as any).type || (business.id.startsWith('BEA') ? 'beauty' : '')).toLowerCase();
-  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || business.id.startsWith('BEA');
+  const bType = (business.businessType || (business as any).type || (business.id?.startsWith('BEA') ? 'beauty' : '')).toLowerCase();
+  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || (business.id && business.id.startsWith('BEA')) || (business.email && business.email.toLowerCase().includes('marcom'));
   const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
   const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
   const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';

@@ -1823,8 +1823,12 @@ const App: React.FC = () => {
     }
 
     if (biz) {
+      const isBeautyBiz = beauty.some(b => b.id === targetId) || targetId.startsWith('BEA') || (biz.businessType && biz.businessType.toLowerCase() === 'beauty') || (biz.email && biz.email.toLowerCase().includes('marcom'));
+      if (isBeautyBiz) {
+        biz.businessType = 'beauty';
+      }
       const bType = (biz.businessType || (biz as any).type || (biz.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
-      const isBeauty = bType === 'beauty' || bType === 'beauties';
+      const isBeauty = isBeautyBiz || bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
       const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
       const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
@@ -1873,6 +1877,10 @@ const App: React.FC = () => {
             }}
             onUpdateBusiness={async (updated) => {
               // Encontrar o endpoint correto usando o mapa central
+              const isBeautyBiz = updated.id.startsWith('BEA') || (updated.email && updated.email.toLowerCase().includes('marcom')) || beauty.some(b => b.id === updated.id);
+              if (isBeautyBiz) {
+                updated.businessType = 'beauty';
+              }
               const bType = (updated.businessType || (updated as any).type || (updated.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
               const endpoint = BUSINESS_TYPE_TO_ENDPOINT[bType] || 'restaurants';
               
