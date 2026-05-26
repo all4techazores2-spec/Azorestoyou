@@ -266,6 +266,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // API_BASE_URL centralized in config.ts
 
   const bType = (business.businessType || (business as any).type || (business.id?.startsWith('BEA') ? 'beauty' : '')).toLowerCase();
+  console.log("DEBUG DASHBOARD:", {
+    propIsBeauty,
+    bType,
+    businessId: business.id,
+    businessName: business.name,
+    businessEmail: business.email,
+    businessAdminEmail: business.adminEmail,
+    businessPublicEmail: business.publicEmail,
+    isBeautyCalculated: propIsBeauty || bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || (business.id && business.id.startsWith('BEA'))
+  });
   const isBeauty = propIsBeauty || bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || (business.id && business.id.startsWith('BEA')) || (business.email && business.email.toLowerCase().includes('marcom')) || (business.adminEmail && business.adminEmail.toLowerCase().includes('marcom'));
   const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
   const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
