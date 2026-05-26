@@ -2355,20 +2355,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
              </div>
              <div>
                 <h1 className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">{business.name}</h1>
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">{isHotel ? 'Boutique Hotel' : isRentCar ? 'Rent-a-Car' : 'Gestão de Negócio'}</p>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">{isHotel ? 'Boutique Hotel' : isRentCar ? 'Rent-a-Car' : isBeauty ? 'Salão de Beleza' : 'Gestão de Negócio'}</p>
              </div>
           </div>
 
           <div className="flex-1 overflow-y-auto py-8 px-4 space-y-1 scrollbar-hide">
             {([
               { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, hideForStaff: true },
-              { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : <TableIcon size={18} />, hideForStaff: true },
+              { id: 'tables', label: isHotel ? 'Mapa de Quartos' : isRentCar ? 'Frota' : isBeauty ? 'Cadeiras' : 'Mesas', icon: isHotel ? <Hotel size={18} /> : isRentCar ? <Car size={18} /> : isBeauty ? <Scissors size={18} /> : <TableIcon size={18} />, hideForStaff: true },
               (isHotel && { id: 'room_management', label: 'Gestão de Quartos', icon: <Hotel size={18} />, hideForStaff: true }),
               { id: 'products', label: 'Stock de Produtos', icon: <Package size={18} />, hideForStaff: true },
-              { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status !== 'delivered').length },
+              (!isBeauty && { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status !== 'delivered').length }),
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
-              { id: 'dishes', label: 'Ementa Restaurante', icon: <Utensils size={18} />, hideForStaff: true },
-              (isRestaurant && { id: 'reservations', label: 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
+              { id: 'dishes', label: isBeauty ? 'Serviços' : 'Ementa Restaurante', icon: isBeauty ? <Scissors size={18} /> : <Utensils size={18} />, hideForStaff: true },
+              ((isRestaurant || isBeauty) && { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
               { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
               { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
             ] as any[]).filter(item => item && (!isStaff || !item.hideForStaff)).map((item) => (
