@@ -1273,7 +1273,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const currentUserEmail = staffEmail || '';
   const loggedInStaff = currentUserEmail ? (staffList as any[]).find(s => s.email?.toLowerCase() === currentUserEmail.toLowerCase()) : null;
 
-  const displayName = loggedInStaff ? loggedInStaff.name : 'Gustavo Pereira';
+  const displayName = loggedInStaff ? loggedInStaff.name : (business.managerName || 'Gustavo Pereira');
   const displayRole = loggedInStaff 
     ? (loggedInStaff.role === 'chef' || loggedInStaff.role === 'cook' ? 'Cozinheiro' : loggedInStaff.role === 'waiter' ? 'Empregado de Mesa' : loggedInStaff.role === 'manager' ? 'Gerente' : 'Staff') 
     : 'Gerente Geral';
@@ -5081,7 +5081,7 @@ ${items.map((it, i) => `        <Line>
                     <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Localização do Negócio</p>
                     <div className="flex flex-col w-full gap-3 mt-auto">
                       <button onClick={() => setActiveTab('reservations')} className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Gerir Reservas</button>
-                      <button onClick={() => setActiveTab('dishes')} className="w-full py-3.5 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Ver Ementa</button>
+                      <button onClick={() => setActiveTab('dishes')} className="w-full py-3.5 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">{isBeauty ? 'Ver Serviços' : 'Ver Ementa'}</button>
                     </div>
                   </div>
                 </div>
@@ -5809,7 +5809,7 @@ ${items.map((it, i) => `        <Line>
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                         <Calendar size={16} /> Reservas App
+                         <Calendar size={16} /> {isBeauty ? 'Aprovações' : 'Reservas App'}
                          {pendingCount > 0 && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />}
                       </div>
                     </button>
@@ -5820,7 +5820,7 @@ ${items.map((it, i) => `        <Line>
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                         <ShoppingBag size={16} /> Pedidos App
+                         <ShoppingBag size={16} /> {isBeauty ? 'Calendário de Marcações' : 'Pedidos App'}
                          {kitchenOrders.filter(o => o.status === 'pending_admin').length > 0 && (
                            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
                          )}

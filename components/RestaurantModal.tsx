@@ -96,7 +96,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   if (!restaurant) return null;
 
-  const isBeauty = restaurant.businessType === 'beauty';
+  const isBeauty = restaurant.businessType === 'beauty' || (restaurant.id && restaurant.id.startsWith('BEA')) || (restaurant as any).id?.startsWith('BEA');
   const isShop = restaurant.businessType === 'shop';
   const isAutoRepair = restaurant.businessType === 'auto_repair';
   const isOffice = restaurant.businessType === 'office';
@@ -451,7 +451,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </button>
                 <div>
                   <h3 className="font-black text-slate-800 uppercase tracking-tight">
-                    {bookingStep === 'menu' ? 'Ementa do Restaurante' : 'Confirmar Reserva'}
+                    {bookingStep === 'menu' ? (isBeauty ? 'Serviços do Salão' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
                   </h3>
                   <div className="flex gap-1.5 mt-1.5">
                     {[1,2,3].map(i => (
@@ -482,8 +482,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
-                      <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />
-                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{getTranslation(currentLang, 'cuisine')}</span>
+                      {isBeauty ? <Scissors className="w-5 h-5 text-red-500 mb-2" /> : <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />}
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{isBeauty ? 'Categoria' : getTranslation(currentLang, 'cuisine')}</span>
                       <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.cuisine}</span>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
@@ -550,8 +550,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
                     >
-                      <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
-                      Ver Ementa
+                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />} 
+                      {isBeauty ? 'Ver Serviços' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
                     <button 
