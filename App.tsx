@@ -1838,6 +1838,7 @@ const App: React.FC = () => {
       return (
         <ErrorBoundary>
           <BusinessDashboard 
+            isBeauty={isBeauty} // Forced prop pass!
             business={biz}
             language={language}
             isStaff={isStaff}

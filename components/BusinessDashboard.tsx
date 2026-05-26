@@ -26,8 +26,8 @@ interface BusinessDashboardProps {
   staffRole?: string;
   onForceRefresh?: () => void;
   staffEmail?: string;
+  isBeauty?: boolean;
 }
-
 type DashboardTab = 'tables' | 'kitchen' | 'pos' | 'reservations' | 'reservas_hotel' | 'dishes' | 'products' | 'dashboard' | 'reviews' | 'updates' | 'settings' | 'gallery' | 'qrcode' | 'staff' | 'business' | 'staff_list' | 'ponto' | 'ferias' | 'suppliers' | 'atendimentos' | 'details';
 
 const POS_CATEGORIES = ['Entradas', 'Sopas', 'Pratos', 'Vinhos', 'Bebidas', 'Aperitivos', 'Sobremesas', 'Bolos', 'Gelados'];
@@ -250,7 +250,6 @@ const ReportExportMenu: React.FC<{ onExport: (period: 'hoje' | 'semana' | 'mes')
 };
 
 const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
-
   business,
   onUpdateBusiness,
   onSync,
@@ -259,14 +258,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   isStaff = false,
   staffRole,
   onForceRefresh,
-  staffEmail
+  staffEmail,
+  isBeauty: propIsBeauty
 }) => {
   // Se for staff, a aba inicial é cozinha ou pos
   // Detetar automaticamente o endereço do backend
   // API_BASE_URL centralized in config.ts
 
   const bType = (business.businessType || (business as any).type || (business.id?.startsWith('BEA') ? 'beauty' : '')).toLowerCase();
-  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || (business.id && business.id.startsWith('BEA')) || (business.email && business.email.toLowerCase().includes('marcom'));
+  const isBeauty = propIsBeauty || bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || (business.id && business.id.startsWith('BEA')) || (business.email && business.email.toLowerCase().includes('marcom')) || (business.adminEmail && business.adminEmail.toLowerCase().includes('marcom'));
   const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
   const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
   const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
