@@ -265,8 +265,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   // Detetar automaticamente o endereço do backend
   // API_BASE_URL centralized in config.ts
 
-  const bType = (business.businessType || (business as any).type || '').toLowerCase();
-  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service');
+  const bType = (business.businessType || (business as any).type || (business.id.startsWith('BEA') ? 'beauty' : '')).toLowerCase();
+  const isBeauty = bType === 'beauty' || bType === 'beauties' || (!!(business as any).services && !(business as any).dishes && bType !== 'service') || business.id.startsWith('BEA');
   const isService = bType === 'service' || bType === 'services' || (!!(business as any).services && !(business as any).dishes && !isBeauty);
   const isShop = bType === 'shop' || bType === 'shops' || (!!(business as any).products && !(business as any).dishes && !isBeauty && !isService);
   const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
@@ -277,8 +277,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
     isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') : 
-    isShop ? 'pos' : 
-    isBeauty ? 'pos' : 'tables'
+    isShop ? 'pos' : 'tables'
   );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
@@ -1846,7 +1845,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [editingProduct, setEditingProduct] = useState<{idx: number, product: Product} | null>(null);
 
   const startDishEdit = (idx: number) => {
-    setEditingDish({ idx, dish: { ...business.dishes[idx] } });
+    setEditingDish({ idx, dish: { ...(isBeauty ? business.services : business.dishes)[idx] } });
   };
 
   const saveDishEdit = (e: React.FormEvent) => {
@@ -3460,7 +3459,7 @@ return t;
                        >
                           <option value="fast">Venda Rápida / Balcão</option>
                           {tables.map(t => (
-                            <option key={t.id} value={String(t.id)}>Mesa #{t.number} ({t.status === 'occupied' ? 'Ocupada' : 'Livre'})</option>
+                            <option key={t.id} value={String(t.id)}>{isBeauty ? 'Cadeira' : 'Mesa'} #{t.number} ({t.status === 'occupied' ? 'Ocupada' : 'Livre'})</option>
                           ))}
                        </select>
                     </div>
@@ -5134,14 +5133,14 @@ ${items.map((it, i) => `        <Line>
           {activeTab === 'dishes' && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{isHotel ? 'Ementa do Restaurante Hotel' : 'Lista de Pratos'}</h3>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{isHotel ? 'Ementa do Restaurante Hotel' : isBeauty ? 'Serviços do Salão' : 'Lista de Pratos'}</h3>
                   <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2 text-blue-600 font-bold hover:underline">
                     <LayoutDashboard className="w-4 h-4" /> Voltar à Dashboard
                   </button>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {(business.dishes || []).map((dish, idx) => (
+                 {((isBeauty ? business.services : business.dishes) || []).map((dish, idx) => (
                    <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col h-full">
                       <div className="h-48 relative overflow-hidden bg-slate-100">
                         {dish.image ? (
@@ -7122,7 +7121,7 @@ ${items.map((it, i) => `        <Line>
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden">
                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Editar Prato</h3>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">{isBeauty ? 'Editar Serviço' : 'Editar Prato'}</h3>
                   <button 
                     onClick={() => setEditingDish(null)} 
                     className="p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"

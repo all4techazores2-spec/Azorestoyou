@@ -1823,7 +1823,7 @@ const App: React.FC = () => {
     }
 
     if (biz) {
-      const bType = (biz.businessType || (biz as any).type || 'restaurant').toLowerCase();
+      const bType = (biz.businessType || (biz as any).type || (biz.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
       const isBeauty = bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
       const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
@@ -1873,7 +1873,7 @@ const App: React.FC = () => {
             }}
             onUpdateBusiness={async (updated) => {
               // Encontrar o endpoint correto usando o mapa central
-              const bType = (updated.businessType || (updated as any).type || 'restaurant').toLowerCase();
+              const bType = (updated.businessType || (updated as any).type || (updated.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
               const endpoint = BUSINESS_TYPE_TO_ENDPOINT[bType] || 'restaurants';
               
               // Map de setters locais
