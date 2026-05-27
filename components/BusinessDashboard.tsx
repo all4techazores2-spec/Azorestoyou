@@ -8915,6 +8915,103 @@ isBeauty ? (
       <AnimatePresence>
         {showScheduleCalendar && renderScheduleCalendarModal()}
       </AnimatePresence>
+
+      {/* MANUAL RESERVATION MODAL */}
+      <AnimatePresence>
+        {manualReservationModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-md w-full space-y-6"
+            >
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Nova Marcação</h3>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                    📅 {manualReservationModal?.date} às {manualReservationModal?.time}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setManualReservationModal(null)}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const name = form.elements.name.value;
+                  const phone = form.elements.phone.value;
+                  const email = form.elements.email.value;
+                  if (!name.trim()) {
+                    alert("Por favor, preencha o nome do cliente.");
+                    return;
+                  }
+                  handleSaveManualReservation(name, phone, email);
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nome do Cliente</label>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    required
+                    placeholder="Ex: Maria Silva"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Telemóvel</label>
+                  <input 
+                    type="tel" 
+                    name="phone"
+                    placeholder="Ex: 912 345 678"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label>
+                  <input 
+                    type="email" 
+                    name="email"
+                    placeholder="Ex: cliente@email.com"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-slate-100">
+                  <button 
+                    type="button" 
+                    onClick={() => setManualReservationModal(null)}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -9358,105 +9455,7 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
             </motion.div>
           </motion.div>
         )}
-      
-        {/* MANUAL RESERVATION MODAL */}
-        <AnimatePresence>
-          {manualReservationModal && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[500] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4"
-            >
-              <motion.div 
-                initial={{ scale: 0.95, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-w-md w-full space-y-6"
-              >
-                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <div>
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Nova Marcação</h3>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
-                      📅 {manualReservationModal?.date} às {manualReservationModal?.time}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setManualReservationModal(null)}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-all"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    const name = form.elements.name.value;
-                    const phone = form.elements.phone.value;
-                    const email = form.elements.email.value;
-                    if (!name.trim()) {
-                      alert("Por favor, preencha o nome do cliente.");
-                      return;
-                    }
-                    handleSaveManualReservation(name, phone, email);
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Nome do Cliente</label>
-                    <input 
-                      type="text" 
-                      name="name" 
-                      required
-                      placeholder="Ex: Maria Silva"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Telemóvel</label>
-                    <input 
-                      type="tel" 
-                      name="phone"
-                      placeholder="Ex: 912 345 678"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label>
-                    <input 
-                      type="email" 
-                      name="email"
-                      placeholder="Ex: cliente@email.com"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="flex gap-4 pt-4 border-t border-slate-100">
-                    <button 
-                      type="button" 
-                      onClick={() => setManualReservationModal(null)}
-                      className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
-                    >
-                      Confirmar
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-  
-</AnimatePresence>
+      </AnimatePresence>
 
           </>
   );
