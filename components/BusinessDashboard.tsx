@@ -2686,7 +2686,7 @@ return t;
                                           className={`h-10 rounded-lg border transition-all flex items-center justify-center cursor-pointer relative overflow-hidden group/slot ${
                                             res ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-emerald-50/30 border-emerald-100/50 hover:bg-emerald-50 hover:border-emerald-200'
                                           }`}
-                                          title={res ? `Reservado para: ${res.customerName}` : 'Disponível'}
+                                          title={res ? `Reservado para: {res.customerName}` : 'Disponível'}
                                         >
                                           {res && (
                                             <div className="absolute inset-0 flex items-center justify-center">
@@ -3981,7 +3981,7 @@ return t;
                     const formattedItems = (lastGeneratedInvoice.items || []).map((item: any) => {
                       const itemTotalStr = `€${(item.price * item.quantity).toFixed(2)}`;
                       const itemIvaStr = `${item.ivaRate}%`;
-                      const itemLeftStr = `${item.quantity} ${item.name}`;
+                      const itemLeftStr = `{item.quantity} ${item.name}`;
                       return formatThreeCols(itemLeftStr, itemIvaStr, itemTotalStr);
                     });
 
@@ -6185,7 +6185,7 @@ isBeauty ? (
                                               {res ? (
                                                 <>
                                                   <div className="absolute inset-0 flex items-center justify-center p-1">
-                                                    <span className="text-[10px] font-black text-white truncate px-1 font-bold">${res.customerName}</span>
+                                                    <span className="text-[10px] font-black text-white truncate px-1 font-bold">{res.customerName}</span>
                                                   </div>
                                                   
                                                   {/* Tooltip detail card with smooth fade-in/fade-out transition */}
@@ -6194,12 +6194,12 @@ isBeauty ? (
                                                       <span className="text-blue-400 font-black uppercase tracking-widest text-[9px]">Ficha da Marcação</span>
                                                       <span className="ml-auto bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">Confirmada</span>
                                                     </div>
-                                                    <p className="font-black text-sm text-white font-bold">${res.customerName}</p>
-                                                    {res.customerPhone && <p className="text-slate-300 font-bold text-[10px] mt-1.5 flex items-center gap-1.5">📞 ${res.customerPhone}</p>}
-                                                    {res.customerEmail && <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1.5">✉️ ${res.customerEmail}</p>}
+                                                    <p className="font-black text-sm text-white font-bold">{res.customerName}</p>
+                                                    {res.customerPhone && <p className="text-slate-300 font-bold text-[10px] mt-1.5 flex items-center gap-1.5">📞 {res.customerPhone}</p>}
+                                                    {res.customerEmail && <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1.5">✉️ {res.customerEmail}</p>}
                                                     <div className="mt-3 pt-2 border-t border-white/5 flex justify-between text-[9px] text-slate-400 font-bold uppercase">
-                                                      <span>🕒 ${res.time}</span>
-                                                      <span>📅 ${res.date}</span>
+                                                      <span>🕒 {res.time}</span>
+                                                      <span>📅 {res.date}</span>
                                                     </div>
                                                   </div>
                                                 </>
@@ -6260,13 +6260,13 @@ isBeauty ? (
                                        <div className="flex justify-between items-center">
                                           <div className="flex items-center gap-4">
                                              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black">
-                                                #${res.tableId?.replace('T','') || '?'}
+                                                #{res.tableId?.replace('T','') || '?'}
                                              </div>
                                              <div>
-                                                <p className="text-lg font-black text-slate-800 font-bold">${res.customerName}</p>
+                                                <p className="text-lg font-black text-slate-800 font-bold">{res.customerName}</p>
                                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                                                  Reserva para ${res.date} às ${res.time}
-                                                  ${res.requestedTime && ` • Prep: ${res.requestedTime === 'now' ? 'Imediata' : res.requestedTime === 'at_reservation' ? 'Na Reserva' : res.requestedTime}`}
+                                                  Reserva para {res.date} às {res.time}
+                                                  {res.requestedTime && ` • Prep: {res.requestedTime === 'now' ? 'Imediata' : res.requestedTime === 'at_reservation' ? 'Na Reserva' : res.requestedTime}`}
                                                 </p>
                                              </div>
                                           </div>
@@ -6287,9 +6287,9 @@ isBeauty ? (
                                           {((res.preOrder || res.preorder) || []).map((item, i) => (
                                             <div key={i} className="flex justify-between items-center py-2 border-b border-slate-200 last:border-0">
                                                <div className="flex items-center gap-3">
-                                                  <span className="w-6 h-6 bg-white rounded-lg flex items-center justify-center font-black text-xs shadow-sm">${item.quantity}x</span>
-                                                  <span className="font-bold text-slate-700">${item.dish.name}</span>
-                                                  {item.meatPoint && <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-md font-black">${item.meatPoint}</span>}
+                                                  <span className="w-6 h-6 bg-white rounded-lg flex items-center justify-center font-black text-xs shadow-sm">{item.quantity}x</span>
+                                                  <span className="font-bold text-slate-700">{item.dish.name}</span>
+                                                  {item.meatPoint && <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-md font-black">{item.meatPoint}</span>}
                                                </div>
                                             </div>
                                           ))}
@@ -6299,9 +6299,9 @@ isBeauty ? (
                                           {!order ? (
                                             <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 gap-3">
                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                                                  ${res.status === 'accepted' ? 'Reserva confirmada, mas pedido ainda não processado.' : 'Deve aceitar a reserva primeiro para gerir o pedido.'}
+                                                  {res.status === 'accepted' ? 'Reserva confirmada, mas pedido ainda não processado.' : 'Deve aceitar a reserva primeiro para gerir o pedido.'}
                                                </p>
-                                               ${res.status === 'accepted' && (
+                                               {res.status === 'accepted' && (
                                                  <button 
                                                    onClick={() => createOrderForReservation(res)}
                                                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-black uppercase text-[9px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-900/20"
@@ -9378,7 +9378,7 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
                   <div>
                     <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Nova Marcação</h3>
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
-                      📅 ${manualReservationModal.date} às ${manualReservationModal.time}
+                      📅 {manualReservationModal?.date} às {manualReservationModal?.time}
                     </p>
                   </div>
                   <button 
