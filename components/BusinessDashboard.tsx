@@ -1890,9 +1890,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const saveDishEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingDish) {
-      const newDishes = [...business.dishes];
-      newDishes[editingDish.idx] = editingDish.dish;
-      handleUpdate({ dishes: newDishes });
+      if (isBeauty) {
+        const newServices = [...(business.services || [])];
+        newServices[editingDish.idx] = editingDish.dish;
+        handleUpdate({ services: newServices });
+      } else {
+        const newDishes = [...(business.dishes || [])];
+        newDishes[editingDish.idx] = editingDish.dish;
+        handleUpdate({ dishes: newDishes });
+      }
       setEditingDish(null);
     }
   };
@@ -1987,6 +1993,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       const newService: Service = { id: `S${Date.now()}`, name: 'Novo Serviço', description: '', price: 0, duration: 30, image: '' };
       const newServices = [...(business.services || []), newService];
       handleUpdate({ services: newServices });
+      setEditingDish({ idx: newServices.length - 1, dish: { ...newService } as any });
       return;
     }
     const newDish: Dish = { name: 'Novo Prato', description: '', price: 0, image: '' };
@@ -2655,7 +2662,7 @@ return t;
                                <QrCode size={20} className="text-blue-400" />
                              </div>
                              <div>
-                               <p className="text-white font-black text-sm uppercase tracking-widest">QR Code por Mesa</p>
+                               <p className="text-white font-black text-sm uppercase tracking-widest">{isBeauty ? 'QR Code por Cadeira' : 'QR Code por Mesa'}</p>
                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Cliente escaneia → entra direto no menu, sem login</p>
                              </div>
                            </div>
@@ -2670,8 +2677,8 @@ return t;
                                 >
                                   <span className="truncate">
                                     {qrTableTarget
-                                      ? (() => { const t = tables.find(x => String(x.id) === String(qrTableTarget)); return t ? `Mesa ${t.number}${t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}` : 'Mesa'; })()
-                                      : 'Escolher mesa...'}
+                                      ? (() => { const t = tables.find(x => String(x.id) === String(qrTableTarget)); return t ? `${isBeauty ? 'Cadeira' : 'Mesa'} ${t.number}${t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}` : (isBeauty ? 'Cadeira' : 'Mesa'); })()
+                                      : (isBeauty ? 'Escolher cadeira...' : 'Escolher mesa...')}
                                   </span>
                                   <ChevronRight size={12} className={`flex-shrink-0 transition-transform duration-200 ${qrDropdownOpen ? 'rotate-90' : ''}`} />
                                 </button>
@@ -2697,7 +2704,7 @@ return t;
                                               : 'text-slate-200 hover:bg-white/10'
                                           }`}
                                         >
-                                          <span>Mesa {t.number}{t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}</span>
+                                          <span>{isBeauty ? 'Cadeira' : 'Mesa'} {t.number}{t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}</span>
                                           <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase flex-shrink-0 ${
                                             t.status === 'occupied' ? 'bg-red-500/30 text-red-300' :
                                             t.status === 'reserved' ? 'bg-orange-500/30 text-orange-300' :
@@ -2745,7 +2752,7 @@ return t;
                              </div>
                              <p className="text-slate-700 font-black text-xs uppercase tracking-widest text-center">
                                {tables.find(t => String(t.id) === String(qrTableTarget)) 
-                                 ? `Mesa ${tables.find(t => String(t.id) === String(qrTableTarget))!.number}` 
+                                 ? `${isBeauty ? 'Cadeira' : 'Mesa'} ${tables.find(t => String(t.id) === String(qrTableTarget))!.number}` 
                                  : ''}
                              </p>
                            </div>
@@ -2821,7 +2828,7 @@ return t;
                                   </div>
                                   <div className="text-center">
                                     <span className={`text-xl font-black block leading-none ${table.status === 'occupied' ? 'text-white' : 'text-slate-800'}`}>
-                                      isBeauty ? `Cadeira ${table.number}` : `#${table.number}`
+                                      {isBeauty ? table.number : `#${table.number}`}
                                     </span>
                                     <div className="flex items-center justify-center gap-1 mt-1.5 opacity-30">
                                        {[...Array(isHotel ? 2 : isRentCar ? 5 : 4)].map((_, i) => (
@@ -4805,10 +4812,12 @@ ${items.map((it, i) => `        <Line>
                 {/* ── KPI CARDS ── */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {[
-                    { label: 'Reservas Hoje', value: reservations.length, icon: <Calendar size={22} />, color: 'blue', change: '↑ 12% vs ontem' },
-                    { label: 'Check-ins', value: pendingCount, icon: <Hotel size={22} />, color: 'orange', change: '↑ 14% vs ontem' },
-                    { label: 'Check-outs', value: '7', icon: <LogOut size={22} />, color: 'emerald', change: '↓ 5% vs ontem' },
-                    { label: 'Hóspedes', value: '42', icon: <Users size={22} />, color: 'indigo', change: '↑ 8% vs ontem' },
+                    { label: isBeauty ? 'Marcações Hoje' : 'Reservas Hoje', value: reservations.length, icon: <Calendar size={22} />, color: 'blue', change: '↑ 12% vs ontem' },
+                    ...(!isBeauty ? [
+                      { label: 'Check-ins', value: pendingCount, icon: <Hotel size={22} />, color: 'orange', change: '↑ 14% vs ontem' },
+                      { label: 'Check-outs', value: '7', icon: <LogOut size={22} />, color: 'emerald', change: '↓ 5% vs ontem' },
+                      { label: 'Hóspedes', value: '42', icon: <Users size={22} />, color: 'indigo', change: '↑ 8% vs ontem' }
+                    ] : []),
                     { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2)}` : '€ 0,00', icon: <DollarSign size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
                     { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2)}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
                   ].map((stat, i) => (
@@ -4979,43 +4988,100 @@ ${items.map((it, i) => `        <Line>
                   </div>
                 </div>
 
-                {/* ── FIADO CLIENTS ── */}
-                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
-                  <div className="flex items-center justify-between mb-8">
-                    <div>
-                      <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Contas de Clientes (Fiado)</h3>
-                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Saldos pendentes e créditos de consumo</p>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100">{debtClients.length} Em Dívida</div>
-                      <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">{creditClients.length} Com Crédito</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {fiadoClients.map(client => (
-                      <div key={client.id} className={`flex items-center gap-6 p-6 rounded-[2rem] border transition-all hover:shadow-md ${
-                        client.balance < 0 ? 'bg-red-50/30 border-red-100' : 'bg-emerald-50/30 border-emerald-100'
-                      }`}>
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 shadow-sm ${
-                          client.balance < 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-                        }`}>{client.name.charAt(0)}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-black text-slate-900 text-lg truncate leading-tight">{client.name}</p>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{client.phone}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0 px-4">
-                          <p className={`font-black text-2xl tracking-tighter ${client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {client.balance < 0 ? '-' : '+'}€{Math.abs(client.balance).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance + 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 shadow-sm border border-emerald-100 transition-all active:scale-90">+</button>
-                          <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance - 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-500 font-black hover:bg-red-50 shadow-sm border border-red-100 transition-all active:scale-90">−</button>
-                        </div>
+                {/* ── FIADO CLIENTS / SIMULAÇÃO DE PRÓXIMAS MARCAÇÕES ── */}
+                {isBeauty ? (
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Simulação de Próximas Marcações</h3>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Próximas marcações ordenadas por data e hora do fluxo de trabalho</p>
                       </div>
-                    ))}
+                      <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                        {reservations.filter(r => r.status === 'accepted').length} Marcações Ativas
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {reservations
+                        .filter(r => r.status === 'accepted')
+                        .sort((a, b) => {
+                          const dateCompare = (a.date || '').localeCompare(b.date || '');
+                          if (dateCompare !== 0) return dateCompare;
+                          return (a.time || '').localeCompare(b.time || '');
+                        })
+                        .map(res => (
+                          <div key={res.id} className="flex items-center gap-6 p-6 rounded-[2rem] border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all">
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 bg-blue-100 text-blue-700 shadow-sm">
+                              {(res.customerName || 'C').charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-slate-900 text-lg truncate leading-tight">{res.customerName}</p>
+                              {res.customerPhone && <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">📞 {res.customerPhone}</p>}
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-blue-100">{res.time || '--:--'}</span>
+                                <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-slate-200">{res.date}</span>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <button 
+                                onClick={() => {
+                                  if (confirm("Remover esta marcação definitivamente?")) {
+                                    deleteReservation(res.id);
+                                  }
+                                }} 
+                                className="w-10 h-10 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all border border-red-100 active:scale-95"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      {reservations.filter(r => r.status === 'accepted').length === 0 && (
+                        <div className="col-span-2 py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                          <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                          <p className="font-bold text-sm text-slate-400 uppercase tracking-widest">Sem marcações agendadas no fluxo.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Contas de Clientes (Fiado)</h3>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Saldos pendentes e créditos de consumo</p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100">{debtClients.length} Em Dívida</div>
+                        <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">{creditClients.length} Com Crédito</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {fiadoClients.map(client => (
+                        <div key={client.id} className={`flex items-center gap-6 p-6 rounded-[2rem] border transition-all hover:shadow-md ${
+                          client.balance < 0 ? 'bg-red-50/30 border-red-100' : 'bg-emerald-50/30 border-emerald-100'
+                        }`}>
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 shadow-sm ${
+                            client.balance < 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>{client.name.charAt(0)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-black text-slate-900 text-lg truncate leading-tight">{client.name}</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{client.phone}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 px-4">
+                            <p className={`font-black text-2xl tracking-tighter ${client.balance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                              {client.balance < 0 ? '-' : '+'}€{Math.abs(client.balance).toFixed(2)}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance + 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 font-black hover:bg-emerald-100 shadow-sm border border-emerald-100 transition-all active:scale-90">+</button>
+                            <button onClick={() => { const updated = fiadoClients.map(c => c.id === client.id ? {...c, balance: parseFloat((c.balance - 5).toFixed(2))} : c); setFiadoClients(updated); handleUpdate({ fiadoClients: updated }); }} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-red-500 font-black hover:bg-red-50 shadow-sm border border-red-100 transition-all active:scale-90">−</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             );
           })()}
