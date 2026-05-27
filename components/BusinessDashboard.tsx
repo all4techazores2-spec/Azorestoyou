@@ -4809,8 +4809,66 @@ ${items.map((it, i) => `        <Line>
                   </button>
                 </div>
 
+                {/* ── SIMULAÇÃO DE PRÓXIMAS MARCAÇÕES (CABELEIREIROS) ── */}
+                {isBeauty && (
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Simulação de Próximas Marcações</h3>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Próximas marcações ordenadas por data e hora do fluxo de trabalho</p>
+                      </div>
+                      <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                        {reservations.filter(r => r.status === 'accepted').length} Marcações Ativas
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {reservations
+                        .filter(r => r.status === 'accepted')
+                        .sort((a, b) => {
+                          const dateCompare = (a.date || '').localeCompare(b.date || '');
+                          if (dateCompare !== 0) return dateCompare;
+                          return (a.time || '').localeCompare(b.time || '');
+                        })
+                        .map(res => (
+                          <div key={res.id} className="flex items-center gap-6 p-6 rounded-[2rem] border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all">
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 bg-blue-100 text-blue-700 shadow-sm">
+                              {(res.customerName || 'C').charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-slate-900 text-lg truncate leading-tight">{res.customerName}</p>
+                              {res.customerPhone && <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">📞 {res.customerPhone}</p>}
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-blue-100">{res.time || '--:--'}</span>
+                                <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-slate-200">{res.date}</span>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <button 
+                                onClick={() => {
+                                  if (confirm("Remover esta marcação definitivamente?")) {
+                                    deleteReservation(res.id);
+                                  }
+                                }} 
+                                className="w-10 h-10 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all border border-red-100 active:scale-95"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      {reservations.filter(r => r.status === 'accepted').length === 0 && (
+                        <div className="col-span-2 py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                          <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                          <p className="font-bold text-sm text-slate-400 uppercase tracking-widest">Sem marcações agendadas no fluxo.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* ── KPI CARDS ── */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className={isBeauty ? "flex flex-wrap justify-center gap-4 w-full" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"}>
                   {[
                     { label: isBeauty ? 'Marcações Hoje' : 'Reservas Hoje', value: reservations.length, icon: <Calendar size={22} />, color: 'blue', change: '↑ 12% vs ontem' },
                     ...(!isBeauty ? [
@@ -4821,7 +4879,7 @@ ${items.map((it, i) => `        <Line>
                     { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2)}` : '€ 0,00', icon: <DollarSign size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
                     { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2)}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                    <div key={i} className={`bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group ${isBeauty ? 'flex-1 min-w-[200px] max-w-[280px]' : ''}`}>
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>{stat.icon}</div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-tight">{stat.label}</p>
                       <h4 className={`text-xl font-black tracking-tighter mb-1 ${stat.color === 'amber' ? 'text-amber-600' : 'text-slate-900'}`}>{stat.value}</h4>
@@ -4988,63 +5046,8 @@ ${items.map((it, i) => `        <Line>
                   </div>
                 </div>
 
-                {/* ── FIADO CLIENTS / SIMULAÇÃO DE PRÓXIMAS MARCAÇÕES ── */}
-                {isBeauty ? (
-                  <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl">Simulação de Próximas Marcações</h3>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Próximas marcações ordenadas por data e hora do fluxo de trabalho</p>
-                      </div>
-                      <div className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                        {reservations.filter(r => r.status === 'accepted').length} Marcações Ativas
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {reservations
-                        .filter(r => r.status === 'accepted')
-                        .sort((a, b) => {
-                          const dateCompare = (a.date || '').localeCompare(b.date || '');
-                          if (dateCompare !== 0) return dateCompare;
-                          return (a.time || '').localeCompare(b.time || '');
-                        })
-                        .map(res => (
-                          <div key={res.id} className="flex items-center gap-6 p-6 rounded-[2rem] border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all">
-                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl flex-shrink-0 bg-blue-100 text-blue-700 shadow-sm">
-                              {(res.customerName || 'C').charAt(0)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-black text-slate-900 text-lg truncate leading-tight">{res.customerName}</p>
-                              {res.customerPhone && <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">📞 {res.customerPhone}</p>}
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-blue-100">{res.time || '--:--'}</span>
-                                <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border border-slate-200">{res.date}</span>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0">
-                              <button 
-                                onClick={() => {
-                                  if (confirm("Remover esta marcação definitivamente?")) {
-                                    deleteReservation(res.id);
-                                  }
-                                }} 
-                                className="w-10 h-10 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all border border-red-100 active:scale-95"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      {reservations.filter(r => r.status === 'accepted').length === 0 && (
-                        <div className="col-span-2 py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
-                          <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                          <p className="font-bold text-sm text-slate-400 uppercase tracking-widest">Sem marcações agendadas no fluxo.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
+                {/* ── FIADO CLIENTS (APENAS PARA RESTAURANTES) ── */}
+                {!isBeauty && (
                   <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm overflow-hidden">
                     <div className="flex items-center justify-between mb-8">
                       <div>
