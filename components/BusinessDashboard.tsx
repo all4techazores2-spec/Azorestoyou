@@ -6088,9 +6088,9 @@ isBeauty ? (
                                           d.setDate(d.getDate() - currentDay + 1 + i);
                                           const dateStr = d.toISOString().split('T')[0];
                                           
-                                          // Check if there's an accepted reservation for this day and time
+                                          // Check if there's an accepted or occupied reservation for this day and time
                                           const res = reservations.find(r => 
-                                            r.status === 'accepted' && 
+                                            (r.status === 'accepted' || r.status === 'occupied') && 
                                             r.time === time && 
                                             (r.date === dateStr || 
                                              r.date.split('/').reverse().join('-') === dateStr || 
@@ -6107,7 +6107,11 @@ isBeauty ? (
                                                 }
                                               }}
                                               className={`h-12 rounded-xl border transition-all flex items-center justify-center cursor-pointer relative overflow-visible group/slot ${
-                                                res ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/10' : 'bg-emerald-50/20 border-emerald-100/30 hover:bg-emerald-50 hover:border-emerald-200'
+                                                res 
+                                                  ? (res.status === 'occupied' 
+                                                      ? 'bg-fuchsia-600 border-fuchsia-500 shadow-lg shadow-fuchsia-600/10' 
+                                                      : 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/10') 
+                                                  : 'bg-emerald-50/20 border-emerald-100/30 hover:bg-emerald-50 hover:border-emerald-200'
                                               }`}
                                             >
                                               {res ? (
@@ -6120,7 +6124,13 @@ isBeauty ? (
                                                   <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-2xl bg-slate-900/95 p-4 text-left text-xs text-white shadow-2xl backdrop-blur-md border border-slate-700/50 opacity-0 scale-95 group-hover/slot:opacity-100 group-hover/slot:scale-100 transition-all duration-300 origin-bottom">
                                                     <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
                                                       <span className="text-blue-400 font-black uppercase tracking-widest text-[9px]">Ficha da Marcação</span>
-                                                      <span className="ml-auto bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded-full font-black uppercase">Confirmada</span>
+                                                      <span className={`ml-auto text-[8px] px-2 py-0.5 rounded-full font-black uppercase ${
+                                                        res.status === 'occupied' 
+                                                          ? 'bg-fuchsia-500/20 text-fuchsia-400' 
+                                                          : 'bg-blue-500/20 text-blue-400'
+                                                      }`}>
+                                                        {res.status === 'occupied' ? 'Em Atendimento' : 'Confirmada'}
+                                                      </span>
                                                     </div>
                                                     <p className="font-black text-sm text-white font-bold">{res.customerName}</p>
                                                     {res.customerPhone && <p className="text-slate-300 font-bold text-[10px] mt-1.5 flex items-center gap-1.5">📞 {res.customerPhone}</p>}
