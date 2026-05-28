@@ -304,6 +304,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [showScheduleCalendar, setShowScheduleCalendar] = useState(false);
   const [scheduleCalDate, setScheduleCalDate] = useState(new Date());
   const [manualReservationModal, setManualReservationModal] = useState<{ date: string, time: string } | null>(null);
+  const [checkingInRes, setCheckingInRes] = useState<any | null>(null);
   
   // Custom Area and Table States
   const [hoveredTableId, setHoveredTableId] = useState<string | number | null>(null);
@@ -5933,6 +5934,10 @@ ${items.map((it, i) => `        <Line>
                                           {res.status === 'accepted' && (
                                             <button 
                                               onClick={async () => {
+                                                if (isBeauty) {
+                                                  setCheckingInRes(res);
+                                                  return;
+                                                }
                                                 try {
                                                   lastLocalUpdateRef.current = Date.now();
                                                   const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'occupied' as const } : r);
@@ -9221,6 +9226,100 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
           <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Produtos</span>
         </div>
       </div>
+
+      {/* SELECT CHAIR MODAL FOR SALONS CHECK-IN */}
+      <AnimatePresence>
+        {checkingInRes && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setCheckingInRes(null)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-[3rem] p-8 shadow-2xl text-white space-y-6 overflow-hidden text-left"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setCheckingInRes(null)}
+                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
+              >
+                <X size={18} />
+              </button>
+              
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-fuchsia-500/10 rounded-2xl flex items-center justify-center text-fuchsia-500">
+                  <Scissors size={24} />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black uppercase tracking-tighter">Atribuir Cadeira</h4>
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Selecione uma cadeira livre para iniciar</p>
+                </div>
+              </div>
+
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-1 text-xs">
+                <p className="font-bold text-slate-300">Cliente: <span className="text-white font-black">{checkingInRes.customerName}</span></p>
+                <p className="font-bold text-slate-300">Serviço: <span className="text-white font-black">{checkingInRes.preOrder && checkingInRes.preOrder.length > 0 ? checkingInRes.preOrder.map((item) => item.name || item.dish?.name).join(', ') : 'Serviço de Beleza'}</span></p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Cadeiras Livres Disponíveis:</p>
+                <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
+                  {tables.filter(t => t.status === 'available').length === 0 ? (
+                    <div className="col-span-2 py-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
+                      <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Sem cadeiras livres disponíveis</p>
+                    </div>
+                  ) : (
+                    tables.filter(t => t.status === 'available').map(chair => (
+                      <button
+                        key={chair.id}
+                        onClick={async () => {
+                          try {
+                            lastLocalUpdateRef.current = Date.now();
+                            const updatedRes = { ...checkingInRes, status: 'occupied', tableId: chair.id };
+                            const updated = reservations.map(r => r.id === checkingInRes.id ? updatedRes : r);
+                            setReservations(updated);
+
+                            // Occupy the chair in local state
+                            const updatedTables = tables.map(t => t.id === chair.id ? { 
+                              ...t, 
+                              status: 'occupied',
+                              customerName: checkingInRes.customerName,
+                              reservationTime: checkingInRes.time
+                            } : t);
+                            setTables(updatedTables);
+
+                            // Persist check-in to server
+                            const response = await fetch(`${API_BASE_URL}/api/reservations/${checkingInRes.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: 'occupied', tableId: chair.id })
+                            });
+
+                            if (response.ok && onForceRefresh) onForceRefresh();
+                            setCheckingInRes(null);
+                            alert(`✅ Cadeira #${chair.number || chair.id} ocupada por ${checkingInRes.customerName}!`);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="p-4 bg-white/5 hover:bg-fuchsia-600/10 border border-white/10 hover:border-fuchsia-500 rounded-2xl text-left transition-all active:scale-95 group"
+                      >
+                        <p className="font-black text-sm text-white group-hover:text-fuchsia-400">Cadeira #${chair.number || chair.id}</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">${chair.area || 'Zona Geral'}</p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* STOCK SCANNER MODAL */}
       <AnimatePresence>
