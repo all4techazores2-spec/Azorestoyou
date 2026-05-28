@@ -340,6 +340,29 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   const timeSlots = getFilteredTimeSlots();
 
+  const getChairsAvailability = () => {
+    if (!selectedDate || !selectedTime) return { total: 12, available: 12, isFull: false };
+    
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    const total = restaurant.tables ? restaurant.tables.length : 12;
+    
+    // Count confirmed bookings at this exact date and time
+    const occupiedCount = (restaurant.reservations || []).filter((r: any) => 
+      (r.status === 'accepted' || r.status === 'occupied') && 
+      r.time === selectedTime && 
+      (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
+    ).length;
+    
+    const available = Math.max(0, total - occupiedCount);
+    return {
+      total,
+      available,
+      isFull: available === 0
+    };
+  };
+
+  const { total: totalChairs, available: availableChairs, isFull: isTimeFull } = getChairsAvailability();
+
   // Simple Calendar Logic
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -737,7 +760,27 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           </div>
                         </div>
 
+                        {isBeauty && (
+                          <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+                            isTimeFull 
+                              ? 'bg-red-500/10 border-red-500/25 text-red-400' 
+                              : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <Scissors size={14} className={isTimeFull ? 'text-red-400' : 'text-emerald-400'} />
+                              <span>{isTimeFull ? 'Sem vagas de serviço disponíveis' : 'Vagas de serviço disponíveis'}</span>
+                            </div>
+                            <span className="font-black text-sm">{isTimeFull ? 'Esgotado' : `${availableChairs} / ${totalChairs}`}</span>
+                          </div>
+                        )}
+
                         <div className="space-y-4">
+                          {isBeauty && isTimeFull && (
+                            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
+                              ⚠️ Lamento, mas já não temos vagas (cadeiras livres) disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
+                            </div>
+                          )}
+
                           <div>
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
                             <textarea 
@@ -829,14 +872,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                         </div>
 
                         <button 
-                          disabled={isProcessing || !paymentType}
+                          disabled={isProcessing || !paymentType || (isBeauty && isTimeFull)}
                           onClick={handleFinalize}
                           className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                            ${(!paymentType || isProcessing) 
+                            ${(!paymentType || isProcessing || (isBeauty && isTimeFull)) 
                               ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
                               : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
                         >
-                          {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
+                          {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : 'Confirmar Reserva'}
                           <ArrowRight className="w-5 h-5" />
                         </button>
                       </motion.div>
