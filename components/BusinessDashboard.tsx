@@ -6579,6 +6579,22 @@ isBeauty ? (
                     />
                  </div>
 
+                  <div>
+                      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                        <Clock className="w-3.5 h-3.5" /> Horário de Funcionamento (Horas de Serviço e Pausas)
+                      </label>
+                     <input 
+                       type="text"
+                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                       value={settingsForm.openingHours || ''} 
+                       onChange={e => setSettingsForm({...settingsForm, openingHours: e.target.value})}
+                       placeholder="Ex: 09:00-13:00, 14:00-19:00"
+                     />
+                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1 ml-2">
+                       * Formato sugerido: HH:MM-HH:MM. Para pausas, use vírgula como separador (Ex: 09:00-13:00, 14:00-19:00 para pausa das 13h às 14h)
+                     </p>
+                  </div>
+
                   {/* CREDIT SETTINGS */}
                   <div className="border-t border-slate-100 pt-6 mt-2">
                     <div className="flex items-center gap-3 mb-4">

@@ -298,10 +298,47 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const totalCreditsCost = orderItems.reduce((acc, item) => acc + (item.quantity * 10), 0);
   const canAffordWithPoints = userCredits >= totalCreditsCost;
 
-  const timeSlots = [
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-    '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'
-  ];
+  const timeToMinutes = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const minutesToTime = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  const getFilteredTimeSlots = () => {
+    const rawHours = restaurant.openingHours || (isBeauty ? '09:00-13:00, 14:00-19:00' : '12:00-15:00, 19:00-23:00');
+    const ranges = rawHours.split(',').map(r => r.trim());
+    const slots: string[] = [];
+    
+    ranges.forEach(range => {
+      const parts = range.split('-');
+      if (parts.length === 2) {
+        try {
+          const startMin = timeToMinutes(parts[0]);
+          const endMin = timeToMinutes(parts[1]);
+          for (let min = startMin; min < endMin; min += 30) {
+            slots.push(minutesToTime(min));
+          }
+        } catch (e) {}
+      }
+    });
+    
+    if (slots.length > 0) return slots;
+    
+    return isBeauty ? [
+      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
+    ] : [
+      '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+      '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'
+    ];
+  };
+
+  const timeSlots = getFilteredTimeSlots();
 
   // Simple Calendar Logic
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -511,7 +548,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                        <Info className="w-5 h-5 text-red-500" /> Sobre o Restaurante
+                        <Info className="w-5 h-5 text-red-500" /> {isBeauty ? 'Sobre o Salão' : 'Sobre o Restaurante'}
                       </h3>
                       <button 
                         onClick={handleSpeak}

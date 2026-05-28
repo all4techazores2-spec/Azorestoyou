@@ -331,6 +331,13 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       )}
 
                       {res.status === 'occupied' && (() => {
+                        if (isBeautyRes) {
+                          return (
+                            <div className="bg-fuchsia-50 border border-fuchsia-100 rounded-3xl p-6 text-center text-fuchsia-700 font-black uppercase text-xs tracking-widest shadow-sm">
+                              ✨ Marcação ativa. Desfrute do seu serviço de beleza!
+                            </div>
+                          );
+                        }
                         const orderStatus = getOrderStatus(res);
                         return (
                           <div className="space-y-4">

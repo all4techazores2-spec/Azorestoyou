@@ -667,11 +667,14 @@ const App: React.FC = () => {
     
     myReservations.forEach(res => {
       const restName = res.businessName || res.restaurantName || 'Restaurante';
+      const isBeautyRes = res.type === 'beauty' || res.businessType === 'beauty' || (res.id && res.id.startsWith('BEA')) || (res.bookingFee && res.bookingFee > 0);
 
       // 1. Notificação de Reserva Confirmada
       if (res.status === 'accepted' && !notifiedResIds.has(res.id)) {
-        const title = "Reserva Confirmada!";
-        const message = `O restaurante ${restName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
+        const title = isBeautyRes ? "Marcação Confirmada!" : "Reserva Confirmada!";
+        const message = isBeautyRes 
+          ? `O salão ${restName} aceitou a sua marcação para ${res.date} às ${res.time}.`
+          : `O restaurante ${restName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
         
         const newNotification: AppNotification = {
           id: `NOTIF_ACC_${Date.now()}_${res.id}`,
@@ -687,11 +690,13 @@ const App: React.FC = () => {
         setNotifiedResIds(prev => new Set(prev).add(res.id));
       }
 
-      // 2. Notificação de Mesa Atribuída (se já foi notificado da aceitação mas agora tem mesa)
+      // 2. Notificação de Mesa/Cadeira Atribuída
       const tableNotifKey = `table_${res.id}`;
       if (res.status === 'accepted' && res.tableId && !notifiedResIds.has(tableNotifKey)) {
-        const title = "Mesa Atribuída!";
-        const message = `Já temos uma mesa pronta para si no ${restName}: Mesa #${res.tableId.replace('T', '')}.`;
+        const title = isBeautyRes ? "Cadeira Atribuída!" : "Mesa Atribuída!";
+        const message = isBeautyRes 
+          ? `Já temos uma cadeira pronta para si no salão ${restName}: Cadeira #${res.tableId.replace('T', '')}.`
+          : `Já temos uma mesa pronta para si no ${restName}: Mesa #${res.tableId.replace('T', '')}.`;
         
         const newNotification: AppNotification = {
           id: `NOTIF_TAB_${Date.now()}_${res.id}`,
