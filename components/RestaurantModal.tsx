@@ -101,11 +101,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const isAutoRepair = restaurant.businessType === 'auto_repair';
   const isOffice = restaurant.businessType === 'office';
 
+  const getSafeImage = (img: string | undefined | null): string => {
+    if (!img) return 'https://picsum.photos/400/300?random=1';
+    return img.startsWith('/') ? `${API_BASE_URL}${img}` : img;
+  };
+
   const slides = [
-    { image: restaurant.image.startsWith('/') ? `${API_BASE_URL}${restaurant.image}` : restaurant.image, title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
-    ...(restaurant.gallery || []).map(img => ({ image: img.startsWith('/') ? `${API_BASE_URL}${img}` : img, title: restaurant.name, desc: getTranslation(currentLang, 'environment') })),
-    ...(restaurant.dishes || []).map(d => ({ image: d.image.startsWith('/') ? `${API_BASE_URL}${d.image}` : d.image, title: d.name, desc: d.description })),
-    ...(restaurant.services || []).map(s => ({ image: (s.image || restaurant.image).startsWith('/') ? `${API_BASE_URL}${s.image || restaurant.image}` : (s.image || restaurant.image), title: s.name, desc: s.description || '' }))
+    { image: getSafeImage(restaurant.image), title: restaurant.name, desc: getTranslation(currentLang, 'environment') },
+    ...(restaurant.gallery || []).filter(Boolean).map(img => ({ image: getSafeImage(img), title: restaurant.name, desc: getTranslation(currentLang, 'environment') })),
+    ...(restaurant.dishes || []).filter(Boolean).map(d => ({ image: getSafeImage(d.image), title: d.name, desc: d.description })),
+    ...(restaurant.services || []).filter(Boolean).map(s => ({ image: getSafeImage(s.image || restaurant.image), title: s.name, desc: s.description || '' }))
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -833,7 +838,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       >
                         <div className="relative aspect-square overflow-hidden bg-slate-50">
                           <img 
-                            src={dish.image.startsWith('/') ? `${API_BASE_URL}${dish.image}` : dish.image} 
+                            src={getSafeImage(dish.image)} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                             alt={dish.name} 
                           />
@@ -912,7 +917,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                               className="w-full md:w-[450px] aspect-square rounded-[3.5rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-8 border-white/5"
                             >
                               <img 
-                                src={restaurant.dishes[selectedDishIdx].image.startsWith('/') ? `${API_BASE_URL}${restaurant.dishes[selectedDishIdx].image}` : restaurant.dishes[selectedDishIdx].image} 
+                                src={getSafeImage(restaurant.dishes[selectedDishIdx].image)} 
                                 className="w-full h-full object-cover" 
                                 alt="Dish Immersive" 
                               />

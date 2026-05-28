@@ -952,7 +952,7 @@ const App: React.FC = () => {
     let tableName = tableId ? `Mesa #${tableId}` : "Mesa Principal";
 
     try {
-      const rest = restaurants.find(r => r.id === restaurantId);
+      const rest = restaurants.find(r => r.id === restaurantId) || beauty.find(b => b.id === restaurantId);
 
       if (rest) {
         restName = rest.name;
@@ -964,7 +964,7 @@ const App: React.FC = () => {
         const foodItems = resObj?.preOrder || resObj?.preorder || [];
         if (tableId) {
           const matchingTable = updatedTables.find(t => t.id === tableId || String(t.id) === String(tableId));
-          if (matchingTable) tableName = `Mesa #${matchingTable.number}`;
+          if (matchingTable) tableName = matchingTable.number !== undefined ? `Mesa #${matchingTable.number}` : matchingTable.id;
           updatedTables = updatedTables.map(t => (t.id === tableId || String(t.id) === String(tableId)) ? {
             ...t,
             status: 'occupied' as const,
@@ -999,7 +999,12 @@ const App: React.FC = () => {
           );
         }
         const updatedRest = { ...rest, tables: updatedTables, reservations: updatedReservations, kitchenOrders: updatedKitchenOrders };
-        setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+        const isBeautyBiz = beauty.some(b => b.id === restaurantId);
+        if (isBeautyBiz) {
+          setBeauty(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+        } else {
+          setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+        }
 
         await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
           method: 'PUT',
@@ -1026,7 +1031,7 @@ const App: React.FC = () => {
     const confirmOut = window.confirm("Confirmar saída do restaurante?");
     if (!confirmOut) return;
 
-    const rest = restaurants.find(r => r.id === restaurantId);
+    const rest = restaurants.find(r => r.id === restaurantId) || beauty.find(b => b.id === restaurantId);
     if (!rest) return;
 
     // Just mark as finished and free the table — credits come after payment confirmation by the restaurant
@@ -1036,7 +1041,12 @@ const App: React.FC = () => {
     const updatedTables = rest.tables?.map(t => t.id === tableId ? { ...t, status: 'available' as const, customerName: undefined, reservationTime: undefined, currentTab: [] } : t);
     const updatedReservations = rest.reservations?.map(r => r.id === resId ? { ...r, status: 'finished' as const } : r);
     const updatedRest = { ...rest, tables: updatedTables, reservations: updatedReservations };
-    setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+    const isBeautyBiz = beauty.some(b => b.id === restaurantId);
+    if (isBeautyBiz) {
+      setBeauty(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+    } else {
+      setRestaurants(prev => prev.map(r => r.id === restaurantId ? updatedRest : r));
+    }
 
     try {
       // 1. Atualizar a reserva global no servidor (o servidor libertará a mesa automaticamente)
