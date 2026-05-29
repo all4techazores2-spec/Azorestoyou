@@ -901,18 +901,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }));
   };
 
-  const posTotal = posCart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
 
-  // AzoresPOS dynamic calculations
-  const posDiscountVal = posDiscountType === 'percent' 
-    ? (posTotal * (posDiscount / 100)) 
-    : posDiscount;
-  const posTotalAfterDiscount = Math.max(0, posTotal - posDiscountVal);
-  const posServiceTax = posTotalAfterDiscount * 0.10;
-  const posFinalTotal = posTotalAfterDiscount + posServiceTax;
-  const shareToPay = splitRemainingTotal !== null 
-    ? (splitRemainingTotal / (paymentSplitBy - splitPaidInvoicesCount)) 
-    : (paymentSplitBy > 1 ? (posFinalTotal / paymentSplitBy) : posFinalTotal);
 
   const handleClearSale = () => {
     setPosCart([]);
@@ -1501,6 +1490,20 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setInvoicePreviewOpen(true);
     setPaymentFormOpen(false);
   }
+
+  const posTotal = posCart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+
+  // AzoresPOS dynamic calculations
+  const posDiscountVal = posDiscountType === 'percent' 
+    ? (posTotal * (posDiscount / 100)) 
+    : posDiscount;
+  const posTotalAfterDiscount = Math.max(0, posTotal - posDiscountVal);
+  const posServiceTax = posTotalAfterDiscount * 0.10;
+  const posFinalTotal = posTotalAfterDiscount + posServiceTax;
+  const shareToPay = splitRemainingTotal !== null 
+    ? (splitRemainingTotal / (paymentSplitBy - splitPaidInvoicesCount)) 
+    : (paymentSplitBy > 1 ? (posFinalTotal / paymentSplitBy) : posFinalTotal);
+
 
 
   const saveStaff = (e: React.FormEvent) => {
