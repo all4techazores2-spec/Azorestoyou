@@ -971,8 +971,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                <ArrowRight size={20} className="text-red-600" />
                              </div>
                           </div>
-                          <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm">
-                            {dish.price}€
+                          <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                            {(dish as any).promoPrice ? (
+                              <>
+                                <span className="line-through text-slate-400 text-[8px] font-bold leading-none">Antes: {dish.price}€</span>
+                                <span className="text-emerald-600 leading-none mt-0.5">Agora: {(dish as any).promoPrice}€</span>
+                              </>
+                            ) : (
+                              <span>{dish.price}€</span>
+                            )}
                           </div>
                           <div className="absolute top-4 left-4">
                              <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
@@ -1062,7 +1069,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                </div>
                                
                                <div className="flex flex-col md:flex-row items-center gap-6 pt-4">
-                                  <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
+                                  {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
+                                    <div className="flex flex-col items-center md:items-start">
+                                      <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
+                                      <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl mt-1">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
+                                  )}
                                   <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
                                   <div className="flex flex-col items-center md:items-start opacity-50">
                                      <span className="text-[10px] font-black uppercase tracking-widest">Disponível em</span>

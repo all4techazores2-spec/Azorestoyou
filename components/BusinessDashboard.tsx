@@ -7621,6 +7621,17 @@ isBeauty ? (
                        />
                     </div>
                     <div>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Preço Promocional / Desconto do Dia (€) (Opcional)</label>
+                       <input 
+                         type="number"
+                         step="0.01"
+                         placeholder="Ex: 8.50"
+                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                         value={(editingDish.dish as any).promoPrice || ''} 
+                         onChange={e => setEditingDish({...editingDish, dish: {...editingDish.dish, promoPrice: e.target.value ? parseFloat(e.target.value) : undefined} as any})}
+                       />
+                    </div>
+                    <div>
                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Descrição</label>
                        <textarea 
                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none h-32" 
