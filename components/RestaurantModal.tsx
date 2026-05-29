@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Restaurant, Language, OrderItem, Dish, Business, Service } from '../types';
-import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info, ShoppingBag, Sparkles, Smartphone, Scissors } from 'lucide-react';
+import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info, ShoppingBag, Sparkles, Smartphone, Scissors, ThumbsUp } from 'lucide-react';
 import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -56,6 +56,42 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [customerName, setCustomerName] = useState(userProfile?.name || 'Cliente Viajante');
   const [preorderSelected, setPreorderSelected] = useState<boolean | null>(null);
   const [selectedDishIdx, setSelectedDishIdx] = useState<number | null>(null);
+  
+  // Follow and Like state for individual business
+  const [isFollowed, setIsFollowed] = useState(() => {
+    if (!restaurant) return false;
+    return localStorage.getItem(`follow_biz_${restaurant.id}`) === 'true';
+  });
+
+  const [isLiked, setIsLiked] = useState(() => {
+    if (!restaurant) return false;
+    return localStorage.getItem(`like_biz_${restaurant.id}`) === 'true';
+  });
+
+  const toggleFollow = () => {
+    if (!restaurant) return;
+    const next = !isFollowed;
+    setIsFollowed(next);
+    localStorage.setItem(`follow_biz_${restaurant.id}`, String(next));
+  };
+
+  const toggleLike = () => {
+    if (!restaurant) return;
+    const next = !isLiked;
+    setIsLiked(next);
+    localStorage.setItem(`like_biz_${restaurant.id}`, String(next));
+  };
+
+  const getFollowersCount = () => {
+    if (!restaurant) return 0;
+    let hash = 0;
+    const bizKey = restaurant.id || 'default';
+    for (let i = 0; i < bizKey.length; i++) {
+      hash = bizKey.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const base = Math.abs(hash % 980) + 240; // 240 - 1220 followers base
+    return isFollowed ? base + 1 : base;
+  };
   
   // Payment states for booking fee
   const [mbwayPhone, setMbwayPhone] = useState(userProfile?.phone || '');
@@ -565,6 +601,40 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       <Clock className="w-5 h-5 text-emerald-500 mb-2" />
                       <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Estado</span>
                       <span className="font-bold text-emerald-600 text-[10px] mt-1 uppercase tracking-tighter">Aberto Agora</span>
+                    </div>
+                  </div>
+                  
+                  {/* Follow & Like Section */}
+                  <div className="flex items-center justify-between bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block leading-none mb-1">Comunidade</span>
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-tight">
+                          {getFollowersCount()} Seguidores
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={toggleFollow}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 shadow-sm
+                          ${isFollowed ? 'bg-blue-600 text-white shadow-blue-500/20' : 'bg-white text-slate-600 border border-slate-200/60 hover:bg-slate-50'}`}
+                      >
+                        <Users size={14} />
+                        {isFollowed ? 'A Seguir' : 'Seguir'}
+                      </button>
+                      <button
+                        onClick={toggleLike}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 shadow-sm
+                          ${isLiked ? 'bg-red-50 text-red-500 border border-red-100 shadow-red-500/5' : 'bg-white text-slate-600 border border-slate-200/60 hover:bg-slate-50'}`}
+                      >
+                        <ThumbsUp size={14} className={isLiked ? 'fill-current' : ''} />
+                        {isLiked ? 'Gostei' : 'Gostar'}
+                      </button>
                     </div>
                   </div>
 
