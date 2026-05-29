@@ -169,12 +169,21 @@ const MOCK_BEAUTY_SERVICES: any[] = [
 ];
 
 // ── LIVE CLOCK CARD ──
-const LiveClockCard: React.FC<{ businessName: string; island: string }> = ({ businessName, island }) => {
+const LiveClockCard: React.FC<{ businessName: string; island: string; photos?: string[] }> = ({ businessName, island, photos = [] }) => {
   const [now, setNow] = React.useState(new Date());
+  const [activePhotoIdx, setActivePhotoIdx] = React.useState(0);
   React.useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+  React.useEffect(() => {
+    if (photos && photos.length > 1) {
+      const timer = setInterval(() => {
+        setActivePhotoIdx(prev => (prev + 1) % photos.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [photos]);
   const timeStr = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const dateStr = now.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const dateCapital = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
@@ -183,10 +192,31 @@ const LiveClockCard: React.FC<{ businessName: string; island: string }> = ({ bus
   const greetEmoji = hours < 12 ? '☀️' : hours < 19 ? '🌤️' : '🌙';
   const weatherOptions = ['☁️ 18°C', '⛅ 21°C', '☀️ 24°C', '🌦️ 16°C'];
   const weatherStr = weatherOptions[now.getDate() % 4];
+  const hasPhotos = photos && photos.length > 0;
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[3rem] p-8 overflow-hidden shadow-2xl shadow-slate-900/30">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+    <div className="relative rounded-[3rem] p-8 overflow-hidden shadow-2xl shadow-slate-900/30 w-full">
+      {hasPhotos ? (
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="popLayout">
+            <motion.img
+              key={activePhotoIdx}
+              src={photos[activePhotoIdx]}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 0.45, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.2 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-slate-950/70 mix-blend-multiply pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-950/45 to-transparent pointer-events-none" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none" />
+        </div>
+      )}
       <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
@@ -1352,7 +1382,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     nif: (business as any).nif || '',
     creditValue: (business as any).creditValue ?? 0.30,
     creditsPerReservation: (business as any).creditsPerReservation ?? 0,
-    openingHours: business.openingHours || '09:00-13:00, 14:00-19:00'
+    openingHours: business.openingHours || '09:00-13:00, 14:00-19:00',
+    clockPhotos: (business as any).clockPhotos || []
   });
 
   // Staff Management State
@@ -1480,6 +1511,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       email: formData.get('email') as string,
       password: formData.get('password') as string,
       phone: formData.get('phone') as string,
+      photo: formData.get('photo') as string || '',
       role: formData.get('role') as any,
       shiftStart: formData.get('shiftStart') as string || '08:00',
       pauseStart: formData.get('pauseStart') as string || '12:00',
@@ -4953,7 +4985,7 @@ ${items.map((it, i) => `        <Line>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
 
                 {/* ── LIVE CLOCK ── */}
-                <LiveClockCard businessName={business.name} island={business.island || ''} />
+                <LiveClockCard businessName={business.name} island={business.island || ''} photos={(business as any).clockPhotos || []} />
 
                 {/* ── ACTION BUTTONS ── */}
                 <div className="flex flex-wrap items-center justify-end gap-3">
@@ -6622,15 +6654,16 @@ isBeauty ? (
           )}
 
           {(activeTab === 'settings' || activeTab === 'business') && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-3xl">
-               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-6xl w-full mx-auto">
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                   <div>
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Dados do Negócio</h3>
-                    <p className="text-slate-400 text-sm font-medium">Informações fiscais, contacto e localização</p>
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Dados & Slider do Relógio</h3>
+                    <p className="text-slate-400 text-sm font-medium">Informações fiscais, contacto, localização e fotos do slider do relógio</p>
                   </div>
                </div>
                
-               <form onSubmit={saveSettings} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                 <form onSubmit={saveSettings} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
                  {/* IDENTIDADE */}
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -6832,6 +6865,86 @@ isBeauty ? (
                      </button>
                   </div>
                </form>
+
+               {/* RIGHT COLUMN: SLIDERRELOGIO PHOTOS PANEL */}
+               <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+                 <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                   <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                     <Clock className="w-5 h-5" />
+                   </div>
+                   <div>
+                     <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">Slider do Relógio</h4>
+                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Fotos rotativas de fundo com suave transparência</p>
+                   </div>
+                 </div>
+
+                 {/* Add new photo url */}
+                 <div className="space-y-3">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Adicionar Foto (URL ou Link)</label>
+                   <div className="flex gap-2">
+                     <input 
+                       id="new-clock-photo-input"
+                       type="url" 
+                       placeholder="https://exemplo.com/foto.jpg"
+                       className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                     />
+                     <button
+                       type="button"
+                       onClick={() => {
+                         const el = document.getElementById('new-clock-photo-input') as HTMLInputElement;
+                         if (el && el.value.trim()) {
+                           const url = el.value.trim();
+                           const currentPhotos = settingsForm.clockPhotos || [];
+                           if (!currentPhotos.includes(url)) {
+                             const updatedPhotos = [...currentPhotos, url];
+                             setSettingsForm({ ...settingsForm, clockPhotos: updatedPhotos });
+                             handleUpdate({ clockPhotos: updatedPhotos });
+                           }
+                             el.value = '';
+                         }
+                       }}
+                       className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-600 active:scale-95 transition-all shadow-md cursor-pointer"
+                     >
+                       Adicionar
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Listed Photos */}
+                 <div className="space-y-4 pt-4">
+                   <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Fotos Ativas ({settingsForm.clockPhotos?.length || 0})</h5>
+                   
+                   <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+                     {(settingsForm.clockPhotos || []).map((photoUrl: string, idx: number) => (
+                       <div key={idx} className="relative group aspect-video rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
+                         <img src={photoUrl} alt="Clock Background" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                           <button
+                             type="button"
+                             onClick={() => {
+                               const updatedPhotos = (settingsForm.clockPhotos || []).filter((_, i) => i !== idx);
+                               setSettingsForm({ ...settingsForm, clockPhotos: updatedPhotos });
+                               handleUpdate({ clockPhotos: updatedPhotos });
+                             }}
+                             className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all shadow-lg active:scale-90 cursor-pointer"
+                           >
+                             <Trash2 size={16} />
+                           </button>
+                         </div>
+                       </div>
+                     ))}
+
+                     {(settingsForm.clockPhotos || []).length === 0 && (
+                       <div className="col-span-2 py-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                         <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sem fotos no slider</p>
+                         <p className="text-[8px] text-slate-400 font-bold mt-1 uppercase">O relógio usará o gradiente escuro padrão</p>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+             </div>
             </motion.div>
           )}
 
@@ -6953,7 +7066,22 @@ isBeauty ? (
                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-2xl rounded-full"></div>
                        
                        <div className="flex items-center gap-4 mb-6">
-                          <div className="w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center text-xl font-black shadow-lg">
+                          {member.photo ? (
+                            <img 
+                              src={member.photo} 
+                              alt={member.name} 
+                              className="w-16 h-16 rounded-2xl object-cover shadow-lg border border-slate-100"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                                const fallback = (e.target as HTMLElement).nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            style={{ display: member.photo ? 'none' : 'flex' }}
+                            className="w-16 h-16 bg-slate-900 text-white rounded-2xl flex items-center justify-center text-xl font-black shadow-lg shrink-0"
+                          >
                              {(member.name || '?').charAt(0)}
                           </div>
                           <div>
@@ -7881,6 +8009,16 @@ isBeauty ? (
                          name="name"
                          defaultValue={editingStaff?.name || ''}
                          required
+                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                       />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Foto (URL)</label>
+                       <input 
+                         name="photo"
+                         type="text"
+                         defaultValue={editingStaff?.photo || ''}
+                         placeholder="https://exemplo.com/foto.jpg"
                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
                        />
                     </div>
