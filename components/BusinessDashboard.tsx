@@ -875,193 +875,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setPaymentFormOpen(true);
   };
 
-  const executeConfirmPayment = () => {
-    if (posCart.length === 0) return;
-
-    const totalCart = posTotal;
-    const discountFactor = totalCart > 0 ? (posTotalAfterDiscount / totalCart) : 1;
-
-    // ── Calcular IVA Discriminado (13% e 23%) ──
-    let base13 = 0;
-    let iva13 = 0;
-    let base23 = 0;
-    let iva23 = 0;
-
-    posCart.forEach(i => {
-      const itemTotal = (i.product.price * i.quantity) * discountFactor;
-      const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
-      const rate = isDrink ? 23 : 13;
-      const itemBase = itemTotal / (1 + rate / 100);
-      const itemIva = itemTotal - itemBase;
-      
-      if (rate === 13) {
-        base13 += itemBase;
-        iva13 += itemIva;
-      } else {
-        base23 += itemBase;
-        iva23 += itemIva;
-      }
-    });
-
-    // IVA da taxa de serviço em Portugal (23%)
-    if (posServiceTax > 0) {
-      const sBase = posServiceTax / 1.23;
-      const sIva = posServiceTax - sBase;
-      base23 += sBase;
-      iva23 += sIva;
-    }
-
-    // Determine the amount to pay for this specific step/person
-    let currentPersonToPay = posFinalTotal;
-    let isSplitActive = paymentSplitBy > 1;
-    let newPaidCount = splitPaidInvoicesCount;
-    let newRemaining = splitRemainingTotal;
-
-    if (isSplitActive) {
-      if (splitRemainingTotal === null) {
-        // First payment of the split
-        newRemaining = posFinalTotal;
-      }
-      currentPersonToPay = newRemaining / (paymentSplitBy - splitPaidInvoicesCount);
-      newPaidCount = splitPaidInvoicesCount + 1;
-      newRemaining = newRemaining - currentPersonToPay;
-    }
-
-    // Proportional scaling for invoice totals
-    const ratio = currentPersonToPay / posFinalTotal;
-
-    const received = parseFloat(paymentCashReceived) || currentPersonToPay;
-    const change = Math.max(0, received - currentPersonToPay);
-
-    // ── Numeração Sequencial Certificada e ATCUD ──
-    const existingSalesHistory: any[] = (business as any).salesHistory || [];
-    const nextInvoiceNum = existingSalesHistory.length + 1;
-    const year = new Date().getFullYear();
-    const invoiceNumber = `FR ${year}/${String(nextInvoiceNum).padStart(6, '0')}`;
-    const atcudCode = `JF5T-3E2C-7P1X-${String(nextInvoiceNum).padStart(6, '0')}`;
-
-    // Morada e NIF da empresa
-    const companyNif = (business as any).nif || '509999999';
-    const clientNif = paymentNif || '999999990'; // 999999990 é o NIF genérico de Consumidor Final em Portugal
-    const formattedDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    
-    // String oficial do QR Code da AT em Portugal
-    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${(iva13 * ratio).toFixed(2)}*I4:${(iva23 * ratio).toFixed(2)}*O:${currentPersonToPay.toFixed(2)}`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`;
-
-    const invoiceData = {
-      invoiceNumber,
-      date: new Date().toLocaleDateString('pt-PT') + ' ' + new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-      tableName: selectedTableId !== null
-        ? `Mesa #${tables.find(t => String(t.id) === String(selectedTableId))?.number ?? selectedTableId}`
-        : 'Balcão',
-      operator: staffRole ? `Atendente (${staffRole})` : 'Operador AzoresPOS',
-      items: posCart.map(i => {
-        const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
-        return {
-          name: i.product.name,
-          price: i.product.price * ratio,
-          quantity: i.quantity,
-          category: i.product.category || '',
-          ivaRate: isDrink ? 23 : 13
-        };
-      }),
-      subtotal: totalCart * ratio,
-      discount: posDiscountVal * ratio,
-      serviceTax: posServiceTax * ratio,
-      total: currentPersonToPay,
-      nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
-      paymentMethod: paymentMethod === 'cash' ? 'Dinheiro' : 'Multibanco',
-      cashReceived: received,
-      change,
-      splitBy: paymentSplitBy,
-      isSplitActive,
-      splitPaidCount: newPaidCount,
-      base13: base13 * ratio,
-      iva13: iva13 * ratio,
-      base23: base23 * ratio,
-      iva23: iva23 * ratio,
-      atcud: atcudCode,
-      qrCodeUrl,
-      note: posNote
-    };
-
-    // ── Gravar Registo de Venda ──
-    const saleRecord = {
-      id: `sale_${Date.now()}`,
-      date: new Date().toISOString(),
-      tableName: invoiceData.tableName,
-      customerName: invoiceData.nif,
-      total: currentPersonToPay,
-      items: invoiceData.items.map(it => ({
-        name: it.name,
-        price: it.price,
-        quantity: it.quantity,
-        category: it.category
-      }))
-    };
-
-    const updatedSalesHistory = [...existingSalesHistory, saleRecord];
-
-    const isSplitFinished = !isSplitActive || newPaidCount >= paymentSplitBy;
-
-    if (isSplitFinished) {
-      if (selectedTableId !== null) {
-        const updatedTables = tables.map(t => {
-          if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
-            return {
-              ...t,
-              status: 'available' as const,
-              customerName: undefined,
-              reservationTime: undefined,
-              currentTab: [],
-              pendingOrderItems: [],
-              alertStatus: 'none' as const
-            };
-          }
-          return t;
-        });
-        setTables(updatedTables);
-        
-        const updatedReservations = (business.reservations || []).map((r: any) => {
-          if (String(r.tableId) === String(selectedTableId) && (r.status === 'accepted' || r.status === 'occupied')) {
-            return { ...r, status: 'finished' as const };
-          }
-          return r;
-        });
-        
-        onUpdateBusiness({
-          ...business,
-          tables: updatedTables,
-          reservations: updatedReservations,
-          salesHistory: updatedSalesHistory
-        } as any);
-        
-        setSelectedTableId(null);
-      } else {
-        onUpdateBusiness({
-          ...business,
-          salesHistory: updatedSalesHistory
-        } as any);
-      }
-
-      setSplitRemainingTotal(null);
-      setSplitPaidInvoicesCount(0);
-      handleClearSale();
-    } else {
-      setSplitRemainingTotal(newRemaining);
-      setSplitPaidInvoicesCount(newPaidCount);
-
-      onUpdateBusiness({
-        ...business,
-        salesHistory: updatedSalesHistory
-      } as any);
-    }
-
-    setLastGeneratedInvoice(invoiceData);
-    setInvoicePreviewOpen(true);
-    setPaymentFormOpen(false);
-  };
+;
 
   const addToPosCart = (product: Product) => {
     setPosCart(prev => {
@@ -1499,6 +1313,195 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     { id: 'F3', name: 'Pedro Ávila',   phone: '+351 914 003 003', balance: -12.00, lastVisit: '2026-04-18' },
     { id: 'F4', name: 'Luisa Correia', phone: '+351 915 004 004', balance: 5.00,   lastVisit: '2026-04-25' },
   ]);
+
+  const executeConfirmPayment = () => {
+    if (posCart.length === 0) return;
+
+    const totalCart = posTotal;
+    const discountFactor = totalCart > 0 ? (posTotalAfterDiscount / totalCart) : 1;
+
+    // ── Calcular IVA Discriminado (13% e 23%) ──
+    let base13 = 0;
+    let iva13 = 0;
+    let base23 = 0;
+    let iva23 = 0;
+
+    posCart.forEach(i => {
+      const itemTotal = (i.product.price * i.quantity) * discountFactor;
+      const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+      const rate = isDrink ? 23 : 13;
+      const itemBase = itemTotal / (1 + rate / 100);
+      const itemIva = itemTotal - itemBase;
+      
+      if (rate === 13) {
+        base13 += itemBase;
+        iva13 += itemIva;
+      } else {
+        base23 += itemBase;
+        iva23 += itemIva;
+      }
+    });
+
+    // IVA da taxa de serviço em Portugal (23%)
+    if (posServiceTax > 0) {
+      const sBase = posServiceTax / 1.23;
+      const sIva = posServiceTax - sBase;
+      base23 += sBase;
+      iva23 += sIva;
+    }
+
+    // Determine the amount to pay for this specific step/person
+    let currentPersonToPay = posFinalTotal;
+    let isSplitActive = paymentSplitBy > 1;
+    let newPaidCount = splitPaidInvoicesCount;
+    let newRemaining = splitRemainingTotal;
+
+    if (isSplitActive) {
+      if (splitRemainingTotal === null) {
+        // First payment of the split
+        newRemaining = posFinalTotal;
+      }
+      currentPersonToPay = newRemaining / (paymentSplitBy - splitPaidInvoicesCount);
+      newPaidCount = splitPaidInvoicesCount + 1;
+      newRemaining = newRemaining - currentPersonToPay;
+    }
+
+    // Proportional scaling for invoice totals
+    const ratio = currentPersonToPay / posFinalTotal;
+
+    const received = parseFloat(paymentCashReceived) || currentPersonToPay;
+    const change = Math.max(0, received - currentPersonToPay);
+
+    // ── Numeração Sequencial Certificada e ATCUD ──
+    const existingSalesHistory: any[] = (business as any).salesHistory || [];
+    const nextInvoiceNum = existingSalesHistory.length + 1;
+    const year = new Date().getFullYear();
+    const invoiceNumber = `FR ${year}/${String(nextInvoiceNum).padStart(6, '0')}`;
+    const atcudCode = `JF5T-3E2C-7P1X-${String(nextInvoiceNum).padStart(6, '0')}`;
+
+    // Morada e NIF da empresa
+    const companyNif = (business as any).nif || '509999999';
+    const clientNif = paymentNif || '999999990'; // 999999990 é o NIF genérico de Consumidor Final em Portugal
+    const formattedDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    
+    // String oficial do QR Code da AT em Portugal
+    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${(iva13 * ratio).toFixed(2)}*I4:${(iva23 * ratio).toFixed(2)}*O:${currentPersonToPay.toFixed(2)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`;
+
+    const invoiceData = {
+      invoiceNumber,
+      date: new Date().toLocaleDateString('pt-PT') + ' ' + new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+      tableName: selectedTableId !== null
+        ? `Mesa #${tables.find(t => String(t.id) === String(selectedTableId))?.number ?? selectedTableId}`
+        : 'Balcão',
+      operator: staffRole ? `Atendente (${staffRole})` : 'Operador AzoresPOS',
+      items: posCart.map(i => {
+        const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+        return {
+          name: i.product.name,
+          price: i.product.price * ratio,
+          quantity: i.quantity,
+          category: i.product.category || '',
+          ivaRate: isDrink ? 23 : 13
+        };
+      }),
+      subtotal: totalCart * ratio,
+      discount: posDiscountVal * ratio,
+      serviceTax: posServiceTax * ratio,
+      total: currentPersonToPay,
+      nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
+      paymentMethod: paymentMethod === 'cash' ? 'Dinheiro' : 'Multibanco',
+      cashReceived: received,
+      change,
+      splitBy: paymentSplitBy,
+      isSplitActive,
+      splitPaidCount: newPaidCount,
+      base13: base13 * ratio,
+      iva13: iva13 * ratio,
+      base23: base23 * ratio,
+      iva23: iva23 * ratio,
+      atcud: atcudCode,
+      qrCodeUrl,
+      note: posNote
+    };
+
+    // ── Gravar Registo de Venda ──
+    const saleRecord = {
+      id: `sale_${Date.now()}`,
+      date: new Date().toISOString(),
+      tableName: invoiceData.tableName,
+      customerName: invoiceData.nif,
+      total: currentPersonToPay,
+      items: invoiceData.items.map(it => ({
+        name: it.name,
+        price: it.price,
+        quantity: it.quantity,
+        category: it.category
+      }))
+    };
+
+    const updatedSalesHistory = [...existingSalesHistory, saleRecord];
+
+    const isSplitFinished = !isSplitActive || newPaidCount >= paymentSplitBy;
+
+    if (isSplitFinished) {
+      if (selectedTableId !== null) {
+        const updatedTables = tables.map(t => {
+          if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
+            return {
+              ...t,
+              status: 'available' as const,
+              customerName: undefined,
+              reservationTime: undefined,
+              currentTab: [],
+              pendingOrderItems: [],
+              alertStatus: 'none' as const
+            };
+          }
+          return t;
+        });
+        setTables(updatedTables);
+        
+        const updatedReservations = (business.reservations || []).map((r: any) => {
+          if (String(r.tableId) === String(selectedTableId) && (r.status === 'accepted' || r.status === 'occupied')) {
+            return { ...r, status: 'finished' as const };
+          }
+          return r;
+        });
+        
+        onUpdateBusiness({
+          ...business,
+          tables: updatedTables,
+          reservations: updatedReservations,
+          salesHistory: updatedSalesHistory
+        } as any);
+        
+        setSelectedTableId(null);
+      } else {
+        onUpdateBusiness({
+          ...business,
+          salesHistory: updatedSalesHistory
+        } as any);
+      }
+
+      setSplitRemainingTotal(null);
+      setSplitPaidInvoicesCount(0);
+      handleClearSale();
+    } else {
+      setSplitRemainingTotal(newRemaining);
+      setSplitPaidInvoicesCount(newPaidCount);
+
+      onUpdateBusiness({
+        ...business,
+        salesHistory: updatedSalesHistory
+      } as any);
+    }
+
+    setLastGeneratedInvoice(invoiceData);
+    setInvoicePreviewOpen(true);
+    setPaymentFormOpen(false);
+  }
+
 
   const saveStaff = (e: React.FormEvent) => {
     e.preventDefault();
