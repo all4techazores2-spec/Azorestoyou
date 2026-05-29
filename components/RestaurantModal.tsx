@@ -49,7 +49,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [bookingNote, setBookingNote] = useState('');
   const [prepTimeChoice, setPrepTimeChoice] = useState<'now' | 'at_reservation' | 'custom'>('at_reservation');
   const [customPrepTime, setCustomPrepTime] = useState('');
-  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve' | null>(null);
+  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve' | null>('reserve');
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [customerEmail, setCustomerEmail] = useState(userProfile?.email || 'traveler@azorestoyou.com');
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || '+351 912 345 678');
@@ -791,33 +791,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                             />
                           </div>
 
-                          <div>
-                             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Garantia de Reserva</h5>
-                             <div className="grid grid-cols-2 gap-2">
-                               {[
-                                 { id: 'reserve', label: 'No Local', icon: <Wallet size={14} /> },
-                                 { id: 'mbway', label: 'MBWay', icon: <Smartphone size={14} /> },
-                                 { id: 'points', label: 'Créditos', icon: <Star size={14} /> },
-                                 { id: 'transfer', label: 'Cartão', icon: <CreditCard size={14} /> }
-                               ].map(opt => (
-                                 <button 
-                                   key={opt.id}
-                                   onClick={() => setPaymentType(opt.id as any)}
-                                   className={`p-3 rounded-2xl border-2 text-left transition-all active:scale-95
-                                     ${paymentType === opt.id 
-                                       ? 'border-red-500 bg-red-500/10' 
-                                       : 'border-white/5 hover:border-white/20'}`}
-                                 >
-                                   <div className="flex items-center gap-2">
-                                     <div className={`p-1.5 rounded-lg ${paymentType === opt.id ? 'bg-red-500 text-white' : 'bg-white/10 text-slate-400'}`}>
-                                       {opt.icon}
-                                     </div>
-                                     <span className="text-[10px] font-black uppercase tracking-tight">{opt.label}</span>
-                                   </div>
-                                 </button>
-                               ))}
-                             </div>
-                          </div>
+
 
                           {/* Dynamic Payment Fields */}
                           {paymentType === 'mbway' && (

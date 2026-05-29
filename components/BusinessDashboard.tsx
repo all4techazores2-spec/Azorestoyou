@@ -881,6 +881,28 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       iva23 += sIva;
     }
 
+    // Determine the amount to pay for this specific step/person
+    let currentPersonToPay = posFinalTotal;
+    let isSplitActive = paymentSplitBy > 1;
+    let newPaidCount = splitPaidInvoicesCount;
+    let newRemaining = splitRemainingTotal;
+
+    if (isSplitActive) {
+      if (splitRemainingTotal === null) {
+        // First payment of the split
+        newRemaining = posFinalTotal;
+      }
+      currentPersonToPay = newRemaining / (paymentSplitBy - splitPaidInvoicesCount);
+      newPaidCount = splitPaidInvoicesCount + 1;
+      newRemaining = newRemaining - currentPersonToPay;
+    }
+
+    // Proportional scaling for invoice totals
+    const ratio = currentPersonToPay / posFinalTotal;
+
+    const received = parseFloat(paymentCashReceived) || currentPersonToPay;
+    const change = Math.max(0, received - currentPersonToPay);
+
     // ── Numeração Sequencial Certificada e ATCUD ──
     const existingSalesHistory: any[] = (business as any).salesHistory || [];
     const nextInvoiceNum = existingSalesHistory.length + 1;
@@ -894,11 +916,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const formattedDate = new Date().toISOString().split('T')[0].replace(/-/g, '');
     
     // String oficial do QR Code da AT em Portugal
-    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${iva13.toFixed(2)}*I4:${iva23.toFixed(2)}*O:${posFinalTotal.toFixed(2)}`;
+    const qrCodeData = `A:${companyNif}*B:${clientNif === 'Consumidor Final' ? '999999990' : clientNif}*C:PT*D:FR*E:N*F:${formattedDate}*G:${invoiceNumber}*H:${atcudCode}*I1:PT*I3:${(iva13 * ratio).toFixed(2)}*I4:${(iva23 * ratio).toFixed(2)}*O:${currentPersonToPay.toFixed(2)}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeData)}`;
-
-    const received = parseFloat(paymentCashReceived) || posFinalTotal;
-    const change = Math.max(0, received - posFinalTotal);
 
     const invoiceData = {
       invoiceNumber,
@@ -911,25 +930,27 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
         return {
           name: i.product.name,
-          price: i.product.price,
+          price: i.product.price * ratio,
           quantity: i.quantity,
           category: i.product.category || '',
           ivaRate: isDrink ? 23 : 13
         };
       }),
-      subtotal: totalCart,
-      discount: posDiscountVal,
-      serviceTax: posServiceTax,
-      total: posFinalTotal,
+      subtotal: totalCart * ratio,
+      discount: posDiscountVal * ratio,
+      serviceTax: posServiceTax * ratio,
+      total: currentPersonToPay,
       nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
       paymentMethod: paymentMethod === 'cash' ? 'Dinheiro' : 'Multibanco',
       cashReceived: received,
       change,
       splitBy: paymentSplitBy,
-      base13,
-      iva13,
-      base23,
-      iva23,
+      isSplitActive,
+      splitPaidCount: newPaidCount,
+      base13: base13 * ratio,
+      iva13: iva13 * ratio,
+      base23: base23 * ratio,
+      iva23: iva23 * ratio,
       atcud: atcudCode,
       qrCodeUrl,
       note: posNote
@@ -941,7 +962,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       date: new Date().toISOString(),
       tableName: invoiceData.tableName,
       customerName: invoiceData.nif,
-      total: posFinalTotal,
+      total: currentPersonToPay,
       items: invoiceData.items.map(it => ({
         name: it.name,
         price: it.price,
@@ -952,39 +973,55 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
     const updatedSalesHistory = [...existingSalesHistory, saleRecord];
 
-    if (selectedTableId !== null) {
-      const updatedTables = tables.map(t => {
-        if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
-          return {
-            ...t,
-            status: 'available' as const,
-            customerName: undefined,
-            reservationTime: undefined,
-            currentTab: [],
-            pendingOrderItems: [],
-            alertStatus: 'none' as const
-          };
-        }
-        return t;
-      });
-      setTables(updatedTables);
-      
-      const updatedReservations = (business.reservations || []).map((r: any) => {
-        if (String(r.tableId) === String(selectedTableId) && (r.status === 'accepted' || r.status === 'occupied')) {
-          return { ...r, status: 'finished' as const };
-        }
-        return r;
-      });
-      
-      onUpdateBusiness({
-        ...business,
-        tables: updatedTables,
-        reservations: updatedReservations,
-        salesHistory: updatedSalesHistory
-      } as any);
-      
-      setSelectedTableId(null);
+    const isSplitFinished = !isSplitActive || newPaidCount >= paymentSplitBy;
+
+    if (isSplitFinished) {
+      if (selectedTableId !== null) {
+        const updatedTables = tables.map(t => {
+          if (t.id === selectedTableId || String(t.id) === String(selectedTableId)) {
+            return {
+              ...t,
+              status: 'available' as const,
+              customerName: undefined,
+              reservationTime: undefined,
+              currentTab: [],
+              pendingOrderItems: [],
+              alertStatus: 'none' as const
+            };
+          }
+          return t;
+        });
+        setTables(updatedTables);
+        
+        const updatedReservations = (business.reservations || []).map((r: any) => {
+          if (String(r.tableId) === String(selectedTableId) && (r.status === 'accepted' || r.status === 'occupied')) {
+            return { ...r, status: 'finished' as const };
+          }
+          return r;
+        });
+        
+        onUpdateBusiness({
+          ...business,
+          tables: updatedTables,
+          reservations: updatedReservations,
+          salesHistory: updatedSalesHistory
+        } as any);
+        
+        setSelectedTableId(null);
+      } else {
+        onUpdateBusiness({
+          ...business,
+          salesHistory: updatedSalesHistory
+        } as any);
+      }
+
+      setSplitRemainingTotal(null);
+      setSplitPaidInvoicesCount(0);
+      handleClearSale();
     } else {
+      setSplitRemainingTotal(newRemaining);
+      setSplitPaidInvoicesCount(newPaidCount);
+
       onUpdateBusiness({
         ...business,
         salesHistory: updatedSalesHistory
@@ -994,7 +1031,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setLastGeneratedInvoice(invoiceData);
     setInvoicePreviewOpen(true);
     setPaymentFormOpen(false);
-    handleClearSale();
   };
 
   const addToPosCart = (product: Product) => {
@@ -1049,6 +1085,83 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
+  const handlePrintTableBill = () => {
+    if (posCart.length === 0) return;
+
+    const totalCart = posTotal;
+    const discountFactor = totalCart > 0 ? (posTotalAfterDiscount / totalCart) : 1;
+
+    // Calcular IVA Discriminado
+    let base13 = 0;
+    let iva13 = 0;
+    let base23 = 0;
+    let iva23 = 0;
+
+    posCart.forEach(i => {
+      const itemTotal = (i.product.price * i.quantity) * discountFactor;
+      const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+      const rate = isDrink ? 23 : 13;
+      const itemBase = itemTotal / (1 + rate / 100);
+      const itemIva = itemTotal - itemBase;
+      
+      if (rate === 13) {
+        base13 += itemBase;
+        iva13 += itemIva;
+      } else {
+        base23 += itemBase;
+        iva23 += itemIva;
+      }
+    });
+
+    if (posServiceTax > 0) {
+      const sBase = posServiceTax / 1.23;
+      const sIva = posServiceTax - sBase;
+      base23 += sBase;
+      iva23 += sIva;
+    }
+
+    const companyNif = (business as any).nif || '509999999';
+    const clientNif = paymentNif || '999999990';
+
+    const invoiceData = {
+      invoiceNumber: 'PROVISÓRIA',
+      date: new Date().toLocaleDateString('pt-PT') + ' ' + new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      tableName: selectedTableId !== null
+        ? `Mesa #${tables.find(t => String(t.id) === String(selectedTableId))?.number ?? selectedTableId}`
+        : 'Balcão',
+      operator: loggedInStaff?.name ? `Atendente (${loggedInStaff.name})` : 'Operador AzoresPOS',
+      items: posCart.map(i => {
+        const isDrink = ['bebidas', 'vinhos', 'aperitivos', 'drinks', 'wine', 'beverages'].includes((i.product.category || '').toLowerCase());
+        return {
+          name: i.product.name,
+          price: i.product.price,
+          quantity: i.quantity,
+          category: i.product.category || '',
+          ivaRate: isDrink ? 23 : 13
+        };
+      }),
+      subtotal: totalCart,
+      discount: posDiscountVal,
+      serviceTax: posServiceTax,
+      total: posFinalTotal,
+      nif: clientNif === '999999990' || !clientNif ? 'Consumidor Final' : clientNif,
+      paymentMethod: 'A aguardar',
+      cashReceived: 0,
+      change: 0,
+      splitBy: 1,
+      base13,
+      iva13,
+      base23,
+      iva23,
+      atcud: 'PROVISÓRIA',
+      qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PROVISORIA',
+      note: posNote
+    };
+
+    setLastGeneratedInvoice(invoiceData);
+    setInvoicePreviewOpen(true);
+  };
+
   const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientName.trim()) {
@@ -1095,6 +1208,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [selectedPrinter, setSelectedPrinter] = useState<string>('xp80');
   const [showPrinterSelect, setShowPrinterSelect] = useState(false);
   const [isPrintingAnim, setIsPrintingAnim] = useState(false);
+
+  // Split bill states
+  const [splitRemainingTotal, setSplitRemainingTotal] = useState<number | null>(null);
+  const [splitPaidInvoicesCount, setSplitPaidInvoicesCount] = useState<number>(0);
 
   const handlePrint = (printerId: string) => {
     setSelectedPrinter(printerId);
@@ -3224,6 +3341,7 @@ return t;
                               (statusGroup.id === 'preparing' && o.status === 'preparando') ||
                               (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
                             )
+                            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
                               .map((order, idx) => (
                               <motion.div 
                                 layout
@@ -3240,7 +3358,7 @@ return t;
                                     </div>
                                     <div className="text-right">
                                        <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                                          {new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                          {new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
                                        </p>
                                     </div>
                                  </div>
@@ -3348,6 +3466,16 @@ return t;
                   </div>
                   
                   <div className="flex items-center gap-4">
+                    {selectedTableId !== null && posCart.length > 0 && (
+                      <button
+                        onClick={handlePrintTableBill}
+                        className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-100 text-slate-700 hover:text-slate-900 transition-all shadow-sm"
+                      >
+                         <Printer size={16} className="text-slate-500" />
+                         <span className="font-black text-xs uppercase tracking-widest">Imprimir Conta</span>
+                      </button>
+                    )}
+
                     <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
                        <TableIcon size={16} className="text-slate-400" />
                        <select 
@@ -3610,9 +3738,23 @@ return t;
                           {/* Total Display */}
                           <div className="bg-gradient-to-br from-slate-950 to-slate-900 rounded-[2rem] p-6 border border-slate-800 text-center relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Total a Pagar</p>
-                            <p className="text-5xl font-black text-emerald-400 mt-2 tracking-tighter">€{posFinalTotal.toFixed(2).replace('.', ',')}</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Já inclui 10% de taxa de serviço (IVA 23% incl.)</p>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                              {splitRemainingTotal !== null ? `Total a Pagar (Pessoa ${splitPaidInvoicesCount + 1} de ${paymentSplitBy})` : 'Total a Pagar'}
+                            </p>
+                            <p className="text-5xl font-black text-emerald-400 mt-2 tracking-tighter">
+                              €{(splitRemainingTotal !== null 
+                                ? (splitRemainingTotal / (paymentSplitBy - splitPaidInvoicesCount)) 
+                                : (paymentSplitBy > 1 ? (posFinalTotal / paymentSplitBy) : posFinalTotal)
+                              ).toFixed(2).replace('.', ',')}
+                            </p>
+                            {splitRemainingTotal !== null && (
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1.5">
+                                Restam €{splitRemainingTotal.toFixed(2)} por liquidar da conta geral (€{posFinalTotal.toFixed(2)})
+                              </p>
+                            )}
+                            {splitRemainingTotal === null && (
+                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Já inclui 10% de taxa de serviço (IVA 23% incl.)</p>
+                            )}
                           </div>
 
                           {/* Dividir a Conta */}
@@ -3624,8 +3766,9 @@ return t;
                             <div className="grid grid-cols-5 gap-2">
                               <button 
                                 type="button"
+                                disabled={splitRemainingTotal !== null}
                                 onClick={() => setPaymentSplitBy(prev => Math.max(1, prev - 1))}
-                                className="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-black text-base active:scale-95 transition-all text-slate-300 animate-hover"
+                                className={`py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-black text-base active:scale-95 transition-all text-slate-300 animate-hover ${splitRemainingTotal !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                               >
                                 -
                               </button>
@@ -3633,8 +3776,9 @@ return t;
                                 <button
                                   key={num}
                                   type="button"
+                                  disabled={splitRemainingTotal !== null}
                                   onClick={() => setPaymentSplitBy(num)}
-                                  className={`py-3 rounded-xl font-black text-xs transition-all active:scale-95 ${paymentSplitBy === num ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-400'}`}
+                                  className={`py-3 rounded-xl font-black text-xs transition-all active:scale-95 ${paymentSplitBy === num ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-400'} ${splitRemainingTotal !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                   {num === 1 ? 'Individual' : `${num} Pax`}
                                 </button>
@@ -3843,7 +3987,7 @@ return t;
                     const formattedItems = (lastGeneratedInvoice.items || []).map((item: any) => {
                       const itemTotalStr = `€${(item.price * item.quantity).toFixed(2)}`;
                       const itemIvaStr = `${item.ivaRate}%`;
-                      const itemLeftStr = `{item.quantity} ${item.name}`;
+                      const itemLeftStr = `${item.quantity}x ${item.name}`;
                       return formatThreeCols(itemLeftStr, itemIvaStr, itemTotalStr);
                     });
 
@@ -3935,7 +4079,7 @@ return t;
                                   </div>
 
                                   <div className="text-center font-bold border-y-2 border-dashed border-slate-300 py-1.5 my-2 uppercase tracking-wide text-slate-800">
-                                    FATURA RECIBO {lastGeneratedInvoice.invoiceNumber}
+                                    {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'CONTA DA MESA' : `FATURA RECIBO ${lastGeneratedInvoice.invoiceNumber}`}
                                   </div>
 
                                   {/* Detalhes de Venda */}
@@ -3998,36 +4142,39 @@ return t;
                                         <p className="font-bold text-slate-800">{formatReceiptLine(`Troco:`, `€${lastGeneratedInvoice.change.toFixed(2)}`)}</p>
                                       </>
                                     )}
-                                    {lastGeneratedInvoice.splitBy > 1 && (
-                                      <p className="font-bold text-blue-600 mt-1">
-                                        {formatReceiptLine(`Dividido por ${lastGeneratedInvoice.splitBy} pessoas:`, `€${(lastGeneratedInvoice.total / lastGeneratedInvoice.splitBy).toFixed(2)}/pax`)}
-                                      </p>
+                                    {lastGeneratedInvoice.isSplitActive && (
+                                      <div className="text-[10px] text-blue-600 font-bold mt-1 space-y-0.5 animate-pulse">
+                                        <p>{formatReceiptLine(`Conta dividida por ${lastGeneratedInvoice.splitBy} pessoas`, '')}</p>
+                                        <p>{formatReceiptLine(`Fração: Pessoa ${lastGeneratedInvoice.splitPaidCount} de ${lastGeneratedInvoice.splitBy}`, '')}</p>
+                                      </div>
                                     )}
                                   </div>
 
                                   {/* ATCUD e QR CODE */}
-                                  <div className="border-t-2 border-dashed border-slate-300 mt-4 pt-3 flex flex-col items-center space-y-3">
-                                    <p className="text-[10px] text-slate-800 font-bold text-center">
-                                      ATCUD: {lastGeneratedInvoice.atcud}
-                                    </p>
-                                    
-                                    {/* QR Code de 3x3 cm */}
-                                    <div className="bg-white p-2.5 border border-slate-200 rounded-xl shadow-inner flex items-center justify-center">
-                                      <img
-                                        src={lastGeneratedInvoice.qrCodeUrl}
-                                        alt="AT QR Code"
-                                        className="w-[120px] h-[120px]"
-                                        style={{ minWidth: '120px', minHeight: '120px' }}
-                                      />
+                                  {lastGeneratedInvoice.invoiceNumber !== 'PROVISÓRIA' && (
+                                    <div className="border-t-2 border-dashed border-slate-300 mt-4 pt-3 flex flex-col items-center space-y-3">
+                                      <p className="text-[10px] text-slate-800 font-bold text-center">
+                                        ATCUD: {lastGeneratedInvoice.atcud}
+                                      </p>
+                                      
+                                      {/* QR Code de 3x3 cm */}
+                                      <div className="bg-white p-2.5 border border-slate-200 rounded-xl shadow-inner flex items-center justify-center">
+                                        <img
+                                          src={lastGeneratedInvoice.qrCodeUrl}
+                                          alt="AT QR Code"
+                                          className="w-[120px] h-[120px]"
+                                          style={{ minWidth: '120px', minHeight: '120px' }}
+                                        />
+                                      </div>
+                                      
+                                      {/* Assinatura de Software AT */}
+                                      <div className="text-[9px] text-slate-500 text-center leading-tight space-y-0.5">
+                                        <p>Processado por programa certificado nº 1234/AT</p>
+                                        <p>Software: Azores4you v1.0</p>
+                                        <p>Certificação: 2026/AT</p>
+                                      </div>
                                     </div>
-                                    
-                                    {/* Assinatura de Software AT */}
-                                    <div className="text-[9px] text-slate-500 text-center leading-tight space-y-0.5">
-                                      <p>Processado por programa certificado nº 1234/AT</p>
-                                      <p>Software: Azores4you v1.0</p>
-                                      <p>Certificação: 2026/AT</p>
-                                    </div>
-                                  </div>
+                                  )}
 
                                   {/* Nota / Observações de Rodapé */}
                                   {lastGeneratedInvoice.note && (
@@ -4057,11 +4204,19 @@ return t;
                           {/* Coluna Direita: Opções da Impressora e Controlo */}
                           <div className="w-full lg:w-96 flex flex-col justify-between bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 no-print shadow-2xl">
                             <div className="space-y-6">
-                              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex gap-3">
-                                <span className="text-xl text-emerald-400">✓</span>
+                              <div className={`${lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} border rounded-2xl p-4 flex gap-3`}>
+                                <span className={`text-xl ${lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                  {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? '📝' : '✓'}
+                                </span>
                                 <div>
-                                  <h4 className="font-black text-emerald-400 text-xs uppercase tracking-widest">Fatura Registada</h4>
-                                  <p className="text-[10px] text-slate-400 font-bold mt-1">A venda foi integrada e a fatura certificada pela Autoridade Tributária com sucesso.</p>
+                                  <h4 className={`font-black ${lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'text-amber-400' : 'text-emerald-400'} text-xs uppercase tracking-widest`}>
+                                    {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'Consulta de Conta' : 'Fatura Registada'}
+                                  </h4>
+                                  <p className="text-[10px] text-slate-400 font-bold mt-1">
+                                    {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA'
+                                      ? 'Esta é uma consulta de mesa provisória para levar ao cliente antes de emitir a fatura final.'
+                                      : 'A venda foi integrada e a fatura certificada pela Autoridade Tributária com sucesso.'}
+                                  </p>
                                 </div>
                               </div>
 
@@ -4112,7 +4267,7 @@ return t;
                                       className="bg-blue-500 h-full rounded-full"
                                     />
                                   </div>
-                                  <p className="text-[9px] text-slate-500 font-mono text-center">📠 Enviando comandos ESC/POS via USB/Wifi...</p>
+                                    <p className="text-[9px] text-slate-500 font-mono text-center">📠 Enviando comandos ESC/POS via USB/Wifi...</p>
                                 </div>
                               ) : (
                                 <motion.button
@@ -4120,7 +4275,7 @@ return t;
                                   onClick={() => handlePrint(selectedPrinter)}
                                   className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2"
                                 >
-                                  <Printer size={16} /> Imprimir Fatura
+                                  <Printer size={16} /> {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'Imprimir Conta' : 'Imprimir Fatura'}
                                 </motion.button>
                               )}
 
@@ -4129,10 +4284,16 @@ return t;
                                   onClick={() => {
                                     setInvoicePreviewOpen(false);
                                     setLastGeneratedInvoice(null);
+                                    if (splitRemainingTotal !== null && splitRemainingTotal > 0.01) {
+                                      setPaymentFormOpen(true);
+                                      setPaymentNif('');
+                                      setPaymentCashReceived('');
+                                    }
                                   }}
                                   className="w-full py-4.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                  Concluir & Novo Pedido <ArrowRight size={14} />
+                                  {lastGeneratedInvoice.invoiceNumber === 'PROVISÓRIA' ? 'Voltar ao POS' : 
+                                   (splitRemainingTotal !== null && splitRemainingTotal > 0.01) ? `Seguinte (Pessoa ${splitPaidInvoicesCount + 1})` : 'Concluir & Novo Pedido'} <ArrowRight size={14} />
                               </motion.button>
                             </div>
                           </div>
