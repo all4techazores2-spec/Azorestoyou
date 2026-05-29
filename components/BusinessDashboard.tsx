@@ -1066,6 +1066,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const posTotalAfterDiscount = Math.max(0, posTotal - posDiscountVal);
   const posServiceTax = posTotalAfterDiscount * 0.10;
   const posFinalTotal = posTotalAfterDiscount + posServiceTax;
+  const shareToPay = splitRemainingTotal !== null 
+    ? (splitRemainingTotal / (paymentSplitBy - splitPaidInvoicesCount)) 
+    : (paymentSplitBy > 1 ? (posFinalTotal / paymentSplitBy) : posFinalTotal);
 
   const handleClearSale = () => {
     setPosCart([]);
@@ -2926,6 +2929,11 @@ return t;
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setAssignStaffTableTarget(table);
+                                  } else if (table.alertStatus === 'waiting_bill') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setActiveTab('pos');
+                                    handleSelectTable(table.id);
                                   } else {
                                     toggleTableStatus(table.id);
                                   }
@@ -3869,7 +3877,7 @@ return t;
                                 type="button"
                                 onClick={() => {
                                   setPaymentMethod('cash');
-                                  setPaymentCashReceived(posFinalTotal.toFixed(2));
+                                  setPaymentCashReceived(shareToPay.toFixed(2));
                                 }}
                                 className={`p-6 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all active:scale-95 ${paymentMethod === 'cash' ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-lg shadow-emerald-500/10' : 'border-slate-800 bg-slate-950/20 text-slate-400 hover:border-slate-700 hover:text-white'}`}
                               >
@@ -3907,12 +3915,12 @@ return t;
                               </div>
                               {/* Atalhos de Dinheiro */}
                               <div className="flex flex-wrap gap-2">
-                                {[posFinalTotal, 5, 10, 20, 50, 100].map((val, idx) => {
+                                {[shareToPay, 5, 10, 20, 50, 100].map((val, idx) => {
                                   const isExact = idx === 0;
                                   const displayVal = isExact ? 'Exato' : `€${val}`;
                                   const targetVal = val;
                                   
-                                  if (!isExact && val < posFinalTotal) return null;
+                                  if (!isExact && val < shareToPay) return null;
 
                                   return (
                                     <button
@@ -3927,12 +3935,12 @@ return t;
                                 })}
                               </div>
                               {/* Cálculo de Troco */}
-                              {parseFloat(paymentCashReceived) >= posFinalTotal ? (
+                              {parseFloat(paymentCashReceived) >= shareToPay ? (
                                 <div className="pt-4 border-t border-slate-800/80 flex justify-between items-center">
                                   <div>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Troco a dar:</p>
                                     <p className="text-3xl font-black text-emerald-400 tracking-tighter mt-1">
-                                      €{(parseFloat(paymentCashReceived) - posFinalTotal).toFixed(2).replace('.', ',')}
+                                      €{(parseFloat(paymentCashReceived) - shareToPay).toFixed(2).replace('.', ',')}
                                     </p>
                                   </div>
                                   <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
@@ -3941,7 +3949,7 @@ return t;
                                 </div>
                               ) : parseFloat(paymentCashReceived) > 0 ? (
                                 <div className="pt-2 text-center">
-                                  <p className="text-xs text-amber-500 font-bold">Falta €{(posFinalTotal - parseFloat(paymentCashReceived)).toFixed(2)} por liquidar</p>
+                                  <p className="text-xs text-amber-500 font-bold">Falta €{(shareToPay - parseFloat(paymentCashReceived)).toFixed(2)} por liquidar</p>
                                 </div>
                               ) : null}
                             </motion.div>
