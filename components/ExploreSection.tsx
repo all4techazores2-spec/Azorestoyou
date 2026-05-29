@@ -7,7 +7,7 @@ import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
 import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
-import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users } from 'lucide-react';
 import { getTranslation } from '../translations';
 
 interface ExploreSectionProps {
@@ -142,6 +142,69 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
   const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
   const [trailZoneFilter, setTrailZoneFilter] = useState<'Todos' | 'Oeste' | 'Centro' | 'Leste'>('Todos');
+  
+  // Follow and Like states for Categories/Subcategories
+  const [followedCats, setFollowedCats] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('followed_categories');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [likedCats, setLikedCats] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('liked_categories');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleFollowCategory = (catKey: string) => {
+    const next = { ...followedCats, [catKey]: !followedCats[catKey] };
+    setFollowedCats(next);
+    localStorage.setItem('followed_categories', JSON.stringify(next));
+  };
+
+  const toggleLikeCategory = (catKey: string) => {
+    const next = { ...likedCats, [catKey]: !likedCats[catKey] };
+    setLikedCats(next);
+    localStorage.setItem('liked_categories', JSON.stringify(next));
+  };
+
+  const getCategoryFollowers = (catKey: string) => {
+    let hash = 0;
+    for (let i = 0; i < catKey.length; i++) {
+      hash = catKey.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const base = Math.abs(hash % 450) + 75; // Base range 75 - 525 followers
+    return followedCats[catKey] ? base + 1 : base;
+  };
+
+  const renderFollowLikeButtons = (catKey: string) => {
+    return (
+      <div className="flex items-center gap-2 mt-2 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full border border-slate-100/80 shadow-sm w-fit z-10">
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleFollowCategory(catKey); }}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95
+            ${followedCats[catKey] ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200/50'}`}
+        >
+          <Users size={11} />
+          <span>Seguir ({getCategoryFollowers(catKey)})</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleLikeCategory(catKey); }}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95
+            ${likedCats[catKey] ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200/50'}`}
+        >
+          <ThumbsUp size={11} className={likedCats[catKey] ? 'fill-current' : ''} />
+          <span>{likedCats[catKey] ? 'Gostei' : 'Gostar'}</span>
+        </button>
+      </div>
+    );
+  };
   
   // Handle external item selection (e.g. from slider)
   React.useEffect(() => {
@@ -842,6 +905,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {filtered.length} resultados encontrados
                 </p>
+                {renderFollowLikeButtons(`beauty_${beautyFilter}`)}
               </div>
            </div>
            <button 
@@ -933,6 +997,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {filtered.length} serviços especializados
                 </p>
+                {renderFollowLikeButtons(`services_${servicesFilter}`)}
               </div>
            </div>
            <button 
@@ -1102,6 +1167,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       {filtered.length} estabelecimentos encontrados
                     </p>
+                    {renderFollowLikeButtons(`auto_${autoRepairFilter}`)}
                   </div>
                </div>
                <button 
@@ -1627,6 +1693,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                  {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
                </p>
              </div>
+             {renderFollowLikeButtons(`cat_${category}`)}
            </div>
         </div>
         <button 
