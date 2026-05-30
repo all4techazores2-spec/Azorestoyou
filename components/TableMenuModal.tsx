@@ -108,10 +108,14 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
     ...(restaurant.products || []).map(p => ({ ...p, category: p.category || 'Bebidas' }))
   ];
 
-  const filteredItems = allItems.filter(item => 
-    (activeCategory === 'Todos' || item.category === activeCategory) &&
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredItems = allItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (activeCategory === 'Todos') return true;
+    if (activeCategory === 'Pratos do Dia') return item.promoType === 'day' || item.category === 'Pratos do Dia';
+    if (activeCategory === 'Pratos da Semana') return item.promoType === 'week' || item.category === 'Pratos da Semana';
+    return item.category === activeCategory;
+  });
 
   const totalAmount = cart.reduce((acc, item) => acc + ((item.dish.promoPrice || item.dish.price) * item.quantity), 0);
   const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);

@@ -33,6 +33,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [ratingTarget, setRatingTarget] = useState<any | null>(null);
+  const [showBillPopup, setShowBillPopup] = useState<any | null>(null);
 
   const getOrderStatus = (res: any) => {
     const preOrder = res.preOrder || res.preorder;
@@ -232,6 +233,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
             r.name === res.restaurantName || 
             r.name === res.businessName
           );
+          const tableObj = rest?.tables?.find((t: any) => String(t.id) === String(res.tableId));
+          const isBillSent = tableObj?.billSent === true;
           const isBeautyRes = rType === 'beauty';
           const isShopRes = rType === 'shop';
           const isLandscapeRes = rType === 'landscape';
@@ -451,13 +454,22 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                </button>
                              </div>
 
-                             {/* Request Bill Button */}
-                             <button 
-                               onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'waiting_bill')}
-                               className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2"
-                             >
-                               <Receipt size={18} /> Pedir a Conta
-                             </button>
+                             {/* Request Bill Button / Verificar Conta */}
+                             {isBillSent ? (
+                               <button 
+                                 onClick={() => setShowBillPopup(res.id)}
+                                 className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 hover:opacity-95 shadow-lg shadow-emerald-500/25 cursor-pointer"
+                               >
+                                 <CheckCircle size={16} /> Verificar Conta
+                               </button>
+                             ) : (
+                               <button 
+                                 onClick={() => onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'waiting_bill')}
+                                 className="w-full py-4 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer"
+                               >
+                                 <Receipt size={18} /> Pedir a Conta
+                               </button>
+                             )}
 
                           </div>
                         );
@@ -739,6 +751,66 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suporte 24h</span>
            </div>
         </div>
+        {showBillPopup && (() => {
+          const res = reservations.find(r => r.id === showBillPopup);
+          const rest = restaurants.find(r => 
+            r.id === res?.restaurantId || 
+            r.id === res?.businessId
+          );
+          const tableObj = rest?.tables?.find((t: any) => String(t.id) === String(res?.tableId));
+          const consumedItems = tableObj?.currentTab || [];
+          const totalBill = consumedItems.reduce((acc, item) => acc + ((item.dish?.promoPrice || item.dish?.price || item.price || 0) * item.quantity), 0);
+
+          return (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-900 border border-slate-805 p-8 rounded-[3rem] max-w-md w-full text-white shadow-2xl relative flex flex-col max-h-[80vh]"
+              >
+                <button
+                  onClick={() => setShowBillPopup(null)}
+                  className="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center hover:bg-slate-700 transition-all cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+
+                <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Receipt size={24} />
+                </div>
+                
+                <h3 className="text-lg font-black text-white uppercase tracking-tight text-center">Verificar Conta</h3>
+                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center mt-0.5 mb-6">Mesa #{res?.tableId} · {rest?.name}</p>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-6 bg-slate-950/40 p-4 rounded-3xl border border-slate-850">
+                  {consumedItems.length > 0 ? consumedItems.map((item, idx) => {
+                    const price = item.dish?.promoPrice || item.dish?.price || item.price || 0;
+                    return (
+                      <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-2xl border border-slate-850">
+                        <div className="text-left flex-1 min-w-0 pr-2">
+                          <p className="font-bold text-xs text-slate-200 truncate">{item.dish?.name || item.name}</p>
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.quantity}x @ €{price.toFixed(2)}</span>
+                        </div>
+                        <span className="font-black text-xs text-indigo-400">€{(price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    );
+                  }) : (
+                    <div className="py-8 text-center text-slate-500 font-bold text-xs uppercase tracking-widest">
+                      Nenhum item consumido ainda.
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-800 pt-4 flex justify-between items-end mb-2 shrink-0">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total da Conta</span>
+                  <span className="text-2xl font-black text-indigo-400">€{totalBill.toFixed(2)}</span>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+
         {ratingTarget && (
           <RatingModal
             isOpen={!!ratingTarget}

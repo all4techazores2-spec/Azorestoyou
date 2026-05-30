@@ -2544,7 +2544,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         </button>
       )}
 
-      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* ... existing sidebar content ... */}
           <div className="p-8 flex items-center gap-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
@@ -2618,9 +2618,41 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       </div>
 
       {/* Main Container */}
-      <main className="flex-1 lg:ml-80 min-h-screen flex flex-col relative overflow-hidden">
+      <main className={`flex-1 min-h-screen flex flex-col relative overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'}`}>
         {/* Top Header - Estilo Foto 2 */}
         <header className="sticky top-0 bg-white border-b border-slate-100 h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
+            <div className="flex items-center gap-3 mr-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all active:scale-95 flex items-center justify-center cursor-pointer border border-slate-150 shadow-sm"
+                title={sidebarOpen ? "Ocultar Menu" : "Mostrar Menu"}
+              >
+                <Menu size={18} />
+              </button>
+              
+              <button
+                onClick={() => {
+                  setInstallingStatus('caching');
+                  setInstallProgress(0);
+                  const interval = setInterval(() => {
+                    setInstallProgress(prev => {
+                      if (prev >= 100) {
+                        clearInterval(interval);
+                        setInstallingStatus('success');
+                        setTimeout(() => setInstallingStatus(null), 3000);
+                        return 100;
+                      }
+                      return prev + 10;
+                    });
+                  }, 200);
+                }}
+                className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-500/10 cursor-pointer border border-blue-500/20"
+                title="Instalar App localmente no Tablet"
+              >
+                <Package size={14} className="animate-bounce" />
+                <span>Instalar App</span>
+              </button>
+            </div>
             {isStaff ? (
               // ── CABEÇALHO PARA STAFF (RELÓGIO CENTRADO E DADOS DO PERFIL) ──
               <div className="flex-1 flex justify-between items-center w-full">
@@ -2960,24 +2992,11 @@ return t;
                            >
                               <motion.button 
                                 whileTap={{ scale: 0.9 }}
-                                onClick={(e) => {
-                                  if (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setHoveredTableId(hoveredTableId === table.id || String(hoveredTableId) === String(table.id) ? null : table.id);
-                                  } else if (table.alertStatus === 'calling_waiter') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setAssignStaffTableTarget(table);
-                                  } else if (table.alertStatus === 'waiting_bill') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setActiveTab('pos');
-                                    handleSelectTable(table.id);
-                                  } else {
-                                    toggleTableStatus(table.id);
-                                  }
-                                }}
+                                 onClick={(e) => {
+                                   e.preventDefault();
+                                   e.stopPropagation();
+                                   setHoveredTableId(hoveredTableId === table.id || String(hoveredTableId) === String(table.id) ? null : table.id);
+                                 }}
                                 className={`aspect-square w-full rounded-[2.5rem] p-6 flex flex-col items-center justify-center transition-all duration-500 shadow-xl relative group ${
                                   acceptingReservation ? (table.status === 'available' ? 'bg-emerald-50 border-4 border-emerald-500 scale-110 shadow-emerald-500/20' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
                                   selectedResForTable ? (table.status === 'available' ? 'bg-emerald-50 border-emerald-200 ring-2 ring-emerald-500' : 'bg-slate-50 opacity-40 grayscale pointer-events-none') :
@@ -3041,8 +3060,8 @@ return t;
                                 <Trash2 size={11} />
                               </button>
 
-                               <AnimatePresence>
-                                {(hoveredTableId === table.id || String(hoveredTableId) === String(table.id)) && (table.alertStatus === 'new_order' || (table.pendingOrderItems && table.pendingOrderItems.length > 0)) && (
+                                <AnimatePresence>
+                                {(hoveredTableId === table.id || String(hoveredTableId) === String(table.id)) && (
                                   <motion.div 
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -3051,47 +3070,106 @@ return t;
                                     className="absolute inset-0 bg-slate-950/95 backdrop-blur-md border border-slate-800 text-white rounded-[2.5rem] p-3.5 flex flex-col items-center justify-center gap-1.5 z-[100] text-center shadow-2xl overflow-hidden"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <div className="flex items-center justify-center gap-1 shrink-0">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                                      <p className="text-[8px] font-black text-red-500 uppercase tracking-widest leading-none">Novo Pedido</p>
-                                    </div>
-                                    
-                                    {/* Compact scrollable items list */}
-                                    <div className="w-full flex-1 max-h-12 overflow-y-auto custom-scrollbar space-y-0.5 py-1 px-1.5 bg-white/5 rounded-xl text-center select-none text-[8px] font-bold text-slate-300">
-                                      {(table.pendingOrderItems || []).map((item: any, idx: number) => (
-                                        <p key={idx} className="truncate">
-                                          <span className="text-orange-400 font-black mr-0.5">{item.quantity}x</span> {item.dish?.name || item.name}
-                                        </p>
-                                      ))}
-                                    </div>
-                                    
-                                    <div className="w-full flex flex-col gap-1 shrink-0">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSendToKitchen(table.id);
-                                          setHoveredTableId(null);
-                                        }}
-                                        className="py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20 cursor-pointer"
-                                      >
-                                        <ChefHat size={10} />
-                                        Enviar Pedido
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleVerMesa(table.id);
-                                          setHoveredTableId(null);
-                                        }}
-                                        className="py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 cursor-pointer"
-                                      >
-                                        <Eye size={10} />
-                                        Ver Pedido
-                                      </button>
-                                    </div>
+                                    {table.status === 'occupied' ? (() => {
+                                      const isWaitingBill = table.alertStatus === 'waiting_bill' || (table as any).waitingBill;
+                                      
+                                      if (isWaitingBill) {
+                                        return (
+                                          <div className="w-full flex flex-col gap-2 justify-center items-center h-full select-none">
+                                            <div className="flex items-center justify-center gap-1 shrink-0">
+                                              <Receipt size={14} className="text-indigo-400 animate-pulse" />
+                                              <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest leading-none">Pediu a Conta</p>
+                                            </div>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                const updated = tables.map(t => {
+                                                  if (t.id === table.id || String(t.id) === String(table.id)) {
+                                                    return { ...t, alertStatus: 'none', waitingBill: false, billSent: true };
+                                                  }
+                                                  return t;
+                                                });
+                                                setTables(updated);
+                                                onUpdateBusiness({ ...business, tables: updated });
+                                                setHoveredTableId(null);
+                                                alert("🛎️ Conta enviada ao cliente com sucesso! O ecrã do cliente foi atualizado para 'Verificar Conta'.");
+                                              }}
+                                              className="w-full py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-500/25 cursor-pointer shrink-0"
+                                            >
+                                              <Send size={10} />
+                                              Enviar Conta
+                                            </button>
+                                          </div>
+                                        );
+                                      }
+
+                                      const hasPendingItems = table.pendingOrderItems && table.pendingOrderItems.length > 0;
+                                      return (
+                                        <div className="w-full flex flex-col gap-1.5 justify-center h-full">
+                                          <div className="flex items-center justify-center gap-1 shrink-0 mb-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                            <p className="text-[8px] font-black text-red-500 uppercase tracking-widest leading-none">Mesa Ocupada</p>
+                                          </div>
+                                          
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleVerMesa(table.id);
+                                              setHoveredTableId(null);
+                                            }}
+                                            className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 cursor-pointer"
+                                          >
+                                            <ShoppingBag size={10} />
+                                            Venda
+                                          </button>
+                                          
+                                          <button
+                                            disabled={!hasPendingItems}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSendToKitchen(table.id);
+                                              setHoveredTableId(null);
+                                            }}
+                                            className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
+                                            title={hasPendingItems ? "Enviar pedido pendente para a cozinha" : "Não há pratos pendentes"}
+                                          >
+                                            <ChefHat size={10} />
+                                            Cozinha
+                                          </button>
+                                        </div>
+                                      );
+                                    })() : (
+                                      <div className="w-full flex flex-col gap-1.5 justify-center h-full">
+                                        <div className="flex items-center justify-center gap-1 shrink-0 mb-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                          <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest leading-none">Mesa Livre</p>
+                                        </div>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleVerMesa(table.id);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md cursor-pointer"
+                                        >
+                                          <Plus size={10} />
+                                          Abrir Venda
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleTableStatus(table.id);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2.5 bg-slate-800 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center cursor-pointer"
+                                        >
+                                          Alterar Estado
+                                        </button>
+                                      </div>
+                                    )}
                                   </motion.div>
                                 )}
-                               </AnimatePresence>
+                                </AnimatePresence>
                            </motion.div>
                          ))}
                       </div>
