@@ -13,7 +13,7 @@ interface TableMenuModalProps {
   onPlaceOrder: (items: OrderItem[]) => void;
 }
 
-const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos'];
+const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos', 'Pratos da Semana'];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Todos': <ShoppingBag size={15} />,
@@ -97,7 +97,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
     item.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalAmount = cart.reduce((acc, item) => acc + (item.dish.price * item.quantity), 0);
+  const totalAmount = cart.reduce((acc, item) => acc + ((item.dish.promoPrice || item.dish.price) * item.quantity), 0);
   const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const updateQuantity = (itemObj: any, delta: number) => {
@@ -246,9 +246,25 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                               <div key={idx} className="bg-slate-900 border border-slate-850/80 p-3 rounded-3xl flex flex-col justify-between hover:border-slate-750 transition-colors shadow-sm relative overflow-hidden group">
                                  
                                  {/* Price tag on image */}
-                                 <div className="absolute top-2.5 left-2.5 bg-slate-950/85 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-black text-orange-400 z-10 border border-white/5">
-                                   €{item.price.toFixed(2)}
+                                 <div className="absolute top-2.5 left-2.5 bg-slate-950/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl text-[9px] font-black z-10 border border-white/5 flex flex-col items-center justify-center gap-0.5 min-w-[55px]">
+                                   {(item as any).promoPrice ? (
+                                     <>
+                                       <span className="line-through text-slate-400 text-[7px] font-bold leading-none">Antes: {item.price.toFixed(2)}€</span>
+                                       <span className="text-emerald-400 leading-none mt-0.5 font-black text-[9px]">Agora: {(item as any).promoPrice.toFixed(2)}€</span>
+                                     </>
+                                   ) : (
+                                     <span className="text-orange-400 font-black">{item.price.toFixed(2)}€</span>
+                                   )}
                                  </div>
+
+                                 {/* Promo type badge if exists */}
+                                 {(item as any).promoPrice && (
+                                   <div className="absolute top-2.5 right-2.5 z-10">
+                                     <span className={`px-2 py-0.5 rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg ${(item as any).promoType === 'week' ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}>
+                                       {(item as any).promoType === 'week' ? 'Semana' : 'Dia'}
+                                     </span>
+                                   </div>
+                                 )}
 
                                  <div className="space-y-2">
                                     <div className="h-24 bg-slate-950/50 rounded-2xl overflow-hidden flex items-center justify-center relative">
@@ -348,7 +364,7 @@ const TableMenuModal: React.FC<TableMenuModalProps> = ({
                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.dish.category}</span>
                           </div>
                        </div>
-                       <span className="font-black text-sm text-slate-100">€{(item.dish.price * item.quantity).toFixed(2)}</span>
+                       <span className="font-black text-sm text-slate-100">€{((item.dish.promoPrice || item.dish.price) * item.quantity).toFixed(2)}</span>
                     </div>
                  ))}
               </div>

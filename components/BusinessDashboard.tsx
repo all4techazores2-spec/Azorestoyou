@@ -2101,7 +2101,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             description: product.description,
             price: product.price,
             image: product.image,
-            category: product.category || 'Ementa'
+            category: product.category || 'Ementa',
+            promoPrice: (product as any).promoPrice,
+            promoType: (product as any).promoType
           };
           if (dishIdx !== -1) {
             updatedDishes[dishIdx] = { ...updatedDishes[dishIdx], ...dishData };
