@@ -1491,7 +1491,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setPaymentFormOpen(false);
   }
 
-  const posTotal = posCart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const posTotal = posCart.reduce((acc, item) => acc + (((item.product as any).promoPrice || item.product.price) * item.quantity), 0);
 
   // AzoresPOS dynamic calculations
   const posDiscountVal = posDiscountType === 'percent' 
@@ -3472,7 +3472,7 @@ return t;
           {activeTab === 'pos' && (() => {
             const posProducts = [
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
-              ...(products || []).filter(p => p.category !== 'Stock Interno').map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
+              ...(products || []).filter(p => p.category !== 'Stock Interno' && !isBeauty && !isShop ? !(business.dishes || []).some(d => d.id === p.id || d.name.toLowerCase() === p.name.toLowerCase()) : true).map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
                 !(business.services || []).some(s => s.name === ms.name) &&
                 !(products || []).some(p => p.name === ms.name)
@@ -3482,7 +3482,7 @@ return t;
               ))
             ];
             
-            const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
+            const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : [...POS_CATEGORIES, 'Pratos do Dia', 'Pratos da Semana'];
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
             const allCats = ['Todos', ...Array.from(new Set([...availableCategories, ...currentCategories]))].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
 
@@ -3491,7 +3491,13 @@ return t;
               p.category.toLowerCase().includes(posSearchQuery.toLowerCase())
             );
 
-            const filtered = posCategory === 'Todos' ? filteredBySearch : filteredBySearch.filter(p => p.category === posCategory);
+            const filtered = posCategory === 'Todos' 
+              ? filteredBySearch 
+              : posCategory === 'Pratos do Dia' 
+                ? filteredBySearch.filter(p => (p as any).promoType === 'day' || p.category === 'Pratos do Dia')
+                : posCategory === 'Pratos da Semana'
+                  ? filteredBySearch.filter(p => (p as any).promoType === 'week' || p.category === 'Pratos da Semana')
+                  : filteredBySearch.filter(p => p.category === posCategory);
 
             return (
               <>
@@ -3600,7 +3606,16 @@ return t;
                              </div>
                              <div className="p-5 flex-1 flex flex-col">
                                <p className="font-black text-slate-800 text-sm leading-tight mb-2 flex-1">{product.name}</p>
-                               <p className="font-black text-slate-800 text-lg">€{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
+                               <div className="flex flex-col">
+                                 {(product as any).promoPrice ? (
+                                   <div className="flex flex-col">
+                                     <span className="line-through text-slate-400 text-xs font-bold leading-none mb-1">Antes: €{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</span>
+                                     <span className="text-emerald-600 font-black text-lg">Agora: €{(Number((product as any).promoPrice) || 0).toFixed(2).replace('.', ',')}</span>
+                                   </div>
+                                 ) : (
+                                   <p className="font-black text-slate-800 text-lg">€{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
+                                 )}
+                               </div>
                              </div>
                            </motion.button>
                          ))}
@@ -3707,9 +3722,9 @@ return t;
                                         <span className="px-2 text-xs font-black text-slate-600 min-w-[20px] text-center">{item.quantity}</span>
                                         <button onClick={() => updatePosQuantity(item.product.id, 1)} className="px-2 py-1 text-slate-400 hover:bg-slate-200 transition-colors">+</button>
                                      </div>
-                                     <span className="text-[10px] font-bold text-slate-400">€{item.product.price.toFixed(2)} / un</span>
+                                     <span className="text-[10px] font-bold text-slate-400">€{((item.product as any).promoPrice || item.product.price).toFixed(2)} / un</span>
                                   </div>
-                                  <p className="font-black text-slate-800 text-sm">€{(item.product.price * item.quantity).toFixed(2).replace('.', ',')}</p>
+                                  <p className="font-black text-slate-800 text-sm">€{(((item.product as any).promoPrice || item.product.price) * item.quantity).toFixed(2).replace('.', ',')}</p>
                                </div>
                             </div>
                           </motion.div>
