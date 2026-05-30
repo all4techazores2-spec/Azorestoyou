@@ -21,7 +21,8 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Bebidas': <Beer size={15} />,
   'Cafetaria': <Coffee size={15} />,
   'Sobremesas': <Sparkles size={15} />,
-  'Vinhos': <Wine size={15} />
+  'Vinhos': <Wine size={15} />,
+  'Pratos da Semana': <Sparkles size={15} className="text-amber-500 fill-current animate-pulse" />
 };
 
 const CATEGORY_DETAILS: Record<string, { label: string, desc: string, gradient: string, border: string, text: string }> = {
@@ -62,10 +63,17 @@ const CATEGORY_DETAILS: Record<string, { label: string, desc: string, gradient: 
   },
   'Vinhos': {
     label: 'Vinhos Regionais',
-    desc: 'Vinhos brancos, tintos e verdes da ementa',
+    desc: 'Vinhos bracos, tintos e verdes da ementa',
     gradient: 'from-purple-600/10 to-indigo-700/10 hover:from-purple-600/20 hover:to-indigo-700/20',
     border: 'border-purple-600/20 hover:border-purple-600/40',
     text: 'text-purple-400'
+  },
+  'Pratos da Semana': {
+    label: 'Pratos da Semana',
+    desc: 'Especialidades promocionais selecionadas para esta semana',
+    gradient: 'from-amber-500/10 to-orange-600/10 hover:from-amber-500/20 hover:to-orange-600/20',
+    border: 'border-amber-500/20 hover:border-amber-500/45',
+    text: 'text-amber-450'
   }
 };
 
