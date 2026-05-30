@@ -13,7 +13,7 @@ interface TableMenuModalProps {
   onPlaceOrder: (items: OrderItem[]) => void;
 }
 
-const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos', 'Pratos da Semana'];
+const CATEGORIES = ['Todos', 'Pratos', 'Bebidas', 'Cafetaria', 'Sobremesas', 'Vinhos', 'Pratos do Dia', 'Pratos da Semana'];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Todos': <ShoppingBag size={15} />,
@@ -22,6 +22,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Cafetaria': <Coffee size={15} />,
   'Sobremesas': <Sparkles size={15} />,
   'Vinhos': <Wine size={15} />,
+  'Pratos do Dia': <Sparkles size={15} className="text-emerald-500 fill-current animate-pulse" />,
   'Pratos da Semana': <Sparkles size={15} className="text-amber-500 fill-current animate-pulse" />
 };
 
@@ -67,6 +68,13 @@ const CATEGORY_DETAILS: Record<string, { label: string, desc: string, gradient: 
     gradient: 'from-purple-600/10 to-indigo-700/10 hover:from-purple-600/20 hover:to-indigo-700/20',
     border: 'border-purple-600/20 hover:border-purple-600/40',
     text: 'text-purple-400'
+  },
+  'Pratos do Dia': {
+    label: 'Pratos do Dia',
+    desc: 'Especialidades deliciosas preparadas especialmente para hoje',
+    gradient: 'from-emerald-500/10 to-teal-600/10 hover:from-emerald-500/20 hover:to-teal-600/20',
+    border: 'border-emerald-500/20 hover:border-emerald-500/45',
+    text: 'text-emerald-450'
   },
   'Pratos da Semana': {
     label: 'Pratos da Semana',
