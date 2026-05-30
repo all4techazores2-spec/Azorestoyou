@@ -9062,36 +9062,58 @@ isBeauty ? (
                 <span className="ml-2 font-bold text-white uppercase text-[10px] tracking-wider">Instalador Interno Azores4You</span>
               </div>
 
-              <div className="space-y-2 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400">
-                <p>⚡ Iniciando sequência de empacotamento local...</p>
-                {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
-                {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
-                {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
-                {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
-                {installProgress === 100 && (
-                   (() => {
-                     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                     if (!isLocal) {
-                       return (
-                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed font-sans">
-                           🎉 INSTALADOR PERSONALIZADO DESCARREGADO!<br/>
-                           <span className="text-yellow-400 block mt-2 text-[10px]">👉 Dê dois cliques no ficheiro 'instalar_pos.bat' descarregado na barra de transferências!</span>
-                           <span className="text-slate-300 block mt-2 text-[8px] font-normal leading-normal">
-                             Isso criará a pasta C:\\Azores4You e o atalho personalizado "A_Tasca_POS" no seu Ambiente de Trabalho automaticamente!
-                           </span>
-                         </div>
-                       );
-                     }
-                     return (
-                       <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed">
-                         🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!<br/>
-                         ÍCONE DE ARRANQUE ENVIADO PARA O DESKTOP.<br/>
-                         AO CLICAR, O SOFTWARE FICA FULL SCREEN.
-                       </div>
-                     );
-                   })()
-                 )}
-              </div>
+              {(() => {
+                const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 1024;
+                const isApple = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+                
+                if (isMobileOrTablet) {
+                  return (
+                    <div className="space-y-4 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400 font-sans">
+                      <p className="font-mono">⚡ Iniciando instalação local no tablet...</p>
+                      {installProgress >= 20 && <p className="text-white font-mono">📁 A registar Service Worker e PWA...</p>}
+                      {installProgress >= 50 && <p className="text-white font-mono">📦 A armazenar base de dados e ementa offline (Local)...</p>}
+                      {installProgress >= 80 && <p className="text-yellow-400 font-mono">🚀 A descarregar e guardar imagens em cache local...</p>}
+                      {installProgress === 100 && (
+                        <div className="p-5 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-3xl mt-4 text-emerald-450 font-bold uppercase text-[9.5px] tracking-widest text-center leading-relaxed font-sans shadow-md">
+                          🎉 APLICAÇÃO PRONTA A INSTALAR NO TABLET!<br/>
+                          {isApple ? (
+                            <span className="text-yellow-400 block mt-3 text-[10.5px] font-black normal-case tracking-normal leading-normal">
+                              👉 Toque no botão "Partilhar" (Share 📤) na barra do Safari e selecione "Adicionar ao Ecrã Principal" (Add to Home Screen ➕) para instalar o ícone da App!
+                            </span>
+                          ) : (
+                            <span className="text-yellow-400 block mt-3 text-[10.5px] font-black normal-case tracking-normal leading-normal">
+                              👉 Toque nos 3 pontos verticais (Menu ︙) no topo direito do Chrome e selecione "Instalar aplicação" ou "Adicionar ao Ecrã Principal" para criar o atalho da App!
+                            </span>
+                          )}
+                          <span className="text-slate-400 block mt-3 text-[8.5px] font-semibold leading-normal normal-case">
+                            Isto criará o atalho personalizado "A Tasca POS" no ecrã inicial do tablet, permitindo funcionar na rede local offline em caso de falha de internet.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Default Windows PC layout
+                return (
+                  <div className="space-y-2 min-h-[140px] overflow-y-auto mb-6 text-[11px] leading-relaxed text-emerald-400">
+                    <p>⚡ Iniciando sequência de empacotamento local...</p>
+                    {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
+                    {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
+                    {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
+                    {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
+                    {installProgress === 100 && (
+                      <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed font-sans">
+                        🎉 INSTALADOR PERSONALIZADO DESCARREGADO!<br/>
+                        <span className="text-yellow-400 block mt-2 text-[10px]">👉 Dê dois cliques no ficheiro 'instalar_pos.bat' descarregado na barra de transferências!</span>
+                        <span className="text-slate-300 block mt-2 text-[8px] font-normal leading-normal">
+                          Isso criará a pasta C:\\Azores4You e o atalho personalizado "A_Tasca_POS" no seu Ambiente de Trabalho automaticamente!
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Progress bar */}
               <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-6">
