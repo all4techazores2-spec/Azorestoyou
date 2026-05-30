@@ -7832,6 +7832,37 @@ isBeauty ? (
                     </div>
 
                     {editingProduct.product.category !== 'Stock Interno' && (
+                       <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 space-y-4 shadow-sm mb-4">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Promoção do Produto</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-1">Tipo de Promoção</label>
+                                <select 
+                                  className="w-full bg-white border border-slate-200 rounded-xl p-3 font-bold focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 text-xs"
+                                  value={(editingProduct.product as any).promoType || ''}
+                                  onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, promoType: e.target.value || undefined} as any})}
+                                >
+                                  <option value="">Sem Promoção</option>
+                                  <option value="day">Promoção do Dia</option>
+                                  <option value="week">Promoção da Semana</option>
+                                </select>
+                             </div>
+                             <div>
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-1">Preço Promo (€)</label>
+                                <input 
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="Ex: 8.50"
+                                  className="w-full bg-white border border-slate-200 rounded-xl p-3 font-bold focus:ring-2 focus:ring-blue-500 outline-none text-xs" 
+                                  value={(editingProduct.product as any).promoPrice || ''} 
+                                  onChange={e => setEditingProduct({...editingProduct, product: {...editingProduct.product, promoPrice: e.target.value ? parseFloat(e.target.value) : undefined} as any})}
+                                />
+                             </div>
+                          </div>
+                       </div>
+                    )}
+
+                    {editingProduct.product.category !== 'Stock Interno' && (
                       <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex items-center justify-between shadow-sm">
                          <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
