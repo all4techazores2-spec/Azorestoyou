@@ -317,16 +317,16 @@ app.post('/api/install-internally', async (req, res) => {
         fs.writeFileSync(startScriptPath, batContent, 'utf-8');
         
         // 4. Create desktop shortcut using PowerShell
-        const sanitizedName = (restaurantName || 'Azores4You').replace(/[^a-zA-Z0-9_\-]/g, '_');
+        const stuffName = (restaurantName || 'Tasca').replace(/[^a-zA-Z0-9]/g, '') + 'Stuff';
         const desktopPath = path.join(process.env.USERPROFILE || 'C:\\Users\\PC', 'Desktop');
-        const shortcutPath = path.join(desktopPath, `${sanitizedName}_POS.lnk`);
+        const shortcutPath = path.join(desktopPath, `${stuffName}.lnk`);
         
         const psCommand = `
             $WshShell = New-Object -ComObject WScript.Shell;
             $Shortcut = $WshShell.CreateShortcut("${shortcutPath.replace(/\\/g, '\\\\')}");
             $Shortcut.TargetPath = "${startScriptPath.replace(/\\/g, '\\\\')}";
             $Shortcut.IconLocation = "shell32.dll,14";
-            $Shortcut.Description = "${(restaurantName || 'Azores4You').replace(/"/g, '""')} POS";
+            $Shortcut.Description = "${stuffName}";
             $Shortcut.Save();
         `;
         
@@ -349,7 +349,7 @@ app.post('/api/install-internally', async (req, res) => {
             
             res.json({ 
                 success: true, 
-                message: `Instalado com sucesso no disco local C: e atalho "${sanitizedName}_POS" criado no Ambiente de Trabalho!`,
+                message: `Instalado com sucesso no disco local C: e atalho "${stuffName}" criado no Ambiente de Trabalho!`,
                 localFolder: localDir,
                 shortcut: shortcutPath
             });
@@ -384,11 +384,11 @@ app.get('/api/download-app-zip', (req, res) => {
 // --- CLOUD SETUP LAUNCHER DOWNLOAD ---
 app.get('/api/download-installer', (req, res) => {
     const { restaurantName, restaurantId } = req.query;
-    const sanitizedName = (restaurantName || 'Azores4You').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const stuffName = (restaurantName || 'Tasca').replace(/[^a-zA-Z0-9]/g, '') + 'Stuff';
     const posQuery = restaurantId ? `?pos=${restaurantId}` : '';
     
     // Dynamic generation of windows setup script
-    const batContent = `@echo off\r\ntitle Instalador Azores4You POS\r\ncolor 0A\r\necho ===================================================\r\necho ⚡ A INICIAR INSTALACAO DO POS LOCAL: ${restaurantName || 'Azores4You'}\r\necho ===================================================\r\necho.\r\necho 📂 1. A criar pasta local C:\\Azores4You...\r\nmkdir C:\\Azores4You >nul 2>&1\r\ncd /d C:\\Azores4You\r\n\r\necho 📥 2. A descarregar ficheiros do POS da Cloud...\r\npowershell -Command "Invoke-WebRequest -Uri 'https://azorestoyou-1.onrender.com/api/download-app-zip' -OutFile 'app_package.zip'"\r\n\r\necho 📦 3. A extrair ficheiros do POS local...\r\npowershell -Command "Expand-Archive -Path 'app_package.zip' -DestinationPath 'C:\\Azores4You' -Force"\r\ndel app_package.zip\r\n\r\necho 📦 4. A instalar dependencias locais do POS (npm install)... (Aguarde)\r\ncall npm install --omit=dev --no-audit --no-fund\r\n\r\necho 📝 5. A configurar inicializador start_pos.bat...\r\n(\r\necho @echo off\r\necho cd /d C:\\Azores4You\r\necho taskkill /f /im node.exe ^>nul 2^>^&1\r\necho start /min node server.js\r\necho timeout /t 3 /nobreak ^>nul\r\necho start msedge.exe --start-fullscreen --app=http://localhost:3001/${posQuery}\r\necho exit\r\n) > start_pos.bat\r\n\r\necho 🚀 6. A criar atalho personalizado no Ambiente de Trabalho...\r\npowershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\\Desktop\\${sanitizedName}_POS.lnk'); $Shortcut.TargetPath = 'C:\\Azores4You\\start_pos.bat'; $Shortcut.IconLocation = 'shell32.dll,14'; $Shortcut.Description = '${(restaurantName || 'Azores4You').replace(/'/g, '')} POS'; $Shortcut.Save();"\r\n\r\necho.\r\necho ===================================================\r\necho 🎉 INSTALACAO CONCLUIDA COM SUCESSO!\r\necho O atalho \\"${sanitizedName}_POS\\" foi criado no seu Ambiente de Trabalho.\r\necho ===================================================\r\necho.\r\npause\r\nexit\r\n`;
+    const batContent = `@echo off\r\ntitle Instalador ${stuffName}\r\ncolor 0A\r\necho ===================================================\r\necho ⚡ A INICIAR INSTALACAO DO POS LOCAL: ${restaurantName || 'Azores4You'}\r\necho ===================================================\r\necho.\r\necho 📂 1. A criar pasta local C:\\Azores4You...\r\nmkdir C:\\Azores4You >nul 2>&1\r\ncd /d C:\\Azores4You\r\n\r\necho 📥 2. A descarregar ficheiros do POS da Cloud...\r\npowershell -Command "Invoke-WebRequest -Uri 'https://azorestoyou-1.onrender.com/api/download-app-zip' -OutFile 'app_package.zip'"\r\n\r\necho 📦 3. A extrair ficheiros do POS local...\r\npowershell -Command "Expand-Archive -Path 'app_package.zip' -DestinationPath 'C:\\Azores4You' -Force"\r\ndel app_package.zip\r\n\r\necho 📦 4. A instalar dependencias locais do POS (npm install)... (Aguarde)\r\ncall npm install --omit=dev --no-audit --no-fund\r\n\r\necho 📝 5. A configurar inicializador start_pos.bat...\r\n(\r\necho @echo off\r\necho cd /d C:\\Azores4You\r\necho taskkill /f /im node.exe ^>nul 2^>^&1\r\necho start /min node server.js\r\necho timeout /t 3 /nobreak ^>nul\r\necho start msedge.exe --start-fullscreen --app=http://localhost:3001/${posQuery}\r\necho exit\r\n) > start_pos.bat\r\n\r\necho 🚀 6. A criar atalho personalizado no Ambiente de Trabalho...\r\npowershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\\Desktop\\${stuffName}.lnk'); $Shortcut.TargetPath = 'C:\\Azores4You\\start_pos.bat'; $Shortcut.IconLocation = 'shell32.dll,14'; $Shortcut.Description = '${stuffName}'; $Shortcut.Save();"\r\n\r\necho.\r\necho ===================================================\r\necho 🎉 INSTALACAO CONCLUIDA COM SUCESSO!\r\necho O atalho \\"${stuffName}\\" foi criado no seu Ambiente de Trabalho.\r\necho ===================================================\r\necho.\r\npause\r\nexit\r\n`;
 
     res.setHeader('Content-Type', 'application/x-bat');
     res.setHeader('Content-Disposition', `attachment; filename=instalar_pos.bat`);

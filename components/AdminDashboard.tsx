@@ -116,7 +116,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
   const [adminFormData, setAdminFormData] = useState({ email: '', password: '' });
   const [addingStaffToId, setAddingStaffToId] = useState<string | null>(null);
-  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', password: '', role: 'waiter' });
+  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', password: '', role: 'waiter', pin: '' });
   const [addingSupplierToId, setAddingSupplierToId] = useState<string | null>(null);
   const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
   const [supplierFormData, setSupplierFormData] = useState({ name: '', email: '', phone: '', nif: '', address: '' });
@@ -301,7 +301,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     else if (shops.some(s => s.id === restId)) onUpdateShops(findAndAdd(shops));
     else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndAdd(beauty));
     setAddingStaffToId(null);
-    setStaffFormData({ name: '', email: '', password: '', role: 'waiter' });
+    setStaffFormData({ name: '', email: '', password: '', role: 'waiter', pin: '' });
     alert('Funcionário adicionado com sucesso!');
   };
 
@@ -3273,7 +3273,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                                {addingStaffToId === rest.id && (
                                  <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 mb-6 animate-in fade-in slide-in-from-top-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                        <input className="bg-white border-none p-3 rounded-xl text-xs shadow-sm" placeholder="Nome" value={staffFormData.name} onChange={e => setStaffFormData({...staffFormData, name: e.target.value})} />
                                        <input className="bg-white border-none p-3 rounded-xl text-xs shadow-sm" placeholder="Email" value={staffFormData.email} onChange={e => setStaffFormData({...staffFormData, email: e.target.value})} />
                                        <input className="bg-white border-none p-3 rounded-xl text-xs shadow-sm" placeholder="Password" value={staffFormData.password} onChange={e => setStaffFormData({...staffFormData, password: e.target.value})} />
@@ -3282,6 +3282,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                           <option value="chef">Cozinheiro</option>
                                           <option value="manager">Gerente</option>
                                        </select>
+                                       <input className="bg-white border-none p-3 rounded-xl text-xs shadow-sm" placeholder="PIN Tablet (4 dígitos)" maxLength={4} value={staffFormData.pin || ''} onChange={e => setStaffFormData({...staffFormData, pin: e.target.value.replace(/\D/g, '')})} />
                                     </div>
                                     <div className="flex justify-end gap-3 mt-4">
                                        <button onClick={() => setAddingStaffToId(null)} className="px-4 py-2 text-xs font-black uppercase text-slate-400 hover:text-slate-600">Cancelar</button>
@@ -3301,7 +3302,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                           <div>
                                              <p className="text-[9px] font-mono text-slate-500">{s.email}</p>
                                              <p className="text-[9px] font-mono text-blue-600 font-bold">
-                                                {showPassword[s.id] ? s.password : '••••••'}
+                                                {showPassword[s.id] ? s.password : '••••••'} {s.pin ? `| PIN: ${s.pin}` : ''}
                                              </p>
                                           </div>
                                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

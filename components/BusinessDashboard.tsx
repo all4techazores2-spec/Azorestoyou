@@ -1246,6 +1246,11 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   
   const displayAvatarSeed = loggedInStaff ? loggedInStaff.name : 'Gustavo';
 
+  // Tablet Access PIN Lock
+  const [isTabletPinLocked, setIsTabletPinLocked] = useState(!!(isStaff && loggedInStaff && loggedInStaff.pin));
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+
   // Fiado (restaurant credit/tab per client)
   // Cash Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(business.isDrawerOpen || false);
@@ -1519,6 +1524,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       phone: formData.get('phone') as string,
       photo: formData.get('photo') as string || '',
       role: formData.get('role') as any,
+      pin: formData.get('pin') as string || '',
       shiftStart: formData.get('shiftStart') as string || '08:00',
       pauseStart: formData.get('pauseStart') as string || '12:00',
       pauseEnd: formData.get('pauseEnd') as string || '13:00',
@@ -2393,6 +2399,135 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       transition: { type: 'spring', stiffness: 300, damping: 35 }
     }
   };
+
+  if (isTabletPinLocked) {
+    const handleKeyPress = (num: string) => {
+      setPinError(false);
+      if (enteredPin.length < 4) {
+        const newPin = enteredPin + num;
+        setEnteredPin(newPin);
+        if (newPin.length === 4) {
+          if (newPin === loggedInStaff?.pin) {
+            setTimeout(() => {
+              setIsTabletPinLocked(false);
+            }, 300);
+          } else {
+            setTimeout(() => {
+              setPinError(true);
+              setEnteredPin('');
+              if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            }, 250);
+          }
+        }
+      }
+    };
+
+    const handleDelete = () => {
+      setEnteredPin(prev => prev.slice(0, -1));
+      setPinError(false);
+    };
+
+    const handleClear = () => {
+      setEnteredPin('');
+      setPinError(false);
+    };
+
+    return (
+      <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden font-sans">
+        <style>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+          }
+          .animate-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+          }
+        `}</style>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse"></div>
+
+        <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden z-10 flex flex-col items-center">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner relative group animate-bounce">
+            <Lock size={40} className="text-blue-400 group-hover:scale-115 transition-transform duration-300" />
+          </div>
+
+          <h2 className="text-2xl font-black text-white uppercase tracking-wider mb-1">
+            {business?.name ? `${business.name.replace(/\s+/g, '')}Stuff` : 'TascaStuff'}
+          </h2>
+          <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-4">POSTTAB Tablet Mode</p>
+          
+          <div className="flex flex-col items-center mb-8">
+            <p className="text-slate-400 text-xs font-medium text-center">
+              Olá, <span className="text-white font-bold">{displayName}</span>!
+            </p>
+            <p className="text-slate-500 text-[10px] font-semibold mt-1">Introduza o seu PIN para desbloquear o Tablet.</p>
+          </div>
+
+          <div className={`flex gap-5 mb-10 transition-all ${pinError ? 'animate-shake' : ''}`}>
+            {[0, 1, 2, 3].map((index) => {
+              const active = enteredPin.length > index;
+              return (
+                <div 
+                  key={index}
+                  className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                    pinError 
+                      ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)] scale-110' 
+                      : active 
+                        ? 'bg-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.8)] scale-125' 
+                        : 'bg-white/10 border border-white/20'
+                  }`}
+                />
+              );
+            })}
+          </div>
+
+          {pinError && (
+            <p className="text-rose-400 text-[10px] font-black uppercase tracking-widest mb-6 animate-pulse">PIN de acesso incorreto ✗</p>
+          )}
+
+          <div className="grid grid-cols-3 gap-4 w-full max-w-[280px]">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+              <button
+                key={num}
+                onClick={() => handleKeyPress(num)}
+                className="w-16 h-16 bg-white/5 hover:bg-white/10 active:bg-blue-500/20 active:border-blue-500/40 border border-white/5 text-white text-xl font-bold rounded-full transition-all flex items-center justify-center outline-none select-none cursor-pointer transform active:scale-90 animate-in fade-in"
+              >
+                {num}
+              </button>
+            ))}
+            <button
+              onClick={handleClear}
+              className="w-16 h-16 bg-transparent text-slate-400 hover:text-white text-xs font-bold rounded-full transition-all flex items-center justify-center outline-none select-none cursor-pointer active:scale-90"
+            >
+              Limpar
+            </button>
+            <button
+              onClick={() => handleKeyPress('0')}
+              className="w-16 h-16 bg-white/5 hover:bg-white/10 active:bg-blue-500/20 active:border-blue-500/40 border border-white/5 text-white text-xl font-bold rounded-full transition-all flex items-center justify-center outline-none select-none cursor-pointer transform active:scale-90"
+            >
+              0
+            </button>
+            <button
+              onClick={handleDelete}
+              className="w-16 h-16 bg-transparent text-slate-400 hover:text-white text-xs font-bold rounded-full transition-all flex items-center justify-center outline-none select-none cursor-pointer active:scale-90"
+            >
+              Apagar
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              onLogout();
+            }}
+            className="mt-8 text-slate-500 hover:text-slate-350 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+          >
+            ← Sair do Tablet
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isStaff && loggedInStaff && !loggedInStaff.onDuty) {
     return (
@@ -8243,7 +8378,7 @@ isBeauty ? (
                           />
                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                        <div>
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Telemóvel</label>
                           <input 
@@ -9065,6 +9200,7 @@ isBeauty ? (
               {(() => {
                 const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 1024;
                 const isApple = /iPad|iPhone|iPod/i.test(navigator.userAgent);
+                const stuffName = business?.name ? `${business.name.replace(/\s+/g, '')}Stuff` : 'TascaStuff';
                 
                 if (isMobileOrTablet) {
                   return (
@@ -9086,7 +9222,7 @@ isBeauty ? (
                             </span>
                           )}
                           <span className="text-slate-400 block mt-3 text-[8.5px] font-semibold leading-normal normal-case">
-                            Isto criará o atalho personalizado "A Tasca POS" no ecrã inicial do tablet, permitindo funcionar na rede local offline em caso de falha de internet.
+                            Isto criará o atalho personalizado "{stuffName}" no ecrã inicial do tablet, permitindo funcionar na rede local offline em caso de falha de internet.
                           </span>
                         </div>
                       )}
@@ -9101,13 +9237,13 @@ isBeauty ? (
                     {installProgress >= 20 && <p className="text-white">📁 A criar directório local no cliente: C:\\Azores4You</p>}
                     {installProgress >= 40 && <p className="text-white">📦 A copiar ficheiros principais, assets estáticos e base de dados db.json...</p>}
                     {installProgress >= 65 && <p className="text-white">💻 A compilar executável interno Node.js e atalho no Ambiente de Trabalho...</p>}
-                    {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho (Azores4You.lnk) para arranque automático...</p>}
+                    {installProgress >= 90 && <p className="text-yellow-400">🚀 A gerar ícone e atalho ({stuffName}.lnk) para arranque automático...</p>}
                     {installProgress === 100 && (
                       <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mt-4 text-emerald-400 font-bold uppercase text-[9px] tracking-widest text-center leading-relaxed font-sans">
                         🎉 INSTALADOR PERSONALIZADO DESCARREGADO!<br/>
                         <span className="text-yellow-400 block mt-2 text-[10px]">👉 Dê dois cliques no ficheiro 'instalar_pos.bat' descarregado na barra de transferências!</span>
                         <span className="text-slate-300 block mt-2 text-[8px] font-normal leading-normal">
-                          Isso criará a pasta C:\\Azores4You e o atalho personalizado "A_Tasca_POS" no seu Ambiente de Trabalho automaticamente!
+                          Isso criará a pasta C:\\Azores4You e o atalho personalizado "{stuffName}" no seu Ambiente de Trabalho automaticamente!
                         </span>
                       </div>
                     )}

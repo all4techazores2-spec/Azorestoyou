@@ -237,6 +237,7 @@ export interface StaffMember {
   password: string;
   phone: string;
   role: 'waiter' | 'chef' | 'manager';
+  pin?: string;
   onDuty?: boolean;
   vacationStart?: string;
   vacationEnd?: string;
