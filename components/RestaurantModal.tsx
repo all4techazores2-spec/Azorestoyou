@@ -981,10 +981,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                               <span>{dish.price}€</span>
                             )}
                           </div>
-                          <div className="absolute top-4 left-4">
-                             <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
-                               <Sparkles size={8} /> Sugestão
-                             </span>
+                          <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+                            <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                              <Sparkles size={8} /> Sugestão
+                            </span>
+                            {(dish as any).promoPrice && (
+                              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg ${(dish as any).promoType === 'week' ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}>
+                                {(dish as any).promoType === 'week' ? 'Promo da Semana' : 'Promo do Dia'}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="p-6">
@@ -1071,7 +1076,12 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                <div className="flex flex-col md:flex-row items-center gap-6 pt-4">
                                   {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
                                     <div className="flex flex-col items-center md:items-start">
-                                      <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black text-white uppercase tracking-wider ${(restaurant.dishes[selectedDishIdx] as any).promoType === 'week' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                                          {(restaurant.dishes[selectedDishIdx] as any).promoType === 'week' ? 'Promoção da Semana' : 'Promoção do Dia'}
+                                        </span>
+                                      </div>
                                       <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl mt-1">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
                                     </div>
                                   ) : (

@@ -6886,14 +6886,38 @@ isBeauty ? (
 
                  {/* Add new photo url */}
                  <div className="space-y-3">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Adicionar Foto (URL ou Link)</label>
-                   <div className="flex gap-2">
-                     <input 
-                       id="new-clock-photo-input"
-                       type="url" 
-                       placeholder="https://exemplo.com/foto.jpg"
-                       className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                     />
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-2">Adicionar Foto ao Slider (URL ou Upload)</label>
+                    <div className="flex gap-2 w-full">
+                      <input 
+                        id="new-clock-photo-input"
+                        type="text" 
+                        placeholder="https://exemplo.com/foto.jpg ou Upload..."
+                        className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <label className={`p-4 bg-slate-100 text-slate-600 rounded-2xl cursor-pointer hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center ${isUploading ? 'opacity-50' : ''}`}>
+                         {isUploading ? '...' : <ImageIcon className="w-5 h-5" />}
+                         <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={async (e) => {
+                               const file = e.target.files?.[0];
+                               if (file) {
+                                  const url = await handleImageUpload(file, 'gallery');
+                                  if (url) {
+                                     const el = document.getElementById('new-clock-photo-input');
+                                     if (el) el.value = url;
+                                     const currentPhotos = settingsForm.clockPhotos || [];
+                                     if (!currentPhotos.includes(url)) {
+                                        const updatedPhotos = [...currentPhotos, url];
+                                        setSettingsForm({ ...settingsForm, clockPhotos: updatedPhotos });
+                                        handleUpdate({ clockPhotos: updatedPhotos });
+                                     }
+                                  }
+                               }
+                            }}
+                         />
+                      </label>
                      <button
                        type="button"
                        onClick={() => {
@@ -7621,15 +7645,26 @@ isBeauty ? (
                        />
                     </div>
                     <div>
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Preço Promocional / Desconto do Dia (€) (Opcional)</label>
-                       <input 
-                         type="number"
-                         step="0.01"
-                         placeholder="Ex: 8.50"
-                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
-                         value={(editingDish.dish as any).promoPrice || ''} 
-                         onChange={e => setEditingDish({...editingDish, dish: {...editingDish.dish, promoPrice: e.target.value ? parseFloat(e.target.value) : undefined} as any})}
-                       />
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Tipo de Promoção</label>
+                           <select 
+                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-bold text-slate-700 mb-4"
+                             value={(editingDish.dish as any).promoType || ''}
+                             onChange={e => setEditingDish({...editingDish, dish: {...editingDish.dish, promoType: e.target.value || undefined} as any})}
+                           >
+                             <option value="">Sem Promoção</option>
+                             <option value="day">Promoção do Dia</option>
+                             <option value="week">Promoção da Semana</option>
+                           </select>
+                           
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Novo Valor da Promoção (€)</label>
+                           <input 
+                             type="number"
+                             step="0.01"
+                             placeholder="Ex: 8.50"
+                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                             value={(editingDish.dish as any).promoPrice || ''} 
+                             onChange={e => setEditingDish({...editingDish, dish: {...editingDish.dish, promoPrice: e.target.value ? parseFloat(e.target.value) : undefined} as any})}
+                           />
                     </div>
                     <div>
                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Descrição</label>
@@ -8030,14 +8065,35 @@ isBeauty ? (
                        />
                     </div>
                     <div>
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Foto (URL)</label>
-                       <input 
-                         name="photo"
-                         type="text"
-                         defaultValue={editingStaff?.photo || ''}
-                         placeholder="https://exemplo.com/foto.jpg"
-                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
-                       />
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-2">Foto (URL ou Upload)</label>
+                       <div className="flex gap-2 w-full">
+                          <input 
+                            name="photo"
+                            id="staff-photo-input-field"
+                            type="text"
+                            defaultValue={editingStaff?.photo || ''}
+                            placeholder="https://exemplo.com/foto.jpg"
+                            className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                          />
+                          <label className={`p-4 bg-slate-100 text-slate-600 rounded-2xl cursor-pointer hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center ${isUploading ? 'opacity-50' : ''}`}>
+                             {isUploading ? '...' : <ImageIcon className="w-5 h-5" />}
+                             <input 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={async (e) => {
+                                   const file = e.target.files?.[0];
+                                   if (file) {
+                                      const url = await handleImageUpload(file, 'gallery');
+                                      if (url) {
+                                         const el = document.getElementById('staff-photo-input-field');
+                                         if (el) el.value = url;
+                                      }
+                                   }
+                                }}
+                             />
+                          </label>
+                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div>
