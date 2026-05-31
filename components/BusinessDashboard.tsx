@@ -1071,6 +1071,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [closingDrawerOpen, setClosingDrawerOpen] = useState(false);
   const [installingStatus, setInstallingStatus] = useState<string | null>(null);
   const [installProgress, setInstallProgress] = useState(0);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
   const [publishingStatus, setPublishingStatus] = useState<string | null>(null);
   const [publishProgress, setPublishProgress] = useState(0);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -2766,20 +2776,43 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               </button>
               
               <button
-                onClick={() => {
-                  setInstallingStatus('caching');
-                  setInstallProgress(0);
-                  const interval = setInterval(() => {
-                    setInstallProgress(prev => {
-                      if (prev >= 100) {
+                onClick={async () => {
+                  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+                  const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+                  const isAndroid = /android/i.test(userAgent);
+
+                  if (isIOS) {
+                    alert('Para instalar no iPhone/iPad:\n1. Toque no botão Partilhar (quadrado com seta)\n2. Escolha "Ecrã Principal"');
+                    return;
+                  }
+
+                  if (deferredPrompt) {
+                    setInstallingStatus('caching');
+                    setInstallProgress(0);
+                    
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                      progress += 20;
+                      setInstallProgress(progress);
+                      if (progress >= 100) {
                         clearInterval(interval);
-                        setInstallingStatus('success');
-                        setTimeout(() => setInstallingStatus(null), 3000);
-                        return 100;
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(({ outcome }: any) => {
+                          if (outcome === 'accepted') {
+                            setInstallingStatus('success');
+                            setDeferredPrompt(null);
+                          } else {
+                            setInstallingStatus(null);
+                          }
+                          setTimeout(() => setInstallingStatus(null), 3000);
+                        });
                       }
-                      return prev + 10;
-                    });
-                  }, 200);
+                    }, 100);
+                  } else if (isAndroid) {
+                    alert('Para instalar a aplicação no seu tablet Android e criar o ícone no ambiente de trabalho:\n\n1. Toque no ícone de 3 pontos no canto superior direito do seu navegador (Chrome ou Samsung Internet).\n2. Selecione a opção "Instalar aplicação" ou "Adicionar ao ecrã principal".\n\nIsso irá criar o atalho diretamente no ambiente de trabalho do seu tablet!');
+                  } else {
+                    alert('Para instalar no seu dispositivo:\n\n1. Abra as opções do seu navegador.\n2. Escolha "Instalar App" ou "Adicionar ao ecrã principal".');
+                  }
                 }}
                 className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-500/10 cursor-pointer border border-blue-500/20"
                 title="Instalar App localmente no Tablet"
