@@ -20,6 +20,7 @@ interface ProfileModalProps {
   };
   onUpdateProfile: (update: { name: string; email: string; phone: string; avatar: string; nif?: string; password?: string }) => void;
   onShowReservations?: () => void;
+  onShowInvoices?: () => void;
   onLogout?: () => void;
   onShowSOS?: () => void;
   onShowCommunity?: () => void;
@@ -37,6 +38,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   userProfile, 
   onUpdateProfile,
   onShowReservations,
+  onShowInvoices,
   onLogout,
   onShowSOS,
   onShowCommunity
@@ -159,7 +161,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                         <span className="font-bold text-slate-700">Minhas Reservas</span>
                       </button>
 
-                      <button className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group">
+                      <button 
+                        onClick={() => onShowInvoices?.()}
+                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                      >
                         <div className="p-3 rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
                           <CreditCard size={20} />
                         </div>

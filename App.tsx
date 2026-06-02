@@ -14,6 +14,7 @@ import PackagePreviewModal from './components/PackagePreviewModal';
 import IslandSelectionModal from './components/IslandSelectionModal';
 import ProfileModal from './components/ProfileModal';
 import MyReservationsModal from './components/MyReservationsModal';
+import { InvoicesModal } from './components/InvoicesModal';
 import MostRequestedSlider from './components/MostRequestedSlider';
 import QRScannerModal from './components/QRScannerModal';
 import TableMenuModal from './components/TableMenuModal';
@@ -598,6 +599,7 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showInvoicesModal, setShowInvoicesModal] = useState(false);
   const [pendingFlight, setPendingFlight] = useState<Flight | null>(null);
   const [scannerConfig, setScannerConfig] = useState<{ type: 'checkin' | 'checkout', resId: string, restaurantId: string, tableId: string } | null>(null);
   const [tableMenuRes, setTableMenuRes] = useState<any | null>(null);
@@ -2813,6 +2815,11 @@ const App: React.FC = () => {
           setShowProfileModal(false);
           setShowMyReservationsModal(true);
         }}
+        onShowInvoices={() => {
+          setReturnToProfile(true);
+          setShowProfileModal(false);
+          setShowInvoicesModal(true);
+        }}
         onLogout={() => { setIsAuthenticated(false); setHasEnteredApp(false); }}
         onShowSOS={() => setShowSOSModal(true)}
         onShowCommunity={() => {
@@ -2820,6 +2827,22 @@ const App: React.FC = () => {
            setShowProfileModal(false);
            setHasEnteredApp(true);
         }}
+      />
+
+      <InvoicesModal
+        isOpen={showInvoicesModal}
+        onClose={() => {
+          setShowInvoicesModal(false);
+          if (returnToProfile) {
+            setShowProfileModal(true);
+            setReturnToProfile(false);
+          }
+        }}
+        reservations={myReservations}
+        restaurants={restaurants}
+        beauty={beauty}
+        userProfile={userProfile}
+        language={language}
       />
 
       <MyReservationsModal 
