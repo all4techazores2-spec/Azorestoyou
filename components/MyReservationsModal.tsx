@@ -807,61 +807,61 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
           };
 
           return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-slate-900 border border-slate-805 p-8 rounded-[3rem] max-w-md w-full text-white shadow-2xl relative flex flex-col max-h-[80vh]"
+                className="bg-white/95 backdrop-blur-xl border border-white/60 p-8 rounded-[3rem] max-w-md w-full text-slate-800 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] relative flex flex-col max-h-[80vh]"
               >
                 <button
                   onClick={closeBillPopup}
-                  className="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center hover:bg-slate-700 transition-all cursor-pointer"
+                  className="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center hover:bg-slate-200 transition-all cursor-pointer border border-slate-200/20 shadow-sm"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
 
                 {concludedSuccess ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center space-y-6">
-                    <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-3xl flex items-center justify-center">
-                      <CheckCircle size={32} />
+                  <div className="flex flex-col items-center justify-center py-8 text-center space-y-6 animate-in zoom-in-95">
+                    <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/25 animate-bounce">
+                      <CheckCircle size={36} className="text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-tight animate-pulse">Pagamento Confirmado!</h3>
-                      <p className="text-xs text-slate-450 mt-2 font-medium">
-                        A confirmação foi enviada para o painel do restaurante. A sua mesa receberá a notificação de encerramento em instantes. Obrigado!
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Confirmado!</h3>
+                      <p className="text-xs text-slate-500 mt-2 font-bold leading-relaxed">
+                        A confirmação da conta foi enviada ao staff do restaurante. A sua mesa será libertada em instantes. Obrigado!
                       </p>
                     </div>
                     <button
                       onClick={closeBillPopup}
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all cursor-pointer"
+                      className="w-full py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all cursor-pointer active:scale-95"
                     >
                       Ok, Fechar
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Receipt size={24} />
+                    <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-md shadow-emerald-500/10">
+                      <Receipt size={28} />
                     </div>
                     
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight text-center">Verificar Conta</h3>
-                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center mt-0.5 mb-6">Mesa #{res?.tableId} · {rest?.name}</p>
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight text-center">Verificar Conta</h3>
+                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest text-center mt-1 mb-6">Mesa #{res?.tableId} · {rest?.name}</p>
 
-                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 bg-slate-950/40 p-4 rounded-3xl border border-slate-850">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
                       {consumedItems.length > 0 ? consumedItems.map((item, idx) => {
                         const price = item.dish?.promoPrice || item.dish?.price || item.price || 0;
                         return (
-                          <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-2xl border border-slate-850">
+                          <div key={idx} className="flex justify-between items-center bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm">
                             <div className="text-left flex-1 min-w-0 pr-2">
-                              <p className="font-bold text-xs text-slate-200 truncate">{item.dish?.name || item.name}</p>
-                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.quantity}x @ €{price.toFixed(2)}</span>
+                              <p className="font-black text-xs text-slate-800 truncate">{item.dish?.name || item.name}</p>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{item.quantity}x @ €{price.toFixed(2)}</span>
                             </div>
-                            <span className="font-black text-xs text-indigo-400">€{(price * item.quantity).toFixed(2)}</span>
+                            <span className="font-black text-xs text-emerald-600">€{(price * item.quantity).toFixed(2)}</span>
                           </div>
                         );
                       }) : (
-                        <div className="py-8 text-center text-slate-500 font-bold text-xs uppercase tracking-widest">
+                        <div className="py-12 text-center text-slate-400 font-black text-xs uppercase tracking-widest">
                           Nenhum item consumido ainda.
                         </div>
                       )}
@@ -869,18 +869,18 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
                     {/* Analysis Result Box */}
                     {analysisResult && (
-                      <div className={`p-4 rounded-2xl border text-xs font-bold mb-4 ${
+                      <div className={`p-4 rounded-2xl border text-xs font-bold mb-4 shadow-sm animate-in fade-in slide-in-from-top-2 ${
                         analysisResult.status === 'success' 
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                          : 'bg-red-500/10 border-red-500/20 text-red-400'
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+                          : 'bg-rose-50 border-rose-100 text-rose-700'
                       }`}>
                         <p className="font-black uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                          {analysisResult.status === 'success' ? '✅ Tudo Correto' : '⚠️ Diferenças Encontradas'}
+                          {analysisResult.status === 'success' ? '✅ Tudo Coincide' : '⚠️ Diferenças Encontradas'}
                         </p>
                         {analysisResult.status === 'success' ? (
-                          <p className="font-medium text-slate-350">Os itens no POS correspondem exatamente ao que pediu.</p>
+                          <p className="font-medium opacity-90">A conta do POS coincide inteiramente com o seu pedido.</p>
                         ) : (
-                          <ul className="list-disc pl-4 space-y-1 mt-1 text-[11px] font-medium text-slate-300">
+                          <ul className="list-disc pl-4 space-y-1 mt-1.5 text-[11px] font-bold opacity-90">
                             {analysisResult.mismatches.map((m, idx) => (
                               <li key={idx}>{m}</li>
                             ))}
@@ -889,17 +889,17 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       </div>
                     )}
 
-                    <div className="border-t border-slate-800 pt-4 flex justify-between items-end mb-4 shrink-0">
+                    <div className="border-t border-slate-100 pt-4 flex justify-between items-end mb-4 shrink-0 select-none">
                       <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total da Conta</span>
-                      <span className="text-2xl font-black text-indigo-400">€{totalBill.toFixed(2)}</span>
+                      <span className="text-3xl font-black text-slate-800">€{totalBill.toFixed(2)}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 shrink-0">
+                    <div className="grid grid-cols-2 gap-4 shrink-0">
                       <button
                         onClick={handleCompareOrder}
-                        className="py-4 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        className="py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
                       >
-                        <Receipt size={14} /> Confirmar com Pedido
+                        <Receipt size={14} className="text-slate-500" /> Confirmar com Pedido
                       </button>
                       <button
                         onClick={() => {
@@ -908,7 +908,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                             setConcludedSuccess(true);
                           }
                         }}
-                        className="py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/25 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        className="py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/25 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 hover:opacity-95"
                       >
                         <CheckCircle size={14} /> Concluir
                       </button>
