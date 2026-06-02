@@ -34,6 +34,17 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [ratingTarget, setRatingTarget] = useState<any | null>(null);
   const [showBillPopup, setShowBillPopup] = useState<any | null>(null);
+  const [concludedSuccess, setConcludedSuccess] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<{
+    status: 'success' | 'warning';
+    mismatches: string[];
+  } | null>(null);
+
+  const closeBillPopup = () => {
+    setShowBillPopup(null);
+    setConcludedSuccess(false);
+    setAnalysisResult(null);
+  };
 
   const getOrderStatus = (res: any) => {
     const preOrder = res.preOrder || res.preorder;
@@ -761,8 +772,42 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
           const consumedItems = tableObj?.currentTab || [];
           const totalBill = consumedItems.reduce((acc, item) => acc + ((item.dish?.promoPrice || item.dish?.price || item.price || 0) * item.quantity), 0);
 
+          const handleCompareOrder = () => {
+            const mismatches: string[] = [];
+            const po = res?.preOrder || res?.preorder || [];
+            const posItems = consumedItems || [];
+
+            const clientMap: Record<string, number> = {};
+            po.forEach((item: any) => {
+              const name = item.dish?.name || item.name;
+              if (name) clientMap[name] = (clientMap[name] || 0) + item.quantity;
+            });
+
+            const posMap: Record<string, number> = {};
+            posItems.forEach((item: any) => {
+              const name = item.dish?.name || item.name;
+              if (name) posMap[name] = (posMap[name] || 0) + item.quantity;
+            });
+
+            const allNames = Array.from(new Set([...Object.keys(clientMap), ...Object.keys(posMap)]));
+            allNames.forEach(name => {
+              const clientQty = clientMap[name] || 0;
+              const posQty = posMap[name] || 0;
+              if (posQty > clientQty) {
+                mismatches.push(`Cobrado a mais no POS: ${name} (Fatura: ${posQty}x, Pedido: ${clientQty}x)`);
+              } else if (clientQty > posQty) {
+                mismatches.push(`Faltando no POS: ${name} (Pedido: ${clientQty}x, Fatura: ${posQty}x)`);
+              }
+            });
+
+            setAnalysisResult({
+              status: mismatches.length > 0 ? 'warning' : 'success',
+              mismatches
+            });
+          };
+
           return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -770,42 +815,106 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 className="bg-slate-900 border border-slate-805 p-8 rounded-[3rem] max-w-md w-full text-white shadow-2xl relative flex flex-col max-h-[80vh]"
               >
                 <button
-                  onClick={() => setShowBillPopup(null)}
+                  onClick={closeBillPopup}
                   className="absolute top-6 right-6 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center hover:bg-slate-700 transition-all cursor-pointer"
                 >
                   <X size={16} />
                 </button>
 
-                <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Receipt size={24} />
-                </div>
-                
-                <h3 className="text-lg font-black text-white uppercase tracking-tight text-center">Verificar Conta</h3>
-                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center mt-0.5 mb-6">Mesa #{res?.tableId} · {rest?.name}</p>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-6 bg-slate-950/40 p-4 rounded-3xl border border-slate-850">
-                  {consumedItems.length > 0 ? consumedItems.map((item, idx) => {
-                    const price = item.dish?.promoPrice || item.dish?.price || item.price || 0;
-                    return (
-                      <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-2xl border border-slate-850">
-                        <div className="text-left flex-1 min-w-0 pr-2">
-                          <p className="font-bold text-xs text-slate-200 truncate">{item.dish?.name || item.name}</p>
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.quantity}x @ €{price.toFixed(2)}</span>
-                        </div>
-                        <span className="font-black text-xs text-indigo-400">€{(price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    );
-                  }) : (
-                    <div className="py-8 text-center text-slate-500 font-bold text-xs uppercase tracking-widest">
-                      Nenhum item consumido ainda.
+                {concludedSuccess ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center space-y-6">
+                    <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-3xl flex items-center justify-center">
+                      <CheckCircle size={32} />
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white uppercase tracking-tight animate-pulse">Pagamento Confirmado!</h3>
+                      <p className="text-xs text-slate-450 mt-2 font-medium">
+                        A confirmação foi enviada para o painel do restaurante. A sua mesa receberá a notificação de encerramento em instantes. Obrigado!
+                      </p>
+                    </div>
+                    <button
+                      onClick={closeBillPopup}
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all cursor-pointer"
+                    >
+                      Ok, Fechar
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Receipt size={24} />
+                    </div>
+                    
+                    <h3 className="text-lg font-black text-white uppercase tracking-tight text-center">Verificar Conta</h3>
+                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest text-center mt-0.5 mb-6">Mesa #{res?.tableId} · {rest?.name}</p>
 
-                <div className="border-t border-slate-800 pt-4 flex justify-between items-end mb-2 shrink-0">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total da Conta</span>
-                  <span className="text-2xl font-black text-indigo-400">€{totalBill.toFixed(2)}</span>
-                </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 bg-slate-950/40 p-4 rounded-3xl border border-slate-850">
+                      {consumedItems.length > 0 ? consumedItems.map((item, idx) => {
+                        const price = item.dish?.promoPrice || item.dish?.price || item.price || 0;
+                        return (
+                          <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-3 rounded-2xl border border-slate-850">
+                            <div className="text-left flex-1 min-w-0 pr-2">
+                              <p className="font-bold text-xs text-slate-200 truncate">{item.dish?.name || item.name}</p>
+                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{item.quantity}x @ €{price.toFixed(2)}</span>
+                            </div>
+                            <span className="font-black text-xs text-indigo-400">€{(price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        );
+                      }) : (
+                        <div className="py-8 text-center text-slate-500 font-bold text-xs uppercase tracking-widest">
+                          Nenhum item consumido ainda.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Analysis Result Box */}
+                    {analysisResult && (
+                      <div className={`p-4 rounded-2xl border text-xs font-bold mb-4 ${
+                        analysisResult.status === 'success' 
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                          : 'bg-red-500/10 border-red-500/20 text-red-400'
+                      }`}>
+                        <p className="font-black uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                          {analysisResult.status === 'success' ? '✅ Tudo Correto' : '⚠️ Diferenças Encontradas'}
+                        </p>
+                        {analysisResult.status === 'success' ? (
+                          <p className="font-medium text-slate-350">Os itens no POS correspondem exatamente ao que pediu.</p>
+                        ) : (
+                          <ul className="list-disc pl-4 space-y-1 mt-1 text-[11px] font-medium text-slate-300">
+                            {analysisResult.mismatches.map((m, idx) => (
+                              <li key={idx}>{m}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="border-t border-slate-800 pt-4 flex justify-between items-end mb-4 shrink-0">
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total da Conta</span>
+                      <span className="text-2xl font-black text-indigo-400">€{totalBill.toFixed(2)}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 shrink-0">
+                      <button
+                        onClick={handleCompareOrder}
+                        className="py-4 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <Receipt size={14} /> Confirmar com Pedido
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (res) {
+                            onTableAction?.(res.restaurantId || res.businessId || '', res.tableId, 'bill_confirmed');
+                            setConcludedSuccess(true);
+                          }
+                        }}
+                        className="py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/25 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle size={14} /> Concluir
+                      </button>
+                    </div>
+                  </>
+                )}
               </motion.div>
             </div>
           );

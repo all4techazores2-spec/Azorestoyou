@@ -3202,7 +3202,7 @@ return t;
                                   </div>
 
                                  {/* Pulsing alert badge for new remote orders & waiter calls */}
-                                 {table.alertStatus && table.alertStatus !== 'none' && (
+                                 {table.alertStatus && table.alertStatus !== 'none' && table.alertStatus !== 'bill_confirmed' && (
                                    <div className="absolute -top-2 -left-2 flex h-6 w-6 z-40">
                                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                                        table.alertStatus === 'calling_waiter' ? 'bg-amber-400' :
@@ -3218,6 +3218,30 @@ return t;
                                    </div>
                                  )}
                               </motion.button>
+
+                               {table.alertStatus === 'bill_confirmed' && (
+                                 <div className="absolute inset-0 bg-emerald-600/95 backdrop-blur-sm rounded-[2.5rem] flex flex-col items-center justify-center p-4 z-50 text-white animate-in fade-in duration-300">
+                                   <CheckCircle size={28} className="text-white mb-2 animate-bounce" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Pagamento Confirmado!</span>
+                                   <button 
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       e.preventDefault();
+                                       const updated = tables.map(t => {
+                                         if (t.id === table.id || String(t.id) === String(table.id)) {
+                                           return { ...t, alertStatus: 'none' as const, status: 'available' as const, currentTab: [], pendingOrderItems: [] };
+                                         }
+                                         return t;
+                                       });
+                                       setTables(updated);
+                                       onUpdateBusiness({ ...business, tables: updated });
+                                     }}
+                                     className="mt-3 px-3 py-1.5 bg-white text-emerald-800 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer"
+                                   >
+                                     Libertar Mesa
+                                   </button>
+                                 </div>
+                               )}
 
                               {/* Delete table button — top left, visible on hover */}
                               <button

@@ -56,6 +56,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [customerName, setCustomerName] = useState(userProfile?.name || 'Cliente Viajante');
   const [preorderSelected, setPreorderSelected] = useState<boolean | null>(null);
   const [selectedDishIdx, setSelectedDishIdx] = useState<number | null>(null);
+  const [showFullMenuPopup, setShowFullMenuPopup] = useState(false);
   
   // Follow and Like state for individual business
   const [isFollowed, setIsFollowed] = useState(() => {
@@ -1013,12 +1014,20 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 )}
 
                 {restaurant.businessType === 'restaurant' && (
-                  <button 
-                    onClick={() => setBookingStep('datetime')}
-                    className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
-                  >
-                    <CalendarCheck size={18} /> Reservar Mesa Agora
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={() => setShowFullMenuPopup(true)}
+                      className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                    >
+                      <UtensilsCrossed size={18} /> Ver Ementa Completa
+                    </button>
+                    <button 
+                      onClick={() => setBookingStep('datetime')}
+                      className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                    >
+                      <CalendarCheck size={18} /> Reservar Mesa Agora
+                    </button>
+                  </div>
                 )}
 
                 <AnimatePresence>
@@ -1031,7 +1040,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     >
                       <button 
                         onClick={() => setSelectedDishIdx(null)}
-                        className="absolute top-8 right-8 p-3 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                        className="absolute top-8 right-8 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all border-none shadow-lg shadow-blue-500/40 z-[120] cursor-pointer"
                       >
                         <X size={24} />
                       </button>
@@ -1167,6 +1176,62 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
             )}
           </AnimatePresence>
         </div>
+        {/* Full Menu Popup */}
+        <AnimatePresence>
+          {showFullMenuPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 md:p-6"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-slate-100 flex flex-col max-h-[90vh] p-8"
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center pb-6 border-b border-slate-100 mb-6">
+                  <div className="text-left">
+                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Ementa Completa</h3>
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Todos os pratos disponíveis</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowFullMenuPopup(false)}
+                    className="p-3 bg-slate-100 text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-md cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Dishes list/grid */}
+                <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                  <div className="grid grid-cols-2 gap-4 pb-4">
+                    {restaurant.dishes?.map((dish, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => {
+                          setSelectedDishIdx(idx);
+                        }}
+                        className="bg-slate-50 border border-slate-100 rounded-[2rem] p-4 flex flex-col justify-between hover:shadow-lg transition-all cursor-pointer group"
+                      >
+                        <div className="h-32 rounded-[1.5rem] overflow-hidden bg-slate-200 mb-3 relative">
+                          <img src={getSafeImage(dish.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <div className="absolute top-2 right-2 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[9px] font-black text-slate-800 shadow-sm">
+                            {dish.price}€
+                          </div>
+                        </div>
+                        <h4 className="text-xs font-black text-slate-800 uppercase truncate mb-1">{dish.name}</h4>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{dish.description || 'Especialidade da Casa'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
     </AnimatePresence>

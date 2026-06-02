@@ -1280,7 +1280,7 @@ const App: React.FC = () => {
   const selectedIslandName = isNearbyFilter 
     ? (language === 'pt' ? 'Perto de Mim' : 'Nearby Me')
     : (airports.find(a => a.code === publicIslandFilter)?.location || getTranslation(language, 'all_islands'));
-  const handleTableAction = async (restaurantId: string, tableId: string, action: 'calling_waiter' | 'waiting_bill') => {
+  const handleTableAction = async (restaurantId: string, tableId: string, action: 'calling_waiter' | 'waiting_bill' | 'bill_confirmed') => {
     const rest = restaurants.find(r => r.id === restaurantId);
     if (!rest || !rest.tables) return;
 
@@ -1295,7 +1295,9 @@ const App: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRest),
       });
-      alert(action === 'waiting_bill' ? '🧾 Pedido de conta enviado à equipa!' : '👨‍🍳 O Staff foi chamado à sua mesa.');
+      if (action !== 'bill_confirmed') {
+        alert(action === 'waiting_bill' ? '🧾 Pedido de conta enviado à equipa!' : '👨‍🍳 O Staff foi chamado à sua mesa.');
+      }
     } catch (err) { console.error(err); }
   };
 
