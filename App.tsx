@@ -669,15 +669,30 @@ const App: React.FC = () => {
     if (!isAuthenticated || isAdmin || isBusiness) return;
     
     myReservations.forEach(res => {
-      const restName = res.businessName || res.restaurantName || 'Restaurante';
+      const restName = res.businessName || res.restaurantName || res.companyName || res.hotelName || res.hotel?.name || res.car?.companyName || res.flight?.airline || 'Negócio';
       const isBeautyRes = res.type === 'beauty' || res.businessType === 'beauty' || (res.id && res.id.startsWith('BEA')) || (res.bookingFee && res.bookingFee > 0);
+      const isCarRes = res.type === 'car' || res.type === 'cars' || (res.id && res.id.startsWith('RES_C'));
+      const isHotelRes = res.type === 'hotel' || res.type === 'al' || (res.id && res.id.startsWith('RES_H'));
+      const isFlightRes = res.type === 'flight' || (res.id && res.id.startsWith('RES_F'));
 
       // 1. Notificação de Reserva Confirmada
       if (res.status === 'accepted' && !notifiedResIds.has(res.id)) {
-        const title = isBeautyRes ? "Marcação Confirmada!" : "Reserva Confirmada!";
-        const message = isBeautyRes 
-          ? `O salão ${restName} aceitou a sua marcação para ${res.date} às ${res.time}.`
-          : `O restaurante ${restName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
+        let title = "Reserva Confirmada!";
+        let message = `O restaurante ${restName} aceitou a sua reserva para ${res.date} às ${res.time}.`;
+
+        if (isBeautyRes) {
+          title = "Marcação Confirmada!";
+          message = `O salão ${restName} aceitou a sua marcação para ${res.date} às ${res.time}.`;
+        } else if (isCarRes) {
+          title = "Aluguer de Carro Confirmado!";
+          message = `A rent-a-car ${restName} confirmou a sua reserva do carro ${res.car?.model || ''} para o dia ${res.date}.`;
+        } else if (isHotelRes) {
+          title = "Alojamento Confirmado!";
+          message = `O alojamento ${restName} confirmou a sua estadia a partir de ${res.date}.`;
+        } else if (isFlightRes) {
+          title = "Voo Confirmado!";
+          message = `A companhia aérea ${restName} confirmou o seu voo ${res.flight?.flightNumber || ''} para o dia ${res.date}.`;
+        }
         
         const newNotification: AppNotification = {
           id: `NOTIF_ACC_${Date.now()}_${res.id}`,

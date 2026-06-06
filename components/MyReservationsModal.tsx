@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft, Sparkles, ShoppingBag, Home, Camera, Bell, LogOut, Briefcase, Package as PackageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Calendar, Clock, MapPin, CheckCircle, Navigation, Info, Users, ArrowRight, QrCode, Receipt, Star, UtensilsCrossed, Plane, Hotel, Car, ChevronLeft, Sparkles, ShoppingBag, Home, Camera, Bell, LogOut, Briefcase, Package as PackageIcon, MessageSquare, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Restaurant, Itinerary } from '../types';
 import RatingModal from './RatingModal';
+import { API_BASE_URL } from '../config';
 
 interface MyReservationsModalProps {
   isOpen: boolean;
@@ -39,6 +40,66 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     status: 'success' | 'warning';
     mismatches: string[];
   } | null>(null);
+
+  const [chatReservation, setChatReservation] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatText, setChatText] = useState('');
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenEmergencyChat = (res: any) => {
+    setChatReservation(res);
+    setChatMessages(res.chatMessages || []);
+  };
+
+  useEffect(() => {
+    if (!chatReservation) return;
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/reservations/${chatReservation.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setChatMessages(data.chatMessages || []);
+        }
+      } catch (err) {
+        console.error("Erro ao atualizar chat:", err);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [chatReservation]);
+
+  useEffect(() => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, chatReservation]);
+
+  const handleSendMessage = async () => {
+    if (!chatText.trim() || !chatReservation) return;
+    
+    const newMsg = {
+      sender: 'client',
+      text: chatText.trim(),
+      timestamp: new Date().toISOString()
+    };
+    
+    const updatedMessages = [...chatMessages, newMsg];
+    setChatMessages(updatedMessages);
+    setChatText('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${chatReservation.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatMessages: updatedMessages })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setChatMessages(data.chatMessages || []);
+      }
+    } catch (err) {
+      console.error("Erro ao enviar mensagem:", err);
+    }
+  };
 
   const closeBillPopup = () => {
     setShowBillPopup(null);
@@ -667,26 +728,61 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       
                       <div className="p-6 space-y-4">
                          {pkg.items.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                               <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
-                                     {item.type === 'car' ? <Car size={18} /> : item.type === 'flight' ? <Plane size={18} /> : <Hotel size={18} />}
+                            <div key={item.id} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                               <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                     <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
+                                        {item.type === 'car' ? <Car size={18} /> : item.type === 'flight' ? <Plane size={18} /> : <Hotel size={18} />}
+                                     </div>
+                                     <div className="text-left">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                           {item.type === 'car' ? `Rent-a-car (${item.companyName || 'Auto Açores'})` : item.type === 'flight' ? 'Voo' : 'Alojamento'}
+                                        </p>
+                                        <p className="text-sm font-black text-slate-800 leading-tight">
+                                           {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
+                                        </p>
+                                     </div>
                                   </div>
-                                  <div className="text-left">
-                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                        {item.type === 'car' ? `Rent-a-car (${item.companyName || 'Auto Açores'})` : item.type === 'flight' ? 'Voo' : 'Alojamento'}
-                                     </p>
-                                     <p className="text-sm font-black text-slate-800 leading-tight">
-                                        {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
-                                     </p>
+                                  <div className="flex items-center gap-2">
+                                     {item.type === 'car' ? (
+                                       <>
+                                         {item.status === 'accepted' || item.status === 'active' ? (
+                                           item.checkinTime ? (
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                               🛎️ Check-in às {item.checkinTime}
+                                             </span>
+                                           ) : (
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                               ⏳ A aguardar confirmação de check-in
+                                             </span>
+                                           )
+                                         ) : (
+                                           <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'finished' ? 'text-slate-500' : 'text-amber-600'}`}>
+                                             {item.status === 'finished' ? 'Finalizado' : 'Em Aprovação'}
+                                           </span>
+                                         )}
+                                       </>
+                                     ) : (
+                                       <>
+                                         <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                         <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                            {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
+                                         </span>
+                                       </>
+                                     )}
                                   </div>
                                </div>
-                               <div className="flex items-center gap-2">
-                                  <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                                  <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                     {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
-                                  </span>
-                               </div>
+                               {item.type === 'car' && (item.checkinTime || item.status === 'active') && item.status !== 'finished' && (
+                                  <div className="flex justify-end pt-1">
+                                     <button
+                                        onClick={() => handleOpenEmergencyChat(item)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                                     >
+                                        <MessageSquare size={12} />
+                                        Chat de Emergência
+                                     </button>
+                                  </div>
+                               )}
                             </div>
                          ))}
                       </div>
@@ -740,6 +836,27 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duração</span>
                             <span className="text-sm font-black text-slate-800">{res.days} dias</span>
                          </div>
+                         <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</span>
+                            <span className="text-xs font-black text-slate-800">
+                               {res.status === 'accepted' || res.status === 'active' ? (
+                                  res.checkinTime ? `🛎️ Check-in às ${res.checkinTime}` : '⏳ A aguardar confirmação de check-in'
+                               ) : (
+                                  res.status === 'finished' ? 'Finalizado' : 'Em Aprovação'
+                               )}
+                            </span>
+                         </div>
+                         {(res.checkinTime || res.status === 'active') && res.status !== 'finished' && (
+                            <div className="flex justify-end pt-2">
+                               <button
+                                  onClick={() => handleOpenEmergencyChat(res)}
+                                  className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                               >
+                                  <MessageSquare size={14} />
+                                  Chat de Emergência
+                               </button>
+                            </div>
+                         )}
                       </div>
                    </div>
                 ))}
@@ -933,6 +1050,97 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
             }}
             language={language}
           />
+        )}
+
+        {chatReservation && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white/95 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] max-w-md w-full text-slate-800 shadow-2xl relative flex flex-col h-[75vh] max-h-[600px]"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 shrink-0">
+                <div className="text-left">
+                  <span className="text-[9px] font-black text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 max-w-max">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Emergência 24h
+                  </span>
+                  <h3 className="text-lg font-black text-slate-800 tracking-tight mt-1.5">
+                    {chatReservation.companyName || chatReservation.car?.companyName || 'Rent-a-car'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                    Veículo: {chatReservation.car?.model || chatReservation.vehicle || 'Viatura'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setChatReservation(null)}
+                  className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:text-slate-750 flex items-center justify-center hover:bg-slate-200 transition-all cursor-pointer shadow-sm border border-slate-200/20"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Chat Message list */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar py-4 space-y-3.5">
+                {chatMessages.length > 0 ? (
+                  chatMessages.map((msg, idx) => {
+                    const isClient = msg.sender === 'client';
+                    return (
+                      <div key={idx} className={`flex ${isClient ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-1`}>
+                        <div
+                          className={`max-w-[80%] p-4 rounded-3xl text-sm font-medium ${
+                            isClient
+                              ? 'bg-blue-600 text-white rounded-br-none shadow-md shadow-blue-500/10'
+                              : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200/50'
+                          }`}
+                        >
+                          <p className="text-left break-words">{msg.text}</p>
+                          <span className={`text-[8px] font-bold block mt-1.5 text-right ${isClient ? 'text-blue-200' : 'text-slate-400'}`}>
+                            {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-4">
+                    <div className="w-14 h-14 bg-slate-50 text-slate-350 rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
+                      <MessageSquare size={24} />
+                    </div>
+                    <div>
+                      <p className="font-black text-xs uppercase tracking-widest text-slate-600">Canal Seguro Ativo</p>
+                      <p className="text-xs text-slate-400 font-bold max-w-xs mt-1.5 leading-relaxed">
+                        Envie uma mensagem em caso de emergência ou dúvida sobre o seu aluguer. A companhia responderá de imediato.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatBottomRef} />
+              </div>
+
+              {/* Input section */}
+              <div className="pt-4 border-t border-slate-100 shrink-0 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Escreva a sua mensagem..."
+                  value={chatText}
+                  onChange={(e) => setChatText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSendMessage();
+                  }}
+                  className="flex-1 bg-slate-50 border-2 border-slate-150/40 rounded-2xl px-4 py-3 text-sm font-semibold focus:bg-white focus:border-blue-600 focus:outline-none transition-all placeholder:text-slate-300"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!chatText.trim()}
+                  className="w-12 h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-40 disabled:scale-100 disabled:shadow-none cursor-pointer"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </motion.div>
     </div>

@@ -4,7 +4,8 @@ import {
   Wrench, BarChart3, Star, Settings, LogOut, Users, Search, 
   Bell, Sun, Moon, AlertTriangle, Plus, Edit, Trash2, CheckCircle2, 
   X, Check, ChevronRight, FileText, Download, Shield, Eye, Info, HelpCircle,
-  TrendingUp, CalendarDays, Key, FileCheck, Landmark, ChevronDown, CheckCircle, Clock
+  TrendingUp, CalendarDays, Key, FileCheck, Landmark, ChevronDown, CheckCircle, Clock,
+  MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -16,7 +17,7 @@ interface RentCarDashboardProps {
   language?: string;
 }
 
-type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database';
+type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database' | 'chat';
 
 export default function RentCarDashboard({ business, onUpdateBusiness, onLogout, language = 'pt' }: RentCarDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -216,19 +217,22 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     onUpdateBusiness(updatedBiz);
   };
 
-  const updateReservationStatus = async (resId: string, newStatus: 'pending' | 'accepted' | 'cancelled') => {
+  const updateReservationStatus = async (resId: string, newStatus: string, checkinTime?: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus, checkinTime })
       });
       if (!response.ok) throw new Error('Falha ao atualizar estado da reserva');
       
-      const updatedResList = reservations.map(r => r.id === resId ? { ...r, status: newStatus } : r);
+      const updatedResList = reservations.map(r => r.id === resId ? { ...r, status: newStatus, checkinTime: checkinTime || r.checkinTime } : r);
       setReservations(updatedResList);
       
-      const updatedBiz = { ...business, reservations: updatedResList };
+      const normalizedVehicles = getNormalizedVehicles(vehicles, updatedResList);
+      setVehicles(normalizedVehicles);
+
+      const updatedBiz = { ...business, reservations: updatedResList, cars: normalizedVehicles };
       onUpdateBusiness(updatedBiz);
     } catch (err: any) {
       console.error(err);
@@ -409,6 +413,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             { id: 'reservas', label: 'Reservas', icon: <Calendar size={18} /> },
             { id: 'frota', label: 'Frota', icon: <Car size={18} /> },
             { id: 'clientes', label: 'Clientes', icon: <Users size={18} /> },
+            { id: 'chat', label: 'Chat de Emergência', icon: <MessageSquare size={18} /> },
             { id: 'checkin', label: 'Check-In / Check-Cut', icon: <CheckSquare size={18} /> },
             { id: 'pagamentos', label: 'Pagamentos', icon: <DollarSign size={18} /> },
             { id: 'manutencao', label: 'Manutenção', icon: <Wrench size={18} /> },
@@ -1510,32 +1515,45 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     </div>
                     <p className="text-[9px] text-center text-slate-400 italic">Assine dentro da caixa branca acima utilizando o rato ou dedo.</p>
 
-                    <div className="space-y-3 border-t border-slate-200/50 pt-4">
-                      {deliveryConfirmed ? (
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center gap-3">
-                          <CheckCircle2 size={24} />
-                          <div>
-                            <p className="text-xs font-black uppercase">Processo Concluído!</p>
-                            <p className="text-[10px] opacity-80 mt-0.5">As informações foram guardadas nas coleções Firebase.</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => {
-                            setDeliveryConfirmed(true);
-                            // Update reservation status in local database simulation
-                            setReservations(prev => prev.map(r => 
-                              r.id === selectedCheckRes.id 
-                                ? {...r, status: activeCheckFlow === 'in' ? 'Em Curso' : 'Concluída'} 
-                                : r
-                            ));
-                            alert('Sucesso: Assinatura e dados salvos no servidor Azores4you (Firebase Ready)!');
-                          }}
-                          className="w-full py-4 bg-emerald-650 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
-                        >
-                          <CheckCircle2 size={16} /> Confirmar Entrega
-                        </button>
-                      )}
+                     <div className="space-y-3 border-t border-slate-200/50 pt-4">
+                       {activeCheckFlow === 'in' && !deliveryConfirmed && (
+                         <div className="space-y-2 text-left mb-4">
+                           <label className="text-[10px] font-black uppercase text-slate-400">Hora de Check-In (Levantamento)</label>
+                           <input 
+                             type="time" 
+                             id="checkinTimeInput"
+                             defaultValue={new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                             className={`w-full p-3 border rounded-xl bg-transparent outline-none text-xs font-bold ${
+                               darkMode ? 'border-slate-800 text-white' : 'border-slate-200 text-slate-800'
+                             }`}
+                           />
+                         </div>
+                       )}
+
+                       {deliveryConfirmed ? (
+                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center gap-3">
+                           <CheckCircle2 size={24} />
+                           <div>
+                             <p className="text-xs font-black uppercase">Processo Concluído!</p>
+                             <p className="text-[10px] opacity-80 mt-0.5">As informações foram guardadas nas coleções Firebase.</p>
+                           </div>
+                         </div>
+                       ) : (
+                         <button 
+                           onClick={() => {
+                             const checkinTimeInput = document.getElementById('checkinTimeInput') as HTMLInputElement;
+                             const checkinTime = checkinTimeInput ? checkinTimeInput.value : '';
+                             setDeliveryConfirmed(true);
+                             
+                             const dbStatus = activeCheckFlow === 'in' ? 'active' : 'finished';
+                             updateReservationStatus(selectedCheckRes.id, dbStatus, checkinTime);
+                             alert('Sucesso: Assinatura e dados salvos no servidor Azores4you (Firebase Ready)!');
+                           }}
+                           className="w-full py-4 bg-emerald-650 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                         >
+                           <CheckCircle2 size={16} /> Confirmar Entrega
+                         </button>
+                       )}
                       
                       <button 
                         onClick={() => {
@@ -1772,6 +1790,31 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 </button>
               </form>
             </div>
+          )}
+
+          {/* TAB 11: CHAT DE EMERGÊNCIA (ADMIN VIEW) */}
+          {activeTab === 'chat' && (
+            <RentCarEmergencyChat 
+              reservations={reservations} 
+              darkMode={darkMode}
+              onUpdateReservation={async (updatedRes) => {
+                try {
+                  const response = await fetch(`${API_BASE_URL}/api/reservations/${updatedRes.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedRes)
+                  });
+                  if (response.ok) {
+                    const updatedResList = reservations.map(r => r.id === updatedRes.id ? updatedRes : r);
+                    setReservations(updatedResList);
+                    const updatedBiz = { ...business, reservations: updatedResList };
+                    onUpdateBusiness(updatedBiz);
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+            />
           )}
 
         </main>
@@ -2226,6 +2269,201 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
         )}
       </AnimatePresence>
 
+    </div>
+  );
+}
+
+interface RentCarEmergencyChatProps {
+  reservations: any[];
+  darkMode: boolean;
+  onUpdateReservation: (updatedRes: any) => Promise<void>;
+}
+
+function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: RentCarEmergencyChatProps) {
+  const activeRentals = reservations.filter(r => 
+    r.type === 'car' && 
+    (r.status === 'active' || r.status === 'Em Curso' || (r.status === 'accepted' && r.checkinTime)) &&
+    r.status !== 'finished' && r.status !== 'Concluída' &&
+    r.status !== 'cancelled' && r.status !== 'Cancelada'
+  );
+
+  const [selectedResId, setSelectedResId] = useState<string | null>(null);
+  const selectedRes = activeRentals.find(r => r.id === selectedResId);
+  const [newMessageText, setNewMessageText] = useState('');
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (selectedRes) {
+      setChatMessages(selectedRes.chatMessages || []);
+    } else {
+      setChatMessages([]);
+    }
+  }, [selectedResId, selectedRes]);
+
+  useEffect(() => {
+    if (!selectedResId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/reservations/${selectedResId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setChatMessages(data.chatMessages || []);
+        }
+      } catch (e) {}
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [selectedResId]);
+
+  const handleSendMessage = async () => {
+    if (!newMessageText.trim() || !selectedRes) return;
+
+    const newMsg = {
+      sender: 'admin',
+      text: newMessageText.trim(),
+      timestamp: new Date().toISOString()
+    };
+
+    const updatedMessages = [...chatMessages, newMsg];
+    setChatMessages(updatedMessages);
+    setNewMessageText('');
+
+    const updatedRes = {
+      ...selectedRes,
+      chatMessages: updatedMessages
+    };
+
+    await onUpdateReservation(updatedRes);
+  };
+
+  return (
+    <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
+      <div>
+        <h2 className="text-2xl font-black uppercase tracking-tight">Chat de Emergência</h2>
+        <p className="text-slate-400 text-xs mt-1">Comunicação direta em tempo real com os clientes durante o aluguer.</p>
+      </div>
+
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+        <div className={`p-4 rounded-2xl border flex flex-col ${
+          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        } shadow-sm overflow-y-auto`}>
+          <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-3">Alugueres Ativos</h3>
+          <div className="space-y-2">
+            {activeRentals.length === 0 ? (
+              <p className="text-xs text-slate-400 italic text-center py-6">Sem alugueres ativos com check-in.</p>
+            ) : (
+              activeRentals.map(res => (
+                <button
+                  key={res.id}
+                  onClick={() => setSelectedResId(res.id)}
+                  className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between ${
+                    selectedResId === res.id
+                      ? 'bg-blue-600/10 border-blue-500/30 text-blue-600'
+                      : darkMode
+                        ? 'border-slate-800 hover:bg-slate-800/50'
+                        : 'border-slate-100 hover:bg-slate-55'
+                  }`}
+                >
+                  <div>
+                    <p className="font-bold text-xs leading-none text-slate-800 dark:text-white mb-1">
+                      {res.customerName || res.client || 'Cliente'}
+                    </p>
+                    <span className="text-[10px] text-slate-400 uppercase font-black">
+                      {res.car?.model || res.vehicle} · {res.id}
+                    </span>
+                  </div>
+                  {res.chatMessages && res.chatMessages.length > 0 && res.chatMessages[res.chatMessages.length - 1].sender === 'client' && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className={`md:col-span-2 rounded-2xl border flex flex-col ${
+          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        } shadow-sm min-h-0`}>
+          {selectedRes ? (
+            <div className="flex-1 flex flex-col min-h-0 p-4">
+              <div className="border-b pb-3 mb-4 flex justify-between items-center">
+                <div>
+                  <h4 className="font-black text-sm uppercase tracking-tight">
+                    {selectedRes.customerName || selectedRes.client}
+                  </h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                    {selectedRes.car?.model || selectedRes.vehicle} · Check-in: {selectedRes.checkinTime || 'Confirmado'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
+                {chatMessages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                    <MessageSquare size={32} className="opacity-20 mb-2" />
+                    <p className="text-xs font-bold uppercase tracking-wider">Sem mensagens</p>
+                    <p className="text-[9px] text-center max-w-xs mt-1">
+                      Envie uma mensagem de boas-vindas ou de suporte ao cliente.
+                    </p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[85%] rounded-2xl p-3 text-xs font-semibold ${
+                          msg.sender === 'admin' 
+                            ? 'bg-blue-600 text-white rounded-tr-none' 
+                            : darkMode
+                              ? 'bg-slate-800 text-slate-100 rounded-tl-none border border-slate-700'
+                              : 'bg-slate-100 text-slate-800 rounded-tl-none border border-slate-200/50'
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                      <span className="text-[8px] text-slate-400 mt-1 uppercase font-black">
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex gap-2 border-t pt-3">
+                <input 
+                  type="text" 
+                  placeholder="Escreva a sua resposta de emergência..."
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                  className={`flex-1 px-4 py-3 border rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    darkMode 
+                      ? 'border-slate-800 bg-slate-950 text-white placeholder-slate-500' 
+                      : 'border-slate-200 bg-transparent text-slate-800'
+                  }`}
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  className="px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center"
+                >
+                  Enviar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+              <MessageSquare size={48} className="opacity-10 mb-3 animate-bounce" />
+              <p className="text-sm font-black uppercase tracking-widest">Painel do Chat de Emergência</p>
+              <p className="text-[10px] text-center max-w-xs mt-1 italic">
+                Selecione um cliente com aluguer ativo na barra lateral para iniciar a conversação.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
