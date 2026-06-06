@@ -23,6 +23,7 @@ import CategoryBar, { getNavigationCategories } from './components/CategoryBar';
 import IslandSearch from './components/IslandSearch';
 import AdminDashboard from './components/AdminDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
+import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
@@ -1833,7 +1834,7 @@ const App: React.FC = () => {
   if ((isBusiness || isStaff) && currentBusinessId) {
     // Procurar o negócio nos estados sincronizados com o servidor
     const targetId = currentBusinessId.trim();
-    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices].find(b => b.id === targetId);
+    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars].find(b => b.id === targetId);
     
     // Fallback: Se não encontrou no estado (sincronização pendente), apenas retornar erro amigável
     if (!biz) {
@@ -1850,9 +1851,33 @@ const App: React.FC = () => {
       const isBeauty = isBeautyBiz || bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
       const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
-      const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
+      const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car' || targetId.startsWith('RC') || targetId.startsWith('CAR');
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
+
+      if (isRentCar) {
+        return (
+          <ErrorBoundary>
+            <RentCarDashboard 
+              business={biz}
+              language={language}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                 setCars(prev => prev.map(item => item.id === updated.id ? updated : item));
+                 try {
+                   await fetch(`${API_BASE_URL}/api/cars/${updated.id}`, {
+                     method: 'PUT',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(updated),
+                   });
+                 } catch (err) {
+                   console.error("Erro ao atualizar Rent-a-car no servidor:", err);
+                 }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
 
       return (
         <ErrorBoundary>
@@ -2762,7 +2787,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 
