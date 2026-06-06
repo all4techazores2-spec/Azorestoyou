@@ -24,48 +24,39 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   
   // Real-time states or mock fallbacks
   const [vehicles, setVehicles] = useState<any[]>(() => {
-    return business.cars && business.cars.length > 0 ? business.cars : [
-      { id: 'v1', brand: 'Renault', model: 'Clio', plate: 'AA-00-AA', category: 'Económico', status: 'Disponível', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', year: 2022, gearbox: 'Automático', insuranceExp: '2026-12-15', inspectionExp: '2026-10-10' },
-      { id: 'v2', brand: 'Fiat', model: '500', plate: 'BB-11-BB', category: 'Económico', status: 'Reservado', image: 'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?auto=format&fit=crop&w=400&q=80', year: 2021, gearbox: 'Manual', insuranceExp: '2026-06-25', inspectionExp: '2026-07-15' },
-      { id: 'v3', brand: 'Tesla', model: 'Model 3', plate: 'CC-22-CC', category: 'Elétrico', status: 'Alugado', image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=400&q=80', year: 2023, gearbox: 'Automático', insuranceExp: '2026-09-01', inspectionExp: '2026-08-30' },
-      { id: 'v4', brand: 'Dacia', model: 'Duster', plate: 'DD-33-DD', category: 'SUV', status: 'Disponível', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80', year: 2022, gearbox: 'Manual', insuranceExp: '2026-05-10', inspectionExp: '2026-05-12' },
-      { id: 'v5', brand: 'Peugeot', model: '208', plate: 'EE-44-EE', category: 'Económico', status: 'Alugado', image: 'https://images.unsplash.com/photo-1629897048514-3dd7414fe72a?auto=format&fit=crop&w=400&q=80', year: 2023, gearbox: 'Manual', insuranceExp: '2026-11-20', inspectionExp: '2026-12-05' }
-    ];
+    return business.cars || [];
   });
 
   const [reservations, setReservations] = useState<any[]>(() => {
-    return business.reservations && business.reservations.length > 0 ? business.reservations : [
-      { id: '#RC4587', client: 'João Silva', email: 'joaosilva@gmail.com', vehicle: 'Renault Clio', plate: 'AA-00-AA', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', start: '12/06/2024 10:00', end: '14/06/2024 10:00', value: 85, status: 'Confirmada' },
-      { id: '#RC4588', client: 'Maria Santos', email: 'maria.santos@outlook.com', vehicle: 'Fiat 500', plate: 'BB-11-BB', image: 'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?auto=format&fit=crop&w=400&q=80', start: '13/06/2024 09:00', end: '16/06/2024 09:00', value: 120, status: 'Pendente' },
-      { id: '#RC4589', client: 'Pedro Costa', email: 'pedrocosta@yahoo.com', vehicle: 'Tesla Model 3', plate: 'CC-22-CC', image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=400&q=80', start: '15/06/2024 14:00', end: '18/06/2024 14:00', value: 350, status: 'Em Curso' },
-      { id: '#RC4590', client: 'Ana Oliveira', email: 'ana.oliveira@gmail.com', vehicle: 'Dacia Duster', plate: 'DD-33-DD', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80', start: '16/06/2024 11:00', end: '20/06/2024 11:00', value: 150, status: 'Confirmada' },
-      { id: '#RC4591', client: 'Carlos Almeida', email: 'carlos.almeida@live.com.pt', vehicle: 'Peugeot 208', plate: 'EE-44-EE', image: 'https://images.unsplash.com/photo-1629897048514-3dd7414fe72a?auto=format&fit=crop&w=400&q=80', start: '17/06/2024 08:30', end: '19/06/2024 08:30', value: 95, status: 'Cancelada' }
-    ];
+    return business.reservations || [];
   });
 
-  const [clients, setClients] = useState<any[]>([
-    { id: 'c1', name: 'João Silva', email: 'joaosilva@gmail.com', phone: '912 345 678', nif: '234567890', license: 'L-987654 3' },
-    { id: 'c2', name: 'Maria Santos', email: 'maria.santos@outlook.com', phone: '963 852 741', nif: '245678901', license: 'L-123456 8' },
-    { id: 'c3', name: 'Pedro Costa', email: 'pedrocosta@yahoo.com', phone: '921 741 852', nif: '256789012', license: 'L-654321 0' },
-    { id: 'c4', name: 'Ana Oliveira', email: 'ana.oliveira@gmail.com', phone: '934 567 890', nif: '267890123', license: 'L-789012 4' }
-  ]);
+  const [clients, setClients] = useState<any[]>(() => {
+    return business.clients || [];
+  });
 
-  const [maintenance, setMaintenance] = useState<any[]>([
-    { id: 'm1', vehicle: 'Dacia Duster (DD-33-DD)', desc: 'Revisão dos 50.000km e calços de travões', cost: 185.00, date: '2026-06-04', status: 'Em Curso' },
-    { id: 'm2', vehicle: 'Renault Clio (AA-00-AA)', desc: 'Substituição de pneu esquerdo', cost: 95.00, date: '2026-05-20', status: 'Concluído' }
-  ]);
+  const [maintenance, setMaintenance] = useState<any[]>(() => {
+    return business.maintenance || [];
+  });
 
-  const [reviews, setReviews] = useState<any[]>([
-    { id: 'r1', client: 'João Silva', rating: 5, comment: 'Excelente serviço. Carro limpo e entrega pontual no Aeroporto de Ponta Delgada.', date: '2026-06-01' },
-    { id: 'r2', client: 'Ana Oliveira', rating: 4, comment: 'Bom carro e simpática assistência, recomendo.', date: '2026-05-25' }
-  ]);
+  const [reviews, setReviews] = useState<any[]>(() => {
+    return business.reviews || [];
+  });
 
   // Notifications State
-  const [notifications, setNotifications] = useState<any[]>([
-    { id: 1, text: 'Nova reserva pendente de aprovação: #RC4588', read: false },
-    { id: 2, text: 'Seguro do veículo DD-33-DD expira em 4 dias', read: false },
-    { id: 3, text: 'Manutenção agendada para Fiat 500 amanhã', read: true }
-  ]);
+  const [notifications, setNotifications] = useState<any[]>(() => {
+    return business.notifications || [];
+  });
+
+  useEffect(() => {
+    if (business.cars) setVehicles(business.cars);
+    if (business.reservations) setReservations(business.reservations);
+    if (business.clients) setClients(business.clients);
+    if (business.maintenance) setMaintenance(business.maintenance);
+    if (business.reviews) setReviews(business.reviews);
+    if (business.notifications) setNotifications(business.notifications);
+  }, [business]);
+
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showNewResModal, setShowNewResModal] = useState(false);
 
