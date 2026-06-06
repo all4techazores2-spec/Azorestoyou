@@ -60,6 +60,32 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
 
   if (!currentItinerary) return null;
 
+  const checkCarOverlap = (car: any) => {
+    if (!currentItinerary.carStartDate || !currentItinerary.carEndDate) return false;
+    
+    const selStart = new Date(currentItinerary.carStartDate);
+    const selEnd = new Date(currentItinerary.carEndDate);
+    const selStartTime = new Date(selStart.getFullYear(), selStart.getMonth(), selStart.getDate()).getTime();
+    const selEndTime = new Date(selEnd.getFullYear(), selEnd.getMonth(), selEnd.getDate()).getTime();
+
+    const company = companies.find(c => c.cars?.some((vc: any) => vc.id === car.id));
+    if (!company || !company.reservations) return false;
+
+    return company.reservations.some((res: any) => {
+      if (res.type !== 'car' || (res.status !== 'accepted' && res.status !== 'Confirmada')) return false;
+      const resCarId = res.car?.id || res.carId;
+      if (resCarId !== car.id) return false;
+      if (!res.date) return false;
+
+      const resStart = new Date(res.date);
+      const resStartTime = new Date(resStart.getFullYear(), resStart.getMonth(), resStart.getDate()).getTime();
+      const days = Number(res.days) || 3;
+      const resEndTime = resStartTime + (days * 24 * 60 * 60 * 1000) - 1000;
+
+      return (selStartTime <= resEndTime) && (selEndTime >= resStartTime);
+    });
+  };
+
   // Simulate unavailable dates
   const getUnavailableDates = (seed: number) => {
     const dates: Date[] = [];
@@ -216,16 +242,19 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                 {(selectedCompany.cars || []).map(car => {
                   const isSelected = currentItinerary.car?.id === car.id;
                   const totalCarPrice = car.pricePerDay * carDays;
+                  const isCarAvailable = car.isAvailable && !checkCarOverlap(car);
                   
                   return (
                     <div 
                       key={car.id}
-                      onClick={() => handleCarSelect(car)}
+                      onClick={() => {
+                        if (isCarAvailable) handleCarSelect(car);
+                      }}
                       className={`group bg-white rounded-2xl overflow-hidden transition-all duration-300 border-2 flex flex-col h-full
-                        ${!car.isAvailable ? 'opacity-75 grayscale-[0.5]' : 'cursor-pointer'}
+                        ${!isCarAvailable ? 'opacity-75 grayscale-[0.5]' : 'cursor-pointer'}
                         ${isSelected 
                           ? 'border-green-600 shadow-xl scale-[1.01]' 
-                          : car.isAvailable ? 'border-transparent shadow-sm hover:shadow-md hover:border-green-200' : 'border-slate-100 shadow-none'}`}
+                          : isCarAvailable ? 'border-transparent shadow-sm hover:shadow-md hover:border-green-200' : 'border-slate-100 shadow-none'}`}
                     >
                       <div className="relative h-40 bg-slate-100 flex items-center justify-center p-4 overflow-hidden">
                         <img 
@@ -237,7 +266,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                            <span className="bg-slate-800 text-white text-[8px] font-black tracking-widest px-2 py-1 rounded-md uppercase">
                               {getCarTypeTranslation(car.type)}
                            </span>
-                           {!car.isAvailable && (
+                           {!isCarAvailable && (
                              <span className="bg-red-500 text-white text-[8px] font-black tracking-widest px-2 py-1 rounded-md uppercase">
                                 {getTranslation(language, 'unavailable')}
                              </span>
@@ -255,7 +284,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                       <div className="p-5 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-1">
                            <h3 className="text-lg font-bold text-slate-800 leading-tight">{car.model}</h3>
-                           {car.isAvailable && (
+                           {isCarAvailable && (
                              <div className="text-right shrink-0">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-0.5">{getTranslation(language, 'daily_rate')}</p>
                                 <p className="text-sm font-bold text-slate-700">€{car.pricePerDay}</p>
@@ -267,7 +296,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                         </p>
                         
                         <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                          {car.isAvailable ? (
+                          {isCarAvailable ? (
                             <>
                               <div>
                                  <p className="text-[9px] font-bold text-green-500 uppercase tracking-wider">
@@ -501,7 +530,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                    <p className="text-3xl font-black text-green-600">€{selectedCarForDetail.pricePerDay * carDays}</p>
                 </div>
 
-                {selectedCarForDetail.isAvailable ? (
+                {(selectedCarForDetail.isAvailable && !checkCarOverlap(selectedCarForDetail)) ? (
                   <button 
                     onClick={() => handleCarSelect(selectedCarForDetail)}
                     className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-[1.5rem] font-black shadow-xl shadow-green-100 transition-all active:scale-95 flex items-center justify-center gap-3 group"

@@ -23,17 +23,51 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Real-time states or mock fallbacks
-  const [vehicles, setVehicles] = useState<any[]>(() => {
-    // Normalize: if a car has isAvailable but no status, derive status from isAvailable
-    return (business.cars || []).map((c: any) => ({
-      ...c,
-      status: c.status || (c.isAvailable !== false ? 'Disponível' : 'Indisponível')
-    }));
-  });
-
   const [reservations, setReservations] = useState<any[]>(() => {
     return business.reservations || [];
+  });
+
+  const getNormalizedVehicles = (carsList: any[], resList: any[]) => {
+    const today = new Date();
+    return (carsList || []).map((c: any) => {
+      const timeline = Array.from({ length: 7 }).map((_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        
+        const isReserved = (resList || []).some(res => {
+          if (res.type !== 'car' || (res.status !== 'accepted' && res.status !== 'Confirmada')) return false;
+          const resCarId = res.car?.id || res.carId;
+          if (resCarId !== c.id) return false;
+          if (!res.date) return false;
+          
+          const resStart = new Date(res.date);
+          const startTime = new Date(resStart.getFullYear(), resStart.getMonth(), resStart.getDate()).getTime();
+          const days = Number(res.days) || 3;
+          const endTime = startTime + (days * 24 * 60 * 60 * 1000) - 1000;
+          
+          const targetTime = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+          return targetTime >= startTime && targetTime <= endTime;
+        });
+
+        if (isReserved) return 'reserved';
+        return c.statusTimeline?.[i] || 'available';
+      });
+
+      let generalStatus = c.status || (c.isAvailable !== false ? 'Disponível' : 'Indisponível');
+      if (timeline[0] === 'reserved') {
+        generalStatus = 'Reservado';
+      }
+
+      return {
+        ...c,
+        statusTimeline: timeline,
+        status: generalStatus
+      };
+    });
+  };
+
+  const [vehicles, setVehicles] = useState<any[]>(() => {
+    return getNormalizedVehicles(business.cars || [], business.reservations || []);
   });
 
   const [clients, setClients] = useState<any[]>(() => {
@@ -54,15 +88,13 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   });
 
   useEffect(() => {
+    if (business.reservations) {
+      setReservations(business.reservations);
+    }
     if (business.cars) {
-      // Normalize: derive status from isAvailable when status is missing
-      const normalized = business.cars.map((c: any) => ({
-        ...c,
-        status: c.status || (c.isAvailable !== false ? 'Disponível' : 'Indisponível')
-      }));
+      const normalized = getNormalizedVehicles(business.cars, business.reservations || []);
       setVehicles(normalized);
     }
-    if (business.reservations) setReservations(business.reservations);
     if (business.clients) setClients(business.clients);
     if (business.maintenance) setMaintenance(business.maintenance);
     if (business.reviews) setReviews(business.reviews);
@@ -249,6 +281,20 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     return days;
   };
   const timelineDays = getTimelineDays();
+
+  const parseResDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    if (dateStr.includes('-')) {
+      return new Date(dateStr);
+    }
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split(' ')[0].split('/');
+      if (parts.length === 3) {
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
+    }
+    return new Date(dateStr);
+  };
 
   // Canvas Handlers
   useEffect(() => {
@@ -771,49 +817,59 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
 
               {/* THIRD ROW: ENTREGAS, DEVOLUÇÕES & ALERTAS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
                 {/* Entregas Hoje */}
                 <div className={`p-6 rounded-2xl border space-y-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                   <div className="flex justify-between items-center border-b pb-2 border-slate-200/50">
-                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Entregas Hoje</h3>
+                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Próximas Entregas</h3>
                     <button onClick={() => setActiveTab('checkin')} className="text-[10px] text-blue-500 font-bold">Ver todas</button>
                   </div>
                   <div className="space-y-3">
                     {(() => {
-                      const entregasHoje = reservations.filter(r =>
-                        r.start && r.start.includes(todayFormatted) && r.status !== 'Cancelada' && r.status !== 'Concluída'
-                      );
-                      if (entregasHoje.length === 0) {
+                      const todayStart = new Date();
+                      todayStart.setHours(0,0,0,0);
+                      const proximasEntregas = reservations.filter(r => {
+                        if (r.status === 'cancelled' || r.status === 'Cancelada' || r.status === 'finished' || r.status === 'Concluída' || r.status === 'active' || r.status === 'Em Curso') return false;
+                        const dateVal = r.date || r.start;
+                        if (!dateVal) return false;
+                        const parsedDate = parseResDate(dateVal);
+                        parsedDate.setHours(0,0,0,0);
+                        return parsedDate.getTime() >= todayStart.getTime();
+                      }).sort((a, b) => parseResDate(a.date || a.start).getTime() - parseResDate(b.date || b.start).getTime());
+
+                      if (proximasEntregas.length === 0) {
                         return (
                           <div className="text-center py-6 text-slate-400">
                             <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
-                            <p className="text-xs font-bold">Sem entregas para hoje</p>
+                            <p className="text-xs font-bold">Sem entregas agendadas</p>
                           </div>
                         );
                       }
-                      return entregasHoje.map((res: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-                              <Clock size={16} />
+                      return proximasEntregas.slice(0, 5).map((res: any, idx: number) => {
+                        const dateText = res.date ? new Date(res.date).toLocaleDateString('pt-PT') : (res.start?.split(' ')[0] || '—');
+                        return (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <Clock size={16} />
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-xs leading-none">{res.customerName || res.client || 'Cliente'}</p>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">{res.car?.model || res.vehicle || '—'} · {dateText}</span>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-extrabold text-xs leading-none">{res.client || res.clientName || 'Cliente'}</p>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">{res.vehicle || res.car || '—'} · {res.startTime || res.start?.split(' ')[1] || '—'}</span>
-                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedCheckRes(res);
+                                setActiveCheckFlow('in');
+                                setActiveTab('checkin');
+                              }}
+                              className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                              Check-In
+                            </button>
                           </div>
-                          <button
-                            onClick={() => {
-                              setSelectedCheckRes(res);
-                              setActiveCheckFlow('in');
-                              setActiveTab('checkin');
-                            }}
-                            className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                          >
-                            Check-In
-                          </button>
-                        </div>
-                      ));
+                        );
+                      });
                     })()}
                   </div>
                 </div>
@@ -821,45 +877,56 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 {/* Devoluções Hoje */}
                 <div className={`p-6 rounded-2xl border space-y-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                   <div className="flex justify-between items-center border-b pb-2 border-slate-200/50">
-                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Devoluções Hoje</h3>
+                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Próximas Devoluções</h3>
                     <button onClick={() => setActiveTab('checkin')} className="text-[10px] text-blue-500 font-bold">Ver todas</button>
                   </div>
                   <div className="space-y-3">
                     {(() => {
-                      const devolucoesHoje = reservations.filter(r =>
-                        r.end && r.end.includes(todayFormatted) && r.status !== 'Cancelada' && r.status !== 'Disponível'
-                      );
-                      if (devolucoesHoje.length === 0) {
+                      const todayStart = new Date();
+                      todayStart.setHours(0,0,0,0);
+                      const proximasDevolucoes = reservations.filter(r => {
+                        if (r.status === 'cancelled' || r.status === 'Cancelada' || r.status === 'finished' || r.status === 'Concluída' || r.status === 'pending' || r.status === 'Pendente') return false;
+                        const dateVal = r.end || r.date;
+                        if (!dateVal) return false;
+                        const parsedDate = parseResDate(dateVal);
+                        parsedDate.setHours(0,0,0,0);
+                        return parsedDate.getTime() >= todayStart.getTime();
+                      }).sort((a, b) => parseResDate(a.end || a.date).getTime() - parseResDate(b.end || b.date).getTime());
+
+                      if (proximasDevolucoes.length === 0) {
                         return (
                           <div className="text-center py-6 text-slate-400">
                             <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
-                            <p className="text-xs font-bold">Sem devoluções para hoje</p>
+                            <p className="text-xs font-bold">Sem devoluções agendadas</p>
                           </div>
                         );
                       }
-                      return devolucoesHoje.map((res: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600">
-                              <Clock size={16} />
+                      return proximasDevolucoes.slice(0, 5).map((res: any, idx: number) => {
+                        const dateText = res.end ? (res.end.includes('/') ? res.end.split(' ')[0] : new Date(res.end).toLocaleDateString('pt-PT')) : '—';
+                        return (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600">
+                                <Clock size={16} />
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-xs leading-none">{res.customerName || res.client || 'Cliente'}</p>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">{res.car?.model || res.vehicle || '—'} · {dateText}</span>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-extrabold text-xs leading-none">{res.client || res.clientName || 'Cliente'}</p>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">{res.vehicle || res.car || '—'} · {res.endTime || res.end?.split(' ')[1] || '—'}</span>
-                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedCheckRes(res);
+                                setActiveCheckFlow('out');
+                                setActiveTab('checkin');
+                              }}
+                              className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                              Check-Out
+                            </button>
                           </div>
-                          <button
-                            onClick={() => {
-                              setSelectedCheckRes(res);
-                              setActiveCheckFlow('out');
-                              setActiveTab('checkin');
-                            }}
-                            className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                          >
-                            Check-Out
-                          </button>
-                        </div>
-                      ));
+                        );
+                      });
                     })()}
                   </div>
                 </div>
