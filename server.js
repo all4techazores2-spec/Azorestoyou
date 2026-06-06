@@ -1017,10 +1017,43 @@ app.post('/api/admin/clear-reservations', async (req, res) => {
     }
 });
 
+app.get('/api/reservations/:id', async (req, res) => {
+    const { id } = req.params;
+    const db = await readDB();
+    let foundRes = null;
+
+    const ALL_BUSINESS_COLLECTIONS = [
+        'restaurants', 'beauty', 'shops', 'services', 'offices', 
+        'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
+        'real_estate', 'gyms', 'stands', 'auto_repairs', 
+        'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules', 'marketplace_ads', 'marketplace_chats',
+        'bars', 'events', 'municipal'
+    ];
+
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    const found = biz.reservations.find(r => r.id === id);
+                    if (found) foundRes = found;
+                }
+            });
+        }
+    });
+
+    if (foundRes) {
+        res.json(foundRes);
+    } else {
+        res.status(404).json({ error: 'Reserva não encontrada' });
+    }
+});
+
 app.put('/api/reservations/:id', async (req, res) => {
     const { id } = req.params;
     const db = await readDB();
     let found = false;
+
+    let updatedReservation = null;
 
     // 1. Atualizar nos Negócios
     ALL_BUSINESS_COLLECTIONS.forEach(key => {
@@ -1031,6 +1064,7 @@ app.put('/api/reservations/:id', async (req, res) => {
                     if (idx !== -1) {
                         biz.reservations[idx] = { ...biz.reservations[idx], ...req.body };
                         const updatedRes = biz.reservations[idx];
+                        updatedReservation = updatedRes;
                         
                         // SE A RESERVA MUDOU PARA ACCEPTED (CONFIRMADA), ATUALIZAR MESA PARA RESERVED
                         if (updatedRes.status === 'accepted' && updatedRes.tableId && biz.tables) {
@@ -1129,7 +1163,7 @@ app.put('/api/reservations/:id', async (req, res) => {
 
     if (found) {
         await writeDB(db);
-        res.json({ success: true });
+        res.json(updatedReservation || { success: true });
     } else {
         res.status(404).json({ error: "Reservation not found" });
     }

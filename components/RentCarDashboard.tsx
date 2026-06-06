@@ -5,7 +5,7 @@ import {
   Bell, Sun, Moon, AlertTriangle, Plus, Edit, Trash2, CheckCircle2, 
   X, Check, ChevronRight, FileText, Download, Shield, Eye, Info, HelpCircle,
   TrendingUp, CalendarDays, Key, FileCheck, Landmark, ChevronDown, CheckCircle, Clock,
-  MessageSquare
+  MessageSquare, MapPin, Mail, Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -17,12 +17,13 @@ interface RentCarDashboardProps {
   language?: string;
 }
 
-type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database' | 'chat';
+type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database' | 'chat' | 'avarias';
 
 export default function RentCarDashboard({ business, onUpdateBusiness, onLogout, language = 'pt' }: RentCarDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [checkFlowType, setCheckFlowType] = useState<'in' | 'out' | null>(null);
   
   const [reservations, setReservations] = useState<any[]>(() => {
     return business.reservations || [];
@@ -415,140 +416,241 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     const checkinTimeInput = document.getElementById('checkinTimeInput') as HTMLInputElement;
     const timeStr = checkinTimeInput ? checkinTimeInput.value : (selectedCheckRes.checkinTime || '');
 
+    const isCheckOut = activeCheckFlow === 'out';
+    const flowTitle = isCheckOut ? "Auto de Devolução da Viatura" : "Auto de Entrega da Viatura";
+
     const html = `
       <html>
         <head>
-          <title>Ficha de Entrega - Rent-a-car</title>
+          <title>${flowTitle} - Azores4you</title>
           <style>
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 15mm;
             }
             body {
               font-family: Arial, sans-serif;
-              color: #333;
-              line-height: 1.5;
+              color: #1e293b;
+              line-height: 1.4;
               margin: 0;
               padding: 0;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              border-bottom: 2px solid #333;
-              padding-bottom: 10px;
-              margin-bottom: 20px;
-            }
-            .company-details {
               font-size: 11px;
             }
-            .document-title {
-              text-align: right;
-            }
-            .document-title h1 {
-              margin: 0;
-              font-size: 20px;
-              text-transform: uppercase;
-            }
-            .section-title {
-              font-size: 12px;
-              text-transform: uppercase;
-              font-weight: bold;
-              background-color: #f2f2f2;
-              padding: 5px;
-              margin-top: 20px;
-              margin-bottom: 10px;
-              border-left: 4px solid #3B82F6;
-            }
-            .grid {
-              display: grid;
-              grid-template-cols: 1fr 1fr;
-              gap: 10px;
-              font-size: 12px;
-            }
-            .grid-item {
-              margin-bottom: 5px;
-            }
-            .grid-item span {
-              font-weight: bold;
-            }
-            .damage-list {
-              font-size: 12px;
-              margin-top: 5px;
-              padding-left: 20px;
-            }
-            .signature-section {
-              margin-top: 40px;
+            .header-container {
               display: flex;
               justify-content: space-between;
-              align-items: flex-end;
+              align-items: flex-start;
+              border-bottom: 2px solid #3b82f6;
+              padding-bottom: 12px;
+              margin-bottom: 15px;
             }
-            .signature-box {
+            .company-info h2 {
+              margin: 0 0 4px 0;
+              font-size: 18px;
+              color: #1d4ed8;
+              font-weight: 800;
+              text-transform: uppercase;
+            }
+            .company-info p {
+              margin: 2px 0;
+              color: #475569;
+              font-size: 10px;
+            }
+            .doc-title {
+              text-align: right;
+            }
+            .doc-title h1 {
+              margin: 0 0 6px 0;
+              font-size: 16px;
+              color: #0f172a;
+              text-transform: uppercase;
+              font-weight: 800;
+            }
+            .doc-title p {
+              margin: 2px 0;
+              font-size: 10px;
+              color: #475569;
+            }
+            .section-grid {
+              display: grid;
+              grid-template-cols: 1fr 1fr;
+              gap: 15px;
+              margin-bottom: 15px;
+            }
+            .card {
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              background-color: #f8fafc;
+            }
+            .card h3 {
+              margin: 0 0 8px 0;
+              font-size: 11px;
+              text-transform: uppercase;
+              font-weight: bold;
+              color: #1e293b;
+              border-bottom: 1px solid #cbd5e1;
+              padding-bottom: 4px;
+            }
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 4px;
+            }
+            .info-row span.label {
+              color: #64748b;
+              font-weight: 500;
+            }
+            .info-row span.value {
+              font-weight: 700;
+              color: #0f172a;
+            }
+            .checklist-box {
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              margin-bottom: 15px;
+              background-color: #f8fafc;
+            }
+            .checklist-box h3 {
+              margin: 0 0 8px 0;
+              font-size: 11px;
+              text-transform: uppercase;
+              font-weight: bold;
+              border-bottom: 1px solid #cbd5e1;
+              padding-bottom: 4px;
+            }
+            .checklist-grid {
+              display: grid;
+              grid-template-cols: repeat(4, 1fr);
+              gap: 8px;
+            }
+            .checklist-item {
+              display: flex;
+              align-items: center;
+              gap: 5px;
+            }
+            .checkbox {
+              width: 10px;
+              height: 10px;
+              border: 1px solid #475569;
+              display: inline-block;
+              border-radius: 2px;
+            }
+            .checkbox.checked {
+              background-color: #ef4444;
+              border-color: #ef4444;
+            }
+            .rules-box {
+              border: 1px dashed #cbd5e1;
+              border-radius: 8px;
+              padding: 10px;
+              background-color: #fff;
+              margin-bottom: 20px;
+            }
+            .rules-box p {
+              margin: 3px 0;
+              font-size: 9.5px;
+              color: #475569;
+              font-weight: 600;
+            }
+            .signatures-container {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 30px;
+            }
+            .signature-block {
               width: 45%;
               text-align: center;
             }
             .signature-line {
-              border-top: 1px solid #333;
-              margin-top: 10px;
-              padding-top: 5px;
-              font-size: 11px;
+              border-top: 1px solid #475569;
+              padding-top: 6px;
+              font-size: 10px;
               font-weight: bold;
+              color: #334155;
+            }
+            .signature-img-wrap {
+              height: 70px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 6px;
             }
             .signature-img {
-              max-height: 100px;
+              max-height: 100%;
               max-width: 100%;
-              display: block;
-              margin: 0 auto 5px auto;
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="company-details">
-              <h2 style="margin: 0 0 5px 0; font-size: 16px;">${business.name || 'Açores Rent a Car'}</h2>
-              <p style="margin: 2px 0;">Morada: ${business.address || ''}</p>
-              <p style="margin: 2px 0;">Email: ${business.adminEmail || ''}</p>
-              <p style="margin: 2px 0;">Telefone: ${business.contact || ''}</p>
-              ${business.iban ? `<p style="margin: 2px 0;">IBAN: ${business.iban}</p>` : ''}
+          <div class="header-container">
+            <div class="company-info">
+              <h2>${business.name || 'Auto Azores 4 You'}</h2>
+              <p>NIF: ${business.nif || '512 874 956'}</p>
+              <p>Morada: ${business.address || 'Aeroporto de Ponta Delgada, 9500 Ponta Delgada'}</p>
+              <p>Email: ${business.adminEmail || 'reservas@azorestoyou.pt'} | Tel: ${business.contact || '+351 296 458 752'}</p>
             </div>
-            <div class="document-title">
-              <h1>Ficha de Entrega</h1>
-              <p style="margin: 5px 0; font-size: 12px;">Reserva ID: <strong>${selectedCheckRes.id}</strong></p>
-              <p style="margin: 5px 0; font-size: 12px;">Data de Emissão: ${new Date().toLocaleDateString('pt-PT')}</p>
+            <div class="doc-title">
+              <h1>${flowTitle}</h1>
+              <p>Reserva ID: <strong>${selectedCheckRes.id}</strong></p>
+              <p>Data: ${new Date().toLocaleDateString('pt-PT')}</p>
             </div>
           </div>
 
-          <div class="section-title">Dados do Cliente</div>
-          <div class="grid">
-            <div class="grid-item"><span>Nome:</span> ${clientName}</div>
-            <div class="grid-item"><span>NIF:</span> ${nif}</div>
-            <div class="grid-item"><span>Carta de Condução:</span> ${license}</div>
-            <div class="grid-item"><span>Morada:</span> ${address}</div>
+          <div class="section-grid">
+            <div class="card">
+              <h3>Dados do Cliente</h3>
+              <div class="info-row"><span class="label">Nome:</span> <span class="value">${clientName}</span></div>
+              <div class="info-row"><span class="label">NIF:</span> <span class="value">${nif}</span></div>
+              <div class="info-row"><span class="label">Carta de Condução:</span> <span class="value">${license}</span></div>
+              <div class="info-row"><span class="label">Contacto:</span> <span class="value">${selectedCheckRes.customerPhone || selectedCheckRes.phone || 'N/A'}</span></div>
+              <div class="info-row"><span class="label">Morada:</span> <span class="value">${address}</span></div>
+            </div>
+            <div class="card">
+              <h3>Dados da Viatura & Aluguer</h3>
+              <div class="info-row"><span class="label">Viatura:</span> <span class="value">${vehicleName}</span></div>
+              <div class="info-row"><span class="label">Matrícula:</span> <span class="value">${selectedCheckRes.car?.plate || selectedCheckRes.plate || 'N/A'}</span></div>
+              <div class="info-row"><span class="label">Levantamento:</span> <span class="value">${startDate} ${timeStr ? `às ${timeStr}` : ''}</span></div>
+              <div class="info-row"><span class="label">Devolução:</span> <span class="value">${endDate}</span></div>
+              <div class="info-row"><span class="label">Duração:</span> <span class="value">${selectedCheckRes.days || 3} dias</span></div>
+            </div>
           </div>
 
-          <div class="section-title">Dados do Aluguer</div>
-          <div class="grid">
-            <div class="grid-item"><span>Veículo:</span> ${vehicleName}</div>
-            <div class="grid-item"><span>Matrícula:</span> ${selectedCheckRes.car?.plate || selectedCheckRes.plate || 'N/A'}</div>
-            <div class="grid-item"><span>Data Levantamento:</span> ${startDate} ${timeStr ? `às ${timeStr}` : ''}</div>
-            <div class="grid-item"><span>Data Devolução Prevista:</span> ${endDate}</div>
-            <div class="grid-item"><span>Duração:</span> ${selectedCheckRes.days || 3} dias</div>
+          <div class="checklist-box">
+            <h3>Vistoria da Viatura & Checklist de Danos</h3>
+            <div class="checklist-grid">
+              ${damagePoints.map(pt => {
+                const isLogged = damageLog.includes(pt.id);
+                return `
+                  <div class="checklist-item">
+                    <span class="checkbox ${isLogged ? 'checked' : ''}"></span>
+                    <span>${pt.label}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
 
-          <div class="section-title">Estado do Veículo & Danos Registados</div>
-          <p style="font-size: 12px; margin: 5px 0;">Danos assinalados durante a entrega do veículo:</p>
-          ${damageLog.length > 0 ? `
-            <ul class="damage-list">
-              ${damageLog.map(id => `<li>${damagePoints.find(p => p.id === id)?.label || id}</li>`).join('')}
-            </ul>
-          ` : '<p style="font-size: 12px; font-style: italic; margin-left: 20px;">Nenhum dano assinalado (Viatura sem anomalias).</p>'}
+          <div class="rules-box">
+            <p>• A viatura deverá ser devolvida nas mesmas condições em que foi entregue.</p>
+            <p>• Com o nível de combustível acordado.</p>
+            <p>• Na data e hora contratadas.</p>
+            <p>• Qualquer novo dano será comparado com o presente relatório de entrega.</p>
+            <p style="margin-top: 6px;">• O presente relatório identifica o estado da viatura no momento de ${isCheckOut ? 'devolução' : 'entrega'}.</p>
+          </div>
 
-          <div class="signature-section">
-            <div class="signature-box">
-              <div style="height: 100px;"></div>
+          <div class="signatures-container">
+            <div class="signature-block">
+              <div class="signature-img-wrap">
+                <!-- Manual signature on delivery by client -->
+              </div>
               <div class="signature-line">Assinatura do Cliente</div>
             </div>
-            <div class="signature-box">
-              <img class="signature-img" src="${signatureDataUrl}" alt="Assinatura Funcionario" />
+            <div class="signature-block">
+              <div class="signature-img-wrap">
+                <img class="signature-img" src="${signatureDataUrl}" alt="Assinatura Funcionario" />
+              </div>
               <div class="signature-line">Assinatura do Funcionário</div>
             </div>
           </div>
@@ -587,7 +689,8 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             { id: 'frota', label: 'Frota', icon: <Car size={18} /> },
             { id: 'clientes', label: 'Clientes', icon: <Users size={18} /> },
             { id: 'chat', label: 'Chat de Emergência', icon: <MessageSquare size={18} /> },
-            { id: 'checkin', label: 'Check-In / Check-Cut', icon: <CheckSquare size={18} /> },
+            { id: 'avarias', label: 'Manutenção / Avarias', icon: <AlertTriangle size={18} />, count: reservations.filter(r => r.chatMessages && r.chatMessages.some((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'))).length },
+            { id: 'checkin', label: 'Check-In / Check-Out', icon: <CheckSquare size={18} /> },
             { id: 'pagamentos', label: 'Pagamentos', icon: <DollarSign size={18} /> },
             { id: 'manutencao', label: 'Manutenção', icon: <Wrench size={18} /> },
             { id: 'relatorios', label: 'Relatórios', icon: <FileText size={18} /> },
@@ -1597,60 +1700,107 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
           {/* TAB 5: CHECK-IN / CHECK-OUT */}
           {activeTab === 'checkin' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Painel de Check-In / Check-Out</h2>
-                <p className="text-slate-400 text-xs mt-1">Efetue vistorias a veículos, selecione danos interativos e assine no ecrã.</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Painel de Check-In / Check-Out</h2>
+                  <p className="text-slate-400 text-xs mt-1">Efetue vistorias a veículos, selecione danos interativos e assine no ecrã.</p>
+                </div>
+                {checkFlowType && !activeCheckFlow && (
+                  <button
+                    onClick={() => setCheckFlowType(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all"
+                  >
+                    Voltar aos Cartões
+                  </button>
+                )}
               </div>
 
-              {!activeCheckFlow ? (
+              {!checkFlowType && !activeCheckFlow ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Select a reservation for flow */}
+                  <button
+                    onClick={() => setCheckFlowType('in')}
+                    className={`group p-8 rounded-[2.5rem] border text-left transition-all duration-300 hover:shadow-xl hover:scale-[1.02] flex flex-col justify-between h-56 ${
+                      darkMode ? 'bg-slate-900 border-slate-800 text-white hover:border-emerald-500/55' : 'bg-white border-slate-200 text-slate-800 hover:border-emerald-500/50'
+                    } shadow-sm`}
+                  >
+                    <div className="w-14 h-14 bg-emerald-500/10 text-emerald-600 rounded-3xl flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                      <CheckSquare size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black tracking-tight mb-2">Check-in</h3>
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider leading-relaxed">
+                        Processo de entrega do veículo ao cliente. Vistoria inicial, verificação de danos e assinatura do funcionário.
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setCheckFlowType('out')}
+                    className={`group p-8 rounded-[2.5rem] border text-left transition-all duration-300 hover:shadow-xl hover:scale-[1.02] flex flex-col justify-between h-56 ${
+                      darkMode ? 'bg-slate-900 border-slate-800 text-white hover:border-orange-500/55' : 'bg-white border-slate-200 text-slate-800 hover:border-orange-500/50'
+                    } shadow-sm`}
+                  >
+                    <div className="w-14 h-14 bg-orange-500/10 text-orange-600 rounded-3xl flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                      <LogOut size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black tracking-tight mb-2">Check-out</h3>
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider leading-relaxed">
+                        Processo de devolução e receção do veículo. Vistoria final para comparação de novos danos.
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              ) : !activeCheckFlow ? (
+                <div className="grid grid-cols-1 gap-6">
                   <div className={`p-6 rounded-2xl border space-y-4 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
-                    <h3 className="font-extrabold text-sm uppercase">Iniciar Novo Processo</h3>
-                    <p className="text-xs text-slate-400">Escolha uma das reservas confirmadas para iniciar o Check-In ou Check-Out da viatura.</p>
+                    <h3 className="font-extrabold text-sm uppercase">
+                      {checkFlowType === 'in' ? 'Selecione Viatura para Check-in (Entrega)' : 'Selecione Viatura para Check-out (Devolução)'}
+                    </h3>
                     
                     <div className="space-y-3">
-                      {reservations.filter(r => r.status !== 'Cancelada' && r.status !== 'Concluída').map((res) => {
-                        const clientName = res.customerName || res.client || 'Cliente';
-                        const vehicleName = res.car?.model || res.vehicle || 'Viatura';
-                        return (
-                          <div key={res.id} className="p-4 rounded-xl border border-slate-200/50 dark:border-slate-800 flex justify-between items-center text-xs">
-                            <div>
-                              <p className="font-bold">{clientName} ({res.id})</p>
-                              <p className="text-slate-450 text-[10px] uppercase font-bold">{vehicleName}</p>
-                            </div>
-                          <div className="flex gap-2">
-                            {res.status !== 'Em Curso' && (
+                      {(() => {
+                        const filteredList = reservations.filter(r => {
+                          if (checkFlowType === 'in') {
+                            return (r.status === 'accepted' || r.status === 'Confirmada') && !r.checkinTime;
+                          } else {
+                            return r.status === 'active' || r.status === 'Em Curso' || (r.status === 'accepted' && r.checkinTime);
+                          }
+                        });
+
+                        if (filteredList.length === 0) {
+                          return (
+                            <p className="text-xs text-slate-400 italic py-4">Sem reservas prontas para este processo.</p>
+                          );
+                        }
+
+                        return filteredList.map((res) => {
+                          const clientName = res.customerName || res.client || 'Cliente';
+                          const vehicleName = res.car?.model || res.vehicle || 'Viatura';
+                          return (
+                            <div key={res.id} className="p-4 rounded-xl border border-slate-200/50 dark:border-slate-800 flex justify-between items-center text-xs">
+                              <div>
+                                <p className="font-bold">{clientName} ({res.id})</p>
+                                <p className="text-slate-450 text-[10px] uppercase font-bold">{vehicleName}</p>
+                              </div>
                               <button 
                                 onClick={() => {
                                   setSelectedCheckRes(res);
-                                  setActiveCheckFlow('in');
+                                  setActiveCheckFlow(checkFlowType);
                                   setDamageLog([]);
                                   setPhotoMockList([]);
                                   setDeliveryConfirmed(false);
                                 }}
-                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-black uppercase text-[9px] tracking-wider"
+                                className={`px-3 py-1.5 text-white rounded-lg font-black uppercase text-[9px] tracking-wider ${
+                                  checkFlowType === 'in' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600'
+                                }`}
                               >
-                                Check-In (Entregar)
+                                {checkFlowType === 'in' ? 'Check-In (Entregar)' : 'Check-Out (Devolver)'}
                               </button>
-                            )}
-                            {res.status === 'Em Curso' && (
-                              <button 
-                                onClick={() => {
-                                  setSelectedCheckRes(res);
-                                  setActiveCheckFlow('out');
-                                  setDamageLog([]);
-                                  setPhotoMockList([]);
-                                  setDeliveryConfirmed(false);
-                                }}
-                                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider"
-                              >
-                                Check-Out (Devolução)
-                              </button>
-                            )}
                             </div>
-                          </div>
-                        )})}
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -2107,6 +2257,137 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 }
               }}
             />
+          )}
+
+          {/* TAB 12: MANUTENÇÃO / AVARIAS */}
+          {activeTab === 'avarias' && (
+            <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-tight">Manutenção / Avarias (Relatórios)</h2>
+                <p className="text-slate-400 text-xs mt-1">Registo de problemas mecânicos e avarias comunicadas pelos clientes em tempo real.</p>
+              </div>
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+                <div className={`p-4 rounded-2xl border flex flex-col ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-sm overflow-y-auto`}>
+                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-3">Relatórios Reportados</h3>
+                  <div className="space-y-2">
+                    {reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-6">Sem avarias comunicadas.</p>
+                    ) : (
+                      reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).map(res => (
+                        <button
+                          key={res.id}
+                          onClick={() => setSelectedResId(res.id)}
+                          className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between ${
+                            selectedResId === res.id
+                              ? 'bg-amber-600/10 border-amber-500/30 text-amber-650'
+                              : darkMode
+                                ? 'border-slate-800 hover:bg-slate-800/50'
+                                : 'border-slate-100 hover:bg-slate-55'
+                          }`}
+                        >
+                          <div>
+                            <p className="font-bold text-xs leading-none text-slate-800 dark:text-white mb-1">
+                              ⚠️ {res.customerName || res.client || 'Cliente'}
+                            </p>
+                            <span className="text-[10px] text-slate-400 uppercase font-black block">
+                              {res.car?.model || res.vehicle} · {res.id}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className={`md:col-span-2 rounded-2xl border flex flex-col ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-sm min-h-0`}>
+                  {selectedRes ? (
+                    <div className="flex-1 flex flex-col min-h-0 p-6 space-y-4 overflow-y-auto">
+                      <div className="border-b pb-3 flex justify-between items-center">
+                        <div>
+                          <h4 className="font-black text-sm uppercase tracking-tight">
+                            Avaria na Viatura: {selectedRes.car?.model || selectedRes.vehicle}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                            Cliente: {selectedRes.customerName || selectedRes.client} · Tel: {selectedRes.customerPhone || selectedRes.phone || 'N/A'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (confirm("Marcar esta avaria como resolvida e fechar o reporte?")) {
+                              const updatedMessages = [...(selectedRes.chatMessages || []), {
+                                sender: 'admin',
+                                text: "✅ [AVARIA RESOLVIDA] Viatura verificada e problema resolvido pelo staff.",
+                                timestamp: new Date().toISOString()
+                              }];
+                              const updatedRes = {
+                                ...selectedRes,
+                                chatMessages: updatedMessages
+                              };
+                              await onUpdateReservation(updatedRes);
+                              alert("Avaria marcada como resolvida!");
+                            }
+                          }}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+                        >
+                          Marcar como Resolvido
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl">
+                          <p className="text-xs font-black uppercase tracking-wider mb-2">Relatórios Enviados pelo Cliente:</p>
+                          <div className="space-y-2">
+                            {selectedRes.chatMessages.filter((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]')).map((msg: any, idx: number) => (
+                              <div key={idx} className="text-xs border-b border-red-500/10 pb-2 last:border-0 last:pb-0">
+                                <p className="font-bold whitespace-pre-wrap">{msg.text}</p>
+                                <span className="text-[9px] opacity-75 mt-1 block">
+                                  Enviado em: {new Date(msg.timestamp).toLocaleString('pt-PT')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <p className="text-xs font-black uppercase tracking-wider mb-3">Conversa de Emergência Relacionada:</p>
+                          <div className="space-y-3 max-h-60 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/20">
+                            {selectedRes.chatMessages.map((msg: any, idx: number) => (
+                              <div key={idx} className={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
+                                <div className={`max-w-[85%] rounded-2xl p-3 text-xs font-semibold ${
+                                  msg.sender === 'admin' 
+                                    ? 'bg-blue-600 text-white rounded-tr-none' 
+                                    : darkMode
+                                      ? 'bg-slate-800 text-slate-100 rounded-tl-none'
+                                      : 'bg-slate-200 text-slate-800 rounded-tl-none'
+                                }`}>
+                                  {msg.text}
+                                </div>
+                                <span className="text-[8px] text-slate-400 mt-1">
+                                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+                      <AlertTriangle size={48} className="opacity-10 mb-3 animate-pulse" />
+                      <p className="text-sm font-black uppercase tracking-widest">Painel de Avarias & Manutenção</p>
+                      <p className="text-[10px] text-center max-w-xs mt-1 italic">
+                        Selecione um reporte de avaria na barra lateral para ver os detalhes e gerir a intervenção.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
 
         </main>
@@ -2883,6 +3164,12 @@ function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: R
                     {selectedRes.car?.model || selectedRes.vehicle} · Check-in: {selectedRes.checkinTime || 'Confirmado'}
                   </p>
                 </div>
+                <button 
+                  onClick={() => setSelectedResId(null)}
+                  className="p-1.5 rounded-full hover:bg-slate-500/10 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  <X size={16} />
+                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
@@ -2920,6 +3207,40 @@ function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: R
               </div>
 
               <div className="flex gap-2 border-t pt-3">
+                <button
+                  onClick={async () => {
+                    if (!navigator.geolocation) {
+                      alert("A geolocalização não é suportada por este navegador.");
+                      return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                      async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                        const newMsg = {
+                          sender: 'admin',
+                          text: `Localização da Rent-a-car: ${mapsUrl}`,
+                          timestamp: new Date().toISOString()
+                        };
+                        const updatedMessages = [...chatMessages, newMsg];
+                        setChatMessages(updatedMessages);
+                        const updatedRes = {
+                          ...selectedRes,
+                          chatMessages: updatedMessages
+                        };
+                        await onUpdateReservation(updatedRes);
+                      },
+                      (error) => {
+                        console.error(error);
+                        alert("Não foi possível obter a sua localização.");
+                      }
+                    );
+                  }}
+                  className="w-12 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
+                  title="Enviar Localização"
+                >
+                  <MapPin size={18} />
+                </button>
                 <input 
                   type="text" 
                   placeholder="Escreva a sua resposta de emergência..."

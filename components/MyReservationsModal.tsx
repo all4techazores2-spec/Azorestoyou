@@ -149,6 +149,92 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     }
   };
 
+  const handleSendLocation = () => {
+    if (!navigator.geolocation) {
+      alert("A geolocalização não é suportada por este navegador.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const newMsg = {
+          sender: 'client',
+          text: `Minha Localização: ${mapsUrl}`,
+          timestamp: new Date().toISOString()
+        };
+        const updatedMessages = [...chatMessages, newMsg];
+        setChatMessages(updatedMessages);
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/reservations/${chatReservation.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatMessages: updatedMessages })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setChatMessages(data.chatMessages || []);
+          }
+        } catch (err) {
+          console.error("Erro ao enviar localização:", err);
+        }
+      },
+      (error) => {
+        console.error("Erro ao obter localização:", error);
+        alert("Não foi possível obter a sua localização. Por favor, verifique as permissões do navegador.");
+      }
+    );
+  };
+
+  const handleSendMaintenanceReport = async (res: any) => {
+    const desc = prompt("Descreva a avaria ou problema de manutenção:");
+    if (!desc || !desc.trim()) return;
+
+    let locationText = "";
+    if (navigator.geolocation) {
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        const { latitude, longitude } = position.coords;
+        locationText = `\nLocalização: https://www.google.com/maps?q=${latitude},${longitude}`;
+      } catch (err) {
+        console.warn("Could not get location for maintenance report:", err);
+      }
+    }
+
+    const reportMsg = {
+      sender: 'client',
+      text: `⚠️ [REPORTE DE AVARIA]\nProblema: ${desc.trim()}${locationText}`,
+      timestamp: new Date().toISOString()
+    };
+
+    const currentChatMsgs = res.chatMessages || [];
+    const updatedMessages = [...currentChatMsgs, reportMsg];
+
+    if (chatReservation && chatReservation.id === res.id) {
+      setChatMessages(updatedMessages);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatMessages: updatedMessages })
+      });
+      if (response.ok) {
+        alert("Relatório de avaria enviado com sucesso!");
+        if (chatReservation && chatReservation.id === res.id) {
+          const data = await response.json();
+          setChatMessages(data.chatMessages || []);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao enviar reporte de avaria:", err);
+    }
+  };
+
+
   const closeBillPopup = () => {
     setShowBillPopup(null);
     setConcludedSuccess(false);
@@ -327,7 +413,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       <div className="absolute top-0 right-0 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
                     </div>
                     <h3 className="text-xl font-black text-slate-800 mb-2">Sem planos por agora?</h3>
-                    <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">As suas reservas e experiências aparecerão aqui.</p>
+                    <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">As suas reservas and experiências aparecerão aqui.</p>
                   </div>
                 )}
               </motion.div>
@@ -385,7 +471,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="font-black text-xl text-slate-800 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">
-                      {res.itemName || rest?.name || res.restaurantName || res.businessName}
+                       {res.itemName || rest?.name || res.restaurantName || res.businessName}
                     </h3>
                             {res.tableId && (
                               <span className="px-2.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
@@ -548,13 +634,6 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                      </div>
                                    </div>
                                  </div>
-
-                                 {/* Helpful Status Text Description */}
-                                 <p className="text-[10px] text-slate-500 font-medium bg-white/50 p-2.5 rounded-2xl text-center border border-slate-100">
-                                   {orderStatus === 'Pendente' && '🛎️ O seu pedido foi registado! Aguarde que o restaurante envie para a cozinha.'}
-                                   {orderStatus === 'Em preparação' && '👨‍🍳 O seu pedido já foi enviado para a cozinha e está em preparação!'}
-                                   {orderStatus === 'Concluído' && '🎉 O seu pedido está pronto! Bom apetite.'}
-                                 </p>
                                </div>
                              )}
 
@@ -920,7 +999,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                    </div>
                                 ) : (res.status === 'active' || res.checkinTime) ? (
                                    <div className="text-right flex flex-col items-end gap-1">
-                                     <span className="text-emerald-600 block">🛎️ Check-in às {res.checkinTime || 'Confirmado'}</span>
+                                     <span className="text-emerald-650 block">🛎️ Check-in às {res.checkinTime || 'Confirmado'}</span>
                                      <button
                                        onClick={() => handleCarCheckOut(res)}
                                        className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
@@ -940,26 +1019,32 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                 ) : (
                                    'Em Aprovação'
                                 )}
-                            </span>
-                         </div>
-                         {(res.checkinTime || res.status === 'active') && res.status !== 'finished' && (
-                            <div className="flex justify-end pt-2">
-                               <button
-                                  onClick={() => handleOpenEmergencyChat(res)}
-                                  className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
-                               >
-                                  <MessageSquare size={14} />
-                                  Chat de Emergência
-                               </button>
-                            </div>
-                         )}
-                      </div>
-                   </div>
-                ))}
+                             </span>
+                          </div>
+                          {(res.checkinTime || res.status === 'active') && res.status !== 'finished' && (
+                             <div className="flex justify-end pt-2 gap-2">
+                                <button
+                                   onClick={() => handleSendMaintenanceReport(res)}
+                                   className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+                                >
+                                   Manutenção/Avarias
+                                </button>
+                                <button
+                                   onClick={() => handleOpenEmergencyChat(res)}
+                                   className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                                >
+                                   <MessageSquare size={14} />
+                                   Chat de Emergência
+                                </button>
+                             </div>
+                          )}
+                       </div>
+                    </div>
+                 ))}
 
 
-              </motion.div>
-            )}
+               </motion.div>
+             )}
           </AnimatePresence>
         </div>
 
@@ -1217,6 +1302,13 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
               {/* Input section */}
               <div className="pt-4 border-t border-slate-100 shrink-0 flex gap-2">
+                <button
+                  onClick={handleSendLocation}
+                  className="w-12 h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                  title="Enviar Localização"
+                >
+                  <MapPin size={18} />
+                </button>
                 <input
                   type="text"
                   placeholder="Escreva a sua mensagem..."
