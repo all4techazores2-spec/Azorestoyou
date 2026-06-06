@@ -150,7 +150,11 @@ const handleBusinessUpdate = async (req, res) => {
 
             // Protect specific real-time server-side collections from being overwritten by stale frontend data
             if (existingItem.reservations !== undefined) {
-                updatedItem.reservations = existingItem.reservations;
+                if (req.body.reservations && Array.isArray(req.body.reservations)) {
+                    updatedItem.reservations = req.body.reservations;
+                } else {
+                    updatedItem.reservations = existingItem.reservations;
+                }
             }
             if (existingItem.kitchenOrders !== undefined) {
                 if (req.body.kitchenOrders && Array.isArray(req.body.kitchenOrders)) {
