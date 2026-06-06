@@ -25,7 +25,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   
   // Real-time states or mock fallbacks
   const [vehicles, setVehicles] = useState<any[]>(() => {
-    return business.cars || [];
+    // Normalize: if a car has isAvailable but no status, derive status from isAvailable
+    return (business.cars || []).map((c: any) => ({
+      ...c,
+      status: c.status || (c.isAvailable !== false ? 'Disponível' : 'Indisponível')
+    }));
   });
 
   const [reservations, setReservations] = useState<any[]>(() => {
@@ -50,7 +54,14 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   });
 
   useEffect(() => {
-    if (business.cars) setVehicles(business.cars);
+    if (business.cars) {
+      // Normalize: derive status from isAvailable when status is missing
+      const normalized = business.cars.map((c: any) => ({
+        ...c,
+        status: c.status || (c.isAvailable !== false ? 'Disponível' : 'Indisponível')
+      }));
+      setVehicles(normalized);
+    }
     if (business.reservations) setReservations(business.reservations);
     if (business.clients) setClients(business.clients);
     if (business.maintenance) setMaintenance(business.maintenance);
@@ -166,7 +177,8 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const saveToSystem = (updatedCars: any[]) => {
     const processedCars = updatedCars.map(c => ({
       ...c,
-      isAvailable: c.status === 'Disponível'
+      // Derive isAvailable from status; if no status, fall back to existing isAvailable (default true)
+      isAvailable: c.status ? c.status === 'Disponível' : (c.isAvailable !== false)
     }));
     const updatedBiz = { ...business, cars: processedCars };
     onUpdateBusiness(updatedBiz);
