@@ -41,6 +41,54 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     mismatches: string[];
   } | null>(null);
 
+  const [localReservations, setLocalReservations] = useState<any[]>(reservations);
+
+  useEffect(() => {
+    setLocalReservations(reservations);
+  }, [reservations]);
+
+  const handleCarCheckIn = async (res: any) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('pt-PT');
+    
+    const updated = localReservations.map(r => 
+      r.id === res.id ? { ...r, status: 'active', checkinTime: timeStr, checkinDate: dateStr } : r
+    );
+    setLocalReservations(updated);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active', checkinTime: timeStr, checkinDate: dateStr })
+      });
+    } catch (err) {
+      console.error("Erro no checkin:", err);
+    }
+  };
+
+  const handleCarCheckOut = async (res: any) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('pt-PT');
+    
+    const updated = localReservations.map(r => 
+      r.id === res.id ? { ...r, status: 'finished', checkoutTime: timeStr, checkoutDate: dateStr } : r
+    );
+    setLocalReservations(updated);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'finished', checkoutTime: timeStr, checkoutDate: dateStr })
+      });
+    } catch (err) {
+      console.error("Erro no checkout:", err);
+    }
+  };
+
   const [chatReservation, setChatReservation] = useState<any | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatText, setChatText] = useState('');
@@ -149,8 +197,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeReservations = reservations.filter(r => ['pending', 'pendente', 'accepted', 'occupied'].includes(r.status));
-  const historyReservations = reservations.filter(r => ['finished', 'concluida', 'concluído', 'cancelled', 'cancelada'].includes(r.status));
+  const activeReservations = localReservations.filter(r => ['pending', 'pendente', 'accepted', 'occupied', 'active'].includes(r.status));
+  const historyReservations = localReservations.filter(r => ['finished', 'concluida', 'concluído', 'cancelled', 'cancelada'].includes(r.status));
 
   // Filter packages (reservations that have a packageId and are NOT restaurant/shop/beauty)
   const packageReservations = activeReservations.filter(r => r.packageId && (r.type === 'hotel' || r.type === 'al' || r.type === 'car' || r.type === 'flight'));
@@ -745,23 +793,45 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                   </div>
                                   <div className="flex items-center gap-2">
                                      {item.type === 'car' ? (
-                                       <>
-                                         {item.status === 'accepted' || item.status === 'active' ? (
-                                           item.checkinTime ? (
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                                               🛎️ Check-in às {item.checkinTime}
+                                       <div className="flex flex-col items-end gap-2">
+                                         {item.status === 'finished' ? (
+                                           <div className="text-right">
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
+                                               🏁 Finalizado
                                              </span>
-                                           ) : (
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
-                                               ⏳ A aguardar confirmação de check-in
+                                             {item.checkoutDate && item.checkoutTime && (
+                                               <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                                                 Check-out: {item.checkoutDate} às {item.checkoutTime}
+                                               </span>
+                                             )}
+                                           </div>
+                                         ) : (item.status === 'active' || item.checkinTime) ? (
+                                           <div className="text-right flex flex-col items-end gap-1">
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
+                                               🛎️ Check-in às {item.checkinTime || 'Confirmado'}
                                              </span>
-                                           )
+                                             <button
+                                               onClick={() => handleCarCheckOut(item)}
+                                               className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                             >
+                                               Check-Out
+                                             </button>
+                                           </div>
+                                         ) : (item.status === 'accepted' || item.status === 'Confirmada') ? (
+                                           <div className="text-right">
+                                             <button
+                                               onClick={() => handleCarCheckIn(item)}
+                                               className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                             >
+                                               Check-In
+                                             </button>
+                                           </div>
                                          ) : (
-                                           <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'finished' ? 'text-slate-500' : 'text-amber-600'}`}>
-                                             {item.status === 'finished' ? 'Finalizado' : 'Em Aprovação'}
+                                           <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                             ⏳ Em Aprovação
                                            </span>
                                          )}
-                                       </>
+                                       </div>
                                      ) : (
                                        <>
                                          <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
@@ -839,11 +909,37 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                          <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</span>
                             <span className="text-xs font-black text-slate-800">
-                               {res.status === 'accepted' || res.status === 'active' ? (
-                                  res.checkinTime ? `🛎️ Check-in às ${res.checkinTime}` : '⏳ A aguardar confirmação de check-in'
-                               ) : (
-                                  res.status === 'finished' ? 'Finalizado' : 'Em Aprovação'
-                               )}
+                               {res.status === 'finished' ? (
+                                   <div className="text-right">
+                                     <span className="text-slate-500 block">🏁 Finalizado</span>
+                                     {res.checkoutDate && res.checkoutTime && (
+                                       <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                                         Check-out: {res.checkoutDate} às {res.checkoutTime}
+                                       </span>
+                                     )}
+                                   </div>
+                                ) : (res.status === 'active' || res.checkinTime) ? (
+                                   <div className="text-right flex flex-col items-end gap-1">
+                                     <span className="text-emerald-600 block">🛎️ Check-in às {res.checkinTime || 'Confirmado'}</span>
+                                     <button
+                                       onClick={() => handleCarCheckOut(res)}
+                                       className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                     >
+                                       Check-Out
+                                     </button>
+                                   </div>
+                                ) : (res.status === 'accepted' || res.status === 'Confirmada') ? (
+                                   <div className="text-right">
+                                     <button
+                                       onClick={() => handleCarCheckIn(res)}
+                                       className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                     >
+                                       Check-In
+                                     </button>
+                                   </div>
+                                ) : (
+                                   'Em Aprovação'
+                                )}
                             </span>
                          </div>
                          {(res.checkinTime || res.status === 'active') && res.status !== 'finished' && (

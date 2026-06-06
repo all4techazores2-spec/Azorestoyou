@@ -398,6 +398,171 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     setPhotoMockList(prev => [...prev, randomImg]);
   };
 
+  const handlePrintA4 = () => {
+    if (!canvasRef.current || !selectedCheckRes) return;
+    const signatureDataUrl = canvasRef.current.toDataURL();
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    const clientName = selectedCheckRes.customerName || selectedCheckRes.client || 'Cliente';
+    const vehicleName = selectedCheckRes.car?.model || selectedCheckRes.vehicle || 'Viatura';
+    const license = selectedCheckRes.license || 'N/A';
+    const nif = selectedCheckRes.nif || 'N/A';
+    const address = selectedCheckRes.customerAddress || selectedCheckRes.address || 'N/A';
+    const startDate = selectedCheckRes.date ? new Date(selectedCheckRes.date).toLocaleDateString('pt-PT') : (selectedCheckRes.start || 'N/A');
+    const endDate = selectedCheckRes.end || (selectedCheckRes.date ? new Date(new Date(selectedCheckRes.date).getTime() + (selectedCheckRes.days || 3)*24*60*60*1000).toLocaleDateString('pt-PT') : 'N/A');
+    
+    const checkinTimeInput = document.getElementById('checkinTimeInput') as HTMLInputElement;
+    const timeStr = checkinTimeInput ? checkinTimeInput.value : (selectedCheckRes.checkinTime || '');
+
+    const html = `
+      <html>
+        <head>
+          <title>Ficha de Entrega - Rent-a-car</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              color: #333;
+              line-height: 1.5;
+              margin: 0;
+              padding: 0;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              border-bottom: 2px solid #333;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .company-details {
+              font-size: 11px;
+            }
+            .document-title {
+              text-align: right;
+            }
+            .document-title h1 {
+              margin: 0;
+              font-size: 20px;
+              text-transform: uppercase;
+            }
+            .section-title {
+              font-size: 12px;
+              text-transform: uppercase;
+              font-weight: bold;
+              background-color: #f2f2f2;
+              padding: 5px;
+              margin-top: 20px;
+              margin-bottom: 10px;
+              border-left: 4px solid #3B82F6;
+            }
+            .grid {
+              display: grid;
+              grid-template-cols: 1fr 1fr;
+              gap: 10px;
+              font-size: 12px;
+            }
+            .grid-item {
+              margin-bottom: 5px;
+            }
+            .grid-item span {
+              font-weight: bold;
+            }
+            .damage-list {
+              font-size: 12px;
+              margin-top: 5px;
+              padding-left: 20px;
+            }
+            .signature-section {
+              margin-top: 40px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+            }
+            .signature-box {
+              width: 45%;
+              text-align: center;
+            }
+            .signature-line {
+              border-top: 1px solid #333;
+              margin-top: 10px;
+              padding-top: 5px;
+              font-size: 11px;
+              font-weight: bold;
+            }
+            .signature-img {
+              max-height: 100px;
+              max-width: 100%;
+              display: block;
+              margin: 0 auto 5px auto;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-details">
+              <h2 style="margin: 0 0 5px 0; font-size: 16px;">${business.name || 'Açores Rent a Car'}</h2>
+              <p style="margin: 2px 0;">Morada: ${business.address || ''}</p>
+              <p style="margin: 2px 0;">Email: ${business.adminEmail || ''}</p>
+              <p style="margin: 2px 0;">Telefone: ${business.contact || ''}</p>
+              ${business.iban ? `<p style="margin: 2px 0;">IBAN: ${business.iban}</p>` : ''}
+            </div>
+            <div class="document-title">
+              <h1>Ficha de Entrega</h1>
+              <p style="margin: 5px 0; font-size: 12px;">Reserva ID: <strong>${selectedCheckRes.id}</strong></p>
+              <p style="margin: 5px 0; font-size: 12px;">Data de Emissão: ${new Date().toLocaleDateString('pt-PT')}</p>
+            </div>
+          </div>
+
+          <div class="section-title">Dados do Cliente</div>
+          <div class="grid">
+            <div class="grid-item"><span>Nome:</span> ${clientName}</div>
+            <div class="grid-item"><span>NIF:</span> ${nif}</div>
+            <div class="grid-item"><span>Carta de Condução:</span> ${license}</div>
+            <div class="grid-item"><span>Morada:</span> ${address}</div>
+          </div>
+
+          <div class="section-title">Dados do Aluguer</div>
+          <div class="grid">
+            <div class="grid-item"><span>Veículo:</span> ${vehicleName}</div>
+            <div class="grid-item"><span>Matrícula:</span> ${selectedCheckRes.car?.plate || selectedCheckRes.plate || 'N/A'}</div>
+            <div class="grid-item"><span>Data Levantamento:</span> ${startDate} ${timeStr ? `às ${timeStr}` : ''}</div>
+            <div class="grid-item"><span>Data Devolução Prevista:</span> ${endDate}</div>
+            <div class="grid-item"><span>Duração:</span> ${selectedCheckRes.days || 3} dias</div>
+          </div>
+
+          <div class="section-title">Estado do Veículo & Danos Registados</div>
+          <p style="font-size: 12px; margin: 5px 0;">Danos assinalados durante a entrega do veículo:</p>
+          ${damageLog.length > 0 ? `
+            <ul class="damage-list">
+              ${damageLog.map(id => `<li>${damagePoints.find(p => p.id === id)?.label || id}</li>`).join('')}
+            </ul>
+          ` : '<p style="font-size: 12px; font-style: italic; margin-left: 20px;">Nenhum dano assinalado (Viatura sem anomalias).</p>'}
+
+          <div class="signature-section">
+            <div class="signature-box">
+              <div style="height: 100px;"></div>
+              <div class="signature-line">Assinatura do Cliente</div>
+            </div>
+            <div class="signature-box">
+              <img class="signature-img" src="${signatureDataUrl}" alt="Assinatura Funcionario" />
+              <div class="signature-line">Assinatura do Funcionário</div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(() => {
+      printWindow.print();
+    }, 300);
+  };
+
   return (
     <div className={`min-h-screen font-sans flex transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       
@@ -1604,8 +1769,8 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   {/* Flow summary confirmation */}
                   <div className={`p-6 rounded-2xl border space-y-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                     <div>
-                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-400">3. Assinatura do Cliente</h4>
-                      <p className="text-[10px] text-slate-450 mt-1">Recolha a assinatura digital do titular abaixo.</p>
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-400">3. Assinatura do Funcionario</h4>
+                      <p className="text-[10px] text-slate-450 mt-1">Recolha a assinatura digital do funcionário abaixo.</p>
                     </div>
 
                     {/* Canvas HTML5 signature box */}
@@ -1642,28 +1807,44 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                        )}
 
                        {deliveryConfirmed ? (
-                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center gap-3">
-                           <CheckCircle2 size={24} />
-                           <div>
-                             <p className="text-xs font-black uppercase">Processo Concluído!</p>
-                             <p className="text-[10px] opacity-80 mt-0.5">As informações foram guardadas nas coleções Firebase.</p>
+                         <div className="space-y-3">
+                           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center gap-3">
+                             <CheckCircle2 size={24} />
+                             <div>
+                               <p className="text-xs font-black uppercase">Processo Concluído!</p>
+                               <p className="text-[10px] opacity-80 mt-0.5">As informações foram guardadas nas coleções Firebase.</p>
+                             </div>
                            </div>
+                           <button
+                             onClick={handlePrintA4}
+                             className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                           >
+                             <FileText size={16} /> Imprimir Ficha A4
+                           </button>
                          </div>
                        ) : (
-                         <button 
-                           onClick={() => {
-                             const checkinTimeInput = document.getElementById('checkinTimeInput') as HTMLInputElement;
-                             const checkinTime = checkinTimeInput ? checkinTimeInput.value : '';
-                             setDeliveryConfirmed(true);
-                             
-                             const dbStatus = activeCheckFlow === 'in' ? 'active' : 'finished';
-                             updateReservationStatus(selectedCheckRes.id, dbStatus, checkinTime);
-                             alert('Sucesso: Assinatura e dados salvos no servidor Azores4you (Firebase Ready)!');
-                           }}
-                           className="w-full py-4 bg-emerald-650 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
-                         >
-                           <CheckCircle2 size={16} /> Confirmar Entrega
-                         </button>
+                         <div className="space-y-2">
+                           <button 
+                             onClick={() => {
+                               const checkinTimeInput = document.getElementById('checkinTimeInput') as HTMLInputElement;
+                               const checkinTime = checkinTimeInput ? checkinTimeInput.value : '';
+                               setDeliveryConfirmed(true);
+                               
+                               const dbStatus = activeCheckFlow === 'in' ? 'active' : 'finished';
+                               updateReservationStatus(selectedCheckRes.id, dbStatus, checkinTime);
+                               alert('Sucesso: Assinatura e dados salvos no servidor Azores4you (Firebase Ready)!');
+                             }}
+                             className="w-full py-4 bg-emerald-650 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                           >
+                             <CheckCircle2 size={16} /> Confirmar Entrega
+                           </button>
+                           <button
+                             onClick={handlePrintA4}
+                             className="w-full py-3 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                           >
+                             <FileText size={14} /> Pré-visualizar / Imprimir A4
+                           </button>
+                         </div>
                        )}
                       
                       <button 
