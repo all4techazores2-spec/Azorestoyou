@@ -120,7 +120,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const landscapeReservations = activeReservations.filter(r => getResType(r) === 'landscape');
 
   const categories = [
-    { id: 'packages', label: 'Pacotes', icon: <Briefcase size={24} />, count: packagesList.length, color: 'from-blue-600 to-indigo-700', shadow: 'shadow-blue-600/20' },
+    { id: 'packages', label: 'Rent-a-car', icon: <Car size={24} />, count: packagesList.length, color: 'from-blue-600 to-indigo-700', shadow: 'shadow-blue-600/20' },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
     { id: 'landscapes', label: 'Paisagens', icon: <Camera size={24} />, count: landscapeReservations.length, color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
@@ -657,8 +657,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                    <div key={pkg.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
                       <div className="bg-slate-900 p-6 flex justify-between items-center">
                          <div className="flex items-center gap-3 text-white">
-                            <Briefcase size={20} className="text-blue-400" />
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Pacote de Viagem</span>
+                            <Car size={20} className="text-blue-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Rent-a-car</span>
                          </div>
                          <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-blue-500">
                             {pkg.id}
@@ -694,8 +694,8 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                       <div className="px-6 pb-6 pt-2">
                          <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                               <PackageIcon size={16} className="text-blue-500" />
-                               <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Estado Geral do Pacote</span>
+                               <Car size={16} className="text-blue-500" />
+                               <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Estado Geral do Aluguer</span>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${pkg.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                {pkg.status === 'accepted' ? 'Reserva Finalizada' : 'Aguardar Aprovação'}
@@ -708,11 +708,11 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 {selectedCategory === 'packages' && packagesList.length === 0 && (
                    <div className="py-24 text-center">
                      <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
-                       <Briefcase size={48} className="text-slate-200" />
+                       <Car size={48} className="text-slate-200" />
                        <div className="absolute top-0 right-0 w-6 h-6 bg-blue-500 rounded-full border-4 border-white"></div>
                      </div>
-                     <h3 className="text-xl font-black text-slate-800 mb-2">Ainda não tem pacotes?</h3>
-                     <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">Reserve Hotel + Carro para criar o seu primeiro pacote de viagem.</p>
+                     <h3 className="text-xl font-black text-slate-800 mb-2">Sem reservas ativas?</h3>
+                     <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">As suas reservas de Rent-a-car aparecerão aqui.</p>
                    </div>
                 )}
 

@@ -565,42 +565,52 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                         </tr>
                       </thead>
                       <tbody>
-                        {reservations.slice(0, 5).map((res, i) => (
-                          <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
-                            <td className="py-3 font-extrabold text-blue-500">{res.id}</td>
-                            <td className="py-3 font-bold">{res.client}</td>
-                            <td className="py-3">
-                              <div className="flex items-center gap-2">
-                                <img src={res.image} alt={res.vehicle} className="w-10 h-7 rounded object-cover bg-slate-100 border" />
-                                <div>
-                                  <span className="font-bold text-slate-800 dark:text-white block">{res.vehicle}</span>
-                                  <span className="text-[9px] font-black uppercase text-slate-400">{res.plate}</span>
+                        {reservations.slice(0, 5).map((res, i) => {
+                          const clientName = res.customerName || res.client || 'Cliente';
+                          const vehicleName = res.car?.model || res.vehicle || 'Viatura';
+                          const vehiclePlate = res.car?.plate || res.plate || '---';
+                          const vehicleImage = res.car?.image || res.image || 'https://picsum.photos/100/70?random=1';
+                          const startVal = res.date ? new Date(res.date).toLocaleDateString('pt-PT') : (res.start || '---');
+                          const endVal = res.end || (res.date ? new Date(new Date(res.date).getTime() + (res.days || 3)*24*60*60*1000).toLocaleDateString('pt-PT') : '---');
+                          const valueVal = Number(res.value) || (res.car ? res.car.pricePerDay * (res.days || 3) : 120);
+                          const statusLabel = res.status === 'accepted' ? 'Confirmada' : res.status === 'pending' ? 'Pendente' : res.status === 'finished' ? 'Concluída' : res.status;
+                          return (
+                            <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
+                              <td className="py-3 font-extrabold text-blue-500">{res.id}</td>
+                              <td className="py-3 font-bold">{clientName}</td>
+                              <td className="py-3">
+                                <div className="flex items-center gap-2">
+                                  <img src={vehicleImage} alt={vehicleName} className="w-10 h-7 rounded object-cover bg-slate-100 border" />
+                                  <div>
+                                    <span className="font-bold text-slate-800 dark:text-white block">{vehicleName}</span>
+                                    <span className="text-[9px] font-black uppercase text-slate-400">{vehiclePlate}</span>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="py-3 text-slate-400">{res.start}</td>
-                            <td className="py-3 text-slate-400">{res.end}</td>
-                            <td className="py-3 font-black">€{res.value.toFixed(2)}</td>
-                            <td className="py-3">
-                              <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                res.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-500' :
-                                res.status === 'Pendente' ? 'bg-amber-500/10 text-amber-500' :
-                                res.status === 'Em Curso' ? 'bg-blue-500/10 text-blue-500' :
-                                res.status === 'Concluída' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
-                              }`}>
-                                {res.status}
-                              </span>
-                            </td>
-                            <td className="py-3 text-right space-x-1.5">
-                              <button onClick={() => setSelectedResDetails(res)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600 hover:text-blue-800" title="Ver Detalhes">
-                                <Eye size={14} />
-                              </button>
-                              <button onClick={() => setEditingRes(res)} className="p-1.5 hover:bg-amber-50 rounded text-amber-600 hover:text-amber-800" title="Editar">
-                                <Edit size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="py-3 text-slate-400">{startVal}</td>
+                              <td className="py-3 text-slate-400">{endVal}</td>
+                              <td className="py-3 font-black">€{valueVal.toFixed(2)}</td>
+                              <td className="py-3">
+                                <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                  statusLabel === 'Confirmada' || statusLabel === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' :
+                                  statusLabel === 'Pendente' || statusLabel === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                                  statusLabel === 'Em Curso' || statusLabel === 'active' ? 'bg-blue-500/10 text-blue-500' :
+                                  statusLabel === 'Concluída' || statusLabel === 'finished' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                  {statusLabel}
+                                </span>
+                              </td>
+                              <td className="py-3 text-right space-x-1.5">
+                                <button onClick={() => setSelectedResDetails(res)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600 hover:text-blue-800" title="Ver Detalhes">
+                                  <Eye size={14} />
+                                </button>
+                                <button onClick={() => setEditingRes(res)} className="p-1.5 hover:bg-amber-50 rounded text-amber-600 hover:text-amber-800" title="Editar">
+                                  <Edit size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
