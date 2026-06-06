@@ -128,7 +128,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
 
   // Syncing layout structures whenever list changes
   const saveToSystem = (updatedCars: any[]) => {
-    const updatedBiz = { ...business, cars: updatedCars };
+    const processedCars = updatedCars.map(c => ({
+      ...c,
+      isAvailable: c.status === 'Disponível'
+    }));
+    const updatedBiz = { ...business, cars: processedCars };
     onUpdateBusiness(updatedBiz);
   };
 
