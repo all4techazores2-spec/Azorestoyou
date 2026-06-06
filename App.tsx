@@ -1117,7 +1117,7 @@ const App: React.FC = () => {
     const packageId = ticketId || `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     const newReservations: any[] = [];
     
-    console.log("💾 Persistindo pacote:", packageId, itinerary, guestDetails);
+    console.log("💾 Persistindo pacote:", packageId, itinerary, guestDetails); // Deploy trigger
 
     if (itinerary.hotel) {
       newReservations.push({
