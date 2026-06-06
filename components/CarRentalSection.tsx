@@ -120,7 +120,13 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
     if (!isAuthenticated && onShowAuth) {
       onShowAuth();
     } else {
-      onUpdateItinerary({ car, carDays });
+      // Inject company info so the reservation sync can find the right business
+      const carWithCompany = {
+        ...car,
+        companyId: selectedCompany?.id || car.companyId,
+        companyName: selectedCompany?.name || car.companyName
+      };
+      onUpdateItinerary({ car: carWithCompany, carDays });
       setSelectedCarForDetail(null);
       onNext();
     }

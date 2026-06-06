@@ -1192,7 +1192,8 @@ const App: React.FC = () => {
           let endpoint = '';
 
           if (res.type === 'car') {
-            targetBizId = res.car?.id || 'rentcar-1';
+            // Use companyId (e.g. RC17...) not the vehicle id (C17...)
+            targetBizId = res.car?.companyId || res.car?.id || 'rentcar-1';
             endpoint = 'cars';
           } else if (res.type === 'hotel' || res.type === 'al') {
             targetBizId = res.hotel?.id || 'hotel-1';

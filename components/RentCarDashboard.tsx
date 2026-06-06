@@ -1649,9 +1649,9 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
 
                 <button 
                   type="submit"
-                  className="px-6 py-3 bg-blue-650 hover:bg-blue-750 text-white rounded-xl text-xs font-black uppercase tracking-widest"
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-blue-500/20"
                 >
-                  Gravar Configurações
+                  Guardar Configurações
                 </button>
               </form>
             </div>
