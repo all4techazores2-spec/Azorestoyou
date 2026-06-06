@@ -57,6 +57,52 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     if (business.notifications) setNotifications(business.notifications);
   }, [business]);
 
+  // Dynamic calculations for KPIs and statistics
+  const totalVehicles = vehicles.length;
+  const disponiveisCount = vehicles.filter(v => v.status === 'Disponível' || v.status === 'active' || !v.status).length;
+  const alugadosCount = vehicles.filter(v => v.status === 'Alugado' || v.status === 'Reservado' || v.status === 'stopped').length;
+  const manutencaoCount = vehicles.filter(v => v.status === 'Em Manutenção' || v.status === 'Manutenção' || v.status === 'maintenance').length;
+  
+  // Format today's date to match dd/mm/yyyy
+  const formatToday = (d: Date) => {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const todayFormatted = formatToday(new Date());
+
+  const reservationsHoje = reservations.filter(r => {
+    if (!r.start) return false;
+    return r.start.includes(todayFormatted) && r.status !== 'Cancelada';
+  }).length;
+
+  const receitaHoje = reservations.reduce((acc, r) => {
+    if (r.start && r.start.includes(todayFormatted) && r.status !== 'Cancelada') {
+      return acc + (Number(r.value) || 0);
+    }
+    return acc;
+  }, 0);
+
+  const taxaOcupacao = totalVehicles > 0 ? Math.round((alugadosCount / totalVehicles) * 100) : 0;
+  const disponivelPct = totalVehicles > 0 ? Math.round((disponiveisCount / totalVehicles) * 100) : 0;
+
+  // Count island reservations dynamically
+  const islandResCounts = {
+    'São Miguel': reservations.filter(r => (r.island || business.island || 'PDL') === 'PDL' || (r.island || '').includes('Miguel')).length,
+    'Terceira': reservations.filter(r => (r.island || '') === 'TER' || (r.island || '').includes('Terceira')).length,
+    'Pico': reservations.filter(r => (r.island || '') === 'PIX' || (r.island || '').includes('Pico')).length,
+    'Faial': reservations.filter(r => (r.island || '') === 'HOR' || (r.island || '').includes('Faial')).length,
+    'Outras': reservations.filter(r => !['PDL', 'TER', 'PIX', 'HOR', 'São Miguel', 'Terceira', 'Pico', 'Faial'].some(isl => (r.island || '').includes(isl) || r.island === isl)).length,
+  };
+  const totalRes = reservations.length;
+  
+  const smPct = totalRes > 0 ? Math.round((islandResCounts['São Miguel'] / totalRes) * 100) : 0;
+  const terPct = totalRes > 0 ? Math.round((islandResCounts['Terceira'] / totalRes) * 100) : 0;
+  const picPct = totalRes > 0 ? Math.round((islandResCounts['Pico'] / totalRes) * 100) : 0;
+  const faiPct = totalRes > 0 ? Math.round((islandResCounts['Faial'] / totalRes) * 100) : 0;
+  const outPct = totalRes > 0 ? Math.round((islandResCounts['Outras'] / totalRes) * 100) : 0;
+
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showNewResModal, setShowNewResModal] = useState(false);
 
@@ -364,13 +410,13 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
               {/* KPIs PRINCIPAIS (Row of 7 stats with colored circles) */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 {[
-                  { title: 'Total de Veículos', value: '125', icon: <Car size={18} />, color: 'bg-blue-500/10 text-blue-600', sub: 'Todos os veículos', type: 'simple' },
-                  { title: 'Disponíveis', value: '48', icon: <Check size={18} />, color: 'bg-emerald-500/10 text-emerald-600', sub: 'Disponíveis hoje', type: 'simple' },
-                  { title: 'Alugados', value: '67', icon: <Key size={18} />, color: 'bg-amber-500/10 text-amber-600', sub: 'Em utilização', type: 'simple' },
-                  { title: 'Manutenção', value: '10', icon: <Wrench size={18} />, color: 'bg-rose-500/10 text-rose-600', sub: 'Em manutenção', type: 'simple' },
-                  { title: 'Reservas Hoje', value: '23', icon: <CalendarDays size={18} />, color: 'bg-purple-500/10 text-purple-600', sub: '+12% vs ontem', type: 'positive' },
-                  { title: 'Receita Hoje', value: '€4.580', icon: <DollarSign size={18} />, color: 'bg-green-500/10 text-green-600', sub: '+18% vs ontem', type: 'positive' },
-                  { title: 'Taxa Ocupação', value: '72%', icon: <TrendingUp size={18} />, color: 'bg-sky-500/10 text-sky-600', sub: '+8% vs ontem', type: 'positive' }
+                  { title: 'Total de Veículos', value: String(totalVehicles), icon: <Car size={18} />, color: 'bg-blue-500/10 text-blue-600', sub: 'Frota total configurada', type: 'simple' },
+                  { title: 'Disponíveis', value: String(disponiveisCount), icon: <Check size={18} />, color: 'bg-emerald-500/10 text-emerald-600', sub: 'Disponíveis hoje', type: 'simple' },
+                  { title: 'Alugados', value: String(alugadosCount), icon: <Key size={18} />, color: 'bg-amber-500/10 text-amber-600', sub: 'Em utilização', type: 'simple' },
+                  { title: 'Manutenção', value: String(manutencaoCount), icon: <Wrench size={18} />, color: 'bg-rose-500/10 text-rose-600', sub: 'Em manutenção', type: 'simple' },
+                  { title: 'Reservas Hoje', value: String(reservationsHoje), icon: <CalendarDays size={18} />, color: 'bg-purple-500/10 text-purple-600', sub: 'Hoje', type: 'simple' },
+                  { title: 'Receita Hoje', value: `€${receitaHoje.toLocaleString('pt-PT')}`, icon: <DollarSign size={18} />, color: 'bg-green-500/10 text-green-600', sub: 'Hoje', type: 'simple' },
+                  { title: 'Taxa Ocupação', value: `${taxaOcupacao}%`, icon: <TrendingUp size={18} />, color: 'bg-sky-500/10 text-sky-600', sub: 'Ocupação', type: 'simple' }
                 ].map((kpi, idx) => (
                   <div key={idx} className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition-transform hover:scale-[1.02] ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                     <div className="flex items-center justify-between">
@@ -733,16 +779,16 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                           strokeWidth="8" 
                           fill="transparent" 
                           strokeDasharray="251.2" 
-                          strokeDashoffset={251.2 - (251.2 * 72) / 100}
+                          strokeDashoffset={251.2 - (251.2 * taxaOcupacao) / 100}
                         />
                       </svg>
                       <div className="absolute flex flex-col items-center">
-                        <span className="text-xl font-black">72%</span>
+                        <span className="text-xl font-black">{taxaOcupacao}%</span>
                         <span className="text-[8px] font-black text-slate-400 uppercase">Ocupação</span>
                       </div>
                       <div className="w-full flex justify-around text-[9px] font-extrabold text-slate-500 uppercase mt-2 border-t border-slate-200/50 pt-2">
-                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-500" /> Disponível (28%)</div>
-                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-blue-600" /> Ocupado (72%)</div>
+                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-500" /> Disponível ({disponivelPct}%)</div>
+                        <div className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-blue-600" /> Ocupado ({taxaOcupacao}%)</div>
                       </div>
                     </div>
                   </div>
@@ -758,11 +804,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                         </div>
                       </div>
                       <div className="text-[9px] space-y-1 font-extrabold uppercase text-slate-500 leading-tight">
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-blue-600" /> São Miguel (45%)</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-indigo-500" /> Terceira (29%)</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-sky-400" /> Pico (15%)</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-amber-500" /> Faial (10%)</div>
-                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-slate-450" /> Outras (5%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-blue-600" /> São Miguel ({smPct}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-indigo-500" /> Terceira ({terPct}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-sky-400" /> Pico ({picPct}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-amber-500" /> Faial ({faiPct}%)</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-slate-400" /> Outras ({outPct}%)</div>
                       </div>
                     </div>
                   </div>
