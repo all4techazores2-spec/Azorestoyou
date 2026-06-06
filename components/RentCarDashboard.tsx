@@ -7,6 +7,7 @@ import {
   TrendingUp, CalendarDays, Key, FileCheck, Landmark, ChevronDown, CheckCircle, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
 
 interface RentCarDashboardProps {
   business: any;
@@ -111,6 +112,41 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const [editingVeh, setEditingVeh] = useState<any | null>(null);
   const [showAddVeh, setShowAddVeh] = useState(false);
   const [selectedResDetails, setSelectedResDetails] = useState<any | null>(null);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+
+  useEffect(() => {
+    if (editingVeh) {
+      setImageUrl(editingVeh.image || '');
+    } else {
+      setImageUrl('');
+    }
+  }, [editingVeh, showAddVeh]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('restaurantId', business.id);
+    formData.append('type', 'main');
+    formData.append('image', file);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Falha no upload');
+      const data = await response.json();
+      setImageUrl(data.url);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao fazer upload da imagem.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
   
   // Category Filters
   const [fleetFilter, setFleetFilter] = useState('Todos');
@@ -1682,11 +1718,12 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   plate: form.plate.value,
                   category: form.category.value,
                   status: editingVeh ? editingVeh.status : 'Disponível',
-                  image: form.image.value || 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80',
+                  image: imageUrl || 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80',
                   year: parseInt(form.year.value) || 2022,
                   gearbox: form.gearbox.value,
                   insuranceExp: form.insuranceExp.value,
-                  inspectionExp: form.inspectionExp.value
+                  inspectionExp: form.inspectionExp.value,
+                  pricePerDay: parseFloat(form.pricePerDay.value) || 45.0
                 };
 
                 if (editingVeh) {
@@ -1723,7 +1760,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Categoria</label>
-                    <select name="category" defaultValue={editingVeh?.category || 'Económico'} className="w-full border p-3 rounded-xl bg-transparent bg-slate-900 outline-none">
+                    <select name="category" defaultValue={editingVeh?.category || 'Económico'} className="w-full border p-3 rounded-xl bg-slate-900 outline-none">
                       <option value="Económico">Económico</option>
                       <option value="SUV">SUV</option>
                       <option value="Elétrico">Elétrico</option>
@@ -1731,17 +1768,50 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                       <option value="Comerciais">Comerciais</option>
                     </select>
                   </div>
+                  
                   <div className="space-y-1 col-span-2">
-                    <label className="font-bold text-slate-450">URL da Imagem</label>
-                    <input name="image" defaultValue={editingVeh?.image || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="https://..." />
+                    <label className="font-bold text-slate-450">Foto do Carro</label>
+                    <div className="flex gap-2">
+                      <input 
+                        name="image" 
+                        value={imageUrl} 
+                        onChange={(e) => setImageUrl(e.target.value)} 
+                        className="flex-1 border p-3 rounded-xl bg-transparent outline-none text-xs" 
+                        placeholder="URL da foto ou faça upload..." 
+                      />
+                      <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl cursor-pointer font-bold text-center text-xs flex items-center justify-center shrink-0">
+                        {isUploading ? 'A carregar...' : 'Upload'}
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageUpload} 
+                          className="hidden" 
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Valor ao Dia (€)</label>
+                    <input 
+                      name="pricePerDay" 
+                      type="number" 
+                      step="0.01" 
+                      required 
+                      defaultValue={editingVeh?.pricePerDay || 45.0} 
+                      className="w-full border p-3 rounded-xl bg-transparent outline-none" 
+                      placeholder="Ex: 45.00" 
+                    />
+                  </div>
+                  
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Ano</label>
                     <input name="year" type="number" defaultValue={editingVeh?.year || 2022} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Caixa de Velocidades</label>
-                    <select name="gearbox" defaultValue={editingVeh?.gearbox || 'Manual'} className="w-full border p-3 rounded-xl bg-transparent bg-slate-900 outline-none">
+                    <select name="gearbox" defaultValue={editingVeh?.gearbox || 'Manual'} className="w-full border p-3 rounded-xl bg-slate-900 outline-none">
                       <option value="Manual">Manual</option>
                       <option value="Automático">Automático</option>
                     </select>
