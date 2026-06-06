@@ -220,7 +220,7 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                   return (
                     <div 
                       key={car.id}
-                      onClick={() => handleCarClick(car)}
+                      onClick={() => handleCarSelect(car)}
                       className={`group bg-white rounded-2xl overflow-hidden transition-all duration-300 border-2 flex flex-col h-full
                         ${!car.isAvailable ? 'opacity-75 grayscale-[0.5]' : 'cursor-pointer'}
                         ${isSelected 
@@ -275,9 +275,13 @@ const CarRentalSection: React.FC<CarRentalSectionProps> = ({
                                  </p>
                                  <p className="text-xl font-black text-slate-900">€{totalCarPrice}</p>
                               </div>
-                              <div className={`p-2 rounded-lg transition-all ${isSelected ? 'bg-green-600 text-white' : 'bg-slate-50 text-slate-300 group-hover:bg-green-50 group-hover:text-green-500'}`}>
+                              <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleCarClick(car); }}
+                                className={`p-2 rounded-lg transition-all ${isSelected ? 'bg-green-600 text-white' : 'bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-500'}`}
+                              >
                                 <Info className="w-5 h-5" />
-                              </div>
+                              </button>
                             </>
                           ) : (
                             <div className="flex items-center gap-2 text-slate-400 font-bold italic text-sm">
