@@ -132,6 +132,52 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     onUpdateBusiness(updatedBiz);
   };
 
+  // Toggle the status of a vehicle for a specific day
+  const toggleVehicleDayStatus = (vehicleId: string, dayIndex: number) => {
+    const updatedVehicles = vehicles.map(v => {
+      if (v.id === vehicleId) {
+        const timeline = [...(v.statusTimeline || ['available', 'available', 'available', 'available', 'available', 'available', 'available'])];
+        const current = timeline[dayIndex];
+        let next = 'available';
+        if (current === 'available') next = 'reserved';
+        else if (current === 'reserved') next = 'occupied';
+        else if (current === 'occupied') next = 'maintenance';
+        else next = 'available';
+        timeline[dayIndex] = next;
+
+        // Sync main vehicle status with today's status (index 0)
+        let generalStatus = 'Disponível';
+        if (timeline[0] === 'occupied') generalStatus = 'Alugado';
+        else if (timeline[0] === 'reserved') generalStatus = 'Reservado';
+        else if (timeline[0] === 'maintenance') generalStatus = 'Em Manutenção';
+
+        return { ...v, statusTimeline: timeline, status: generalStatus };
+      }
+      return v;
+    });
+
+    setVehicles(updatedVehicles);
+    saveToSystem(updatedVehicles);
+  };
+
+  const getTimelineDays = () => {
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      if (i === 0) days.push('Hoje');
+      else if (i === 1) days.push('Amanhã');
+      else {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        days.push(`${day}/${month}`);
+      }
+    }
+    return days;
+  };
+  const timelineDays = getTimelineDays();
+
   // Canvas Handlers
   useEffect(() => {
     if (activeCheckFlow && canvasRef.current) {
@@ -523,40 +569,40 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   <div className="space-y-3.5">
                     <div className="grid grid-cols-8 gap-1.5 border-b border-slate-200/50 pb-2 text-center text-[9px] font-black text-slate-400 uppercase">
                       <div className="text-left">Veículo</div>
-                      <div>Hoje</div>
-                      <div>Amanhã</div>
-                      <div>14/06</div>
-                      <div>15/06</div>
-                      <div>16/06</div>
-                      <div>17/06</div>
-                      <div>18/06</div>
+                      {timelineDays.map((d, i) => (
+                        <div key={i}>{d}</div>
+                      ))}
                     </div>
 
-                    {[
-                      { model: 'Renault Clio', status: ['occupied', 'occupied', 'available', 'available', 'available', 'available', 'available'] },
-                      { model: 'Fiat 500', status: ['available', 'reserved', 'reserved', 'reserved', 'available', 'available', 'available'] },
-                      { model: 'Tesla Model 3', status: ['occupied', 'occupied', 'occupied', 'occupied', 'available', 'available', 'available'] },
-                      { model: 'Dacia Duster', status: ['available', 'available', 'available', 'occupied', 'occupied', 'available', 'available'] },
-                      { model: 'Peugeot 208', status: ['occupied', 'occupied', 'available', 'available', 'occupied', 'occupied', 'available'] },
-                      { model: 'Nissan Micra', status: ['available', 'available', 'available', 'available', 'available', 'maintenance', 'maintenance'] },
-                      { model: 'VW T-Roc', status: ['available', 'available', 'occupied', 'occupied', 'occupied', 'available', 'available'] },
-                      { model: 'Ford Transit', status: ['available', 'available', 'available', 'available', 'available', 'available', 'available'] }
-                    ].map((row, idx) => (
-                      <div key={idx} className="grid grid-cols-8 gap-1.5 items-center text-center text-[10px]">
-                        <div className="font-bold text-left truncate pr-1 text-slate-600 dark:text-slate-300">{row.model}</div>
-                        {row.status.map((st, i) => (
-                          <div 
-                            key={i} 
-                            className={`h-4 rounded-full transition-all ${
-                              st === 'available' ? 'bg-emerald-500' : 
-                              st === 'reserved' ? 'bg-amber-500' : 
-                              st === 'occupied' ? 'bg-rose-500' : 'bg-slate-400'
-                            }`}
-                            title={st.toUpperCase()}
-                          />
-                        ))}
+                    {vehicles.length === 0 ? (
+                      <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-wider py-6">
+                        Nenhum veículo adicionado à frota. Adicione carros na aba "Frota" para ver a disponibilidade.
                       </div>
-                    ))}
+                    ) : (
+                      vehicles.map((v, idx) => {
+                        const timeline = v.statusTimeline || ['available', 'available', 'available', 'available', 'available', 'available', 'available'];
+                        return (
+                          <div key={v.id || idx} className="grid grid-cols-8 gap-1.5 items-center text-center text-[10px]">
+                            <div className="font-bold text-left truncate pr-1 text-slate-600 dark:text-slate-300">
+                              {v.brand} {v.model}
+                            </div>
+                            {timeline.map((st: string, i: number) => (
+                              <button 
+                                key={i} 
+                                type="button"
+                                onClick={() => toggleVehicleDayStatus(v.id, i)}
+                                className={`h-5 rounded-full transition-all cursor-pointer border-0 w-full hover:scale-105 active:scale-95 ${
+                                  st === 'available' ? 'bg-emerald-500 hover:bg-emerald-600' : 
+                                  st === 'reserved' ? 'bg-amber-500 hover:bg-amber-600' : 
+                                  st === 'occupied' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-slate-400 hover:bg-slate-500'
+                                }`}
+                                title={`Tocar para alterar: ${st.toUpperCase()}`}
+                              />
+                            ))}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
