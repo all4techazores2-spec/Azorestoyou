@@ -915,6 +915,22 @@ app.post('/api/reservations', async (req, res) => {
             console.log(`✅ Business found: [${business.name}]. Adding reservation...`);
             if (!business.reservations) business.reservations = [];
             business.reservations.push(reservation);
+
+            // Auto-register client in business clients list
+            if (!business.clients) business.clients = [];
+            const clientExists = business.clients.some(c => c.email && c.email.toLowerCase() === cleanEmail.toLowerCase());
+            if (!clientExists) {
+                business.clients.push({
+                    id: `CLI_${Date.now()}`,
+                    name: req.body.customerName || req.body.client || targetEmail.split('@')[0],
+                    email: cleanEmail,
+                    phone: req.body.customerPhone || req.body.phone || '',
+                    nif: req.body.nif || '',
+                    license: req.body.license || '',
+                    address: req.body.address || '',
+                    createdAt: new Date().toISOString()
+                });
+            }
             
             if (!db.users) db.users = [];
             let user = db.users.find(u => normalizeEmail(u.email) === cleanEmail);

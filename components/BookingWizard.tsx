@@ -777,6 +777,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
         onClose={onClose || (() => setShowCheckout(false))}
         onComplete={handleBookingComplete}
         onConfirm={onConfirm}
+        cars={cars}
       />
     );
   }

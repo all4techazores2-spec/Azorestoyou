@@ -156,6 +156,8 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const [editingVeh, setEditingVeh] = useState<any | null>(null);
   const [showAddVeh, setShowAddVeh] = useState(false);
   const [selectedResDetails, setSelectedResDetails] = useState<any | null>(null);
+  const [selectedClientDetail, setSelectedClientDetail] = useState<any | null>(null);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
@@ -214,6 +216,12 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
       isAvailable: c.status ? c.status === 'Disponível' : (c.isAvailable !== false)
     }));
     const updatedBiz = { ...business, cars: processedCars };
+    onUpdateBusiness(updatedBiz);
+  };
+
+  const saveClientsToSystem = (updatedClients: any[]) => {
+    setClients(updatedClients);
+    const updatedBiz = { ...business, clients: updatedClients };
     onUpdateBusiness(updatedBiz);
   };
 
@@ -1281,40 +1289,143 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
           {/* TAB 4: CLIENTES */}
           {activeTab === 'clientes' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Fichas de Clientes</h2>
-                <p className="text-slate-400 text-xs mt-1">Consulte os dados de contacto e cartas de condução associadas.</p>
-              </div>
-
-              <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200/50 text-slate-400 uppercase font-black tracking-wider">
-                        <th className="pb-3">Nome do Cliente</th>
-                        <th className="pb-3">Email</th>
-                        <th className="pb-3">Telefone</th>
-                        <th className="pb-3">NIF / Contribuinte</th>
-                        <th className="pb-3 text-right">Carta Condução</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {clients.filter(c => 
-                        (c.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
-                        (c.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-                      ).map((cli) => (
-                        <tr key={cli.id} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
-                          <td className="py-4 font-bold">{cli.name}</td>
-                          <td className="py-4 text-slate-500">{cli.email}</td>
-                          <td className="py-4">{cli.phone}</td>
-                          <td className="py-4 font-mono">{cli.nif}</td>
-                          <td className="py-4 text-right font-mono text-blue-500">{cli.license}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Fichas de Clientes</h2>
+                  <p className="text-slate-400 text-xs mt-1">Consulte os dados de contacto e cartas de condução associadas.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    onClick={() => {
+                      const printWindow = window.open('', '_blank');
+                      if (!printWindow) return;
+                      const html = `
+                        <html>
+                          <head>
+                            <title>Fichas de Clientes - ${business.name || 'Rent-a-car'}</title>
+                            <style>
+                              body { font-family: sans-serif; padding: 20px; }
+                              h1 { text-align: center; font-size: 20px; text-transform: uppercase; margin-bottom: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background-color: #f2f2f2; font-weight: bold; }
+                            </style>
+                          </head>
+                          <body>
+                            <h1>Listagem de Clientes - ${business.name || 'Rent-a-car'}</h1>
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Nome</th>
+                                  <th>Email</th>
+                                  <th>Telefone</th>
+                                  <th>NIF</th>
+                                  <th>Carta Condução</th>
+                                  <th>Morada</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${clients.map(c => `
+                                  <tr>
+                                    <td>${c.name || ''}</td>
+                                    <td>${c.email || ''}</td>
+                                    <td>${c.phone || ''}</td>
+                                    <td>${c.nif || ''}</td>
+                                    <td>${c.license || ''}</td>
+                                    <td>${c.address || ''}</td>
+                                  </tr>
+                                `).join('')}
+                              </tbody>
+                            </table>
+                          </body>
+                        </html>
+                      `;
+                      printWindow.document.write(html);
+                      printWindow.document.close();
+                      printWindow.print();
+                    }}
+                    className="px-4 py-2.5 bg-slate-500/10 hover:bg-slate-500/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                  >
+                    <Download size={14} /> Exportar PDF
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const headers = ['Nome', 'Email', 'Telefone', 'NIF', 'Carta Condução', 'Morada'];
+                      const rows = clients.map(c => [
+                        c.name || '',
+                        c.email || '',
+                        c.phone || '',
+                        c.nif || '',
+                        c.license || '',
+                        c.address || ''
+                      ]);
+                      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                        + [headers.join(','), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", `clientes_${business.name || 'rentacar'}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="px-4 py-2.5 bg-slate-500/10 hover:bg-slate-55/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                  >
+                    <Download size={14} /> Exportar Excel
+                  </button>
+                  <button 
+                    onClick={() => setShowAddClientModal(true)}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 shadow-md shadow-blue-500/10"
+                  >
+                    <Plus size={14} /> Adicionar Cliente
+                  </button>
                 </div>
               </div>
+
+              {clients.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 border border-dashed rounded-[2rem] dark:border-slate-800">
+                  <Users size={32} className="mx-auto mb-2 opacity-30 animate-pulse" />
+                  <p className="font-bold text-xs uppercase tracking-wider">Nenhum cliente registado</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {clients.filter(c => 
+                    (c.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                    (c.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+                  ).map((cli) => (
+                    <div 
+                      key={cli.id} 
+                      onClick={() => setSelectedClientDetail(cli)}
+                      className={`group p-6 rounded-[2rem] border cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] flex flex-col justify-between ${
+                        darkMode ? 'bg-slate-900 border-slate-800 text-white hover:border-blue-500/50' : 'bg-white border-slate-200 text-slate-800 hover:border-blue-500/50'
+                      } shadow-sm`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-black">
+                            {cli.name ? cli.name.charAt(0).toUpperCase() : 'C'}
+                          </div>
+                          <div>
+                            <h3 className="font-black text-sm group-hover:text-blue-500 transition-colors leading-tight">{cli.name}</h3>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Ficha de Cliente</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1.5 pt-2 text-[11px] font-bold text-slate-500 leading-none">
+                          <p className="flex items-center gap-1.5 truncate"><Mail size={12} className="text-slate-400 shrink-0" /> {cli.email}</p>
+                          {cli.phone && <p className="flex items-center gap-1.5"><Phone size={12} className="text-slate-400 shrink-0" /> {cli.phone}</p>}
+                          {cli.nif && <p className="flex items-center gap-1.5"><FileText size={12} className="text-slate-400 shrink-0" /> NIF: <span className="font-mono">{cli.nif}</span></p>}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-slate-800 flex justify-between items-center text-[10px] font-black uppercase text-blue-500">
+                        <span>Carta: {cli.license || '—'}</span>
+                        <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -2193,7 +2304,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 const updatedRes = {
                   ...editingRes,
                   client: form.client.value,
+                  customerName: form.client.value,
                   email: form.email.value,
+                  customerEmail: form.email.value,
+                  phone: form.phone.value,
+                  customerPhone: form.phone.value,
                   start: form.start.value,
                   end: form.end.value,
                   value: val,
@@ -2202,6 +2317,9 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
 
                 const updatedResList = reservations.map(r => r.id === editingRes.id ? updatedRes : r);
                 setReservations(updatedResList);
+
+                // Update server side
+                updateReservationStatus(editingRes.id, form.status.value, editingRes.checkinTime);
 
                 setEditingRes(null);
                 alert(`Reserva ${editingRes.id} editada com sucesso!`);
@@ -2214,31 +2332,35 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1 col-span-2">
                     <label className="font-bold text-slate-450">Nome do Cliente</label>
-                    <input name="client" required defaultValue={editingRes.client} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                    <input name="client" required defaultValue={editingRes.customerName || editingRes.client || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1 col-span-2">
-                    <label className="font-bold text-slate-450">Email do Cliente</label>
-                    <input name="email" type="email" required defaultValue={editingRes.email} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                    <label className="font-bold text-slate-455">Email do Cliente</label>
+                    <input name="email" type="email" required defaultValue={editingRes.customerEmail || editingRes.email || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-bold text-slate-450">Telefone do Cliente</label>
+                    <input name="phone" required defaultValue={editingRes.customerPhone || editingRes.phone || editingRes.guestPhone || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1 col-span-2">
                     <label className="font-bold text-slate-450">Viatura Alugada</label>
-                    <input disabled value={editingRes.vehicle} className="w-full border p-3 rounded-xl bg-slate-100 dark:bg-slate-950 opacity-60 outline-none" />
+                    <input disabled value={editingRes.car?.model || editingRes.vehicle || ''} className="w-full border p-3 rounded-xl bg-slate-100 dark:bg-slate-950 opacity-60 outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Início do Aluguer</label>
-                    <input name="start" required defaultValue={editingRes.start} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                    <input name="start" required defaultValue={editingRes.start || editingRes.date || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Fim do Aluguer</label>
-                    <input name="end" required defaultValue={editingRes.end} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                    <input name="end" required defaultValue={editingRes.end || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-450">Valor Total (€)</label>
-                    <input name="value" type="number" step="0.01" defaultValue={editingRes.value} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                    <label className="font-bold text-slate-455">Valor Total (€)</label>
+                    <input name="value" type="number" step="0.01" defaultValue={editingRes.value || (editingRes.car ? editingRes.car.pricePerDay * (editingRes.days || 3) : 120)} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-450">Estado da Reserva</label>
-                    <select name="status" defaultValue={editingRes.status} className="w-full border p-3 rounded-xl bg-transparent bg-slate-900 outline-none">
+                    <select name="status" defaultValue={editingRes.status} className="w-full border p-3 rounded-xl bg-transparent bg-slate-900 outline-none text-white">
                       <option value="Pendente">Pendente</option>
                       <option value="Confirmada">Confirmada</option>
                       <option value="Em Curso">Em Curso</option>
@@ -2258,7 +2380,191 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   <button 
                     type="button"
                     onClick={() => setEditingRes(null)}
-                    className="flex-1 py-4 bg-slate-500/10 hover:bg-slate-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                    className="flex-1 py-4 bg-slate-500/10 hover:bg-slate-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-white"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CLIENT DETAILS / EDIT MODAL ── */}
+      <AnimatePresence>
+        {selectedClientDetail && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-lg rounded-3xl p-8 relative shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'}`}
+            >
+              <button 
+                onClick={() => setSelectedClientDetail(null)} 
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-500/10"
+              >
+                <X size={18} />
+              </button>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as any;
+                const updatedClient = {
+                  ...selectedClientDetail,
+                  name: form.name.value,
+                  email: form.email.value,
+                  phone: form.phone.value,
+                  nif: form.nif.value,
+                  license: form.license.value,
+                  address: form.address.value
+                };
+
+                const updatedList = clients.map(c => c.id === selectedClientDetail.id ? updatedClient : c);
+                saveClientsToSystem(updatedList);
+                setSelectedClientDetail(null);
+                alert('Ficha de cliente atualizada com sucesso!');
+              }} className="space-y-6">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded">Ficha de Cliente</span>
+                  <h3 className="text-xl font-black mt-2">Detalhes: {selectedClientDetail.name}</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-bold text-slate-450">Nome Completo</label>
+                    <input name="name" required defaultValue={selectedClientDetail.name} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Email</label>
+                    <input name="email" type="email" required defaultValue={selectedClientDetail.email} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Telefone</label>
+                    <input name="phone" defaultValue={selectedClientDetail.phone || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">NIF / Contribuinte</label>
+                    <input name="nif" defaultValue={selectedClientDetail.nif || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none font-mono" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Carta de Condução</label>
+                    <input name="license" defaultValue={selectedClientDetail.license || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none font-mono" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-bold text-slate-450">Morada / Endereço</label>
+                    <input name="address" defaultValue={selectedClientDetail.address || ''} className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="Rua, Código Postal, Localidade" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-3">
+                  <button 
+                    type="submit" 
+                    className="flex-1 py-4 bg-[#0066CC] hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    Gravar
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      if (confirm('Tem a certeza que deseja apagar permanentemente este cliente do sistema?')) {
+                        const updatedList = clients.filter(c => c.id !== selectedClientDetail.id);
+                        saveClientsToSystem(updatedList);
+                        setSelectedClientDetail(null);
+                        alert('Cliente removido com sucesso!');
+                      }
+                    }}
+                    className="flex-1 py-4 bg-red-650 hover:bg-red-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    Apagar Cliente
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── ADD NEW CLIENT MODAL ── */}
+      <AnimatePresence>
+        {showAddClientModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-lg rounded-3xl p-8 relative shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'}`}
+            >
+              <button 
+                onClick={() => setShowAddClientModal(false)} 
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-500/10"
+              >
+                <X size={18} />
+              </button>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as any;
+                const newClient = {
+                  id: `CLI_${Date.now()}`,
+                  name: form.name.value,
+                  email: form.email.value,
+                  phone: form.phone.value,
+                  nif: form.nif.value,
+                  license: form.license.value,
+                  address: form.address.value,
+                  createdAt: new Date().toISOString()
+                };
+
+                const updatedList = [newClient, ...clients];
+                saveClientsToSystem(updatedList);
+                setShowAddClientModal(false);
+                alert('Novo cliente adicionado com sucesso!');
+              }} className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-tight">Adicionar Novo Cliente</h3>
+                  <p className="text-slate-400 text-xs mt-1">Preencha todos os dados do cliente para registo no sistema.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-bold text-slate-450">Nome Completo</label>
+                    <input name="name" required className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="Ex: André Braga" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Email</label>
+                    <input name="email" type="email" required className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="Ex: andre@restaurante.pt" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Telefone</label>
+                    <input name="phone" required className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="Ex: +351 916 111 222" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">NIF / Contribuinte</label>
+                    <input name="nif" required className="w-full border p-3 rounded-xl bg-transparent outline-none font-mono" placeholder="Ex: 4545478454" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-450">Carta de Condução</label>
+                    <input name="license" required className="w-full border p-3 rounded-xl bg-transparent outline-none font-mono" placeholder="Ex: Id1245454" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="font-bold text-slate-450">Morada / Endereço</label>
+                    <input name="address" required className="w-full border p-3 rounded-xl bg-transparent outline-none" placeholder="Ex: Rua Direita, Ponta Delgada" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-3">
+                  <button 
+                    type="submit" 
+                    className="flex-1 py-4 bg-[#0066CC] hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                  >
+                    Adicionar Cliente
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddClientModal(false)}
+                    className="flex-1 py-4 bg-slate-500/10 hover:bg-slate-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-white"
                   >
                     Cancelar
                   </button>

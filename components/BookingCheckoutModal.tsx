@@ -419,7 +419,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 max-w-sm text-center">
                        <p className="text-sm text-slate-600 font-bold leading-relaxed">
                           {itinerary.car 
-                            ? "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte do Hotel e da Rent-a-car."
+                            ? "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte da Rent-a-car."
                             : "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte do Hotel."
                           }
                        </p>
