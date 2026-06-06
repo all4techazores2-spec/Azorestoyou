@@ -684,32 +684,45 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {vehicles.filter(v => 
+                  {vehicles.filter(v =>
                     (fleetFilter === 'Todos' || v.category === fleetFilter || (fleetFilter === 'Económicos' && v.category === 'Económico'))
-                  ).slice(0, 4).map((veh) => (
-                    <div key={veh.id} className={`rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-lg ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm flex flex-col justify-between`}>
-                      <div className="h-44 relative bg-slate-100 dark:bg-slate-950 overflow-hidden flex items-center justify-center">
-                        <img src={veh.image} alt={veh.model} className="w-full h-full object-cover" />
-                        <span className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                          veh.status === 'Disponível' ? 'bg-emerald-500 text-white' :
-                          veh.status === 'Reservado' ? 'bg-amber-500 text-white' :
-                          veh.status === 'Alugado' ? 'bg-rose-500 text-white' : 'bg-slate-500 text-white'
-                        }`}>
-                          {veh.status}
-                        </span>
-                      </div>
-                      <div className="p-4 space-y-3">
-                        <div>
-                          <p className="text-[10px] font-extrabold uppercase text-blue-500 tracking-wider leading-none">{veh.category}</p>
-                          <h4 className="font-extrabold text-sm text-slate-800 dark:text-white mt-1 leading-none">{veh.brand} {veh.model}</h4>
+                  ).slice(0, 4).map((veh) => {
+                    const cycleStatus = () => {
+                      const order = ['Disponível', 'Reservado', 'Alugado', 'Em Manutenção'];
+                      const next = order[(order.indexOf(veh.status) + 1) % order.length];
+                      const updated = vehicles.map(v => v.id === veh.id ? { ...v, status: next } : v);
+                      setVehicles(updated);
+                      saveToSystem(updated);
+                    };
+                    return (
+                      <div key={veh.id} className={`rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-lg ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm flex flex-col justify-between`}>
+                        <div className="h-44 relative bg-slate-100 dark:bg-slate-950 overflow-hidden flex items-center justify-center">
+                          <img src={veh.image} alt={veh.model} className="w-full h-full object-cover" />
+                          <button
+                            onClick={cycleStatus}
+                            title="Tocar para alterar disponibilidade"
+                            className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all active:scale-95 hover:opacity-80 ${
+                              veh.status === 'Disponível' ? 'bg-emerald-500 text-white' :
+                              veh.status === 'Reservado' ? 'bg-amber-500 text-white' :
+                              veh.status === 'Alugado' ? 'bg-rose-500 text-white' : 'bg-slate-500 text-white'
+                            }`}
+                          >
+                            {veh.status || 'Disponível'}
+                          </button>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold border-t border-slate-200/50 pt-2 uppercase">
-                          <span>Plate: {veh.plate}</span>
-                          <span>Gear: {veh.gearbox}</span>
+                        <div className="p-4 space-y-3">
+                          <div>
+                            <p className="text-[10px] font-extrabold uppercase text-blue-500 tracking-wider leading-none">{veh.category}</p>
+                            <h4 className="font-extrabold text-sm text-slate-800 dark:text-white mt-1 leading-none">{veh.brand} {veh.model}</h4>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold border-t border-slate-200/50 pt-2 uppercase">
+                            <span>Plate: {veh.plate}</span>
+                            <span>Gear: {veh.gearbox}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -723,33 +736,42 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     <button onClick={() => setActiveTab('checkin')} className="text-[10px] text-blue-500 font-bold">Ver todas</button>
                   </div>
                   <div className="space-y-3">
-                    {[
-                      { name: 'João Silva', car: 'Renault Clio', time: '10:00', res: reservations[0] },
-                      { name: 'Maria Santos', car: 'Fiat 500', time: '11:30', res: reservations[1] },
-                      { name: 'Pedro Costa', car: 'Tesla Model 3', time: '14:00', res: reservations[2] }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-                            <Clock size={16} />
+                    {(() => {
+                      const entregasHoje = reservations.filter(r =>
+                        r.start && r.start.includes(todayFormatted) && r.status !== 'Cancelada' && r.status !== 'Concluída'
+                      );
+                      if (entregasHoje.length === 0) {
+                        return (
+                          <div className="text-center py-6 text-slate-400">
+                            <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-xs font-bold">Sem entregas para hoje</p>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-xs leading-none">{item.name}</p>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{item.car} · {item.time}</span>
+                        );
+                      }
+                      return entregasHoje.map((res: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                              <Clock size={16} />
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-xs leading-none">{res.client || res.clientName || 'Cliente'}</p>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">{res.vehicle || res.car || '—'} · {res.startTime || res.start?.split(' ')[1] || '—'}</span>
+                            </div>
                           </div>
+                          <button
+                            onClick={() => {
+                              setSelectedCheckRes(res);
+                              setActiveCheckFlow('in');
+                              setActiveTab('checkin');
+                            }}
+                            className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                          >
+                            Check-In
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => {
-                            setSelectedCheckRes(item.res);
-                            setActiveCheckFlow('in');
-                            setActiveTab('checkin');
-                          }}
-                          className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                        >
-                          Check-In
-                        </button>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 </div>
 
@@ -760,32 +782,42 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     <button onClick={() => setActiveTab('checkin')} className="text-[10px] text-blue-500 font-bold">Ver todas</button>
                   </div>
                   <div className="space-y-3">
-                    {[
-                      { name: 'Ana Oliveira', car: 'Dacia Duster', time: '17:00', res: reservations[3] },
-                      { name: 'Carlos Almeida', car: 'Peugeot 208', time: '18:30', res: reservations[4] }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600">
-                            <Clock size={16} />
+                    {(() => {
+                      const devolucoesHoje = reservations.filter(r =>
+                        r.end && r.end.includes(todayFormatted) && r.status !== 'Cancelada' && r.status !== 'Disponível'
+                      );
+                      if (devolucoesHoje.length === 0) {
+                        return (
+                          <div className="text-center py-6 text-slate-400">
+                            <CalendarDays size={28} className="mx-auto mb-2 opacity-30" />
+                            <p className="text-xs font-bold">Sem devoluções para hoje</p>
                           </div>
-                          <div>
-                            <p className="font-extrabold text-xs leading-none">{item.name}</p>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">{item.car} · {item.time}</span>
+                        );
+                      }
+                      return devolucoesHoje.map((res: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl border border-slate-200/10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600">
+                              <Clock size={16} />
+                            </div>
+                            <div>
+                              <p className="font-extrabold text-xs leading-none">{res.client || res.clientName || 'Cliente'}</p>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">{res.vehicle || res.car || '—'} · {res.endTime || res.end?.split(' ')[1] || '—'}</span>
+                            </div>
                           </div>
+                          <button
+                            onClick={() => {
+                              setSelectedCheckRes(res);
+                              setActiveCheckFlow('out');
+                              setActiveTab('checkin');
+                            }}
+                            className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                          >
+                            Check-Out
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => {
-                            setSelectedCheckRes(item.res);
-                            setActiveCheckFlow('out');
-                            setActiveTab('checkin');
-                          }}
-                          className="px-3 py-1.5 bg-[#0066CC] hover:bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                        >
-                          Check-Out
-                        </button>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 </div>
 
@@ -1064,13 +1096,23 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   <div key={veh.id} className={`rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-lg ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                     <div className="h-48 relative overflow-hidden bg-slate-200">
                       <img src={veh.image} alt={veh.model} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-                      <span className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                        veh.status === 'Disponível' ? 'bg-emerald-500 text-white' :
-                        veh.status === 'Reservado' ? 'bg-amber-500 text-white' :
-                        veh.status === 'Alugado' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'
-                      }`}>
-                        {veh.status}
-                      </span>
+                      <button
+                        onClick={() => {
+                          const order = ['Disponível', 'Reservado', 'Alugado', 'Em Manutenção'];
+                          const next = order[(order.indexOf(veh.status) + 1) % order.length];
+                          const updated = vehicles.map(v => v.id === veh.id ? { ...v, status: next } : v);
+                          setVehicles(updated);
+                          saveToSystem(updated);
+                        }}
+                        title="Tocar para alterar disponibilidade"
+                        className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all active:scale-95 hover:opacity-80 ${
+                          veh.status === 'Disponível' ? 'bg-emerald-500 text-white' :
+                          veh.status === 'Reservado' ? 'bg-amber-500 text-white' :
+                          veh.status === 'Alugado' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'
+                        }`}
+                      >
+                        {veh.status || 'Disponível'}
+                      </button>
                     </div>
                     <div className="p-6 space-y-4">
                       <div>
