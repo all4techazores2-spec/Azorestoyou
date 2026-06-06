@@ -1,20 +1,20 @@
-
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, CreditCard, User, Mail, Phone, ArrowRight, ShieldCheck, Wallet, Star, CheckCircle, Clock } from 'lucide-react';
+import { X, Check, CreditCard, User, Mail, Phone, ArrowRight, ShieldCheck, Wallet, Star, CheckCircle, Clock, FileText, Globe } from 'lucide-react';
 import { Itinerary } from '../types';
 
 interface BookingCheckoutModalProps {
   itinerary: Itinerary;
   onClose: () => void;
   onComplete: () => void;
-  onConfirm?: (ticketId: string) => Promise<void>;
+  onConfirm?: (ticketId: string, guestDetails?: any) => Promise<void>;
+  cars?: any[];
 }
 
-const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete, onConfirm }) => {
+const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete, onConfirm, cars = [] }) => {
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'reserve'>('transfer');
+  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points'>('transfer');
 
   // Generate a STABLE unique ticket ID
   const ticketId = useMemo(() => {
@@ -26,11 +26,21 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
     name: '',
     email: '',
     phone: '',
+    license: '',
+    nif: '',
+    nifType: 'Nacional',
     mbwayPhone: '',
     cardNumber: '',
     expiry: '',
     cvv: ''
   });
+
+  // Dynamically find company IBAN based on the selected vehicle's companyId
+  const companyIban = useMemo(() => {
+    if (!itinerary.car || !cars) return null;
+    const company = cars.find((c: any) => c.id === itinerary.car?.companyId);
+    return company?.iban || null;
+  }, [itinerary.car, cars]);
 
   if (!itinerary) return null;
 
@@ -47,7 +57,12 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
       
       try {
         if (onConfirm) {
-          await onConfirm(ticketId);
+          await onConfirm(ticketId, {
+            license: formData.license,
+            nif: `${formData.nifType === 'Internacional' ? 'INT-' : ''}${formData.nif}`,
+            nifType: formData.nifType,
+            paymentMethod: paymentType
+          });
         }
         // Artificial delay for premium feel
         setTimeout(() => {
@@ -73,9 +88,8 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
 
   const paymentMethods = [
     { id: 'mbway', icon: Wallet, title: 'MBWay / Revolut', desc: 'Pagamento rápido via telemóvel' },
-    { id: 'transfer', icon: CreditCard, title: 'Cartão de Crédito', desc: 'Visa, Mastercard, Amex' },
-    { id: 'points', icon: Star, title: 'Saldo de Pontos', desc: 'Utilizar créditos Azores4you' },
-    { id: 'reserve', icon: CheckCircle, title: 'Pagar no Local', desc: 'Liquide a conta no check-in' }
+    { id: 'transfer', icon: CreditCard, title: 'Cartão de Crédito / IBAN', desc: 'Transferência direta para a empresa' },
+    { id: 'points', icon: Star, title: 'Saldo de Pontos', desc: 'Utilizar créditos Azores4you' }
   ];
 
   return (
@@ -88,6 +102,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
       >
         {step !== 'success' && (
           <button 
+            type="button"
             onClick={onClose}
             className="absolute top-6 right-6 z-30 p-2.5 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group"
           >
@@ -101,20 +116,24 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
             <div className="md:w-5/12 bg-slate-50 p-6 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-slate-100 shrink-0">
                <div className="mb-6">
                   <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full">Resumo</span>
-                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mt-3 leading-tight">{itinerary.hotel?.name}</h3>
-                  <p className="text-[10px] text-slate-500 mt-0.5 font-bold">{itinerary.selectedRoom?.name}</p>
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mt-3 leading-tight">{itinerary.hotel?.name || itinerary.car?.model || "Serviço"}</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-bold">{itinerary.selectedRoom?.name || (itinerary.car ? "Aluguer de Viatura" : "")}</p>
                </div>
 
                <div className="space-y-3 flex-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400 font-medium">Estadia ({itinerary.nights} noites)</span>
-                    <span className="text-slate-900 font-bold">€{baseStayPrice}</span>
-                  </div>
-                  {roomUpgradePrice > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400 font-medium">Upgrade Quarto</span>
-                      <span className="text-slate-900 font-bold">€{roomUpgradePrice}</span>
-                    </div>
+                  {itinerary.hotel && (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Estadia ({itinerary.nights} noites)</span>
+                        <span className="text-slate-900 font-bold">€{baseStayPrice}</span>
+                      </div>
+                      {roomUpgradePrice > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-400 font-medium">Upgrade Quarto</span>
+                          <span className="text-slate-900 font-bold">€{roomUpgradePrice}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   {(itinerary.selectedExtras || []).map((extra, idx) => (
                     <div key={idx} className="flex justify-between text-xs">
@@ -224,6 +243,49 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                            </div>
                         </div>
                       </div>
+                      
+                      {/* Driver's License & NIF details (Mandatory as per client request) */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Carta de Condução</label>
+                           <div className="relative group">
+                              <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                              <input 
+                                required
+                                name="license"
+                                value={formData.license}
+                                onChange={handleInputChange}
+                                placeholder="Ex: L-987654 3"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                              />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">NIF (Nacional / Internacional)</label>
+                           <div className="flex gap-2">
+                              <select
+                                name="nifType"
+                                value={formData.nifType}
+                                onChange={(e) => setFormData({ ...formData, nifType: e.target.value })}
+                                className="bg-slate-50 border-2 border-slate-100 rounded-2xl px-3 text-xs font-black focus:bg-white focus:border-blue-600 focus:outline-none"
+                              >
+                                <option value="Nacional">Nac.</option>
+                                <option value="Internacional">Int.</option>
+                              </select>
+                              <div className="relative group flex-1">
+                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                                <input 
+                                  required
+                                  name="nif"
+                                  value={formData.nif}
+                                  onChange={handleInputChange}
+                                  placeholder="NIF / Tax ID"
+                                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                                />
+                              </div>
+                           </div>
+                        </div>
+                      </div>
                    </div>
 
                    <button 
@@ -233,7 +295,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                      Seguinte
                      <ArrowRight size={16} />
                    </button>
-                </motion.form>
+                 </motion.form>
                )}
                {step === 'payment' && (
                  <motion.form 
@@ -253,61 +315,68 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                    </div>
                    <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Pagamento</h2>
                    
-                   <div className="grid grid-cols-2 gap-3">
-                    {paymentMethods.map((method) => {
-                      const Icon = method.icon;
-                      return (
-                        <button
-                          key={method.id}
-                          type="button"
-                          onClick={() => setPaymentType(method.id as any)}
-                          className={`flex flex-col items-center justify-center p-4 rounded-3xl border-2 transition-all gap-2 group active:scale-95
-                            ${paymentType === method.id 
-                              ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-200' 
-                              : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50'}`}
-                        >
-                          <div className={`p-2.5 rounded-2xl transition-colors
-                            ${paymentType === method.id ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-blue-50'}`}>
-                            <Icon size={22} className={paymentType === method.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-600'} />
-                          </div>
-                          <div className="text-center">
-                            <p className={`text-[10px] font-black uppercase tracking-tighter
-                              ${paymentType === method.id ? 'text-white' : 'text-slate-900'}`}>{method.title}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                   <div className="grid grid-cols-3 gap-2">
+                     {paymentMethods.map((method) => {
+                       const Icon = method.icon;
+                       return (
+                         <button
+                           key={method.id}
+                           type="button"
+                           onClick={() => setPaymentType(method.id as any)}
+                           className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all gap-1.5 group active:scale-95
+                             ${paymentType === method.id 
+                               ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-200' 
+                               : 'bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50'}`}
+                         >
+                           <div className={`p-2 rounded-xl transition-colors
+                             ${paymentType === method.id ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-blue-50'}`}>
+                             <Icon size={18} className={paymentType === method.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-600'} />
+                           </div>
+                           <div className="text-center">
+                             <p className={`text-[8px] font-black uppercase tracking-tighter leading-tight
+                               ${paymentType === method.id ? 'text-white' : 'text-slate-900'}`}>{method.title}</p>
+                           </div>
+                         </button>
+                       );
+                     })}
+                   </div>
 
                    <AnimatePresence mode="wait">
                       {paymentType === 'mbway' && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 overflow-hidden" key="mbway-input">
                           <input 
-                            type="tel" name="mbwayPhone" required placeholder="Número MBWay"
-                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            type="tel" name="mbwayPhone" required placeholder="Telemóvel associado ao MBWay / Revolut"
+                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 px-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                             value={formData.mbwayPhone} onChange={handleInputChange}
                           />
                         </motion.div>
                       )}
                       {paymentType === 'transfer' && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 overflow-hidden" key="transfer-input">
-                          <input 
-                            type="text" name="cardNumber" required placeholder="Número do Cartão"
-                            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            value={formData.cardNumber} onChange={handleInputChange}
-                          />
-                          <div className="grid grid-cols-2 gap-2">
-                            <input 
-                              type="text" name="expiry" required placeholder="MM/AA"
-                              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                              value={formData.expiry} onChange={handleInputChange}
-                            />
-                            <input 
-                              type="password" name="cvv" required placeholder="CVV" maxLength={3}
-                              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                              value={formData.cvv} onChange={handleInputChange}
-                            />
+                          <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 text-slate-700 text-xs space-y-3">
+                            <p className="font-black text-center text-blue-600 uppercase tracking-widest text-[10px]">IBAN para Transferência Bancária</p>
+                            <p className="text-[10px] text-slate-500 text-center leading-normal font-bold">
+                              Efetue a transferência do valor total da reserva para o IBAN oficial da Rent-a-car:
+                            </p>
+                            {companyIban ? (
+                              <div className="p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-center font-bold text-slate-800 text-sm tracking-wider select-all shadow-sm">
+                                {companyIban}
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-white border border-amber-250 rounded-xl text-center font-bold text-amber-600">
+                                IBAN pendente de configuração pela Rent-a-car.
+                              </div>
+                            )}
+                            <p className="text-[8px] text-slate-400 text-center uppercase tracking-wider font-black">
+                              Assinale o ID provisório da reserva no descritivo da transferência.
+                            </p>
                           </div>
+                        </motion.div>
+                      )}
+                      {paymentType === 'points' && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 overflow-hidden text-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100" key="points-input">
+                          <p className="text-xs font-bold text-emerald-700">Saldo de Pontos Azores4you</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Serão deduzidos os pontos correspondentes ao valor total da viagem no seu perfil.</p>
                         </motion.div>
                       )}
                    </AnimatePresence>

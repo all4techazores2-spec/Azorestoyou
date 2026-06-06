@@ -809,28 +809,37 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                       </tr>
                     </thead>
                     <tbody>
-                      {reservations.filter(r => 
-                        (r.client?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
-                        (r.vehicle?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
-                        (r.id?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-                      ).map((res, i) => (
-                        <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
-                          <td className="py-4 font-bold text-blue-500">{res.id}</td>
-                          <td className="py-4 font-bold">{res.client}</td>
-                          <td className="py-4 text-slate-500">{res.vehicle}</td>
-                          <td className="py-4">{res.start}</td>
-                          <td className="py-4">{res.end}</td>
-                          <td className="py-4 font-extrabold">€{res.value.toFixed(2)}</td>
-                          <td className="py-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              res.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-500' :
-                              res.status === 'Pendente' ? 'bg-amber-500/10 text-amber-500' :
-                              res.status === 'Em Curso' ? 'bg-blue-500/10 text-blue-500' :
-                              res.status === 'Concluída' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
-                            }`}>
-                              {res.status}
-                            </span>
-                          </td>
+                      {reservations.filter(r => {
+                        const clientName = r.customerName || r.client || '';
+                        const vehicleName = r.car?.model || r.vehicle || '';
+                        const resId = r.id || '';
+                        return clientName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                               vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                               resId.toLowerCase().includes(searchQuery.toLowerCase());
+                      }).map((res, i) => {
+                        const clientName = res.customerName || res.client || 'Cliente';
+                        const vehicleName = res.car?.model || res.vehicle || 'Viatura';
+                        const startDate = res.date ? new Date(res.date).toLocaleDateString('pt-PT') : (res.start || 'N/A');
+                        const endDate = res.end || (res.date ? new Date(new Date(res.date).getTime() + (res.days || 3)*24*60*60*1000).toLocaleDateString('pt-PT') : 'N/A');
+                        const priceValue = res.value || (res.car ? res.car.pricePerDay * (res.days || 3) : 120);
+                        return (
+                          <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
+                            <td className="py-4 font-bold text-blue-500">{res.id}</td>
+                            <td className="py-4 font-bold">{clientName}</td>
+                            <td className="py-4 text-slate-500">{vehicleName}</td>
+                            <td className="py-4">{startDate}</td>
+                            <td className="py-4">{endDate}</td>
+                            <td className="py-4 font-extrabold">€{priceValue.toFixed(2)}</td>
+                            <td className="py-4">
+                              <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                res.status === 'Confirmada' || res.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' :
+                                res.status === 'Pendente' || res.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                                res.status === 'Em Curso' || res.status === 'active' ? 'bg-blue-500/10 text-blue-500' :
+                                res.status === 'Concluída' || res.status === 'finished' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
+                              }`}>
+                                {res.status === 'accepted' ? 'Confirmada' : res.status === 'pending' ? 'Pendente' : res.status === 'finished' ? 'Concluída' : res.status}
+                              </span>
+                            </td>
                           <td className="py-4 text-right space-x-1.5">
                             <button 
                               onClick={() => setSelectedResDetails(res)} 
@@ -860,9 +869,9 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                 Cancelar
                               </button>
                             )}
-                          </td>
+                            </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
@@ -1018,12 +1027,15 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     <p className="text-xs text-slate-400">Escolha uma das reservas confirmadas para iniciar o Check-In ou Check-Out da viatura.</p>
                     
                     <div className="space-y-3">
-                      {reservations.filter(r => r.status !== 'Cancelada' && r.status !== 'Concluída').map((res) => (
-                        <div key={res.id} className="p-4 rounded-xl border border-slate-200/50 dark:border-slate-800 flex justify-between items-center text-xs">
-                          <div>
-                            <p className="font-bold">{res.client} ({res.id})</p>
-                            <p className="text-slate-450 text-[10px] uppercase font-bold">{res.vehicle}</p>
-                          </div>
+                      {reservations.filter(r => r.status !== 'Cancelada' && r.status !== 'Concluída').map((res) => {
+                        const clientName = res.customerName || res.client || 'Cliente';
+                        const vehicleName = res.car?.model || res.vehicle || 'Viatura';
+                        return (
+                          <div key={res.id} className="p-4 rounded-xl border border-slate-200/50 dark:border-slate-800 flex justify-between items-center text-xs">
+                            <div>
+                              <p className="font-bold">{clientName} ({res.id})</p>
+                              <p className="text-slate-450 text-[10px] uppercase font-bold">{vehicleName}</p>
+                            </div>
                           <div className="flex gap-2">
                             {res.status !== 'Em Curso' && (
                               <button 
@@ -1053,9 +1065,9 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                 Check-Out (Devolução)
                               </button>
                             )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )})}
                     </div>
                   </div>
                 </div>
@@ -1263,23 +1275,28 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                       </tr>
                     </thead>
                     <tbody>
-                      {reservations.map((res, i) => (
-                        <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
-                          <td className="py-4 font-bold text-blue-500">{res.id}</td>
-                          <td className="py-4 font-bold">{res.client}</td>
-                          <td className="py-4 font-extrabold">€{res.value.toFixed(2)}</td>
-                          <td className="py-4 text-emerald-500">€{(res.value * 0.2).toFixed(2)}</td>
-                          <td className="py-4">150.00€ (Caução)</td>
-                          <td className="py-4">Cartão de Crédito</td>
-                          <td className="py-4 text-right">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                              res.status === 'Cancelada' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'
-                            }`}>
-                              {res.status === 'Cancelada' ? 'Reembolsado' : 'Aprovado'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {reservations.map((res, i) => {
+                        const clientName = res.customerName || res.client || 'Cliente';
+                        const priceValue = res.value || (res.car ? res.car.pricePerDay * (res.days || 3) : 120);
+                        const payMethodLabel = res.paymentMethod === 'mbway' ? 'MBWay / Revolut' : (res.paymentMethod === 'points' ? 'Saldo Pontos' : 'Transferência IBAN');
+                        return (
+                          <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
+                            <td className="py-4 font-bold text-blue-500">{res.id}</td>
+                            <td className="py-4 font-bold">{clientName}</td>
+                            <td className="py-4 font-extrabold">€{priceValue.toFixed(2)}</td>
+                            <td className="py-4 text-emerald-500">€{(priceValue * 0.2).toFixed(2)}</td>
+                            <td className="py-4">150.00€ (Caução)</td>
+                            <td className="py-4">{payMethodLabel}</td>
+                            <td className="py-4 text-right">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                res.status === 'Cancelada' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'
+                              }`}>
+                                {res.status === 'Cancelada' ? 'Reembolsado' : 'Aprovado'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1402,36 +1419,56 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">Configurações Gerais</h2>
-                <p className="text-slate-400 text-xs mt-1">Gerencie os dados públicos, email e termos de aluguer da companhia.</p>
+                <p className="text-slate-400 text-xs mt-1">Gerencie os dados públicos, email, IBAN e termos de aluguer da companhia.</p>
               </div>
 
-              <div className={`p-8 rounded-2xl border max-w-2xl space-y-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as any;
+                  const updatedBiz = {
+                    ...business,
+                    name: form.name.value,
+                    address: form.address.value,
+                    adminEmail: form.adminEmail.value,
+                    contact: form.contact.value,
+                    iban: form.iban.value
+                  };
+                  onUpdateBusiness(updatedBiz);
+                  alert('Configurações gerais atualizadas com sucesso!');
+                }}
+                className={`p-8 rounded-2xl border max-w-2xl space-y-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1">
                     <label className="font-bold text-slate-400">Nome Público da Rent-a-car</label>
-                    <input className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.name} />
+                    <input name="name" className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.name} />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-400">Cidade / Localização</label>
-                    <input className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.address} />
+                    <input name="address" className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.address} />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-400">Email Administrativo</label>
-                    <input className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.adminEmail} />
+                    <input name="adminEmail" className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.adminEmail} />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-slate-400">Telefone Público</label>
-                    <input className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.contact} />
+                    <input name="contact" className="w-full border p-3 rounded-xl bg-transparent outline-none" defaultValue={business.contact} />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="font-bold text-slate-400">IBAN para Transferências Bancárias (Cartão de Crédito)</label>
+                    <input name="iban" placeholder="PT50 0000 0000 0000 0000 0000 0" className="w-full border p-3 rounded-xl bg-transparent outline-none font-mono text-sm tracking-wider" defaultValue={business.iban || ''} />
                   </div>
                 </div>
 
                 <button 
-                  onClick={() => alert('Configurações atualizadas localmente!')}
+                  type="submit"
                   className="px-6 py-3 bg-blue-650 hover:bg-blue-750 text-white rounded-xl text-xs font-black uppercase tracking-widest"
                 >
                   Gravar Configurações
                 </button>
-              </div>
+              </form>
             </div>
           )}
 
@@ -1464,32 +1501,49 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 <div className="space-y-3 text-xs leading-normal">
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Cliente</span>
-                    <span className="font-bold">{selectedResDetails.client}</span>
+                    <span className="font-bold">{selectedResDetails.customerName || selectedResDetails.client || 'Cliente'}</span>
                   </div>
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Email</span>
-                    <span className="font-bold">{selectedResDetails.email}</span>
+                    <span className="font-bold">{selectedResDetails.customerEmail || selectedResDetails.email || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Viatura</span>
-                    <span className="font-bold">{selectedResDetails.vehicle}</span>
+                    <span className="font-bold">{selectedResDetails.car?.model || selectedResDetails.vehicle || 'Viatura'}</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-2 border-slate-200/50">
+                    <span className="text-slate-400">Carta de Condução</span>
+                    <span className="font-bold text-blue-500">{selectedResDetails.license || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-2 border-slate-200/50">
+                    <span className="text-slate-400">NIF / Tax ID</span>
+                    <span className="font-bold font-mono">{selectedResDetails.nif || 'N/A'} ({selectedResDetails.nifType || 'Nacional'})</span>
+                  </div>
+                  <div className="flex justify-between border-b pb-2 border-slate-200/50">
+                    <span className="text-slate-400">Método Pagamento</span>
+                    <span className="font-bold uppercase tracking-wider">
+                      {selectedResDetails.paymentMethod === 'mbway' ? 'MBWay / Revolut' : (selectedResDetails.paymentMethod === 'points' ? 'Pontos' : 'IBAN Transfer')}
+                    </span>
                   </div>
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Início</span>
-                    <span className="font-bold">{selectedResDetails.start}</span>
+                    <span className="font-bold">{selectedResDetails.date ? new Date(selectedResDetails.date).toLocaleDateString('pt-PT') : (selectedResDetails.start || 'N/A')}</span>
                   </div>
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Fim</span>
-                    <span className="font-bold">{selectedResDetails.end}</span>
+                    <span className="font-bold">{selectedResDetails.end || (selectedResDetails.date ? new Date(new Date(selectedResDetails.date).getTime() + (selectedResDetails.days || 3)*24*60*60*1000).toLocaleDateString('pt-PT') : 'N/A')}</span>
                   </div>
                   <div className="flex justify-between border-b pb-2 border-slate-200/50">
                     <span className="text-slate-400">Valor Pago</span>
-                    <span className="font-black text-blue-500">€{selectedResDetails.value.toFixed(2)}</span>
+                    <span className="font-black text-blue-500">
+                      €{(selectedResDetails.value || (selectedResDetails.car ? selectedResDetails.car.pricePerDay * (selectedResDetails.days || 3) : 120)).toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between pb-2">
                     <span className="text-slate-400">Estado</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                      selectedResDetails.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                      selectedResDetails.status === 'Confirmada' || selectedResDetails.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' :
+                      selectedResDetails.status === 'Pendente' || selectedResDetails.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'
                     }`}>{selectedResDetails.status}</span>
                   </div>
                 </div>

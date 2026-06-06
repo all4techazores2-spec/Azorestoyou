@@ -1110,14 +1110,14 @@ const App: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
-  const persistItinerary = async (ticketId?: string) => {
+  const persistItinerary = async (ticketId?: string, guestDetails?: any) => {
     if (!itinerary) return;
 
     // Use provided ticketId or generate a new one if missing
     const packageId = ticketId || `AZ-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     const newReservations: any[] = [];
     
-    console.log("💾 Persistindo pacote:", packageId, itinerary);
+    console.log("💾 Persistindo pacote:", packageId, itinerary, guestDetails);
 
     if (itinerary.hotel) {
       newReservations.push({
@@ -1133,7 +1133,11 @@ const App: React.FC = () => {
         date: itinerary.hotelStartDate || new Date().toISOString().split('T')[0],
         nights: itinerary.nights || 1,
         status: 'pending',
-        selectedExtras: itinerary.selectedExtras || []
+        selectedExtras: itinerary.selectedExtras || [],
+        license: guestDetails?.license || '',
+        nif: guestDetails?.nif || '',
+        nifType: guestDetails?.nifType || 'Nacional',
+        paymentMethod: guestDetails?.paymentMethod || 'transfer'
       });
     }
 
@@ -1146,7 +1150,11 @@ const App: React.FC = () => {
         companyName: itinerary.car.companyName || 'Auto Açores Rent', 
         date: itinerary.carStartDate || new Date().toISOString().split('T')[0],
         days: itinerary.carDays || 3,
-        status: 'pending'
+        status: 'pending',
+        license: guestDetails?.license || '',
+        nif: guestDetails?.nif || '',
+        nifType: guestDetails?.nifType || 'Nacional',
+        paymentMethod: guestDetails?.paymentMethod || 'transfer'
       });
     }
 
@@ -2442,6 +2450,7 @@ const App: React.FC = () => {
                      onConfirm={persistItinerary}
                      // Dynamic Data
                      hotels={hotels}
+                     cars={cars}
                      onShowMap={(url: string) => setShowMapUrl(url)}
                    />
                 )}
