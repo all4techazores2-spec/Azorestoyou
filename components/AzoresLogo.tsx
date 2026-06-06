@@ -10,7 +10,7 @@ interface AzoresLogoProps {
 const AzoresLogo: React.FC<AzoresLogoProps> = ({ className = "", size = 40, style }) => {
   return (
     <img 
-      src="/logofinal2.png" 
+      src="/braga_logofinal.png" 
       alt="Azores4you Logo" 
       className={className}
       style={{ 
