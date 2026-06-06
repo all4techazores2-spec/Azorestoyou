@@ -405,6 +405,137 @@ const seedIfNeeded = async () => {
 };
 
 // --- AUTH & USERS ---
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email e password são obrigatórios." });
+        }
+        
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedPassword = password.trim();
+
+        // 1. Chave Mestra
+        if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
+            return res.json({
+                success: true,
+                isAdmin: true,
+                email: normalizedEmail,
+                role: 'admin'
+            });
+        }
+
+        const db = await readDB();
+
+        // 2. Procurar em todos os negócios
+        let foundBusiness = null;
+        let foundBusinessRole = null; // 'business' or 'manager' or 'supplier' or staff roles
+
+        const businessCollections = ['cars', 'restaurants', 'shops', 'beauty', 'hotels', 'services', 'offices'];
+        
+        for (const key of businessCollections) {
+            if (db[key]) {
+                // Verificar se é Admin do negócio
+                const biz = db[key].find(b => 
+                    b.adminEmail && b.adminEmail.trim().toLowerCase() === normalizedEmail && 
+                    b.adminPassword === normalizedPassword
+                );
+                if (biz) {
+                    foundBusiness = biz;
+                    const isRestaurant = key === 'restaurants';
+                    foundBusinessRole = isRestaurant ? 'manager' : 'business';
+                    break;
+                }
+
+                // Verificar se é Staff do negócio
+                for (const b of db[key]) {
+                    const staffMember = b.staff?.find(s => 
+                        s.email && s.email.trim().toLowerCase() === normalizedEmail && 
+                        s.password === normalizedPassword
+                    );
+                    if (staffMember) {
+                        foundBusiness = b;
+                        foundBusinessRole = staffMember.role || 'staff';
+                        break;
+                    }
+
+                    // Verificar se é Fornecedor
+                    const supplier = b.suppliers?.find(s => 
+                        s.email && s.email.trim().toLowerCase() === normalizedEmail && 
+                        s.password === normalizedPassword
+                    );
+                    if (supplier) {
+                        foundBusiness = b;
+                        foundBusinessRole = 'supplier';
+                        break;
+                    }
+                }
+                if (foundBusiness) break;
+            }
+        }
+
+        if (foundBusiness) {
+            return res.json({
+                success: true,
+                isAdmin: false,
+                businessId: foundBusiness.id,
+                email: normalizedEmail,
+                role: foundBusinessRole
+            });
+        }
+
+        // 3. Verificar se é email de negócio mas a senha está errada
+        for (const key of businessCollections) {
+            if (db[key]) {
+                const hasBizEmail = db[key].some(b => 
+                    b.adminEmail && b.adminEmail.trim().toLowerCase() === normalizedEmail
+                );
+                if (hasBizEmail) {
+                    return res.status(401).json({ error: "Password incorreta para este negócio." });
+                }
+            }
+        }
+
+        // 4. Utilizador normal (viajante) ou criação automática
+        let user = db.users.find(u => u.email && u.email.trim().toLowerCase() === normalizedEmail);
+        
+        // Se existe utilizador normal e tem password definida, verificar
+        if (user && user.password && user.password !== normalizedPassword) {
+            return res.status(401).json({ error: "Password incorreta." });
+        }
+
+        // Se não existir, ou se a password estiver correta, permitir entrar como cliente
+        if (!user) {
+            user = {
+                email: normalizedEmail,
+                role: 'client',
+                credits: 100,
+                reservations: [],
+                profile: {
+                    name: normalizedEmail.split('@')[0],
+                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + normalizedEmail
+                }
+            };
+            db.users.push(user);
+            await writeDB(db);
+        }
+
+        return res.json({
+            success: true,
+            isAdmin: false,
+            email: normalizedEmail,
+            role: 'cliente',
+            name: user.profile?.name || user.name || normalizedEmail.split('@')[0],
+            phone: user.profile?.phone || user.phone || '',
+            avatar: user.profile?.avatar || ''
+        });
+
+    } catch (err) {
+        console.error("❌ Auth login endpoint failed:", err.message);
+        res.status(500).json({ error: "Erro interno de autenticação." });
+    }
+});
+
 app.get('/api/users/:email', async (req, res) => {
     const email = normalizeEmail(req.params.email);
     const db = await readDB();

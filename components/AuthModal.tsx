@@ -4,6 +4,7 @@ import AzoresLogo from './AzoresLogo';
 import { Mail, Lock, User, X, ArrowRight, Loader2, Phone } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
+import { API_BASE_URL } from '../config';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
 
   if (!isOpen) return null;
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -43,27 +44,81 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    // 1. CHAVE MESTRA
+    // 1. TENTAR AUTENTICAÇÃO COM ENDPOINT UNIFICADO DO SERVIDOR (Mais seguro e rápido)
+    if (authMode === 'login') {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setIsLoading(false);
+          if (data.success) {
+            onSuccess(
+              data.isAdmin, 
+              data.businessId, 
+              data.email, 
+              data.role, 
+              data.name, 
+              data.phone, 
+              normalizedPassword
+            );
+            return;
+          }
+        } else {
+          // Erro retornado explicitamente pelo servidor (Ex: password errada)
+          const errData = await res.json().catch(() => ({}));
+          setIsLoading(false);
+          setError(errData.error || "Credenciais inválidas.");
+          return;
+        }
+      } catch (err) {
+        console.warn("⚠️ Ligação ao endpoint de auth falhou. A usar fallback offline local:", err);
+      }
+    }
+
+    // 2. FALLBACK LOCAL (Se o servidor estiver offline, cold start ou registo)
+    // 2.1 CHAVE MESTRA
     if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
       setIsLoading(false);
       onSuccess(true, undefined, normalizedEmail);
       return;
     }
 
-    // 2. Verificação de Negócios e Staff (Dados do Servidor)
+    // 2.2 Verificação de Negócios e Staff (Dados do Servidor)
     const allBusinesses = [...restaurants, ...shops, ...beauty, ...hotels, ...cars];
-    
-    if (allBusinesses.length === 0) {
-      setIsLoading(false);
-      setError("A carregar base de dados... Tente novamente em instantes.");
-      return;
-    }
 
-    // 2.1 Verificar se é Admin de algum negócio
-    const business = allBusinesses.find(b => 
+    // 2.3 Verificar se é Admin de algum negócio
+    let business = allBusinesses.find(b => 
       b.adminEmail?.toLowerCase() === normalizedEmail && 
       b.adminPassword === normalizedPassword
     );
+
+    // Se não encontrou no cache local, verificar em tempo real diretamente no servidor
+    if (!business) {
+      try {
+        const endpoints = ['cars', 'restaurants', 'shops', 'beauty', 'hotels'];
+        for (const ep of endpoints) {
+          const res = await fetch(`${API_BASE_URL}/api/${ep}`);
+          if (res.ok) {
+            const items = await res.json();
+            const found = items.find((b: any) => 
+              b.adminEmail?.toLowerCase() === normalizedEmail && 
+              b.adminPassword === normalizedPassword
+            );
+            if (found) {
+              business = found;
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Erro ao autenticar em tempo real com o servidor:", err);
+      }
+    }
 
     if (business) {
       setIsLoading(false);
@@ -73,7 +128,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
       return;
     }
 
-    // 2.2 Verificar se é Staff de algum negócio
+    // 2.4 Verificar se é Staff de algum negócio
     for (const b of allBusinesses) {
       const staffMember = b.staff?.find(s => 
         s.email?.toLowerCase() === normalizedEmail && 
@@ -85,7 +140,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
         return;
       }
 
-      // 2.3 Verificar se é Fornecedor
+      // 2.5 Verificar se é Fornecedor
       const supplier = b.suppliers?.find(s => 
         s.email?.toLowerCase() === normalizedEmail && 
         s.password === normalizedPassword
@@ -101,7 +156,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     if (authMode === 'login') {
       setIsLoading(false);
       // Permitir login como viajante se não for email de negócio conhecido ou se for apenas password genérica
-      // Mas se for um email de negócio e a pass estiver errada, mostramos erro
       const isBusinessEmail = allBusinesses.some(b => b.adminEmail?.toLowerCase() === normalizedEmail);
       if (isBusinessEmail) {
         setError("Password incorreta para este negócio.");
