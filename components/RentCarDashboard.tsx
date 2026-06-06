@@ -250,7 +250,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             { id: 'manutencao', label: 'Manutenção', icon: <Wrench size={18} /> },
             { id: 'relatorios', label: 'Relatórios', icon: <FileText size={18} /> },
             { id: 'avaliacoes', label: 'Avaliações', icon: <Star size={18} /> },
-            { id: 'notifications', label: 'Notificações', icon: <Bell size={18} />, count: 5 },
+            { id: 'notifications', label: 'Notificações', icon: <Bell size={18} />, count: notifications.filter((n: any) => !n.read).length },
             { id: 'configuracoes', label: 'Configurações', icon: <Settings size={18} /> }
           ] as const).map((item) => (
             <button
@@ -340,7 +340,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 className={`p-2.5 rounded-xl border relative transition-all active:scale-90 ${darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
               >
                 <Bell size={18} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center">5</span>
+                {notifications.filter((n: any) => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                    {notifications.filter((n: any) => !n.read).length}
+                  </span>
+                )}
               </button>
 
               <AnimatePresence>
@@ -356,11 +360,15 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                       <button onClick={() => setNotifications(prev => prev.map(n => ({...n, read: true})))} className="text-[10px] text-blue-500 hover:underline">Marcar lidas</button>
                     </div>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {notifications.map(n => (
-                        <div key={n.id} className={`p-2 rounded-lg text-xs leading-normal ${!n.read ? 'bg-blue-500/10 font-bold border-l-2 border-blue-500' : 'opacity-60'}`}>
-                          {n.text}
-                        </div>
-                      ))}
+                      {notifications.length === 0 ? (
+                        <div className="text-[10px] text-slate-400 font-bold text-center py-4 uppercase tracking-wider">Sem notificações</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`p-2 rounded-lg text-xs leading-normal ${!n.read ? 'bg-blue-500/10 font-bold border-l-2 border-blue-500' : 'opacity-60'}`}>
+                            {n.text}
+                          </div>
+                        ))
+                      )}
                     </div>
                   </motion.div>
                 )}
