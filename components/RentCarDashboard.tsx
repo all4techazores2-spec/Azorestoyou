@@ -184,6 +184,26 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     onUpdateBusiness(updatedBiz);
   };
 
+  const updateReservationStatus = async (resId: string, newStatus: 'pending' | 'accepted' | 'cancelled') => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${resId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!response.ok) throw new Error('Falha ao atualizar estado da reserva');
+      
+      const updatedResList = reservations.map(r => r.id === resId ? { ...r, status: newStatus } : r);
+      setReservations(updatedResList);
+      
+      const updatedBiz = { ...business, reservations: updatedResList };
+      onUpdateBusiness(updatedBiz);
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao atualizar estado da reserva: ' + err.message);
+    }
+  };
+
   // Toggle the status of a vehicle for a specific day
   const toggleVehicleDayStatus = (vehicleId: string, dayIndex: number) => {
     const updatedVehicles = vehicles.map(v => {
@@ -591,14 +611,27 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                               <td className="py-3 text-slate-400">{endVal}</td>
                               <td className="py-3 font-black">€{valueVal.toFixed(2)}</td>
                               <td className="py-3">
-                                <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                  statusLabel === 'Confirmada' || statusLabel === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' :
-                                  statusLabel === 'Pendente' || statusLabel === 'pending' ? 'bg-amber-500/10 text-amber-500' :
-                                  statusLabel === 'Em Curso' || statusLabel === 'active' ? 'bg-blue-500/10 text-blue-500' :
-                                  statusLabel === 'Concluída' || statusLabel === 'finished' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
-                                }`}>
-                                  {statusLabel}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                    res.status === 'accepted' || res.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-500' :
+                                    res.status === 'pending' || res.status === 'Pendente' ? 'bg-amber-500/10 text-amber-500' :
+                                    res.status === 'active' || res.status === 'Em Curso' ? 'bg-blue-500/10 text-blue-500' :
+                                    res.status === 'finished' || res.status === 'Concluída' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
+                                  }`}>
+                                    {res.status === 'accepted' ? 'Confirmada' : res.status === 'pending' ? 'Pendente' : res.status === 'finished' ? 'Concluída' : res.status === 'cancelled' ? 'Cancelada' : res.status}
+                                  </span>
+                                  <select
+                                    value={res.status === 'accepted' ? 'accepted' : res.status === 'pending' ? 'pending' : res.status === 'cancelled' ? 'cancelled' : res.status}
+                                    onChange={(e) => updateReservationStatus(res.id, e.target.value as any)}
+                                    className={`text-[9px] font-black uppercase border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-0 ${
+                                      darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                  >
+                                    <option value="pending" className={darkMode ? 'bg-slate-900 text-amber-500' : 'bg-white text-amber-600'}>Pendente</option>
+                                    <option value="accepted" className={darkMode ? 'bg-slate-900 text-emerald-500' : 'bg-white text-emerald-600'}>Confirmar</option>
+                                    <option value="cancelled" className={darkMode ? 'bg-slate-900 text-red-500' : 'bg-white text-red-650'}>Cancelar</option>
+                                  </select>
+                                </div>
                               </td>
                               <td className="py-3 text-right space-x-1.5">
                                 <button onClick={() => setSelectedResDetails(res)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600 hover:text-blue-800" title="Ver Detalhes">
@@ -1016,44 +1049,51 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                             <td className="py-4">{endDate}</td>
                             <td className="py-4 font-extrabold">€{priceValue.toFixed(2)}</td>
                             <td className="py-4">
-                              <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                res.status === 'Confirmada' || res.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-500' :
-                                res.status === 'Pendente' || res.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
-                                res.status === 'Em Curso' || res.status === 'active' ? 'bg-blue-500/10 text-blue-500' :
-                                res.status === 'Concluída' || res.status === 'finished' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
-                              }`}>
-                                {res.status === 'accepted' ? 'Confirmada' : res.status === 'pending' ? 'Pendente' : res.status === 'finished' ? 'Concluída' : res.status}
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                  res.status === 'accepted' || res.status === 'Confirmada' ? 'bg-emerald-500/10 text-emerald-500' :
+                                  res.status === 'pending' || res.status === 'Pendente' ? 'bg-amber-500/10 text-amber-500' :
+                                  res.status === 'active' || res.status === 'Em Curso' ? 'bg-blue-500/10 text-blue-500' :
+                                  res.status === 'finished' || res.status === 'Concluída' ? 'bg-slate-500/10 text-slate-450' : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                  {res.status === 'accepted' ? 'Confirmada' : res.status === 'pending' ? 'Pendente' : res.status === 'finished' ? 'Concluída' : res.status === 'cancelled' ? 'Cancelada' : res.status}
+                                </span>
+                                <select
+                                  value={res.status === 'accepted' ? 'accepted' : res.status === 'pending' ? 'pending' : res.status === 'cancelled' ? 'cancelled' : res.status}
+                                  onChange={(e) => updateReservationStatus(res.id, e.target.value as any)}
+                                  className={`text-[9px] font-black uppercase border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-0 ${
+                                    darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'
+                                  }`}
+                                >
+                                  <option value="pending" className={darkMode ? 'bg-slate-900 text-amber-500' : 'bg-white text-amber-600'}>Pendente</option>
+                                  <option value="accepted" className={darkMode ? 'bg-slate-900 text-emerald-500' : 'bg-white text-emerald-600'}>Confirmar</option>
+                                  <option value="cancelled" className={darkMode ? 'bg-slate-900 text-red-500' : 'bg-white text-red-650'}>Cancelar</option>
+                                </select>
+                              </div>
                             </td>
-                          <td className="py-4 text-right space-x-1.5">
-                            <button 
-                              onClick={() => setSelectedResDetails(res)} 
-                              className="px-2 py-1 bg-slate-500/10 hover:bg-slate-500/20 rounded-md text-[10px] font-bold"
-                            >
-                              Detalhes
-                            </button>
-                            {res.status === 'Pendente' && (
+                            <td className="py-4 text-right space-x-1.5">
                               <button 
-                                onClick={() => {
-                                  setReservations(prev => prev.map(r => r.id === res.id ? {...r, status: 'Confirmada'} : r));
-                                  alert('Reserva aprovada e confirmada!');
-                                }}
-                                className="px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-bold hover:bg-emerald-600"
+                                onClick={() => setSelectedResDetails(res)} 
+                                className="px-2 py-1 bg-slate-500/10 hover:bg-slate-500/20 rounded-md text-[10px] font-bold"
                               >
-                                Confirmar
+                                Detalhes
                               </button>
-                            )}
-                            {res.status !== 'Concluída' && res.status !== 'Cancelada' && (
-                              <button 
-                                onClick={() => {
-                                  setReservations(prev => prev.map(r => r.id === res.id ? {...r, status: 'Cancelada'} : r));
-                                  alert('Reserva cancelada com sucesso.');
-                                }}
-                                className="px-2 py-1 bg-red-500/10 text-red-500 rounded-md text-[10px] font-bold hover:bg-red-500/20"
-                              >
-                                Cancelar
-                              </button>
-                            )}
+                              {(res.status === 'pending' || res.status === 'Pendente') && (
+                                <button 
+                                  onClick={() => updateReservationStatus(res.id, 'accepted')}
+                                  className="px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-bold hover:bg-emerald-600"
+                                >
+                                  Confirmar
+                                </button>
+                              )}
+                              {res.status !== 'finished' && res.status !== 'Concluída' && res.status !== 'cancelled' && res.status !== 'Cancelada' && (
+                                <button 
+                                  onClick={() => updateReservationStatus(res.id, 'cancelled')}
+                                  className="px-2 py-1 bg-red-500/10 text-red-500 rounded-md text-[10px] font-bold hover:bg-red-500/20"
+                                >
+                                  Cancelar
+                                </button>
+                              )}
                             </td>
                         </tr>
                       )})}
