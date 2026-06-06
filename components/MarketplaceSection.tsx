@@ -246,8 +246,8 @@ const MarketplaceSection: React.FC<MarketplaceSectionProps> = ({
 
   const filteredAds = ads.filter(ad => {
     const matchesCategory = activeCategory === 'all' || ad.category === activeCategory;
-    const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          ad.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (ad.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                          (ad.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesIsland = selectedIsland === 'Todas' || ad.location === selectedIsland;
     const isActive = ad.status === 'active' || ad.status === undefined;
     return matchesCategory && matchesSearch && matchesIsland && isActive;

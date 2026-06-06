@@ -810,9 +810,9 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     </thead>
                     <tbody>
                       {reservations.filter(r => 
-                        r.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        r.vehicle.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        r.id.toLowerCase().includes(searchQuery.toLowerCase())
+                        (r.client?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                        (r.vehicle?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                        (r.id?.toLowerCase() || '').includes(searchQuery.toLowerCase())
                       ).map((res, i) => (
                         <tr key={i} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
                           <td className="py-4 font-bold text-blue-500">{res.id}</td>
@@ -907,7 +907,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {vehicles.filter(v => 
                   (fleetFilter === 'Todos' || v.category === fleetFilter || (fleetFilter === 'Económicos' && v.category === 'Económico')) &&
-                  (v.brand.toLowerCase().includes(searchQuery.toLowerCase()) || v.model.toLowerCase().includes(searchQuery.toLowerCase()) || v.plate.toLowerCase().includes(searchQuery.toLowerCase()))
+                  ((v.brand?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || (v.model?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || (v.plate?.toLowerCase() || '').includes(searchQuery.toLowerCase()))
                 ).map((veh) => (
                   <div key={veh.id} className={`rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-lg ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm`}>
                     <div className="h-48 relative overflow-hidden bg-slate-200">
@@ -984,8 +984,8 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     </thead>
                     <tbody>
                       {clients.filter(c => 
-                        c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        c.email.toLowerCase().includes(searchQuery.toLowerCase())
+                        (c.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                        (c.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
                       ).map((cli) => (
                         <tr key={cli.id} className="border-b border-slate-250/20 last:border-0 hover:bg-slate-500/5 transition-colors">
                           <td className="py-4 font-bold">{cli.name}</td>
