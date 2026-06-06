@@ -122,11 +122,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
         
         <div className="mb-0">
           <div className="mx-auto flex items-center justify-center mb-0">
-            <AzoresLogo size={190} />
+            <AzoresLogo size={950} />
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white lg:text-slate-900 tracking-tight drop-shadow-lg lg:drop-shadow-none">
-            Azores<span className="text-green-400 lg:text-green-600">toyou</span>
-          </h1>
           <p className="text-lg md:text-xl text-slate-100 lg:text-slate-600 mt-2 font-medium tracking-wide drop-shadow-md lg:drop-shadow-none">
             {t.subtitle}
           </p>

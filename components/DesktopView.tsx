@@ -34,8 +34,8 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
     <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg py-3' : 'bg-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-8 flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <AzoresLogo size={48} className="drop-shadow-lg" />
-          <span className={`text-2xl font-black tracking-tighter ${scrolled ? 'text-slate-900' : 'text-white drop-shadow-md'}`}>Azorestoyou</span>
+          <AzoresLogo size={240} className="drop-shadow-lg" />
+          
         </div>
 
         <nav className="flex items-center gap-10">
@@ -96,8 +96,7 @@ export const DesktopFooter: React.FC = () => {
       <div className="max-w-7xl mx-auto px-8 grid grid-cols-12 gap-12 mb-24">
         <div className="col-span-4">
           <div className="flex items-center gap-3 mb-8">
-            <AzoresLogo size={56} />
-            <span className="text-3xl font-black tracking-tighter">Azorestoyou</span>
+            <AzoresLogo size={280} />
           </div>
           <p className="text-slate-400 text-sm leading-relaxed mb-10 max-w-sm">
             O seu guia completo para descobrir as maravilhas dos Açores. Natureza, aventura e experiências inesquecíveis esperam por si.
@@ -298,15 +297,12 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
 
       {/* SEARCH BAR OVERLAP */}
       <div className="relative z-40 -mt-16 max-w-5xl mx-auto px-8">
-        <div className="bg-white rounded-[3rem] p-4 shadow-2xl border border-slate-100 flex items-center gap-4">
-          <div className="flex-1 flex items-center gap-4 px-6 py-4 bg-slate-50 rounded-[2rem] border border-slate-100">
-            <Search className="text-slate-400" size={22} />
-            <input 
+        <div className="bg-white rounded-[3rem] p-4 shadow-2xl border border-slate-100 flex items-center gap-4"><AzoresLogo size={950} />
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white lg:text-slate-900 tracking-tight drop-shadow-lg lg:drop-shadow-none"></h1>  <input 
               type="text" 
               placeholder="O que deseja explorar hoje?" 
               className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 font-medium placeholder-slate-400"
             />
-          </div>
           <button 
             onClick={onOpenIslandSelection}
             className="flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-green-700/20"

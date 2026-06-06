@@ -2710,7 +2710,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               (!isBeauty && { id: 'kitchen', label: 'Pedidos Restaurante', icon: <Utensils size={18} />, badge: kitchenOrders.filter(o => o.status !== 'delivered').length }),
               { id: 'pos', label: 'Faturação / Bar', icon: <ShoppingBag size={18} /> },
               { id: 'dishes', label: isBeauty ? 'Serviços' : 'Ementa Restaurante', icon: isBeauty ? <Scissors size={18} /> : <Utensils size={18} />, hideForStaff: true },
-              ((isRestaurant || isBeauty) && { id: 'reservations', label: isBeauty ? 'Marcações' : 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
+              ((isRestaurant || isBeauty || isRentCar) && { id: 'reservations', label: isRentCar ? 'Alugueres / Reservas' : isBeauty ? 'Marcações' : 'Reservas Restaurante', icon: <Calendar size={18} />, badge: pendingCount }),
               { id: 'staff_list', label: 'Equipa / Staff', icon: <Users size={18} />, hideForStaff: true },
               { id: 'settings', label: 'Configurações', icon: <Settings size={18} />, hideForStaff: true },
             ] as any[]).filter(item => item && (!isStaff || !item.hideForStaff)).map((item) => (
@@ -6320,7 +6320,20 @@ ${items.map((it, i) => `        <Line>
                                       <div className="flex items-center gap-4 mt-2">
                                          <span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
                                          {res.time && <span className="bg-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase text-white tracking-widest">{res.time}</span>}
-                                         {!isBeauty && !isShop && !isHotel && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>}
+                                         {!isBeauty && !isShop && !isHotel && !isRentCar && <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400"><Users size={12}/> {res.guests} Pax</span>}
+                                          {isRentCar && (
+                                            <>
+                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600">
+                                                🚗 {res.selectedCar ? `${res.selectedCar.brand} ${res.selectedCar.model}` : res.carName || 'Veículo não definido'}
+                                              </span>
+                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-blue-600">
+                                                <Calendar size={12}/> {res.days || 1} Dias
+                                              </span>
+                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400">
+                                                <Receipt size={12}/> ID: #{res.id.slice(-6).toUpperCase()}
+                                              </span>
+                                            </>
+                                          )}
                                          {isHotel && (
                                            <>
                                              <span className="flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600">
@@ -6344,7 +6357,7 @@ ${items.map((it, i) => `        <Line>
                                  <div className="flex gap-3 w-full md:w-auto">
                                     <button 
                                       onClick={() => {
-                                        if (isBeauty || isShop || isHotel) {
+                                        if (isBeauty || isShop || isHotel || isRentCar) {
                                           handleReservationAction(res.id, 'accepted');
                                         } else {
                                           setAcceptingReservation(res);
@@ -6415,7 +6428,17 @@ ${items.map((it, i) => `        <Line>
                                             <div className="flex items-center gap-3 mt-2">
                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-slate-500 tracking-widest">{res.date}</span>
                                                {res.time && <span className="bg-blue-600 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-white tracking-widest">{res.time}</span>}
-                                               <span className="flex items-center gap-1 text-[9px] font-black uppercase text-slate-400"><Users size={10}/> {res.guests} Pax</span>
+                                               {!isRentCar && <span className="flex items-center gap-1 text-[9px] font-black uppercase text-slate-400"><Users size={10}/> {res.guests} Pax</span>}
+                                               {isRentCar && (
+                                                 <>
+                                                   <span className="flex items-center gap-1 text-[9px] font-black uppercase text-emerald-600">
+                                                     🚗 {res.selectedCar ? `${res.selectedCar.brand} ${res.selectedCar.model}` : res.carName || 'Veículo não definido'}
+                                                   </span>
+                                                   <span className="flex items-center gap-1 text-[9px] font-black uppercase text-blue-600">
+                                                     <Calendar size={12}/> {res.days || 1} Dias
+                                                   </span>
+                                                 </>
+                                               )}
                                                {res.tableId && (
                                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest">
                                                    Mesa #{res.tableId.replace('T', '')}
