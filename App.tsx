@@ -1439,6 +1439,21 @@ const App: React.FC = () => {
   };
 
 
+  // --- HOTEL ROOM SERVICE QR CODES CONCIERGE ---
+  if (roomServiceAccess) {
+    return (
+      <HotelRoomService 
+        hotelId={roomServiceAccess.hotelId}
+        roomId={roomServiceAccess.roomId}
+        qrToken={roomServiceAccess.qrToken}
+        onBackToApp={() => {
+          setRoomServiceAccess(null);
+          window.history.pushState({}, '', '/');
+        }}
+      />
+    );
+  }
+
   // --- GUEST QR MODE RENDER ---
   if (isGuestMode && guestRestaurantId && guestTableId) {
     const guestRestaurant = restaurants.find(r => String(r.id) === String(guestRestaurantId));
@@ -2145,19 +2160,6 @@ const App: React.FC = () => {
     }
   };
 
-  if (roomServiceAccess) {
-    return (
-      <HotelRoomService 
-        hotelId={roomServiceAccess.hotelId}
-        roomId={roomServiceAccess.roomId}
-        qrToken={roomServiceAccess.qrToken}
-        onBackToApp={() => {
-          setRoomServiceAccess(null);
-          window.history.pushState({}, '', '/');
-        }}
-      />
-    );
-  }
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
