@@ -356,6 +356,7 @@ const App: React.FC = () => {
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showMarketplaceFavorites, setShowMarketplaceFavorites] = useState(false);
   const [showMyReservationsModal, setShowMyReservationsModal] = useState(false);
+  const [reservationsInitialCategory, setReservationsInitialCategory] = useState<string | null>(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [directAdStart, setDirectAdStart] = useState<any | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -2936,6 +2937,13 @@ const App: React.FC = () => {
         onShowReservations={() => {
           setReturnToProfile(true);
           setShowProfileModal(false);
+          setReservationsInitialCategory(null);
+          setShowMyReservationsModal(true);
+        }}
+        onShowMessages={() => {
+          setReturnToProfile(true);
+          setShowProfileModal(false);
+          setReservationsInitialCategory('messages');
           setShowMyReservationsModal(true);
         }}
         onShowInvoices={() => {
@@ -2972,12 +2980,14 @@ const App: React.FC = () => {
         isOpen={showMyReservationsModal}
         onClose={() => {
           setShowMyReservationsModal(false);
+          setReservationsInitialCategory(null);
           if (returnToProfile) {
             setShowProfileModal(true);
             setReturnToProfile(false);
           }
         }}
         reservations={myReservations}
+        initialCategory={reservationsInitialCategory}
         restaurants={restaurants}
         onCheckIn={handleCheckIn}
         onCheckOut={handleCheckOut}

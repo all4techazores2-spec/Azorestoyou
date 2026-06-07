@@ -17,6 +17,7 @@ interface MyReservationsModalProps {
   onAddItems?: (res: any) => void;
   onReview?: (data: any) => void;
   language: any;
+  initialCategory?: string | null;
 }
 
 const MyReservationsModal: React.FC<MyReservationsModalProps> = ({ 
@@ -30,9 +31,10 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   onTableAction,
   onAddItems,
   onReview,
-  language
+  language,
+  initialCategory = null
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
   const [ratingTarget, setRatingTarget] = useState<any | null>(null);
   const [showBillPopup, setShowBillPopup] = useState<any | null>(null);
   const [concludedSuccess, setConcludedSuccess] = useState<boolean>(false);
@@ -42,6 +44,12 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   } | null>(null);
 
   const [localReservations, setLocalReservations] = useState<any[]>(reservations);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   useEffect(() => {
     setLocalReservations(reservations);
@@ -86,6 +94,96 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
       });
     } catch (err) {
       console.error("Erro no checkout:", err);
+    }
+  };
+
+  const handleHotelCheckIn = async (res: any) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('pt-PT');
+    
+    const updated = localReservations.map(r => 
+      r.id === res.id ? { ...r, status: 'Hospedado', checkinTime: timeStr, checkinDate: dateStr, checkinEmployee: 'Auto Check-In' } : r
+    );
+    setLocalReservations(updated);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Hospedado', checkinTime: timeStr, checkinDate: dateStr, checkinEmployee: 'Auto Check-In' })
+      });
+      
+      const hotelId = res.hotelId || res.businessId;
+      const targetRoomId = res.roomId || res.selectedRoom?.id;
+      if (hotelId && targetRoomId) {
+        const hRes = await fetch(`${API_BASE_URL}/api/hotels/${hotelId}`);
+        if (hRes.ok) {
+          const hotel = await hRes.json();
+          if (hotel.rooms) {
+            const updatedRooms = hotel.rooms.map((r: any) => r.id === targetRoomId ? { ...r, status: 'Ocupado' } : r);
+            await fetch(`${API_BASE_URL}/api/hotels/${hotelId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rooms: updatedRooms })
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Erro no checkin do hotel:", err);
+    }
+  };
+
+  const handleHotelCheckOut = async (res: any) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('pt-PT');
+    
+    const updated = localReservations.map(r => 
+      r.id === res.id ? { ...r, status: 'Concluído', checkoutTime: timeStr, checkoutDate: dateStr } : r
+    );
+    setLocalReservations(updated);
+
+    try {
+      await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Concluído', checkoutTime: timeStr, checkoutDate: dateStr })
+      });
+      
+      const hotelId = res.hotelId || res.businessId;
+      const targetRoomId = res.roomId || res.selectedRoom?.id;
+      if (hotelId && targetRoomId) {
+        const hRes = await fetch(`${API_BASE_URL}/api/hotels/${hotelId}`);
+        if (hRes.ok) {
+          const hotel = await hRes.json();
+          if (hotel.rooms) {
+            const updatedRooms = hotel.rooms.map((r: any) => r.id === targetRoomId ? { ...r, status: 'Limpeza' } : r);
+            
+            // Adicionar tarefa de limpeza
+            const targetRoom = hotel.rooms.find((r: any) => r.id === targetRoomId);
+            const roomName = targetRoom ? targetRoom.name : (res.selectedRoom?.name || '?');
+            const newTask = {
+              id: `hk_${Date.now()}`,
+              room: roomName,
+              roomId: targetRoomId,
+              task: 'Limpeza Geral',
+              status: 'Pendente',
+              staff: 'Não Atribuído'
+            };
+            const updatedHousekeeping = [...(hotel.housekeeping || []), newTask];
+
+            await fetch(`${API_BASE_URL}/api/hotels/${hotelId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rooms: updatedRooms, housekeeping: updatedHousekeeping })
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Erro no checkout do hotel:", err);
     }
   };
 
@@ -368,6 +466,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   };
 
   const categories = [
+    { id: 'messages', label: 'Mensagens / Chats', icon: <MessageSquare size={24} />, count: activeReservations.length, color: 'from-indigo-500 to-purple-650', shadow: 'shadow-indigo-500/20' },
     { id: 'packages', label: firstPackageInfo.label, icon: firstPackageInfo.sidebarIcon, count: packagesList.length, color: firstPackageInfo.color, shadow: firstPackageInfo.shadow },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
@@ -378,7 +477,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
     { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
     { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages' || cat.id === 'restaurants');
+  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages' || cat.id === 'restaurants' || cat.id === 'messages');
 
   const handleBack = () => setSelectedCategory(null);
 
@@ -859,39 +958,127 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 ))}
 
                 {/* HOTELS & AL VIEW */}
-                {(selectedCategory === 'hotels' || selectedCategory === 'al') && (selectedCategory === 'hotels' ? hotelReservations : alReservations).map((res) => (
-                   <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
-                      <div className="h-40 relative">
-                         <img src={res.hotel.image} alt={res.hotel.name} className="w-full h-full object-cover" />
-                         <div className={`absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 ${res.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${res.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                            {res.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
-                         </div>
-                      </div>
-                      <div className="p-8 text-left">
-                         <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">{res.hotel.name}</h3>
-                         <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mb-6">
-                            <MapPin size={14} /> {res.hotel.island}, Açores
-                         </p>
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
-                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Check-in</p>
-                               <p className="text-sm font-black text-slate-800">{res.date}</p>
-                            </div>
-                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
-                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estadia</p>
-                               <p className="text-sm font-black text-slate-800">{(res?.nights || 0)} noites</p>
+                {(selectedCategory === 'hotels' || selectedCategory === 'al') && (selectedCategory === 'hotels' ? hotelReservations : alReservations).map((res) => {
+                    const isConfirmed = res.status === 'accepted' || res.status === 'Confirmada';
+                    const isHoused = res.status === 'Hospedado';
+                    const isDone = res.status === 'Concluído';
+                    
+                    return (
+                      <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
+                         <div className="h-40 relative">
+                            <img src={res.hotel?.image || res.hotel?.gallery?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945'} alt={res.hotel?.name || 'Alojamento'} className="w-full h-full object-cover" />
+                            <div className={`absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 ${
+                              isConfirmed ? 'text-emerald-600' : isHoused ? 'text-blue-600' : isDone ? 'text-slate-600' : 'text-amber-600'
+                            }`}>
+                               <div className={`w-1.5 h-1.5 rounded-full ${
+                                 isConfirmed ? 'bg-emerald-500' : isHoused ? 'bg-blue-500' : isDone ? 'bg-slate-500' : 'bg-amber-500'
+                               } animate-pulse`} />
+                               {isConfirmed ? 'Confirmado' : isHoused ? 'Hospedado' : isDone ? 'Concluído' : 'Em Aprovação'}
                             </div>
                          </div>
-                         {res.selectedRoom && (
-                            <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                               <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Quarto Selecionado</p>
-                               <p className="text-sm font-black text-blue-800">{res.selectedRoom.name}</p>
+                         <div className="p-8 text-left">
+                            <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">{res.hotel?.name || res.hotelName}</h3>
+                            <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mb-6">
+                               <MapPin size={14} /> {res.hotel?.island || 'Açores'}, Açores
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Check-in</p>
+                                  <p className="text-sm font-black text-slate-800">{res.date}</p>
+                               </div>
+                               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estadia</p>
+                                  <p className="text-sm font-black text-slate-800">{(res?.nights || res?.days || 0)} noites</p>
+                               </div>
                             </div>
-                         )}
+                            
+                            {res.selectedRoom && (
+                               <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                  <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1">Quarto Selecionado</p>
+                                  <p className="text-sm font-black text-blue-800">{res.selectedRoom.name}</p>
+                               </div>
+                            )}
+
+                            {/* Check-in / Out Hours Display */}
+                            {(isConfirmed || isHoused || isDone) ? (
+                              <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700 space-y-1">
+                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Horários de Check-in / Out</p>
+                                 <p>🕒 Entrada (Check-in): <span className="font-bold text-slate-800">{res.checkinTime || res.hotelCheckinTime || '14:00'}</span></p>
+                                 <p>🕒 Saída (Check-out): <span className="font-bold text-slate-800">{res.checkoutTime || '12:00'}</span></p>
+                              </div>
+                            ) : (
+                              res.hotelCheckinTime && (
+                                 <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Hora Estimada de Entrada (Cliente)</p>
+                                    <p>🕒 Check-in Estimado: <span className="font-bold text-slate-800">{res.hotelCheckinTime}</span></p>
+                                 </div>
+                              )
+                            )}
+
+                            {/* Action Buttons */}
+                            {isConfirmed && (
+                               <button
+                                 onClick={() => handleHotelCheckIn(res)}
+                                 className="w-full mt-4 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/10 active:scale-95"
+                               >
+                                 🛎️ Fazer Check-In (Presencial)
+                               </button>
+                            )}
+                            {isHoused && (
+                               <button
+                                 onClick={() => handleHotelCheckOut(res)}
+                                 className="w-full mt-4 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-orange-500/10 active:scale-95"
+                               >
+                                 🏁 Fazer Check-Out
+                               </button>
+                            )}
+
+                            {/* Chat button for accommodation */}
+                            {!isDone && (
+                              <button
+                                onClick={() => handleOpenEmergencyChat(res)}
+                                className="w-full mt-3 py-3 bg-red-500 hover:bg-red-650 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-red-500/10 active:scale-95"
+                              >
+                                <MessageSquare size={14} /> Falar com o Alojamento
+                              </button>
+                            )}
+                         </div>
                       </div>
+                    );
+                 })}
+
+                {/* UNIFIED MESSAGES / CHAT VIEW */}
+                {selectedCategory === 'messages' && activeReservations.map((res) => {
+                  const hotelName = res.hotel?.name || res.hotelName;
+                  const carModel = res.car?.model || res.vehicle;
+                  const restName = res.restaurantName || res.businessName || res.itemName;
+                  const displayName = hotelName || carModel || restName || 'Reserva AzoresToYou';
+                  
+                  return (
+                    <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm flex items-center justify-between gap-4 mb-4">
+                      <div className="text-left">
+                        <span className="bg-indigo-50 text-indigo-650 text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-100">
+                          {res.type === 'hotel' || res.type === 'al' ? 'Alojamento' : res.type === 'car' ? 'Viatura' : res.type === 'restaurant' ? 'Restaurante' : 'Serviço'}
+                        </span>
+                        <h3 className="font-black text-base text-slate-800 tracking-tight mt-1">{displayName}</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{res.date} • {res.time || res.checkinTime || 'N/A'}</p>
+                      </div>
+                      <button
+                        onClick={() => handleOpenEmergencyChat(res)}
+                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-600/10"
+                      >
+                        <MessageSquare size={14} /> Chat
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {selectedCategory === 'messages' && activeReservations.length === 0 && (
+                   <div className="py-12 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200 mb-6">
+                     <MessageSquare size={48} className="mx-auto mb-4 text-slate-200" />
+                     <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Sem conversas ativas no momento</p>
                    </div>
-                ))}
+                )}
 
                 {/* PACKAGES VIEW */}
                 {selectedCategory === 'packages' && packagesList.map((pkg) => {
@@ -1340,13 +1527,13 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
               <div className="flex justify-between items-center pb-4 border-b border-slate-100 shrink-0">
                 <div className="text-left">
                   <span className="text-[9px] font-black text-red-500 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 max-w-max">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Emergência 24h
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Suporte AzoresToYou
                   </span>
                   <h3 className="text-lg font-black text-slate-800 tracking-tight mt-1.5">
-                    {chatReservation.companyName || chatReservation.car?.companyName || 'Rent-a-car'}
+                    {chatReservation.hotel?.name || chatReservation.hotelName || chatReservation.restaurantName || chatReservation.businessName || chatReservation.itemName || chatReservation.companyName || chatReservation.car?.companyName || 'AzoresToYou'}
                   </h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                    Veículo: {chatReservation.car?.model || chatReservation.vehicle || 'Viatura'}
+                    Reserva ID: {chatReservation.id}
                   </p>
                 </div>
                 <button

@@ -24,6 +24,7 @@ interface ProfileModalProps {
   onLogout?: () => void;
   onShowSOS?: () => void;
   onShowCommunity?: () => void;
+  onShowMessages?: () => void;
 }
 
 type ProfileView = 'menu' | 'edit';
@@ -41,7 +42,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   onShowInvoices,
   onLogout,
   onShowSOS,
-  onShowCommunity
+  onShowCommunity,
+  onShowMessages
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [view, setView] = useState<ProfileView>('menu');
@@ -171,7 +173,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                         <span className="font-bold text-slate-700">Faturas</span>
                       </button>
 
-                      <button className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group">
+                      <button 
+                        onClick={() => onShowMessages?.()}
+                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                      >
                         <div className="p-3 rounded-2xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
                           <MessageCircle size={20} />
                         </div>

@@ -19,6 +19,9 @@ type Tab = 'dashboard' | 'reservas' | 'calendario' | 'quartos' | 'checkin' | 'ho
 
 export default function HotelDashboard({ business, onUpdateBusiness, onLogout, language = 'pt' }: HotelDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [confirmingRes, setConfirmingRes] = useState<any | null>(null);
+  const [confirmCheckinTime, setConfirmCheckinTime] = useState('14:00');
+  const [confirmCheckoutTime, setConfirmCheckoutTime] = useState('12:00');
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
@@ -830,15 +833,29 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                           Data: {res.date} · Duração: {res.days || 1} noites · ID: {res.id}
                         </p>
                         {res.phone && <p className="text-xs text-slate-400">📞 Tel: {res.phone}</p>}
+                        {(res.checkinTime || res.checkoutTime) && (
+                          <p className="text-xs text-emerald-600 font-bold">
+                            🕒 Check-in: {res.checkinTime || '–'} · Check-out: {res.checkoutTime || '12:00'}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {res.status === 'Confirmada' && res.status !== 'Hospedado' && (
+                          <button
+                            onClick={() => setShowCheckinModal(res)}
+                            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
+                          >
+                            🔑 Check-In Presencial
+                          </button>
+                        )}
                         {res.status === 'pending' && (
                           <>
                             <button
-                              onClick={async () => {
-                                const updated = { ...res, status: 'Confirmada' };
-                                await handleUpdateReservation(updated);
+                              onClick={() => {
+                                setConfirmingRes(res);
+                                setConfirmCheckinTime(res.hotelCheckinTime || '14:00');
+                                setConfirmCheckoutTime('12:00');
                               }}
                               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                             >
@@ -3352,6 +3369,80 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                 </button>
               </div>
 
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Reservation Hours Modal */}
+      <AnimatePresence>
+        {confirmingRes && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden z-10 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                onClick={() => setConfirmingRes(null)}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-4">Confirmar Horários da Reserva</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-4">Hóspede: {confirmingRes.customerName || confirmingRes.client || 'Hóspede'}</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Hora de Check-In (Entrada)</label>
+                  <select
+                    value={confirmCheckinTime}
+                    onChange={(e) => setConfirmCheckinTime(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => {
+                      const timeStr = `${i.toString().padStart(2, '0')}:00`;
+                      return <option key={timeStr} value={timeStr}>{timeStr}</option>;
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Hora de Check-Out (Saída)</label>
+                  <select
+                    value={confirmCheckoutTime}
+                    onChange={(e) => setConfirmCheckoutTime(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => {
+                      const timeStr = `${i.toString().padStart(2, '0')}:00`;
+                      return <option key={timeStr} value={timeStr}>{timeStr}</option>;
+                    })}
+                  </select>
+                </div>
+                <button
+                  onClick={async () => {
+                    const updated = { 
+                      ...confirmingRes, 
+                      status: 'Confirmada',
+                      checkinTime: confirmCheckinTime,
+                      checkoutTime: confirmCheckoutTime
+                    };
+                    await handleUpdateReservation(updated);
+                    setConfirmingRes(null);
+                  }}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                >
+                  Confirmar Reserva
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
