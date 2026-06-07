@@ -2279,10 +2279,10 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                 } shadow-sm overflow-y-auto`}>
                   <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-3">Relatórios Reportados</h3>
                   <div className="space-y-2">
-                    {reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).length === 0 ? (
+                    {reservations.filter(r => (r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))) || r.towDispatched || r.firefightersDispatched || r.policeDispatched).length === 0 ? (
                       <p className="text-xs text-slate-400 italic text-center py-6">Sem avarias comunicadas.</p>
                     ) : (
-                      reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).map(res => {
+                      reservations.filter(r => (r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))) || r.towDispatched || r.firefightersDispatched || r.policeDispatched).map(res => {
                         const avariaMsg = res.chatMessages?.find((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'));
                         const avariaText = avariaMsg ? avariaMsg.text.replace('⚠️ [REPORTE DE AVARIA]', '').trim() : 'Avaria geral';
                         return (
@@ -3359,10 +3359,6 @@ function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: R
                 </div>
 
                 {(() => {
-                  const hasAvaria = selectedRes.chatMessages?.some((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'));
-                  const hasLocation = selectedRes.chatMessages?.some((m: any) => m.text && (m.text.includes('maps') || m.text.includes('Localização')));
-                  if (!hasAvaria || !hasLocation) return null;
-
                   return (
                     <div className="flex gap-2 mx-4 flex-wrap shrink-0">
                       <button
