@@ -12,6 +12,7 @@ import { getTranslation } from '../translations';
 import { crpBuses } from '../data/crp_buses';
 import { varelaBuses } from '../data/varela_buses';
 import { avmBuses } from '../data/avm_buses';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ExploreSectionProps {
   category: ExploreCategory;
