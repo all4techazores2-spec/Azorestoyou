@@ -1232,8 +1232,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
             language={language}
           />
         )}
+      </motion.div>
 
-        {chatReservation && (
+      {chatReservation && (
           <div className="fixed inset-0 z-[210] flex items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -1330,7 +1331,6 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
             </motion.div>
           </div>
         )}
-      </motion.div>
     </div>
   );
 };
