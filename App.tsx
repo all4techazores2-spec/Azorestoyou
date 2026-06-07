@@ -617,18 +617,33 @@ const App: React.FC = () => {
   const [roomServiceAccess, setRoomServiceAccess] = useState<{ hotelId: string; roomId: string; qrToken: string } | null>(null);
 
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path.startsWith('/hotel-room-service/')) {
-      const parts = path.split('/');
-      if (parts.length >= 5) {
-        const hotelId = parts[2];
-        const roomId = parts[3];
-        const qrToken = parts[4];
-        if (hotelId && roomId && qrToken) {
-          setRoomServiceAccess({ hotelId, roomId, qrToken });
+    const checkRoute = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      
+      let routePath = '';
+      if (path.startsWith('/hotel-room-service/')) {
+        routePath = path;
+      } else if (hash.startsWith('#/hotel-room-service/')) {
+        routePath = hash.replace('#', '');
+      }
+      
+      if (routePath.startsWith('/hotel-room-service/')) {
+        const parts = routePath.split('/');
+        if (parts.length >= 5) {
+          const hotelId = parts[2];
+          const roomId = parts[3];
+          const qrToken = parts[4];
+          if (hotelId && roomId && qrToken) {
+            setRoomServiceAccess({ hotelId, roomId, qrToken });
+          }
         }
       }
-    }
+    };
+
+    checkRoute();
+    window.addEventListener('hashchange', checkRoute);
+    return () => window.removeEventListener('hashchange', checkRoute);
   }, []);
   const [guestCheckIn, setGuestCheckIn] = useState(false);
   const [guestOrderSent, setGuestOrderSent] = useState(false);

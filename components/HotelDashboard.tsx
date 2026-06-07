@@ -1304,7 +1304,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                                     if (!currentQr) {
                                       const qrToken = `tok_${Date.now()}_${Math.floor(Math.random()*1000)}`;
                                       const host = window.location.origin;
-                                      const qrUrl = `${host}/hotel-room-service/${business.id}/${room.id}/${qrToken}`;
+                                      const qrUrl = `${host}/#/hotel-room-service/${business.id}/${room.id}/${qrToken}`;
                                       const newQrPayload = {
                                         hotelId: business.id,
                                         roomId: room.id,
@@ -3340,7 +3340,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     if (confirm('Tem a certeza que deseja regenerar o token deste QR code? O link impresso antigo deixará de funcionar.')) {
                       const qrToken = `tok_${Date.now()}_${Math.floor(Math.random()*1000)}`;
                       const host = window.location.origin;
-                      const qrUrl = `${host}/hotel-room-service/${business.id}/${selectedRoomForQr.room.id}/${qrToken}`;
+                      const qrUrl = `${host}/#/hotel-room-service/${business.id}/${selectedRoomForQr.room.id}/${qrToken}`;
                       const payload = {
                         hotelId: business.id,
                         roomId: selectedRoomForQr.room.id,
