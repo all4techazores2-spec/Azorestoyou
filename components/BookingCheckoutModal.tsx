@@ -58,7 +58,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
       try {
         if (onConfirm) {
           await onConfirm(ticketId, {
-            license: itinerary.car ? formData.license : '',
+            license: (itinerary.car && itinerary.car.id) ? formData.license : '',
             nif: `${formData.nifType === 'Internacional' ? 'INT-' : ''}${formData.nif}`,
             nifType: formData.nifType,
             paymentMethod: paymentType
@@ -82,7 +82,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
     ? (itinerary.selectedRoom.pricePerNight - (itinerary.hotel?.pricePerNight || 0)) * (itinerary.nights || 1)
     : 0;
   const extrasTotal = (itinerary.selectedExtras || []).reduce((sum, extra) => sum + extra.price, 0);
-  const carTotal = itinerary.car ? (itinerary.car.pricePerDay * itinerary.carDays) : 0;
+  const carTotal = (itinerary.car && itinerary.car.id) ? (itinerary.car.pricePerDay * itinerary.carDays) : 0;
   const taxiTotal = itinerary.taxi ? itinerary.taxi.price : 0;
   const total = baseStayPrice + roomUpgradePrice + extrasTotal + carTotal + taxiTotal;
 
@@ -117,8 +117,8 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
             <div className="md:w-5/12 bg-slate-50 p-6 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-slate-100 shrink-0">
                <div className="mb-6">
                   <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full">Resumo</span>
-                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mt-3 leading-tight">{itinerary.hotel?.name || itinerary.car?.model || "Serviço"}</h3>
-                  <p className="text-[10px] text-slate-500 mt-0.5 font-bold">{itinerary.selectedRoom?.name || (itinerary.car ? "Aluguer de Viatura" : "")}</p>
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mt-3 leading-tight">{itinerary.hotel?.name || ((itinerary.car && itinerary.car.id) ? itinerary.car.model : "") || "Serviço"}</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-bold">{itinerary.selectedRoom?.name || ((itinerary.car && itinerary.car.id) ? "Aluguer de Viatura" : "")}</p>
                </div>
 
                <div className="space-y-3 flex-1">
@@ -142,7 +142,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                       <span className="text-slate-900 font-bold">€{extra.price}</span>
                     </div>
                   ))}
-                  {itinerary.car && (
+                  {itinerary.car && itinerary.car.id && (
                      <div className="flex justify-between text-xs">
                        <span className="text-slate-400 font-medium">Aluguer Carro ({itinerary.carDays} dias)</span>
                        <span className="text-slate-900 font-bold">€{carTotal}</span>
@@ -247,7 +247,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                       
                       {/* Driver's License & NIF details (Mandatory as per client request) */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {itinerary.car && (
+                        {itinerary.car && itinerary.car.id && (
                           <div>
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Carta de Condução</label>
                              <div className="relative group">
@@ -263,7 +263,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                              </div>
                           </div>
                         )}
-                        <div className={itinerary.car ? "" : "md:col-span-2"}>
+                        <div className={(itinerary.car && itinerary.car.id) ? "" : "md:col-span-2"}>
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">NIF (Nacional / Internacional)</label>
                            <div className="flex gap-2">
                               <select
@@ -359,12 +359,12 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                           <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 text-slate-700 text-xs space-y-3">
                             <p className="font-black text-center text-blue-600 uppercase tracking-widest text-[10px]">IBAN para Transferência Bancária</p>
                             <p className="text-[10px] text-slate-500 text-center leading-normal font-bold">
-                              {itinerary.car 
+                              {(itinerary.car && itinerary.car.id) 
                                 ? "Efetue a transferência do valor total da reserva para o IBAN oficial da Rent-a-car:"
                                 : "Efetue a transferência do valor total da reserva para o IBAN oficial do Alojamento:"
                               }
                             </p>
-                            {itinerary.car ? (
+                            {(itinerary.car && itinerary.car.id) ? (
                                companyIban ? (
                                  <div className="p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-center font-bold text-slate-800 text-sm tracking-wider select-all shadow-sm">
                                    {companyIban}
@@ -444,7 +444,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
 
                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 mb-8 max-w-sm text-center">
                        <p className="text-sm text-slate-600 font-bold leading-relaxed">
-                          {itinerary.car 
+                          {(itinerary.car && itinerary.car.id) 
                             ? "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte da Rent-a-car."
                             : "O seu pedido de reserva foi enviado com sucesso. Por favor, aguarde pela aprovação final por parte do Hotel."
                           }

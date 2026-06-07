@@ -15,7 +15,7 @@ interface HotelDashboardProps {
   language?: string;
 }
 
-type Tab = 'dashboard' | 'reservas' | 'calendario' | 'quartos' | 'checkin' | 'hospedes' | 'extras' | 'housekeeping' | 'restaurante' | 'mensagens' | 'avaliacoes' | 'relatorios' | 'configuracoes';
+type Tab = 'dashboard' | 'reservas' | 'calendario' | 'quartos' | 'checkin' | 'hospedes' | 'extras' | 'housekeeping' | 'restaurante' | 'mensagens' | 'avaliacoes' | 'relatorios' | 'configuracoes' | 'pedidos';
 
 export default function HotelDashboard({ business, onUpdateBusiness, onLogout, language = 'pt' }: HotelDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -67,6 +67,113 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   const [hotelImage, setHotelImage] = useState(business.image || '');
   const [hotelGallery, setHotelGallery] = useState<any[]>(business.gallery || []);
 
+  // Room QR Codes & POS Service Requests States
+  const [roomRequests, setRoomRequests] = useState<any[]>([]);
+  const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [selectedRoomForQr, setSelectedRoomForQr] = useState<any | null>(null);
+  const [audioNotificationEnabled, setAudioNotificationEnabled] = useState(true);
+
+  // Concierge/Room Service configuration states
+  const [configActiveCategory, setConfigActiveCategory] = useState<'quick' | 'housekeeping' | 'maintenance' | 'extras'>('quick');
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemPrice, setNewItemPrice] = useState(0);
+  const [newItemTime, setNewItemTime] = useState('15');
+  const [roomServiceConfig, setRoomServiceConfig] = useState<any>(() => business.roomServiceConfig || {
+    quick: [
+      { id: 'q_water', name: 'Água', price: 0, estimatedTime: '5', isActive: true },
+      { id: 'q_coffee', name: 'Café', price: 0, estimatedTime: '5', isActive: true },
+      { id: 'q_towels', name: 'Toalhas extra', price: 0, estimatedTime: '10', isActive: true },
+      { id: 'q_pillows', name: 'Almofadas extra', price: 0, estimatedTime: '10', isActive: true },
+      { id: 'q_blanket', name: 'Cobertor extra', price: 0, estimatedTime: '10', isActive: true },
+      { id: 'q_ice', name: 'Gelo', price: 0, estimatedTime: '5', isActive: true },
+      { id: 'q_bf', name: 'Pequeno-almoço no quarto', price: 15, estimatedTime: '20', isActive: true },
+      { id: 'q_champagne', name: 'Champanhe', price: 30, estimatedTime: '15', isActive: true },
+      { id: 'q_wine', name: 'Garrafa de vinho', price: 20, estimatedTime: '15', isActive: true },
+    ],
+    maintenance: [
+      { id: 'm_ac', name: 'Ar condicionado', price: 0, estimatedTime: '30', isActive: true },
+      { id: 'm_light', name: 'Luz fundida', price: 0, estimatedTime: '20', isActive: true },
+      { id: 'm_tv', name: 'TV avariada', price: 0, estimatedTime: '30', isActive: true },
+      { id: 'm_wifi', name: 'Wi-Fi lento/offline', price: 0, estimatedTime: '15', isActive: true },
+      { id: 'm_water', name: 'Sem água quente', price: 0, estimatedTime: '30', isActive: true },
+      { id: 'm_toilet', name: 'Casa de banho entupida', price: 0, estimatedTime: '20', isActive: true },
+      { id: 'm_door', name: 'Fechadura/porta', price: 0, estimatedTime: '15', isActive: true },
+      { id: 'm_noise', name: 'Problema de ruído', price: 0, estimatedTime: '15', isActive: true },
+      { id: 'm_other', name: 'Outro problema', price: 0, estimatedTime: '30', isActive: true },
+    ],
+    housekeeping: [
+      { id: 'h_clean', name: 'Pedir limpeza de quarto', price: 0, estimatedTime: '60', isActive: true },
+      { id: 'h_towels', name: 'Trocar toalhas', price: 0, estimatedTime: '15', isActive: true },
+      { id: 'h_sheets', name: 'Trocar lençóis de cama', price: 0, estimatedTime: '20', isActive: true },
+      { id: 'h_paper', name: 'Repor papel higiénico', price: 0, estimatedTime: '10', isActive: true },
+      { id: 'h_shampoo', name: 'Repor gel de banho / shampoo', price: 0, estimatedTime: '10', isActive: true },
+      { id: 'h_dnd', name: 'Não incomodar', price: 0, estimatedTime: '2', isActive: true },
+    ],
+    extras: [
+      { id: 'e_romantic', name: 'Decoração romântica', price: 50, estimatedTime: '120', isActive: true },
+      { id: 'e_flowers', name: 'Flores frescas', price: 25, estimatedTime: '60', isActive: true },
+      { id: 'e_spa', name: 'Spa / Massagem no quarto', price: 60, estimatedTime: '90', isActive: true },
+      { id: 'e_checkout', name: 'Late check-out', price: 30, estimatedTime: '10', isActive: true },
+      { id: 'e_transfer', name: 'Transfer Aeroporto', price: 35, estimatedTime: '24h', isActive: true },
+      { id: 'e_tour', name: 'Tour / Atividade Açores', price: 40, estimatedTime: '24h', isActive: true },
+      { id: 'e_dinner', name: 'Jantar no quarto', price: 45, estimatedTime: '45', isActive: true },
+    ]
+  });
+
+  const fetchRoomData = async () => {
+    try {
+      const qrRes = await fetch(`${API_BASE_URL}/api/hotel_room_qr_codes?hotelId=${business.id}`);
+      if (qrRes.ok) {
+        const data = await qrRes.json();
+        setQrCodes(data);
+      }
+      
+      const reqRes = await fetch(`${API_BASE_URL}/api/hotel_room_requests?hotelId=${business.id}`);
+      if (reqRes.ok) {
+        const data = await reqRes.json();
+        setRoomRequests(prev => {
+          const newPendings = data.filter((item: any) => 
+            item.status === 'Pendente' && 
+            !prev.some((oldItem: any) => oldItem.id === item.id)
+          );
+          if (newPendings.length > 0 && audioNotificationEnabled && prev.length > 0) {
+            playAlertSound();
+          }
+          return data;
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const playAlertSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    } catch (err) {
+      console.log('Audio Context blocked:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomData();
+    const interval = setInterval(fetchRoomData, 5000);
+    return () => clearInterval(interval);
+  }, [business.id, audioNotificationEnabled]);
+
   // Sync state if business updates
   useEffect(() => {
     if (business.reservations) setReservations(business.reservations);
@@ -86,6 +193,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
     if (business.blockedDates !== undefined) setBlockedDates(business.blockedDates || []);
     if (business.image !== undefined) setHotelImage(business.image || '');
     if (business.gallery !== undefined) setHotelGallery(business.gallery || []);
+    if (business.roomServiceConfig) setRoomServiceConfig(business.roomServiceConfig);
   }, [business]);
 
   const saveUpdatedBusiness = async (updatedFields: Partial<typeof business>) => {
@@ -349,10 +457,29 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   const handleAddHkTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hkRoom || !hkStaff) return;
-    const newTask = { id: `hk_${Date.now()}`, room: hkRoom, task: hkTask, status: 'Pendente', staff: hkStaff };
+    const targetRoom = rooms.find(r => r.name === hkRoom || r.id === hkRoom);
+    const targetRoomId = targetRoom ? targetRoom.id : hkRoom;
+    const roomName = targetRoom ? targetRoom.name : hkRoom;
+    
+    let targetStatus = 'Limpeza';
+    if (hkTask.includes('Manutenção')) {
+      targetStatus = 'Manutenção';
+    }
+    
+    const updatedRooms = rooms.map(r => r.id === targetRoomId ? { ...r, status: targetStatus } : r);
+    setRooms(updatedRooms);
+
+    const newTask = { 
+      id: `hk_${Date.now()}`, 
+      room: roomName, 
+      roomId: targetRoomId,
+      task: hkTask, 
+      status: 'Pendente', 
+      staff: hkStaff 
+    };
     const updated = [...housekeeping, newTask];
     setHousekeeping(updated);
-    await saveUpdatedBusiness({ housekeeping: updated });
+    await saveUpdatedBusiness({ rooms: updatedRooms, housekeeping: updated });
     setHkRoom('');
     setHkStaff('');
   };
@@ -409,6 +536,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
             {([
               { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
               { id: 'reservas', label: 'Reservas', icon: <Calendar size={18} /> },
+              { id: 'pedidos', label: 'Pedidos do Quarto', icon: <MessageSquare size={18} />, count: roomRequests.filter(r => r.status === 'Pendente').length },
               { id: 'calendario', label: 'Calendário', icon: <Calendar size={18} /> },
               { id: 'quartos', label: 'Quartos / Unidades', icon: <Bed size={18} /> },
               { id: 'checkin', label: 'Check-In / Out', icon: <Key size={18} /> },
@@ -1136,21 +1264,56 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                             </div>
                             
                             <div className="mt-4 pt-3 border-t border-slate-200/20 flex justify-between items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const updated = rooms.map(r => r.id === room.id ? { ...r, active: r.active === false ? true : false } : r);
-                                  setRooms(updated);
-                                  await saveUpdatedBusiness({ rooms: updated });
-                                }}
-                                className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${
-                                  room.active !== false 
-                                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' 
-                                    : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                                }`}
-                              >
-                                {room.active !== false ? 'Desativar' : 'Ativar'}
-                              </button>
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const updated = rooms.map(r => r.id === room.id ? { ...r, active: r.active === false ? true : false } : r);
+                                    setRooms(updated);
+                                    await saveUpdatedBusiness({ rooms: updated });
+                                  }}
+                                  className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${
+                                    room.active !== false 
+                                      ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' 
+                                      : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                  }`}
+                                >
+                                  {room.active !== false ? 'Desativar' : 'Ativar'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    let currentQr = qrCodes.find(q => q.roomId === room.id && q.hotelId === business.id);
+                                    if (!currentQr) {
+                                      const qrToken = `tok_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+                                      const host = window.location.origin;
+                                      const qrUrl = `${host}/hotel-room-service/${business.id}/${room.id}/${qrToken}`;
+                                      const newQrPayload = {
+                                        hotelId: business.id,
+                                        roomId: room.id,
+                                        roomName: room.name,
+                                        qrToken,
+                                        url: qrUrl
+                                      };
+                                      
+                                      const saveRes = await fetch(`${API_BASE_URL}/api/hotel_room_qr_codes`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(newQrPayload)
+                                      });
+                                      
+                                      if (saveRes.ok) {
+                                        currentQr = await saveRes.json();
+                                        setQrCodes(prev => [...prev.filter(q => q.roomId !== room.id), currentQr]);
+                                      }
+                                    }
+                                    setSelectedRoomForQr({ room, qr: currentQr || { url: `${window.location.origin}/hotel-room-service/${business.id}/${room.id}/error` } });
+                                  }}
+                                  className="text-blue-500 hover:text-blue-600 text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-blue-500/10 rounded"
+                                >
+                                  QR Code
+                                </button>
+                              </div>
 
                               <div className="flex gap-2">
                                 <button
@@ -1743,6 +1906,213 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
               </motion.div>
             )}
 
+            {/* ── TAB: PEDIDOS DO QUARTO ── */}
+            {activeTab === 'pedidos' && (
+              <motion.div 
+                key="pedidos"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="space-y-6"
+              >
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Pedidos do Quarto / Concierge</h2>
+                    <p className="text-slate-400 text-xs mt-1">Acompanhe e gira os pedidos recebidos em tempo real via QR Code.</p>
+                  </div>
+                  
+                  <div className={`p-4 rounded-2xl border flex items-center gap-4 ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-400">Som de Notificação</span>
+                    <button
+                      type="button"
+                      onClick={() => setAudioNotificationEnabled(!audioNotificationEnabled)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        audioNotificationEnabled 
+                          ? 'bg-emerald-500/10 text-emerald-500' 
+                          : 'bg-red-500/10 text-red-500'
+                      }`}
+                    >
+                      {audioNotificationEnabled ? 'Ativado (A5 Tone)' : 'Desativado'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className={`p-6 rounded-[2rem] border shadow-sm ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-6">Lista de Pedidos Ativos</h3>
+                  
+                  {roomRequests.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                      Nenhum pedido de quarto registado até ao momento.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {roomRequests.slice().reverse().map(req => {
+                        const statusColors = {
+                          'Pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                          'Aceite': 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                          'Em preparação': 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+                          'Entregue': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                          'Cancelado': 'bg-red-500/10 text-red-500 border-red-500/20'
+                        };
+
+                        const handleStatusChange = async (newStatus: string) => {
+                          try {
+                            const res = await fetch(`${API_BASE_URL}/api/hotel_room_requests/${req.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: newStatus })
+                            });
+                            if (res.ok) {
+                              const updatedReq = await res.json();
+                              setRoomRequests(prev => prev.map(r => r.id === req.id ? updatedReq : r));
+                            }
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        };
+
+                        const handleAssignStaff = async (staffName: string) => {
+                          try {
+                            const res = await fetch(`${API_BASE_URL}/api/hotel_room_requests/${req.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ assignedTo: staffName })
+                            });
+                            if (res.ok) {
+                              const updatedReq = await res.json();
+                              setRoomRequests(prev => prev.map(r => r.id === req.id ? updatedReq : r));
+                            }
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        };
+
+                        return (
+                          <div key={req.id} className={`p-6 rounded-2xl border flex flex-col md:flex-row justify-between gap-6 transition-all ${
+                            darkMode ? 'bg-slate-950 border-slate-850 hover:bg-slate-900' : 'bg-slate-50 border-slate-200 hover:bg-white'
+                          }`}>
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="text-sm font-black uppercase text-slate-850 dark:text-white">
+                                  Quarto {req.roomName}
+                                </span>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${statusColors[req.status as keyof typeof statusColors] || 'bg-slate-500/10'}`}>
+                                  {req.status}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                                  {new Date(req.createdAt).toLocaleString('pt-PT')}
+                                </span>
+                              </div>
+                              
+                              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                Categoria: <strong className="text-slate-700 dark:text-slate-200">{req.category}</strong> · Item: <strong className="text-slate-700 dark:text-slate-200">{req.itemName}</strong>
+                                {req.quantity > 1 && ` (x${req.quantity})`}
+                              </p>
+                              
+                              {req.notes && (
+                                <div className={`p-3 rounded-xl border text-[11px] font-medium leading-relaxed ${
+                                  darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-600'
+                                }`}>
+                                  Nota: "{req.notes}"
+                                </div>
+                              )}
+
+                              <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                Preço: <strong className="text-amber-500">{req.price > 0 ? `${req.price * (req.quantity || 1)}€` : 'Gratuito'}</strong>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1.5 flex-wrap">
+                                <span className="text-[9px] font-black uppercase text-slate-450">Atribuído a:</span>
+                                <select
+                                  value={req.assignedTo || 'Não Atribuído'}
+                                  onChange={(e) => handleAssignStaff(e.target.value)}
+                                  className={`px-3 py-1.5 border rounded-lg text-[10px] font-black uppercase tracking-wider cursor-pointer ${
+                                    darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-700'
+                                  }`}
+                                >
+                                  <option value="Não Atribuído">Não Atribuído</option>
+                                  <option value="Maria Silva (Housekeeping)">Maria Silva (Housekeeping)</option>
+                                  <option value="João Santos (Manutenção)">João Santos (Manutenção)</option>
+                                  <option value="Ana Costa (Receção)">Ana Costa (Receção)</option>
+                                  <option value="Carlos Oliveira (Restaurante)">Carlos Oliveira (Restaurante)</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap md:flex-col md:justify-center md:items-end">
+                              {req.status === 'Pendente' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('Aceite')}
+                                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                  >
+                                    Aceitar Pedido
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('Cancelado')}
+                                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </>
+                              )}
+                              
+                              {req.status === 'Aceite' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('Em preparação')}
+                                    className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                  >
+                                    Em Preparação
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStatusChange('Cancelado')}
+                                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </>
+                              )}
+
+                              {req.status === 'Em preparação' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStatusChange('Entregue')}
+                                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                >
+                                  Marcar Entregue
+                                </button>
+                              )}
+
+                              {req.status === 'Entregue' && (
+                                <span className="text-[10px] font-black uppercase text-emerald-600 flex items-center gap-1">
+                                  <Check size={14} /> Entregue com Sucesso
+                                </span>
+                              )}
+
+                              {req.status === 'Cancelado' && (
+                                <span className="text-[10px] font-black uppercase text-red-500">
+                                  Pedido Cancelado
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {/* ── TAB 13: CONFIGURAÇÕES ── */}
             {activeTab === 'configuracoes' && (
               <motion.div 
@@ -2052,6 +2422,217 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                       className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10 disabled:opacity-50"
                     >
                       {isSyncing ? 'A Sincronizar...' : 'Sincronizar agora'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Configuração do Menu do Concierge / Room Service */}
+                <div className="mt-8 pt-8 border-t border-slate-200/20 space-y-6">
+                  <div>
+                    <h4 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Configuração do Menu Concierge (QR Code)</h4>
+                    <p className="text-xs text-slate-450 mt-1">
+                      Customize os itens, preços e tempos de resposta que aparecem aos seus hóspedes na página digital de Concierge.
+                    </p>
+                  </div>
+
+                  {/* Category switcher buttons */}
+                  <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200/10">
+                    {([
+                      { id: 'quick', label: 'Pedidos Rápidos' },
+                      { id: 'housekeeping', label: 'Housekeeping' },
+                      { id: 'maintenance', label: 'Manutenção' },
+                      { id: 'extras', label: 'Extras Pagos' }
+                    ] as const).map(cat => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setConfigActiveCategory(cat.id)}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                          configActiveCategory === cat.id 
+                            ? 'bg-amber-500 border-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/10' 
+                            : darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Config items list for current active category */}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {(roomServiceConfig[configActiveCategory] || []).map((item: any) => (
+                      <div 
+                        key={item.id} 
+                        className={`p-4 rounded-2xl border grid grid-cols-1 md:grid-cols-12 gap-3 items-center ${
+                          darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        {/* Name input */}
+                        <div className="md:col-span-5">
+                          <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Nome do Item</label>
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) => {
+                              const updatedList = roomServiceConfig[configActiveCategory].map((i: any) => 
+                                i.id === item.id ? { ...i, name: e.target.value } : i
+                              );
+                              setRoomServiceConfig({ ...roomServiceConfig, [configActiveCategory]: updatedList });
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Price input */}
+                        <div className="md:col-span-2">
+                          <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Preço (€)</label>
+                          <input
+                            type="number"
+                            value={item.price}
+                            onChange={(e) => {
+                              const updatedList = roomServiceConfig[configActiveCategory].map((i: any) => 
+                                i.id === item.id ? { ...i, price: Number(e.target.value) } : i
+                              );
+                              setRoomServiceConfig({ ...roomServiceConfig, [configActiveCategory]: updatedList });
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Estimated Time input */}
+                        <div className="md:col-span-2">
+                          <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Tempo (min)</label>
+                          <input
+                            type="text"
+                            value={item.estimatedTime || ''}
+                            onChange={(e) => {
+                              const updatedList = roomServiceConfig[configActiveCategory].map((i: any) => 
+                                i.id === item.id ? { ...i, estimatedTime: e.target.value } : i
+                              );
+                              setRoomServiceConfig({ ...roomServiceConfig, [configActiveCategory]: updatedList });
+                            }}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Active Toggle & Delete */}
+                        <div className="md:col-span-3 flex items-center justify-end gap-3 pt-4 md:pt-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedList = roomServiceConfig[configActiveCategory].map((i: any) => 
+                                i.id === item.id ? { ...i, isActive: !i.isActive } : i
+                              );
+                              setRoomServiceConfig({ ...roomServiceConfig, [configActiveCategory]: updatedList });
+                            }}
+                            className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+                              item.isActive !== false 
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+                                : 'bg-red-500/10 border-red-500/20 text-red-500'
+                            }`}
+                          >
+                            {item.isActive !== false ? 'Ativo' : 'Inativo'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm('Tem a certeza que deseja remover este item?')) {
+                                const updatedList = roomServiceConfig[configActiveCategory].filter((i: any) => i.id !== item.id);
+                                setRoomServiceConfig({ ...roomServiceConfig, [configActiveCategory]: updatedList });
+                              }
+                            }}
+                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl transition-all"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add item form for current active category */}
+                  <div className={`p-5 rounded-2xl border ${
+                    darkMode ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-100/30 border-slate-250'
+                  }`}>
+                    <h5 className="font-extrabold uppercase text-[10px] tracking-widest text-slate-400 mb-3">Adicionar Item a esta Categoria</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                      <div>
+                        <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Nome do Item</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Champanhe Seco"
+                          value={newItemName}
+                          onChange={(e) => setNewItemName(e.target.value)}
+                          className={`w-full px-3 py-2.5 rounded-lg border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Preço (€)</label>
+                        <input
+                          type="number"
+                          value={newItemPrice}
+                          onChange={(e) => setNewItemPrice(Number(e.target.value))}
+                          className={`w-full px-3 py-2.5 rounded-lg border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-black uppercase text-slate-400 mb-1">Tempo Est. (min)</label>
+                        <input
+                          type="text"
+                          value={newItemTime}
+                          onChange={(e) => setNewItemTime(e.target.value)}
+                          className={`w-full px-3 py-2.5 rounded-lg border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                          }`}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newItemName.trim()) return;
+                          const newItem = {
+                            id: `${configActiveCategory}_${Date.now()}`,
+                            name: newItemName.trim(),
+                            price: Number(newItemPrice),
+                            estimatedTime: newItemTime.trim() || '15',
+                            isActive: true
+                          };
+                          setRoomServiceConfig({
+                            ...roomServiceConfig,
+                            [configActiveCategory]: [...(roomServiceConfig[configActiveCategory] || []), newItem]
+                          });
+                          setNewItemName('');
+                          setNewItemPrice(0);
+                          setNewItemTime('15');
+                        }}
+                        className="py-2.5 bg-slate-900 hover:bg-black dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                      >
+                        + Adicionar Item
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-slate-250/10">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await saveUpdatedBusiness({ roomServiceConfig });
+                        alert('Menu do Concierge guardado com sucesso!');
+                      }}
+                      className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
+                    >
+                      Guardar Menu Concierge
                     </button>
                   </div>
                 </div>
@@ -2617,6 +3198,160 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                   Confirmar Bloqueio
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* QR Code do Quarto Modal */}
+      <AnimatePresence>
+        {selectedRoomForQr && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden z-10 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                type="button"
+                onClick={() => setSelectedRoomForQr(null)}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-2">QR Code Permanente</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-6">
+                {selectedRoomForQr.room.name}
+              </p>
+
+              {/* QR Image preview */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200/20 max-w-xs mx-auto flex items-center justify-center shadow-inner mb-6">
+                <img 
+                  id="printable-qr-image"
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selectedRoomForQr.qr.url)}&color=0d1629&bgcolor=ffffff`}
+                  className="w-48 h-48 object-contain"
+                  alt="QR Code"
+                />
+              </div>
+
+              {/* URL link */}
+              <div className={`p-3 rounded-xl border text-[11px] font-semibold select-all break-all mb-6 ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-250 text-slate-655'
+              }`}>
+                {selectedRoomForQr.qr.url}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>QR Code - ${selectedRoomForQr.room.name}</title>
+                            <style>
+                              body { font-family: sans-serif; text-align: center; padding: 40px; color: #0d1629; }
+                              .container { border: 2px solid #0d1629; padding: 30px; border-radius: 20px; display: inline-block; }
+                              img { width: 250px; height: 250px; margin-top: 20px; }
+                              h1 { margin: 0; font-size: 24px; text-transform: uppercase; }
+                              h2 { margin: 5px 0 20px; font-size: 16px; color: #78829c; text-transform: uppercase; }
+                              p { font-size: 11px; margin-top: 20px; font-weight: bold; }
+                            </style>
+                          </head>
+                          <body onload="window.print(); window.close();">
+                            <div class="container">
+                              <h1>${business.name}</h1>
+                              <h2>${selectedRoomForQr.room.name}</h2>
+                              <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(selectedRoomForQr.qr.url)}&color=0d1629&bgcolor=ffffff" />
+                              <p>Faça scan para pedir Serviço de Quarto / Housekeeping / Suporte</p>
+                            </div>
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                    }
+                  }}
+                  className="py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                >
+                  Imprimir
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(selectedRoomForQr.qr.url)}&color=0d1629&bgcolor=ffffff`);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `qr_${selectedRoomForQr.room.name.toLowerCase().replace(/\s+/g, '_')}.png`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      alert('Erro ao transferir imagem. Copie o link e gere online.');
+                    }
+                  }}
+                  className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-850 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                >
+                  Download PNG
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedRoomForQr.qr.url);
+                    alert('Link copiado para a área de transferência!');
+                  }}
+                  className="py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                >
+                  Copiar Link
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm('Tem a certeza que deseja regenerar o token deste QR code? O link impresso antigo deixará de funcionar.')) {
+                      const qrToken = `tok_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+                      const host = window.location.origin;
+                      const qrUrl = `${host}/hotel-room-service/${business.id}/${selectedRoomForQr.room.id}/${qrToken}`;
+                      const payload = {
+                        hotelId: business.id,
+                        roomId: selectedRoomForQr.room.id,
+                        roomName: selectedRoomForQr.room.name,
+                        qrToken,
+                        url: qrUrl
+                      };
+                      
+                      const saveRes = await fetch(`${API_BASE_URL}/api/hotel_room_qr_codes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                      });
+                      
+                      if (saveRes.ok) {
+                        const updatedQr = await saveRes.json();
+                        setQrCodes(prev => [...prev.filter(q => q.roomId !== selectedRoomForQr.room.id), updatedQr]);
+                        setSelectedRoomForQr({ ...selectedRoomForQr, qr: updatedQr });
+                        alert('QR Code regenerado com sucesso!');
+                      }
+                    }
+                  }}
+                  className="py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                >
+                  Regenerar QR
+                </button>
+              </div>
+
             </motion.div>
           </div>
         )}

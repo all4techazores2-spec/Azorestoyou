@@ -314,8 +314,61 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   const flightReservations = activeReservations.filter(r => getResType(r) === 'flight' && !r.packageId);
   const landscapeReservations = activeReservations.filter(r => getResType(r) === 'landscape');
 
+  const getPackageInfo = (pkg: { id: string; items: any[] }) => {
+    const hasHotel = pkg.items.some(item => item.type === 'hotel' || item.type === 'al');
+    const hasCar = pkg.items.some(item => item.type === 'car');
+    const hasFlight = pkg.items.some(item => item.type === 'flight');
+
+    if (hasHotel && hasCar) {
+      return {
+        label: 'Pacote Alojamento + Carro',
+        icon: <Briefcase size={20} className="text-blue-400" />,
+        sidebarIcon: <Briefcase size={24} />,
+        footerText: 'Estado Geral da Reserva',
+        color: 'from-blue-600 to-indigo-700',
+        shadow: 'shadow-blue-600/20'
+      };
+    } else if (hasHotel) {
+      const hotelItem = pkg.items.find(item => item.type === 'hotel' || item.type === 'al');
+      const isAL = hotelItem?.hotel?.type === 'al' || hotelItem?.type === 'al';
+      return {
+        label: isAL ? 'Alojamento Local' : 'Hotel / Alojamento',
+        icon: isAL ? <Home size={20} className="text-blue-400" /> : <Hotel size={20} className="text-blue-400" />,
+        sidebarIcon: isAL ? <Home size={24} /> : <Hotel size={24} />,
+        footerText: 'Estado Geral da Reserva',
+        color: isAL ? 'from-blue-400 to-blue-600' : 'from-amber-500 to-orange-600',
+        shadow: isAL ? 'shadow-blue-500/20' : 'shadow-amber-500/20'
+      };
+    } else if (hasCar) {
+      return {
+        label: 'Aluguer de Carro',
+        icon: <Car size={20} className="text-blue-400" />,
+        sidebarIcon: <Car size={24} />,
+        footerText: 'Estado Geral do Aluguer',
+        color: 'from-rose-500 to-pink-600',
+        shadow: 'shadow-rose-500/20'
+      };
+    } else {
+      return {
+        label: 'Pacote de Viagem',
+        icon: <Briefcase size={20} className="text-blue-400" />,
+        sidebarIcon: <Briefcase size={24} />,
+        footerText: 'Estado Geral da Reserva',
+        color: 'from-blue-600 to-indigo-700',
+        shadow: 'shadow-blue-600/20'
+      };
+    }
+  };
+
+  const firstPackageInfo = packagesList.length > 0 ? getPackageInfo(packagesList[0]) : {
+    label: 'Pacote de Viagem',
+    sidebarIcon: <Briefcase size={24} />,
+    color: 'from-blue-600 to-indigo-700',
+    shadow: 'shadow-blue-600/20'
+  };
+
   const categories = [
-    { id: 'packages', label: 'Rent-a-car', icon: <Car size={24} />, count: packagesList.length, color: 'from-blue-600 to-indigo-700', shadow: 'shadow-blue-600/20' },
+    { id: 'packages', label: firstPackageInfo.label, icon: firstPackageInfo.sidebarIcon, count: packagesList.length, color: firstPackageInfo.color, shadow: firstPackageInfo.shadow },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
     { id: 'landscapes', label: 'Paisagens', icon: <Camera size={24} />, count: landscapeReservations.length, color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
@@ -841,133 +894,136 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 ))}
 
                 {/* PACKAGES VIEW */}
-                {selectedCategory === 'packages' && packagesList.map((pkg) => (
-                   <div key={pkg.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
-                      <div className="bg-slate-900 p-6 flex justify-between items-center">
-                         <div className="flex items-center gap-3 text-white">
-                            <Car size={20} className="text-blue-400" />
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Rent-a-car</span>
-                         </div>
-                         <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-blue-500">
-                            {pkg.id}
-                         </div>
-                      </div>
-                      
-                      <div className="p-6 space-y-4">
-                         {pkg.items.map((item: any) => (
-                            <div key={item.id} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                               <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-4">
-                                     <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
-                                        {item.type === 'car' ? <Car size={18} /> : item.type === 'flight' ? <Plane size={18} /> : <Hotel size={18} />}
-                                     </div>
-                                     <div className="text-left">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                           {item.type === 'car' ? `Rent-a-car (${item.companyName || 'Auto Açores'})` : item.type === 'flight' ? 'Voo' : 'Alojamento'}
-                                        </p>
-                                        <p className="text-sm font-black text-slate-800 leading-tight">
-                                           {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
-                                        </p>
-                                        {item.type === 'car' && (item.towDispatched || item.firefightersDispatched || item.policeDispatched) && (
-                                           <div className="mt-1 flex flex-col gap-0.5">
-                                              {item.towDispatched && (
-                                                 <span className="text-[10px] font-black text-amber-600 uppercase tracking-wide block">
-                                                    🚚 Reboque: {item.towStatus === 'Tratado' ? 'Reboque enviado para o local' : item.towStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
-                                                 </span>
-                                              )}
-                                              {item.firefightersDispatched && (
-                                                 <span className="text-[10px] font-black text-red-600 uppercase tracking-wide block">
-                                                    🚒 Bombeiros: {item.firefightersStatus === 'Tratado' ? 'Bombeiros enviados para o local' : item.firefightersStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
-                                                 </span>
-                                              )}
-                                              {item.policeDispatched && (
-                                                 <span className="text-[10px] font-black text-blue-600 uppercase tracking-wide block">
-                                                    👮 Polícia: {item.policeStatus === 'Tratado' ? 'Polícia enviada para o local' : item.policeStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
-                                                 </span>
-                                              )}
-                                           </div>
-                                        )}
-                                     </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                     {item.type === 'car' ? (
-                                       <div className="flex flex-col items-end gap-2">
-                                         {item.status === 'finished' ? (
-                                           <div className="text-right">
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
-                                               🏁 Finalizado
-                                             </span>
-                                             {item.checkoutDate && item.checkoutTime && (
-                                               <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
-                                                 Check-out: {item.checkoutDate} às {item.checkoutTime}
-                                               </span>
-                                             )}
-                                           </div>
-                                         ) : (item.status === 'active' || item.checkinTime) ? (
-                                           <div className="text-right flex flex-col items-end gap-1">
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
-                                               🛎️ Check-in às {item.checkinTime || 'Confirmado'}
-                                             </span>
-                                             <button
-                                               onClick={() => handleCarCheckOut(item)}
-                                               className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
-                                             >
-                                               Check-Out
-                                             </button>
-                                           </div>
-                                         ) : (item.status === 'accepted' || item.status === 'Confirmada') ? (
-                                           <div className="text-right">
-                                             <button
-                                               onClick={() => handleCarCheckIn(item)}
-                                               className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
-                                             >
-                                               Check-In
-                                             </button>
-                                           </div>
-                                         ) : (
-                                           <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
-                                             ⏳ Em Aprovação
-                                           </span>
-                                         )}
+                {selectedCategory === 'packages' && packagesList.map((pkg) => {
+                   const pkgInfo = getPackageInfo(pkg);
+                   return (
+                     <div key={pkg.id} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm text-left mb-6 last:mb-0">
+                        <div className="bg-slate-900 p-6 flex justify-between items-center">
+                           <div className="flex items-center gap-3 text-white">
+                              {pkgInfo.icon}
+                              <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{pkgInfo.label}</span>
+                           </div>
+                           <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest border border-blue-500">
+                              {pkg.id}
+                           </div>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                           {pkg.items.map((item: any) => (
+                              <div key={item.id} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                                 <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm">
+                                          {item.type === 'car' ? <Car size={18} /> : item.type === 'flight' ? <Plane size={18} /> : <Hotel size={18} />}
                                        </div>
-                                     ) : (
-                                       <>
-                                         <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                                         <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                            {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
-                                         </span>
-                                       </>
-                                     )}
-                                  </div>
-                               </div>
-                               {item.type === 'car' && (item.checkinTime || item.status === 'active') && item.status !== 'finished' && (
-                                  <div className="flex justify-end pt-1">
-                                     <button
-                                        onClick={() => handleOpenEmergencyChat(item)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
-                                     >
-                                        <MessageSquare size={12} />
-                                        Chat de Emergência
-                                     </button>
-                                  </div>
-                               )}
-                            </div>
-                         ))}
-                      </div>
-
-                      <div className="px-6 pb-6 pt-2">
-                         <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                               <Car size={16} className="text-blue-500" />
-                               <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Estado Geral do Aluguer</span>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${pkg.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                               {pkg.status === 'accepted' ? 'Reserva Finalizada' : 'Aguardar Aprovação'}
-                            </span>
-                         </div>
-                      </div>
-                   </div>
-                ))}
+                                       <div className="text-left">
+                                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                             {item.type === 'car' ? `Rent-a-car (${item.companyName || 'Auto Açores'})` : item.type === 'flight' ? 'Voo' : 'Alojamento'}
+                                          </p>
+                                          <p className="text-sm font-black text-slate-800 leading-tight">
+                                             {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
+                                          </p>
+                                          {item.type === 'car' && (item.towDispatched || item.firefightersDispatched || item.policeDispatched) && (
+                                             <div className="mt-1 flex flex-col gap-0.5">
+                                                {item.towDispatched && (
+                                                   <span className="text-[10px] font-black text-amber-600 uppercase tracking-wide block">
+                                                      🚚 Reboque: {item.towStatus === 'Tratado' ? 'Reboque enviado para o local' : item.towStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                   </span>
+                                                )}
+                                                {item.firefightersDispatched && (
+                                                   <span className="text-[10px] font-black text-red-600 uppercase tracking-wide block">
+                                                      🚒 Bombeiros: {item.firefightersStatus === 'Tratado' ? 'Bombeiros enviados para o local' : item.firefightersStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                   </span>
+                                                )}
+                                                {item.policeDispatched && (
+                                                   <span className="text-[10px] font-black text-blue-600 uppercase tracking-wide block">
+                                                      👮 Polícia: {item.policeStatus === 'Tratado' ? 'Polícia enviada para o local' : item.policeStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                   </span>
+                                                )}
+                                             </div>
+                                          )}
+                                       </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                       {item.type === 'car' ? (
+                                         <div className="flex flex-col items-end gap-2">
+                                           {item.status === 'finished' ? (
+                                             <div className="text-right">
+                                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
+                                                 🏁 Finalizado
+                                               </span>
+                                               {item.checkoutDate && item.checkoutTime && (
+                                                 <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                                                   Check-out: {item.checkoutDate} às {item.checkoutTime}
+                                                 </span>
+                                               )}
+                                             </div>
+                                           ) : (item.status === 'active' || item.checkinTime) ? (
+                                             <div className="text-right flex flex-col items-end gap-1">
+                                               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
+                                                 🛎️ Check-in às {item.checkinTime || 'Confirmado'}
+                                               </span>
+                                               <button
+                                                 onClick={() => handleCarCheckOut(item)}
+                                                 className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                               >
+                                                 Check-Out
+                                               </button>
+                                             </div>
+                                           ) : (item.status === 'accepted' || item.status === 'Confirmada') ? (
+                                             <div className="text-right">
+                                               <button
+                                                 onClick={() => handleCarCheckIn(item)}
+                                                 className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                               >
+                                                 Check-In
+                                               </button>
+                                             </div>
+                                           ) : (
+                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                               ⏳ Em Aprovação
+                                             </span>
+                                           )}
+                                         </div>
+                                       ) : (
+                                         <>
+                                           <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                           <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                              {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
+                                           </span>
+                                         </>
+                                       )}
+                                    </div>
+                                 </div>
+                                 {item.type === 'car' && (item.checkinTime || item.status === 'active') && item.status !== 'finished' && (
+                                    <div className="flex justify-end pt-1">
+                                       <button
+                                          onClick={() => handleOpenEmergencyChat(item)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                                       >
+                                          <MessageSquare size={12} />
+                                          Chat de Emergência
+                                       </button>
+                                    </div>
+                                 )}
+                              </div>
+                           ))}
+                        </div>
+ 
+                        <div className="px-6 pb-6 pt-2">
+                           <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                 {React.cloneElement(pkgInfo.icon as React.ReactElement, { size: 16, className: 'text-blue-500' })}
+                                 <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">{pkgInfo.footerText}</span>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${pkg.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                 {pkg.status === 'accepted' ? 'Reserva Finalizada' : 'Aguardar Aprovação'}
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+                   );
+                })}
 
                 {selectedCategory === 'packages' && packagesList.length === 0 && (
                    <div className="py-24 text-center">

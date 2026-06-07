@@ -27,6 +27,7 @@ import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
 import AzoresLogo from './components/AzoresLogo';
+import HotelRoomService from './components/HotelRoomService';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
 import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn, UtensilsCrossed } from 'lucide-react';
@@ -610,6 +611,24 @@ const App: React.FC = () => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [guestRestaurantId, setGuestRestaurantId] = useState<string | null>(null);
   const [guestTableId, setGuestTableId] = useState<string | null>(null);
+  
+  // --- HOTEL ROOM SERVICE QR CODES CONCIERGE ---
+  const [roomServiceAccess, setRoomServiceAccess] = useState<{ hotelId: string; roomId: string; qrToken: string } | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/hotel-room-service/')) {
+      const parts = path.split('/');
+      if (parts.length >= 5) {
+        const hotelId = parts[2];
+        const roomId = parts[3];
+        const qrToken = parts[4];
+        if (hotelId && roomId && qrToken) {
+          setRoomServiceAccess({ hotelId, roomId, qrToken });
+        }
+      }
+    }
+  }, []);
   const [guestCheckIn, setGuestCheckIn] = useState(false);
   const [guestOrderSent, setGuestOrderSent] = useState(false);
   const [guestFormData, setGuestFormData] = useState({ name: '', people: 2, phone: '', email: '' });
@@ -2109,6 +2128,20 @@ const App: React.FC = () => {
       console.error("Erro ao enviar avaliação:", err);
     }
   };
+
+  if (roomServiceAccess) {
+    return (
+      <HotelRoomService 
+        hotelId={roomServiceAccess.hotelId}
+        roomId={roomServiceAccess.roomId}
+        qrToken={roomServiceAccess.qrToken}
+        onBackToApp={() => {
+          setRoomServiceAccess(null);
+          window.history.pushState({}, '', '/');
+        }}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>

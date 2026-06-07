@@ -81,7 +81,7 @@ const ALL_BUSINESS_COLLECTIONS = [
     'marketplace_categories', 'bars', 'events', 'municipal'
 ];
 
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts'];
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts', 'hotel_room_qr_codes', 'hotel_room_requests'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
 app.get('/api/health', async (req, res) => {
@@ -807,6 +807,111 @@ app.post('/api/posts', async (req, res) => {
     db.posts.unshift(newPost);
     await writeDB(db);
     res.status(201).json(newPost);
+});
+
+// --- HOTEL ROOM SERVICE QR CODES & REQUESTS ---
+app.get('/api/hotel_room_qr_codes', async (req, res) => {
+    try {
+        const db = await readDB();
+        const hotelId = req.query.hotelId;
+        const qrCodes = db.hotel_room_qr_codes || [];
+        if (hotelId) {
+            res.json(qrCodes.filter(q => q.hotelId === hotelId));
+        } else {
+            res.json(qrCodes);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/hotel_room_qr_codes', async (req, res) => {
+    try {
+        const db = await readDB();
+        if (!db.hotel_room_qr_codes) db.hotel_room_qr_codes = [];
+        
+        const record = req.body;
+        const existingIdx = db.hotel_room_qr_codes.findIndex(q => q.roomId === record.roomId && q.hotelId === record.hotelId);
+        
+        const now = new Date().toISOString();
+        if (existingIdx > -1) {
+            db.hotel_room_qr_codes[existingIdx] = {
+                ...db.hotel_room_qr_codes[existingIdx],
+                ...record,
+                updatedAt: now
+            };
+            res.json(db.hotel_room_qr_codes[existingIdx]);
+        } else {
+            const newQr = {
+                id: `qr_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+                ...record,
+                isActive: true,
+                createdAt: now,
+                updatedAt: now
+            };
+            db.hotel_room_qr_codes.push(newQr);
+            res.status(201).json(newQr);
+        }
+        await writeDB(db);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/hotel_room_requests', async (req, res) => {
+    try {
+        const db = await readDB();
+        const hotelId = req.query.hotelId;
+        const requests = db.hotel_room_requests || [];
+        if (hotelId) {
+            res.json(requests.filter(r => r.hotelId === hotelId));
+        } else {
+            res.json(requests);
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/hotel_room_requests', async (req, res) => {
+    try {
+        const db = await readDB();
+        if (!db.hotel_room_requests) db.hotel_room_requests = [];
+        
+        const newReq = {
+            id: `req_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+            ...req.body,
+            status: 'Pendente',
+            assignedTo: 'Não Atribuído',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        db.hotel_room_requests.push(newReq);
+        await writeDB(db);
+        res.status(201).json(newReq);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/hotel_room_requests/:id', async (req, res) => {
+    try {
+        const db = await readDB();
+        const idx = (db.hotel_room_requests || []).findIndex(r => r.id === req.params.id);
+        if (idx > -1) {
+            db.hotel_room_requests[idx] = {
+                ...db.hotel_room_requests[idx],
+                ...req.body,
+                updatedAt: new Date().toISOString()
+            };
+            await writeDB(db);
+            res.json(db.hotel_room_requests[idx]);
+        } else {
+            res.status(404).send("Request not found");
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Adicionar rotas individuais para GET se necessário (para evitar 404s em refresh)
