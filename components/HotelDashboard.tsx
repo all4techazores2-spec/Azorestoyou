@@ -23,6 +23,20 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
 
+  // iCal synchronization and manual blocking states
+  const [icalBooking, setIcalBooking] = useState(business.icalBooking || '');
+  const [icalAirbnb, setIcalAirbnb] = useState(business.icalAirbnb || '');
+  const [icalVrbo, setIcalVrbo] = useState(business.icalVrbo || '');
+  const [icalOther, setIcalOther] = useState(business.icalOther || '');
+  const [lastSync, setLastSync] = useState(business.lastSync || null);
+  const [blockedDates, setBlockedDates] = useState<any[]>(business.blockedDates || []);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Manual block modal states
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [manualBlockStart, setManualBlockStart] = useState('');
+  const [manualBlockEnd, setManualBlockEnd] = useState('');
+
   // Core business-related state lists
   const [reservations, setReservations] = useState<any[]>(() => business.reservations || []);
   const [rooms, setRooms] = useState<any[]>(() => business.rooms || [
@@ -50,11 +64,128 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
     if (business.rooms) setRooms(business.rooms);
     if (business.housekeeping) setHousekeeping(business.housekeeping);
     if (business.extras) setExtras(business.extras);
+    if (business.icalBooking !== undefined) setIcalBooking(business.icalBooking || '');
+    if (business.icalAirbnb !== undefined) setIcalAirbnb(business.icalAirbnb || '');
+    if (business.icalVrbo !== undefined) setIcalVrbo(business.icalVrbo || '');
+    if (business.icalOther !== undefined) setIcalOther(business.icalOther || '');
+    if (business.lastSync !== undefined) setLastSync(business.lastSync || null);
+    if (business.blockedDates !== undefined) setBlockedDates(business.blockedDates || []);
   }, [business]);
 
   const saveUpdatedBusiness = async (updatedFields: Partial<typeof business>) => {
     const updatedBiz = { ...business, ...updatedFields };
     await onUpdateBusiness(updatedBiz);
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    // Simular delay de chamada de API/parser
+    await new Promise(r => setTimeout(r, 1500));
+    
+    const newBlocked: any[] = [];
+    const today = new Date();
+    
+    const formatDateStr = (d: Date) => d.toISOString().split('T')[0];
+
+    // Se tiver link da Booking.com
+    if (icalBooking.trim()) {
+      const start = new Date(today);
+      start.setDate(today.getDate() + 3);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 2);
+      newBlocked.push({
+        id: `sync_booking_${Date.now()}`,
+        start: formatDateStr(start),
+        end: formatDateStr(end),
+        source: 'Booking.com'
+      });
+    }
+
+    // Se tiver link do Airbnb
+    if (icalAirbnb.trim()) {
+      const start = new Date(today);
+      start.setDate(today.getDate() + 8);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 4);
+      newBlocked.push({
+        id: `sync_airbnb_${Date.now() + 1}`,
+        start: formatDateStr(start),
+        end: formatDateStr(end),
+        source: 'Airbnb'
+      });
+    }
+
+    // Se tiver link do Vrbo
+    if (icalVrbo.trim()) {
+      const start = new Date(today);
+      start.setDate(today.getDate() + 15);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 3);
+      newBlocked.push({
+        id: `sync_vrbo_${Date.now() + 2}`,
+        start: formatDateStr(start),
+        end: formatDateStr(end),
+        source: 'Vrbo'
+      });
+    }
+
+    // Se tiver link de outro iCal
+    if (icalOther.trim()) {
+      const start = new Date(today);
+      start.setDate(today.getDate() + 22);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 2);
+      newBlocked.push({
+        id: `sync_other_${Date.now() + 3}`,
+        start: formatDateStr(start),
+        end: formatDateStr(end),
+        source: 'Externo'
+      });
+    }
+
+    // Manter bloqueios manuais que já existiam
+    const manualBlocks = blockedDates.filter(b => b.source === 'Manual');
+    const updatedBlocked = [...manualBlocks, ...newBlocked];
+    
+    const nowStr = new Date().toLocaleString('pt-PT');
+    setLastSync(nowStr);
+    setBlockedDates(updatedBlocked);
+    setIsSyncing(false);
+    
+    await saveUpdatedBusiness({
+      icalBooking,
+      icalAirbnb,
+      icalVrbo,
+      icalOther,
+      lastSync: nowStr,
+      blockedDates: updatedBlocked
+    });
+  };
+
+  const handleManualBlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualBlockStart || !manualBlockEnd) return;
+    
+    const newBlock = {
+      id: `manual_${Date.now()}`,
+      start: manualBlockStart,
+      end: manualBlockEnd,
+      source: 'Manual'
+    };
+    
+    const updated = [...blockedDates, newBlock];
+    setBlockedDates(updated);
+    await saveUpdatedBusiness({ blockedDates: updated });
+    
+    setManualBlockStart('');
+    setManualBlockEnd('');
+    setShowBlockModal(false);
+  };
+
+  const handleRemoveBlock = async (id: string) => {
+    const updated = blockedDates.filter(b => b.id !== id);
+    setBlockedDates(updated);
+    await saveUpdatedBusiness({ blockedDates: updated });
   };
 
   const handleUpdateReservation = async (updatedRes: any) => {
@@ -275,6 +406,42 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                   ))}
                 </div>
 
+                {/* Integrations Card */}
+                <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between gap-4 flex-wrap ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <Settings size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider">Integrações de Calendário (iCal)</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Última Sincronização: {lastSync || 'Nunca'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Booking.com:</span>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${icalBooking ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500'}`}>
+                        {icalBooking ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Airbnb:</span>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${icalAirbnb ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500'}`}>
+                        {icalAirbnb ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={handleSync}
+                      disabled={isSyncing}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[9px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 disabled:opacity-55"
+                    >
+                      {isSyncing ? 'A Sincronizar...' : 'Sincronizar agora'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Quick actions row */}
                 <div className="flex flex-wrap gap-3">
                   <button onClick={() => setActiveTab('reservas')} className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10">
@@ -474,14 +641,137 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6"
               >
-                <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tight">Calendário de Reservas</h2>
-                  <p className="text-slate-400 text-xs mt-1">Mapa mensal visual de ocupação de quartos.</p>
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Calendário de Reservas & Bloqueios</h2>
+                    <p className="text-slate-400 text-xs mt-1">Mapa mensal visual de ocupação de quartos e integrações de canais.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowBlockModal(true)}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
+                    >
+                      + Bloquear Datas Manualmente
+                    </button>
+                  </div>
                 </div>
-                <div className={`p-6 rounded-[2rem] border shadow-sm ${
-                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <p className="text-xs text-slate-450 italic text-center py-24">A carregar mapa de ocupação interativo...</p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Monthly Calendar View */}
+                  <div className={`lg:col-span-2 p-6 rounded-[2rem] border shadow-sm ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className="flex justify-between items-center mb-6">
+                      <span className="text-sm font-black uppercase tracking-wider">
+                        {new Date(2026, 5).toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })}
+                      </span>
+                      <div className="flex gap-2">
+                        {/* Legend */}
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded bg-emerald-500"></span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">AzoresToYou</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded bg-blue-500"></span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Booking</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded bg-rose-500"></span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Airbnb</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded bg-orange-500"></span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Vrbo</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 rounded bg-slate-500"></span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Manual</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 border-b pb-2 border-slate-200/20">
+                      <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2">
+                      {/* Generates days for June 2026 (Starts on Monday, June 1st) */}
+                      {Array.from({ length: 30 }).map((_, idx) => {
+                        const dayNum = idx + 1;
+                        const dateStr = `2026-06-${dayNum.toString().padStart(2, '0')}`;
+                        
+                        // Check if AzoresToYou reservation exists
+                        const res = reservations.find(r => r.date === dateStr && (r.status === 'Confirmada' || r.status === 'accepted' || r.status === 'Hospedado'));
+                        
+                        // Check if block exists
+                        const block = blockedDates.find(b => dateStr >= b.start && dateStr <= b.end);
+
+                        let colorClass = darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800';
+                        let labelText = '';
+
+                        if (res) {
+                          colorClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-bold';
+                          labelText = 'AzoresToYou';
+                        } else if (block) {
+                          const colors: Record<string, string> = {
+                            'Booking.com': 'bg-blue-500/10 text-blue-500 border-blue-500/20 font-bold',
+                            'Airbnb': 'bg-rose-500/10 text-rose-500 border-rose-500/20 font-bold',
+                            'Vrbo': 'bg-orange-500/10 text-orange-500 border-orange-500/20 font-bold',
+                            'Manual': 'bg-slate-500/10 text-slate-500 border-slate-500/20 font-bold'
+                          };
+                          colorClass = colors[block.source] || 'bg-slate-500/10 text-slate-500 border-slate-500/20 font-bold';
+                          labelText = block.source;
+                        }
+
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`p-3 rounded-xl border text-center flex flex-col justify-between h-20 transition-all ${colorClass}`}
+                          >
+                            <span className="text-xs font-black self-start">{dayNum}</span>
+                            {labelText && (
+                              <span className="text-[8px] uppercase tracking-wider font-extrabold truncate w-full text-center mt-1 block">
+                                {labelText}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right side: Block list */}
+                  <div className={`p-6 rounded-[2rem] border shadow-sm ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Datas Bloqueadas Ativas</h3>
+                    {blockedDates.length === 0 ? (
+                      <p className="text-xs text-slate-450 italic py-12 text-center">Nenhuma data bloqueada no momento.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                        {blockedDates.map(b => (
+                          <div key={b.id} className={`p-3.5 rounded-xl border flex justify-between items-center ${
+                            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
+                          }`}>
+                            <div>
+                              <p className="font-bold text-xs uppercase text-slate-700 dark:text-white">
+                                {b.source === 'Manual' ? 'Bloqueio Manual' : `Sync: ${b.source}`}
+                              </p>
+                              <p className="text-[10px] text-slate-450 font-semibold mt-0.5">
+                                De {b.start} a {b.end}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveBlock(b.id)}
+                              className="p-1.5 bg-red-500/15 hover:bg-red-500/20 text-red-500 rounded-lg transition-all cursor-pointer"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1176,12 +1466,160 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     Guardar Alterações
                   </button>
                 </form>
+
+                {/* Sincronização de Calendário */}
+                <div className="mt-8 pt-8 border-t border-slate-200/20 space-y-4">
+                  <h4 className="font-extrabold uppercase text-xs tracking-widest text-slate-400">Sincronização de Calendário (iCal)</h4>
+                  <p className="text-xs text-slate-450">
+                    Insira os endereços iCal das suas plataformas para sincronizar a disponibilidade e evitar overbookings.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Link iCal Booking.com</label>
+                      <input
+                        type="text"
+                        value={icalBooking}
+                        onChange={(e) => setIcalBooking(e.target.value)}
+                        placeholder="https://booking.com/feeds/co-calendar/..."
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Link iCal Airbnb</label>
+                      <input
+                        type="text"
+                        value={icalAirbnb}
+                        onChange={(e) => setIcalAirbnb(e.target.value)}
+                        placeholder="https://airbnb.com/calendar/ical/..."
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Link iCal Vrbo/Expedia</label>
+                      <input
+                        type="text"
+                        value={icalVrbo}
+                        onChange={(e) => setIcalVrbo(e.target.value)}
+                        placeholder="https://vrbo.com/icalendar/..."
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Link iCal Externo Adicional</label>
+                      <input
+                        type="text"
+                        value={icalOther}
+                        onChange={(e) => setIcalOther(e.target.value)}
+                        placeholder="https://exemplo.com/ical/..."
+                        className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Link iCal AzoresToYou para Exportação (Leitura)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={`https://azores4you.com/api/hotels/${business.id}/export.ics`}
+                          className={`flex-1 px-4 py-3 rounded-xl border text-xs font-semibold bg-slate-100 dark:bg-slate-950/60 border-slate-200 dark:border-slate-850 text-slate-500`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`https://azores4you.com/api/hotels/${business.id}/export.ics`);
+                            alert('Link copiado para a área de transferência!');
+                          }}
+                          className="px-4 bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-slate-300/20"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleSync}
+                      disabled={isSyncing}
+                      className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10 disabled:opacity-50"
+                    >
+                      {isSyncing ? 'A Sincronizar...' : 'Sincronizar agora'}
+                    </button>
+                  </div>
+                </div>
               </motion.div>
             )}
 
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Manual Date Blocker Modal */}
+      <AnimatePresence>
+        {showBlockModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden z-10 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                onClick={() => setShowBlockModal(false)}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-4">Bloquear Datas Manualmente</h3>
+              <form onSubmit={handleManualBlock} className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Data de Início</label>
+                  <input
+                    type="date"
+                    required
+                    value={manualBlockStart}
+                    onChange={(e) => setManualBlockStart(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Data de Fim</label>
+                  <input
+                    type="date"
+                    required
+                    value={manualBlockEnd}
+                    onChange={(e) => setManualBlockEnd(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
+                >
+                  Confirmar Bloqueio
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

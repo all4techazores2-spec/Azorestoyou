@@ -81,9 +81,21 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   };
 
   useEffect(() => {
-    setHotelUnavailableDates(getUnavailableDates(10));
+    const dates = getUnavailableDates(10);
+    if (currentItinerary.hotel && currentItinerary.hotel.blockedDates) {
+      currentItinerary.hotel.blockedDates.forEach((b: any) => {
+        const start = new Date(b.start);
+        const end = new Date(b.end);
+        const curr = new Date(start);
+        while (curr <= end) {
+          dates.push(new Date(curr));
+          curr.setDate(curr.getDate() + 1);
+        }
+      });
+    }
+    setHotelUnavailableDates(dates);
     setCarUnavailableDates(getUnavailableDates(20));
-  }, []);
+  }, [currentItinerary.hotel]);
 
   useEffect(() => {
     if (step === 'accommodation') {
@@ -195,6 +207,24 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   };
 
   const handleAccommodationConfirm = (hotel: Hotel, selectedRoom?: any, rentType?: 'room' | 'house') => {
+    if (hotel.blockedDates && currentItinerary.hotelStartDate && currentItinerary.hotelEndDate) {
+      const start = new Date(currentItinerary.hotelStartDate);
+      const end = new Date(currentItinerary.hotelEndDate);
+      const hasOverlap = hotel.blockedDates.some((b: any) => {
+        const bStart = new Date(b.start);
+        const bEnd = new Date(b.end);
+        return (start <= bEnd && end >= bStart);
+      });
+      
+      if (hasOverlap) {
+        alert(language === 'pt' 
+          ? 'Este alojamento não está disponível nas datas selecionadas devido a bloqueios ou reservas externas (Booking/Airbnb).' 
+          : 'This accommodation is not available on the selected dates due to blocks or external bookings (Booking/Airbnb).'
+        );
+        return;
+      }
+    }
+
     onUpdateItinerary({ 
       ...currentItinerary, 
       hotel,
