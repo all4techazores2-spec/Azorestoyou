@@ -7,8 +7,11 @@ import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
 import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
-import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users, ChevronDown, ChevronUp, Search, ArrowLeft } from 'lucide-react';
 import { getTranslation } from '../translations';
+import { crpBuses } from '../data/crp_buses';
+import { varelaBuses } from '../data/varela_buses';
+import { avmBuses } from '../data/avm_buses';
 
 interface ExploreSectionProps {
   category: ExploreCategory;
@@ -125,6 +128,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [showBusOptionsModal, setShowBusOptionsModal] = useState(false);
   const [busModalStep, setBusModalStep] = useState<'options' | 'schedules' | 'payment'>('options');
   const [selectedTicketType, setSelectedTicketType] = useState<string | null>(null);
+  const [viewingCompanyId, setViewingCompanyId] = useState<string | null>(null);
+  const [routeSearchQuery, setRouteSearchQuery] = useState<string>('');
+  const [expandedRoutes, setExpandedRoutes] = useState<Record<string, boolean>>({});
   const [selectedDayType, setSelectedDayType] = useState<'weekdays' | 'saturdays' | 'sundays'>(() => {
     const day = new Date().getDay();
     if (day === 0) return 'sundays';
@@ -345,23 +351,273 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const renderBusPlanner = () => {
     const currentIsland = targetIsland || 'PDL';
+    const fallbackBusSchedules = [...crpBuses, ...varelaBuses, ...avmBuses];
+    const activeBusSchedules = (busSchedules && busSchedules.length > 0) ? busSchedules : fallbackBusSchedules;
     
-    // Companies list for cards
+    // Grouping schedules into routes in the exact requested structure
+    const getRoutesForCompany = (companyId: string, schedules: BusSchedule[]) => {
+      const matchingSchedules = schedules.filter(s => {
+        const coName = s.company.toLowerCase();
+        if (companyId === 'crp') return coName.includes('crp');
+        if (companyId === 'varela') return coName.includes('varela');
+        if (companyId === 'avm') return coName.includes('micaelense') || coName === 'avm';
+        return false;
+      });
+
+      const routesMap: Record<string, any> = {};
+
+      matchingSchedules.forEach(s => {
+        const towns = [s.origin, s.destination].sort();
+        const routeKey = `${towns[0]} - ${towns[1]}`;
+
+        if (!routesMap[routeKey]) {
+          routesMap[routeKey] = {
+            id: `${companyId}-${s.id.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            from: towns[0] === 'Ponta Delgada' ? towns[0] : towns[1],
+            to: towns[0] === 'Ponta Delgada' ? towns[1] : towns[0],
+            outbound: { weekdays: [], saturday: [], sunday: [] },
+            inbound: { weekdays: [], saturday: [], sunday: [] }
+          };
+        }
+
+        const isOutbound = s.origin === routesMap[routeKey].from;
+        const target = isOutbound ? routesMap[routeKey].outbound : routesMap[routeKey].inbound;
+
+        if (s.schedule) {
+          target.weekdays = s.schedule.weekdays || [];
+          target.saturday = s.schedule.saturdays || s.schedule.saturday || [];
+          target.sunday = s.schedule.sundays || s.schedule.sunday || [];
+        } else {
+          // Fallback to times list if no schedule field is defined
+          target.weekdays = s.times || [];
+        }
+      });
+
+      return Object.values(routesMap);
+    };
+
+    // Helper to calculate the next departure time
+    const getNextDeparture = (times: string[]) => {
+      if (!times || times.length === 0) return null;
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentTimeString = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+
+      const cleanTimes = times.map(t => {
+        const clean = t.replace(/\([^)]*\)/g, '').trim();
+        return { original: t, clean };
+      });
+
+      const upcoming = cleanTimes.filter(t => t.clean >= currentTimeString);
+      if (upcoming.length > 0) {
+        return upcoming[0].original;
+      }
+      return null;
+    };
+
+    // 1. DETAIL VIEW FOR SELECTED BUS COMPANY
+    if (viewingCompanyId) {
+      const busCompaniesList = [
+        { id: 'crp', name: 'CRP', fullName: 'Caetano Raposo & Pereiras', color: '#4F46E5', iconColor: 'bg-indigo-50 text-indigo-600 border-indigo-200' },
+        { id: 'varela', name: 'Varela', fullName: 'Auto Viação Varela', color: '#E91E63', iconColor: 'bg-pink-50 text-pink-650 border-pink-200' },
+        { id: 'avm', name: 'AVM', fullName: 'Auto Viação Micaelense', color: '#16A085', iconColor: 'bg-teal-50 text-teal-650 border-teal-200' }
+      ];
+
+      const currentCo = busCompaniesList.find(c => c.id === viewingCompanyId) || busCompaniesList[0];
+      const allRoutes = getRoutesForCompany(currentCo.id, activeBusSchedules);
+
+      // Filter routes by search query (origin or destination)
+      const filteredRoutes = allRoutes.filter(r => 
+        r.from.toLowerCase().includes(routeSearchQuery.toLowerCase()) ||
+        r.to.toLowerCase().includes(routeSearchQuery.toLowerCase())
+      );
+
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-300">
+          {/* Header Section */}
+          <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setViewingCompanyId(null)}
+                  className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl border border-slate-200/50 transition-all active:scale-95 cursor-pointer"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${currentCo.iconColor}`}>
+                    <Bus size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight leading-none">{currentCo.fullName}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Companhia de Autocarros</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Search Box */}
+              <div className="relative w-full md:max-w-xs group">
+                <Search className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 group-focus-within:text-pink-500 transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="Pesquisar origem ou destino..."
+                  value={routeSearchQuery}
+                  onChange={(e) => setRouteSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-semibold text-xs text-slate-700"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Routes List */}
+          <div className="space-y-4">
+            {filteredRoutes.length === 0 ? (
+              <div className="bg-white p-12 rounded-[2rem] border border-slate-100 text-center">
+                <p className="text-slate-400 font-bold text-sm">Nenhuma rota encontrada para a pesquisa atual.</p>
+              </div>
+            ) : (
+              filteredRoutes.map((route: any) => {
+                const isExpanded = !!expandedRoutes[route.id];
+                const toggleExpanded = () => {
+                  setExpandedRoutes(prev => ({ ...prev, [route.id]: !prev[route.id] }));
+                };
+
+                // Helper to render hours with Next Departure highlight
+                const renderHoursList = (hours: string[]) => {
+                  if (!hours || hours.length === 0) {
+                    return (
+                      <span className="text-[10px] font-bold text-slate-400 italic block mt-1">
+                        Sem horários disponíveis para hoje
+                      </span>
+                    );
+                  }
+
+                  const nextOut = getNextDeparture(hours);
+
+                  return (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {hours.map((h, idx) => {
+                        const isNext = h === nextOut;
+                        return (
+                          <span 
+                            key={idx}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wide border transition-all ${
+                              isNext 
+                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/10 scale-105' 
+                                : 'bg-slate-50 text-slate-700 border-slate-200/60'
+                            }`}
+                            title={isNext ? 'Próxima saída' : undefined}
+                          >
+                            {h} {isNext && <span className="text-[7px] uppercase bg-white/20 px-1 py-0.5 rounded ml-0.5">Próxima</span>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  );
+                };
+
+                return (
+                  <div 
+                    key={route.id}
+                    className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md"
+                  >
+                    {/* Header/Banner clickable */}
+                    <div 
+                      onClick={toggleExpanded}
+                      className="p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-200/50 shrink-0">
+                          <Bus size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Rota da Companhia</p>
+                          <p className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 flex-wrap">
+                            <span>{route.from}</span>
+                            <span className="text-slate-300">➔</span>
+                            <span>{route.to}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-2 hover:bg-slate-100 rounded-full transition-all text-slate-400">
+                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </div>
+                    </div>
+
+                    {/* Expandable Schedules Body */}
+                    {isExpanded && (
+                      <div className="border-t border-slate-100 p-6 bg-slate-50/30 space-y-6">
+                        {/* OUTBOUND / IDA */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
+                            <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-650 rounded text-[9px] font-black uppercase tracking-wider">Ida</span>
+                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">{route.from} ➔ {route.to}</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dias Úteis</span>
+                              {renderHoursList(route.outbound.weekdays)}
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Sábados</span>
+                              {renderHoursList(route.outbound.saturday)}
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Domingos / Feriados</span>
+                              {renderHoursList(route.outbound.sunday)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* INBOUND / VOLTA */}
+                        <div className="space-y-4 pt-2">
+                          <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
+                            <span className="px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-650 rounded text-[9px] font-black uppercase tracking-wider">Volta</span>
+                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">{route.to} ➔ {route.from}</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dias Úteis</span>
+                              {renderHoursList(route.inbound.weekdays)}
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Sábados</span>
+                              {renderHoursList(route.inbound.saturday)}
+                            </div>
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Domingos / Feriados</span>
+                              {renderHoursList(route.inbound.sunday)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // 2. MAIN PLANNER & CARDS GRID VIEW (DEFAULT)
     const busCompanies = [
-      { id: 'CRP', name: 'CRP', desc: 'Caetano, Raposo & Pereiras', color: 'from-blue-600 to-indigo-600' },
-      { id: 'Varela', name: 'Varela', desc: 'Auto Viação Varela', color: 'from-pink-600 to-rose-600' },
-      { id: 'Auto Viação Micaelense', name: 'AVM', desc: 'Auto Viação Micaelense', color: 'from-emerald-600 to-teal-600' }
+      { id: 'crp', name: 'CRP', desc: 'Caetano, Raposo & Pereiras', color: 'from-blue-600 to-indigo-600' },
+      { id: 'varela', name: 'Varela', desc: 'Auto Viação Varela', color: 'from-pink-600 to-rose-600' },
+      { id: 'avm', name: 'AVM', desc: 'Auto Viação Micaelense', color: 'from-emerald-600 to-teal-600' }
     ];
     
-    // Derive locations ONLY from actual schedules for this island
     const availableLocations = Array.from(new Set(
-      busSchedules
+      activeBusSchedules
         .filter(s => s.island === currentIsland)
         .flatMap(s => [s.origin, s.destination])
     )).sort();
 
-    // Find companies that match the selected route
-    const matchingSchedules = busSchedules.filter(s => {
+    const matchingSchedules = activeBusSchedules.filter(s => {
       if (s.island !== currentIsland) return false;
       if (!busOrigin || !busDestination) return false;
       const sOrigin = s.origin.toLowerCase();
@@ -386,12 +642,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <button 
                 key={c.id}
                 onClick={() => {
-                  setBusCompany(c.id);
-                  setBusOrigin('');
-                  setBusDestination('');
+                  setViewingCompanyId(c.id);
+                  setRouteSearchQuery('');
                 }}
-                className={`relative overflow-hidden rounded-[2.5rem] p-8 text-left transition-all duration-500 group
-                  ${busCompany === c.id ? 'ring-4 ring-pink-500 ring-offset-4 scale-[1.02]' : 'hover:scale-[1.02] active:scale-95'}`}
+                className="relative overflow-hidden rounded-[2.5rem] p-8 text-left transition-all duration-500 group hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm hover:shadow-lg border border-slate-100/50"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${c.color} opacity-90 group-hover:opacity-100 transition-opacity`}></div>
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
@@ -502,7 +756,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                    <button 
                      onClick={() => { setBusModalStep('options'); setShowBusOptionsModal(true); }}
                      disabled={!busOrigin || !busDestination || matchingSchedules.length === 0}
-                     className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3
+                     className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 cursor-pointer
                        ${(!busOrigin || !busDestination || matchingSchedules.length === 0) 
                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none' 
                          : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:scale-[1.02] hover:shadow-pink-500/30 active:scale-95'}`}
@@ -528,7 +782,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <p className="text-slate-400 text-sm mt-1">Utilize os seus créditos para adquirir bilhetes e passes turísticos diretamente na app.</p>
            </div>
            <div className="relative z-10">
-              <button className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all shadow-xl">Saiba Mais</button>
+              <button className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all shadow-xl cursor-pointer">Saiba Mais</button>
            </div>
         </div>
       </div>

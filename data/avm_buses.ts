@@ -1,5 +1,5 @@
 
-import { BusSchedule } from './types';
+import { BusSchedule } from '../types';
 
 const avmBuses: BusSchedule[] = [
   // 1. P. Delgada <-> Sete Cidades

@@ -1,5 +1,5 @@
 
-import { BusSchedule } from './types';
+import { BusSchedule } from '../types';
 
 const varelaBuses: BusSchedule[] = [
   // 1. P. Delgada <-> Fajã de Baixo

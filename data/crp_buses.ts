@@ -1,5 +1,5 @@
 
-import { BusSchedule } from './types';
+import { BusSchedule } from '../types';
 
 const crpBuses: BusSchedule[] = [
   // 1. P. Delgada <-> Ribeira Grande
