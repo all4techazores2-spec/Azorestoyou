@@ -1234,12 +1234,12 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
         )}
 
         {chatReservation && (
-          <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="fixed inset-0 z-[210] flex items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-white/95 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] max-w-md w-full text-slate-800 shadow-2xl relative flex flex-col h-[75vh] max-h-[600px]"
+              className="bg-white/95 backdrop-blur-xl border border-white p-4 md:p-6 md:rounded-[2.5rem] rounded-none w-full h-full md:h-[85vh] md:max-w-xl md:max-h-[750px] text-slate-800 shadow-2xl relative flex flex-col"
             >
               {/* Header */}
               <div className="flex justify-between items-center pb-4 border-b border-slate-100 shrink-0">
@@ -1256,9 +1256,9 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                 </div>
                 <button
                   onClick={() => setChatReservation(null)}
-                  className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:text-slate-750 flex items-center justify-center hover:bg-slate-200 transition-all cursor-pointer shadow-sm border border-slate-200/20"
+                  className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center hover:bg-slate-200 transition-all cursor-pointer shadow-md border border-slate-200/50 shrink-0"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 

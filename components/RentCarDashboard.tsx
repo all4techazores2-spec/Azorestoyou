@@ -2282,28 +2282,43 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                     {reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).length === 0 ? (
                       <p className="text-xs text-slate-400 italic text-center py-6">Sem avarias comunicadas.</p>
                     ) : (
-                      reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).map(res => (
-                        <button
-                          key={res.id}
-                          onClick={() => setSelectedResId(res.id)}
-                          className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between ${
-                            selectedResId === res.id
-                              ? 'bg-amber-600/10 border-amber-500/30 text-amber-650'
-                              : darkMode
-                                ? 'border-slate-800 hover:bg-slate-800/50'
-                                : 'border-slate-100 hover:bg-slate-55'
-                          }`}
-                        >
-                          <div>
-                            <p className="font-bold text-xs leading-none text-slate-800 dark:text-white mb-1">
-                              ⚠️ {res.customerName || res.client || 'Cliente'}
-                            </p>
-                            <span className="text-[10px] text-slate-400 uppercase font-black block">
-                              {res.car?.model || res.vehicle} · {res.id}
-                            </span>
-                          </div>
-                        </button>
-                      ))
+                      reservations.filter(r => r.chatMessages && r.chatMessages.some((msg: any) => msg.text && msg.text.includes('⚠️ [REPORTE DE AVARIA]'))).map(res => {
+                        const avariaMsg = res.chatMessages?.find((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'));
+                        const avariaText = avariaMsg ? avariaMsg.text.replace('⚠️ [REPORTE DE AVARIA]', '').trim() : 'Avaria geral';
+                        return (
+                          <button
+                            key={res.id}
+                            onClick={() => setSelectedResId(res.id)}
+                            className={`w-full text-left p-3 rounded-xl border transition-all flex flex-col ${
+                              selectedResId === res.id
+                                ? 'bg-amber-600/10 border-amber-500/30 text-amber-650'
+                                : darkMode
+                                  ? 'border-slate-800 hover:bg-slate-800/50'
+                                  : 'border-slate-100 hover:bg-slate-55'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start w-full">
+                              <div>
+                                <p className="font-bold text-xs leading-none text-slate-800 dark:text-white mb-1">
+                                  ⚠️ {res.customerName || res.client || 'Cliente'}
+                                </p>
+                                <span className="text-[10px] text-slate-400 uppercase font-black block">
+                                  {res.car?.model || res.vehicle} · {res.id}
+                                </span>
+                              </div>
+                            </div>
+
+                            {res.towDispatched && (
+                              <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[9px] text-amber-600 font-bold space-y-1 w-full text-left">
+                                <p className="text-[10px]">🚚 REBOQUE DESPACHADO</p>
+                                <p>ID: {res.id}</p>
+                                <p className="truncate">Avaria: {avariaText}</p>
+                                <p>Data/Hora: {new Date(res.towDispatchedAt).toLocaleString('pt-PT')}</p>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -2312,76 +2327,179 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 } shadow-sm min-h-0`}>
                   {selectedRes ? (
-                    <div className="flex-1 flex flex-col min-h-0 p-6 space-y-4 overflow-y-auto">
-                      <div className="border-b pb-3 flex justify-between items-center">
-                        <div>
-                          <h4 className="font-black text-sm uppercase tracking-tight">
-                            Avaria na Viatura: {selectedRes.car?.model || selectedRes.vehicle}
-                          </h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
-                            Cliente: {selectedRes.customerName || selectedRes.client} · Tel: {selectedRes.customerPhone || selectedRes.phone || 'N/A'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            if (confirm("Marcar esta avaria como resolvida e fechar o reporte?")) {
-                              const updatedMessages = [...(selectedRes.chatMessages || []), {
-                                sender: 'admin',
-                                text: "✅ [AVARIA RESOLVIDA] Viatura verificada e problema resolvido pelo staff.",
-                                timestamp: new Date().toISOString()
-                              }];
-                              const updatedRes = {
-                                ...selectedRes,
-                                chatMessages: updatedMessages
-                              };
-                              await handleUpdateReservation(updatedRes);
-                              alert("Avaria marcada como resolvida!");
-                            }
-                          }}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
-                        >
-                          Marcar como Resolvido
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl">
-                          <p className="text-xs font-black uppercase tracking-wider mb-2">Relatórios Enviados pelo Cliente:</p>
-                          <div className="space-y-2">
-                            {selectedRes.chatMessages.filter((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]')).map((msg: any, idx: number) => (
-                              <div key={idx} className="text-xs border-b border-red-500/10 pb-2 last:border-0 last:pb-0">
-                                <p className="font-bold whitespace-pre-wrap">{msg.text}</p>
-                                <span className="text-[9px] opacity-75 mt-1 block">
-                                  Enviado em: {new Date(msg.timestamp).toLocaleString('pt-PT')}
-                                </span>
-                              </div>
-                            ))}
+                    selectedRes.firefightersDispatched || selectedRes.policeDispatched ? (
+                      <div className="flex-1 flex flex-col min-h-0 p-6 space-y-6 overflow-y-auto">
+                        <div className="border-b pb-4 flex justify-between items-start">
+                          <div>
+                            <h3 className="text-lg font-black uppercase tracking-tight text-red-650 dark:text-red-500 flex items-center gap-2">
+                              🚨 Serviços de Emergência mais Próximos
+                            </h3>
+                            <p className="text-xs text-slate-450 mt-1 font-bold">
+                              Localização Coordenadas: {(() => {
+                                const coords = parseCoordinates(selectedRes.chatMessages);
+                                return coords ? `${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}` : 'Não enviada ou N/A';
+                              })()}
+                            </p>
                           </div>
+                          <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider animate-pulse">
+                            Estado: Pendente
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {selectedRes.firefightersDispatched && (
+                            <div className={`p-6 rounded-3xl border flex flex-col justify-between ${
+                              darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                            } space-y-4 shadow-sm`}>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-black uppercase text-red-500 tracking-wider">🚒 Bombeiros</span>
+                                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase">
+                                    Pendente
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-850 dark:text-white">Estação de Bombeiros Próxima</h4>
+                                <p className="text-xs text-slate-450 leading-relaxed font-bold">
+                                  {(() => {
+                                    const coords = parseCoordinates(selectedRes.chatMessages);
+                                    const contacts = getNearestEmergencyContacts(coords);
+                                    return contacts.bombeiros;
+                                  })()}
+                                </p>
+                              </div>
+                              <a
+                                href={`tel:${(() => {
+                                  const coords = parseCoordinates(selectedRes.chatMessages);
+                                  return getNearestEmergencyContacts(coords).bombeirosPhone;
+                                })()}`}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-red-500/20 w-fit cursor-pointer"
+                              >
+                                📞 Telefonar
+                              </a>
+                            </div>
+                          )}
+
+                          {selectedRes.policeDispatched && (
+                            <div className={`p-6 rounded-3xl border flex flex-col justify-between ${
+                              darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                            } space-y-4 shadow-sm`}>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-black uppercase text-blue-500 tracking-wider">👮 Polícia</span>
+                                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase">
+                                    Pendente
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-855 dark:text-white">Esquadra de Polícia Próxima</h4>
+                                <p className="text-xs text-slate-450 leading-relaxed font-bold">
+                                  {(() => {
+                                    const coords = parseCoordinates(selectedRes.chatMessages);
+                                    const contacts = getNearestEmergencyContacts(coords);
+                                    return contacts.policia;
+                                  })()}
+                                </p>
+                              </div>
+                              <a
+                                href={`tel:${(() => {
+                                  const coords = parseCoordinates(selectedRes.chatMessages);
+                                  return getNearestEmergencyContacts(coords).policiaPhone;
+                                })()}`}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-500/20 w-fit cursor-pointer"
+                              >
+                                📞 Telefonar
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         <div className="border-t pt-4">
-                          <p className="text-xs font-black uppercase tracking-wider mb-3">Conversa de Emergência Relacionada:</p>
-                          <div className="space-y-3 max-h-60 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/20">
-                            {selectedRes.chatMessages.map((msg: any, idx: number) => (
-                              <div key={idx} className={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[85%] rounded-2xl p-3 text-xs font-semibold ${
-                                  msg.sender === 'admin' 
-                                    ? 'bg-blue-600 text-white rounded-tr-none' 
-                                    : darkMode
-                                      ? 'bg-slate-800 text-slate-100 rounded-tl-none'
-                                      : 'bg-slate-200 text-slate-800 rounded-tl-none'
-                                }`}>
-                                  {msg.text}
+                          <button
+                            onClick={async () => {
+                              const updatedRes = {
+                                ...selectedRes,
+                                firefightersDispatched: false,
+                                policeDispatched: false
+                              };
+                              await handleUpdateReservation(updatedRes);
+                            }}
+                            className="px-4 py-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-650 dark:text-slate-350 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                          >
+                            Voltar ao Relatório de Avaria
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col min-h-0 p-6 space-y-4 overflow-y-auto">
+                        <div className="border-b pb-3 flex justify-between items-center">
+                          <div>
+                            <h4 className="font-black text-sm uppercase tracking-tight">
+                              Avaria na Viatura: {selectedRes.car?.model || selectedRes.vehicle}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                              Cliente: {selectedRes.customerName || selectedRes.client} · Tel: {selectedRes.customerPhone || selectedRes.phone || 'N/A'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (confirm("Marcar esta avaria como resolvida e fechar o reporte?")) {
+                                const updatedMessages = [...(selectedRes.chatMessages || []), {
+                                  sender: 'admin',
+                                  text: "✅ [AVARIA RESOLVIDA] Viatura verificada e problema resolvido pelo staff.",
+                                  timestamp: new Date().toISOString()
+                                }];
+                                const updatedRes = {
+                                  ...selectedRes,
+                                  chatMessages: updatedMessages
+                                };
+                                await handleUpdateReservation(updatedRes);
+                                alert("Avaria marcada como resolvida!");
+                              }
+                            }}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+                          >
+                            Marcar como Resolvido
+                          </button>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl">
+                            <p className="text-xs font-black uppercase tracking-wider mb-2">Relatórios Enviados pelo Cliente:</p>
+                            <div className="space-y-2">
+                              {selectedRes.chatMessages.filter((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]')).map((msg: any, idx: number) => (
+                                <div key={idx} className="text-xs border-b border-red-500/10 pb-2 last:border-0 last:pb-0">
+                                  <p className="font-bold whitespace-pre-wrap">{msg.text}</p>
+                                  <span className="text-[9px] opacity-75 mt-1 block">
+                                    Enviado em: {new Date(msg.timestamp).toLocaleString('pt-PT')}
+                                  </span>
                                 </div>
-                                <span className="text-[8px] text-slate-400 mt-1">
-                                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="border-t pt-4">
+                            <p className="text-xs font-black uppercase tracking-wider mb-3">Conversa de Emergência Relacionada:</p>
+                            <div className="space-y-3 max-h-60 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/20">
+                              {selectedRes.chatMessages.map((msg: any, idx: number) => (
+                                <div key={idx} className={`flex flex-col ${msg.sender === 'admin' ? 'items-end' : 'items-start'}`}>
+                                  <div className={`max-w-[85%] rounded-2xl p-3 text-xs font-semibold ${
+                                    msg.sender === 'admin' 
+                                      ? 'bg-blue-600 text-white rounded-tr-none' 
+                                      : darkMode
+                                        ? 'bg-slate-800 text-slate-100 rounded-tl-none'
+                                        : 'bg-slate-200 text-slate-800 rounded-tl-none'
+                                  }`}>
+                                    {msg.text}
+                                  </div>
+                                  <span className="text-[8px] text-slate-400 mt-1">
+                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
                       <AlertTriangle size={48} className="opacity-10 mb-3 animate-pulse" />
@@ -3047,6 +3165,75 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   );
 }
 
+
+const parseCoordinates = (chatMessages: any[]) => {
+  const locMsg = chatMessages?.find(m => m.text && m.text.includes('google.com/maps'));
+  if (!locMsg) return null;
+  const match = locMsg.text.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (match) {
+    return { lat: parseFloat(match[1]), lon: parseFloat(match[2]) };
+  }
+  return null;
+};
+
+const getNearestEmergencyContacts = (coords: { lat: number; lon: number } | null) => {
+  const stations = [
+    {
+      name: "São Miguel (Ponta Delgada)",
+      lat: 37.74, lon: -25.67,
+      bombeiros: "Bombeiros Voluntários de Ponta Delgada (+351 296 201 110)",
+      bombeirosPhone: "+351296201110",
+      policia: "PSP - Comando Regional dos Açores - Ponta Delgada (+351 296 205 000)",
+      policiaPhone: "+351296205000"
+    },
+    {
+      name: "São Miguel (Ribeira Grande)",
+      lat: 37.82, lon: -25.52,
+      bombeiros: "Bombeiros Voluntários da Ribeira Grande (+351 296 470 110)",
+      bombeirosPhone: "+351296470110",
+      policia: "PSP - Esquadra da Ribeira Grande (+351 296 470 060)",
+      policiaPhone: "+351296470060"
+    },
+    {
+      name: "Terceira (Angra do Heroísmo)",
+      lat: 38.65, lon: -27.22,
+      bombeiros: "Bombeiros Voluntários de Angra do Heroísmo (+351 295 204 110)",
+      bombeirosPhone: "+351295204110",
+      policia: "PSP - Esquadra de Angra do Heroísmo (+351 295 204 000)",
+      policiaPhone: "+351295204000"
+    },
+    {
+      name: "Faial (Horta)",
+      lat: 38.53, lon: -28.63,
+      bombeiros: "Bombeiros Voluntários da Horta (+351 292 202 110)",
+      bombeirosPhone: "+351292202110",
+      policia: "PSP - Esquadra da Horta (+351 292 202 000)",
+      policiaPhone: "+351292202000"
+    },
+    {
+      name: "Pico (Madalena)",
+      lat: 38.53, lon: -28.53,
+      bombeiros: "Bombeiros Voluntários da Madalena (+351 292 622 110)",
+      bombeirosPhone: "+351292622110",
+      policia: "PSP - Esquadra da Madalena (+351 292 622 000)",
+      policiaPhone: "+351292622000"
+    }
+  ];
+
+  if (!coords) return stations[0];
+
+  let nearest = stations[0];
+  let minDist = Infinity;
+  stations.forEach(s => {
+    const dist = Math.hypot(coords.lat - s.lat, coords.lon - s.lon);
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = s;
+    }
+  });
+  return nearest;
+};
+
 interface RentCarEmergencyChatProps {
   reservations: any[];
   darkMode: boolean;
@@ -3162,7 +3349,7 @@ function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: R
           {selectedRes ? (
             <div className="flex-1 flex flex-col min-h-0 p-4">
               <div className="border-b pb-3 mb-4 flex justify-between items-center">
-                <div>
+                <div className="flex-1 min-w-0">
                   <h4 className="font-black text-sm uppercase tracking-tight">
                     {selectedRes.customerName || selectedRes.client}
                   </h4>
@@ -3170,6 +3357,72 @@ function RentCarEmergencyChat({ reservations, darkMode, onUpdateReservation }: R
                     {selectedRes.car?.model || selectedRes.vehicle} · Check-in: {selectedRes.checkinTime || 'Confirmado'}
                   </p>
                 </div>
+
+                {(() => {
+                  const hasAvaria = selectedRes.chatMessages?.some((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'));
+                  const hasLocation = selectedRes.chatMessages?.some((m: any) => m.text && (m.text.includes('maps') || m.text.includes('Localização')));
+                  if (!hasAvaria || !hasLocation) return null;
+
+                  return (
+                    <div className="flex gap-2 mx-4 flex-wrap shrink-0">
+                      <button
+                        onClick={async () => {
+                          const updatedRes = {
+                            ...selectedRes,
+                            towDispatched: true,
+                            towDispatchedAt: new Date().toISOString(),
+                          };
+                          await onUpdateReservation(updatedRes);
+                          alert("Reboque despachado com sucesso!");
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 cursor-pointer ${
+                          selectedRes.towDispatched 
+                            ? 'bg-amber-600 text-white shadow-md' 
+                            : 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/25 border border-amber-500/20'
+                        }`}
+                      >
+                        🚚 {selectedRes.towDispatched ? 'Reboque Enviado' : 'Mandar Reboque'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const updatedRes = {
+                            ...selectedRes,
+                            firefightersDispatched: true,
+                            firefightersDispatchedAt: new Date().toISOString(),
+                          };
+                          await onUpdateReservation(updatedRes);
+                          alert("Bombeiros despachados com sucesso!");
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 cursor-pointer ${
+                          selectedRes.firefightersDispatched 
+                            ? 'bg-red-600 text-white shadow-md' 
+                            : 'bg-red-500/10 text-red-500 hover:bg-red-500/25 border border-red-500/20'
+                        }`}
+                      >
+                        🚒 {selectedRes.firefightersDispatched ? 'Bombeiros Enviados' : 'Mandar Bombeiros'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const updatedRes = {
+                            ...selectedRes,
+                            policeDispatched: true,
+                            policeDispatchedAt: new Date().toISOString(),
+                          };
+                          await onUpdateReservation(updatedRes);
+                          alert("Polícia despachada com sucesso!");
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1 cursor-pointer ${
+                          selectedRes.policeDispatched 
+                            ? 'bg-blue-600 text-white shadow-md' 
+                            : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/25 border border-blue-500/20'
+                        }`}
+                      >
+                        👮 {selectedRes.policeDispatched ? 'Polícia Enviada' : 'Mandar Polícia'}
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 <button 
                   onClick={() => setSelectedResId(null)}
                   className="p-1.5 rounded-full hover:bg-slate-500/10 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
