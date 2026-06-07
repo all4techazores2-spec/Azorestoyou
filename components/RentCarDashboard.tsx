@@ -160,6 +160,10 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const [selectedClientDetail, setSelectedClientDetail] = useState<any | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
 
+  // Avarias / Chat Emergency Selected Reservation State
+  const [selectedResId, setSelectedResId] = useState<string | null>(null);
+  const selectedRes = reservations.find(r => r.id === selectedResId);
+
   const [isUploading, setIsUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
 
@@ -246,6 +250,24 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
     } catch (err: any) {
       console.error(err);
       alert('Erro ao atualizar estado da reserva: ' + err.message);
+    }
+  };
+
+  const handleUpdateReservation = async (updatedRes: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reservations/${updatedRes.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRes)
+      });
+      if (response.ok) {
+        const updatedResList = reservations.map(r => r.id === updatedRes.id ? updatedRes : r);
+        setReservations(updatedResList);
+        const updatedBiz = { ...business, reservations: updatedResList };
+        onUpdateBusiness(updatedBiz);
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -2239,23 +2261,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             <RentCarEmergencyChat 
               reservations={reservations} 
               darkMode={darkMode}
-              onUpdateReservation={async (updatedRes) => {
-                try {
-                  const response = await fetch(`${API_BASE_URL}/api/reservations/${updatedRes.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedRes)
-                  });
-                  if (response.ok) {
-                    const updatedResList = reservations.map(r => r.id === updatedRes.id ? updatedRes : r);
-                    setReservations(updatedResList);
-                    const updatedBiz = { ...business, reservations: updatedResList };
-                    onUpdateBusiness(updatedBiz);
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
+              onUpdateReservation={handleUpdateReservation}
             />
           )}
 
@@ -2328,7 +2334,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                 ...selectedRes,
                                 chatMessages: updatedMessages
                               };
-                              await onUpdateReservation(updatedRes);
+                              await handleUpdateReservation(updatedRes);
                               alert("Avaria marcada como resolvida!");
                             }
                           }}
