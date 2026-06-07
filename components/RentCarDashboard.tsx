@@ -5,7 +5,7 @@ import {
   Bell, Sun, Moon, AlertTriangle, Plus, Edit, Trash2, CheckCircle2, 
   X, Check, ChevronRight, FileText, Download, Shield, Eye, Info, HelpCircle,
   TrendingUp, CalendarDays, Key, FileCheck, Landmark, ChevronDown, CheckCircle, Clock,
-  MessageSquare, MapPin, Mail, Phone
+  MessageSquare, MapPin, Mail, Phone, Truck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -17,7 +17,7 @@ interface RentCarDashboardProps {
   language?: string;
 }
 
-type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database' | 'chat' | 'avarias';
+type Tab = 'dashboard' | 'reservas' | 'frota' | 'clientes' | 'checkin' | 'pagamentos' | 'manutencao' | 'relatorios' | 'avaliacoes' | 'configuracoes' | 'database' | 'chat' | 'avarias' | 'reboque';
 
 export default function RentCarDashboard({ business, onUpdateBusiness, onLogout, language = 'pt' }: RentCarDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -88,6 +88,20 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
   const [notifications, setNotifications] = useState<any[]>(() => {
     return business.notifications || [];
   });
+
+  const [towCompanies, setTowCompanies] = useState<any[]>(() => {
+    return business.towCompanies || [
+      { id: 'tow_1', name: 'Reboques Açores Lda', email: 'contacto@reboquesacores.pt', phone: '+351 296 123 456' },
+      { id: 'tow_2', name: 'Reboques do Canal', email: 'canal.reboques@sapo.pt', phone: '+351 292 888 777' },
+      { id: 'tow_3', name: 'Auto Reboque Açoriano', email: 'geral@autoreboqueacoriano.com', phone: '+351 295 444 333' }
+    ];
+  });
+
+  useEffect(() => {
+    if (business.towCompanies) {
+      setTowCompanies(business.towCompanies);
+    }
+  }, [business.towCompanies]);
 
   useEffect(() => {
     if (business.reservations) {
@@ -713,6 +727,7 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
             { id: 'chat', label: 'Chat de Emergência', icon: <MessageSquare size={18} /> },
             { id: 'avarias', label: 'Manutenção / Avarias', icon: <AlertTriangle size={18} />, count: reservations.filter(r => r.chatMessages && r.chatMessages.some((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]'))).length },
             { id: 'checkin', label: 'Check-In / Check-Out', icon: <CheckSquare size={18} /> },
+            { id: 'reboque', label: 'Reboque', icon: <Truck size={18} /> },
             { id: 'pagamentos', label: 'Pagamentos', icon: <DollarSign size={18} /> },
             { id: 'manutencao', label: 'Manutenção', icon: <Wrench size={18} /> },
             { id: 'relatorios', label: 'Relatórios', icon: <FileText size={18} /> },
@@ -2327,23 +2342,20 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                   darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 } shadow-sm min-h-0`}>
                   {selectedRes ? (
-                    selectedRes.firefightersDispatched || selectedRes.policeDispatched ? (
+                    selectedRes.firefightersDispatched || selectedRes.policeDispatched || selectedRes.towDispatched ? (
                       <div className="flex-1 flex flex-col min-h-0 p-6 space-y-6 overflow-y-auto">
                         <div className="border-b pb-4 flex justify-between items-start">
                           <div>
                             <h3 className="text-lg font-black uppercase tracking-tight text-red-650 dark:text-red-500 flex items-center gap-2">
                               🚨 Serviços de Emergência mais Próximos
                             </h3>
-                            <p className="text-xs text-slate-450 mt-1 font-bold">
+                            <p className="text-xs text-slate-455 mt-1 font-bold">
                               Localização Coordenadas: {(() => {
                                 const coords = parseCoordinates(selectedRes.chatMessages);
                                 return coords ? `${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}` : 'Não enviada ou N/A';
                               })()}
                             </p>
                           </div>
-                          <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider animate-pulse">
-                            Estado: Pendente
-                          </span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2355,11 +2367,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs font-black uppercase text-red-500 tracking-wider">🚒 Bombeiros</span>
                                   <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase">
-                                    Pendente
+                                    {selectedRes.firefightersStatus || 'Pendente'}
                                   </span>
                                 </div>
                                 <h4 className="text-sm font-black text-slate-850 dark:text-white">Estação de Bombeiros Próxima</h4>
-                                <p className="text-xs text-slate-450 leading-relaxed font-bold">
+                                <p className="text-xs text-slate-455 leading-relaxed font-bold">
                                   {(() => {
                                     const coords = parseCoordinates(selectedRes.chatMessages);
                                     const contacts = getNearestEmergencyContacts(coords);
@@ -2367,15 +2379,34 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                   })()}
                                 </p>
                               </div>
-                              <a
-                                href={`tel:${(() => {
-                                  const coords = parseCoordinates(selectedRes.chatMessages);
-                                  return getNearestEmergencyContacts(coords).bombeirosPhone;
-                                })()}`}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-red-500/20 w-fit cursor-pointer"
-                              >
-                                📞 Telefonar
-                              </a>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <a
+                                  href={`tel:${(() => {
+                                    const coords = parseCoordinates(selectedRes.chatMessages);
+                                    return getNearestEmergencyContacts(coords).bombeirosPhone;
+                                  })()}`}
+                                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-red-500/20 w-fit cursor-pointer"
+                                >
+                                  📞 Telefonar
+                                </a>
+                                <select
+                                  value={selectedRes.firefightersStatus || 'Pendente'}
+                                  onChange={async (e) => {
+                                    const updatedRes = {
+                                      ...selectedRes,
+                                      firefightersStatus: e.target.value
+                                    };
+                                    await handleUpdateReservation(updatedRes);
+                                  }}
+                                  className={`px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer ${
+                                    darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-700'
+                                  }`}
+                                >
+                                  <option value="Pendente">Pendente</option>
+                                  <option value="Tratado">Tratado</option>
+                                  <option value="Cancelado">Cancelado</option>
+                                </select>
+                              </div>
                             </div>
                           )}
 
@@ -2387,11 +2418,11 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                 <div className="flex justify-between items-center">
                                   <span className="text-xs font-black uppercase text-blue-500 tracking-wider">👮 Polícia</span>
                                   <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase">
-                                    Pendente
+                                    {selectedRes.policeStatus || 'Pendente'}
                                   </span>
                                 </div>
                                 <h4 className="text-sm font-black text-slate-855 dark:text-white">Esquadra de Polícia Próxima</h4>
-                                <p className="text-xs text-slate-450 leading-relaxed font-bold">
+                                <p className="text-xs text-slate-455 leading-relaxed font-bold">
                                   {(() => {
                                     const coords = parseCoordinates(selectedRes.chatMessages);
                                     const contacts = getNearestEmergencyContacts(coords);
@@ -2399,33 +2430,110 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                                   })()}
                                 </p>
                               </div>
-                              <a
-                                href={`tel:${(() => {
-                                  const coords = parseCoordinates(selectedRes.chatMessages);
-                                  return getNearestEmergencyContacts(coords).policiaPhone;
-                                })()}`}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-500/20 w-fit cursor-pointer"
-                              >
-                                📞 Telefonar
-                              </a>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <a
+                                  href={`tel:${(() => {
+                                    const coords = parseCoordinates(selectedRes.chatMessages);
+                                    return getNearestEmergencyContacts(coords).policiaPhone;
+                                  })()}`}
+                                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-500/20 w-fit cursor-pointer"
+                                >
+                                  📞 Telefonar
+                                </a>
+                                <select
+                                  value={selectedRes.policeStatus || 'Pendente'}
+                                  onChange={async (e) => {
+                                    const updatedRes = {
+                                      ...selectedRes,
+                                      policeStatus: e.target.value
+                                    };
+                                    await handleUpdateReservation(updatedRes);
+                                  }}
+                                  className={`px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer ${
+                                    darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-700'
+                                  }`}
+                                >
+                                  <option value="Pendente">Pendente</option>
+                                  <option value="Tratado">Tratado</option>
+                                  <option value="Cancelado">Cancelado</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedRes.towDispatched && (
+                            <div className={`p-6 rounded-3xl border flex flex-col justify-between ${
+                              darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                            } space-y-4 shadow-sm`}>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-black uppercase text-amber-500 tracking-wider">🚚 Reboque</span>
+                                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/25 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase">
+                                    {selectedRes.towStatus || 'Pendente'}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-850 dark:text-white">Companhia de Reboque Despachada</h4>
+                                {(() => {
+                                  const towCo = (towCompanies && towCompanies.length > 0)
+                                    ? towCompanies[0]
+                                    : { name: 'Reboques Açores Lda', phone: '+351 296 123 456', email: 'contacto@reboquesacores.pt' };
+                                  return (
+                                    <div className="text-xs text-slate-455 leading-relaxed font-bold">
+                                      <p>{towCo.name}</p>
+                                      <p>Tel: {towCo.phone}</p>
+                                      <p>Email: {towCo.email}</p>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <a
+                                  href={`tel:${(() => {
+                                    const towCo = (towCompanies && towCompanies.length > 0)
+                                      ? towCompanies[0]
+                                      : { phone: '+351 296 123 456' };
+                                    return towCo.phone;
+                                  })()}`}
+                                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 w-fit cursor-pointer"
+                                >
+                                  📞 Telefonar
+                                </a>
+                                <select
+                                  value={selectedRes.towStatus || 'Pendente'}
+                                  onChange={async (e) => {
+                                    const updatedRes = {
+                                      ...selectedRes,
+                                      towStatus: e.target.value
+                                    };
+                                    await handleUpdateReservation(updatedRes);
+                                  }}
+                                  className={`px-3 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer ${
+                                    darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-700'
+                                  }`}
+                                >
+                                  <option value="Pendente">Pendente</option>
+                                  <option value="Tratado">Tratado</option>
+                                  <option value="Cancelado">Cancelado</option>
+                                </select>
+                              </div>
                             </div>
                           )}
                         </div>
 
                         <div className="border-t pt-4">
-                          <button
-                            onClick={async () => {
-                              const updatedRes = {
-                                ...selectedRes,
-                                firefightersDispatched: false,
-                                policeDispatched: false
-                              };
-                              await handleUpdateReservation(updatedRes);
-                            }}
-                            className="px-4 py-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-650 dark:text-slate-350 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
-                          >
-                            Voltar ao Relatório de Avaria
-                          </button>
+                          <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl">
+                            <p className="text-xs font-black uppercase tracking-wider mb-2">Relatórios Enviados pelo Cliente:</p>
+                            <div className="space-y-2">
+                              {selectedRes.chatMessages.filter((m: any) => m.text && m.text.includes('⚠️ [REPORTE DE AVARIA]')).map((msg: any, idx: number) => (
+                                <div key={idx} className="text-xs border-b border-red-500/10 pb-2 last:border-0 last:pb-0">
+                                  <p className="font-bold whitespace-pre-wrap">{msg.text.replace('⚠️ [REPORTE DE AVARIA]', '').trim()}</p>
+                                  <span className="text-[9px] opacity-75 mt-1 block">
+                                    Enviado em: {new Date(msg.timestamp).toLocaleString('pt-PT')}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -2509,6 +2617,128 @@ export default function RentCarDashboard({ business, onUpdateBusiness, onLogout,
                       </p>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reboque' && (
+            <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-tight">Companhias de Reboque</h2>
+                <p className="text-slate-400 text-xs mt-1">Gerir as companhias de reboque parceiras da empresa.</p>
+              </div>
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+                {/* Form to add */}
+                <div className={`p-6 rounded-2xl border flex flex-col ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-sm`}>
+                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Adicionar Companhia</h3>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget;
+                    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+                    const phone = (form.elements.namedItem('phone') as HTMLInputElement).value;
+                    
+                    if (!name || !phone) {
+                      alert('Nome e Número são obrigatórios!');
+                      return;
+                    }
+                    
+                    const newCo = {
+                      id: `tow_${Date.now()}`,
+                      name,
+                      email,
+                      phone
+                    };
+                    
+                    const updated = [...towCompanies, newCo];
+                    setTowCompanies(updated);
+                    await onUpdateBusiness({
+                      ...business,
+                      towCompanies: updated
+                    });
+                    form.reset();
+                  }} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Nome</label>
+                      <input
+                        name="name"
+                        type="text"
+                        placeholder="Ex: Reboques Central"
+                        required
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Email</label>
+                      <input
+                        name="email"
+                        type="email"
+                        placeholder="Ex: contacto@reboque.pt"
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Número</label>
+                      <input
+                        name="phone"
+                        type="text"
+                        placeholder="Ex: +351 296 999 999"
+                        required
+                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      Adicionar
+                    </button>
+                  </form>
+                </div>
+
+                {/* List of companies */}
+                <div className={`md:col-span-2 p-6 rounded-2xl border flex flex-col ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                } shadow-sm overflow-y-auto`}>
+                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Companhias Registadas</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {towCompanies.map((co) => (
+                      <div key={co.id} className={`p-4 rounded-xl border flex flex-col justify-between ${
+                        darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                      }`}>
+                        <div>
+                          <p className="font-black text-sm text-slate-800 dark:text-white">{co.name}</p>
+                          <p className="text-xs text-slate-400 mt-1">📞 {co.phone}</p>
+                          {co.email && <p className="text-xs text-slate-400">✉️ {co.email}</p>}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Remover companhia ${co.name}?`)) {
+                              const updated = towCompanies.filter(c => c.id !== co.id);
+                              setTowCompanies(updated);
+                              await onUpdateBusiness({
+                                ...business,
+                                towCompanies: updated
+                              });
+                            }
+                          }}
+                          className="mt-3 text-red-500 hover:text-red-700 text-[10px] font-black uppercase tracking-widest self-end cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

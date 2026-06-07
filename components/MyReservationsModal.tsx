@@ -868,6 +868,25 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                         <p className="text-sm font-black text-slate-800 leading-tight">
                                            {item.type === 'car' ? item.car.model : item.type === 'flight' ? `${item.flight.origin} → ${item.flight.destination}` : item.hotel.name}
                                         </p>
+                                        {item.type === 'car' && (item.towDispatched || item.firefightersDispatched || item.policeDispatched) && (
+                                           <div className="mt-1 flex flex-col gap-0.5">
+                                              {item.towDispatched && (
+                                                 <span className="text-[10px] font-black text-amber-600 uppercase tracking-wide block">
+                                                    🚚 Reboque: {item.towStatus === 'Tratado' ? 'Reboque enviado para o local' : item.towStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                 </span>
+                                              )}
+                                              {item.firefightersDispatched && (
+                                                 <span className="text-[10px] font-black text-red-600 uppercase tracking-wide block">
+                                                    🚒 Bombeiros: {item.firefightersStatus === 'Tratado' ? 'Bombeiros enviados para o local' : item.firefightersStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                 </span>
+                                              )}
+                                              {item.policeDispatched && (
+                                                 <span className="text-[10px] font-black text-blue-600 uppercase tracking-wide block">
+                                                    👮 Polícia: {item.policeStatus === 'Tratado' ? 'Polícia enviada para o local' : item.policeStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                                 </span>
+                                              )}
+                                           </div>
+                                        )}
                                      </div>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -968,6 +987,25 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                          <div className="text-left">
                             <h3 className="text-2xl font-black text-slate-800 tracking-tight">{res.car.model}</h3>
                             <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{res.car.type}</p>
+                            {(res.towDispatched || res.firefightersDispatched || res.policeDispatched) && (
+                               <div className="mt-2 flex flex-col gap-1">
+                                  {res.towDispatched && (
+                                     <span className="text-[11px] font-black text-amber-600 uppercase tracking-wide block">
+                                        🚚 Reboque: {res.towStatus === 'Tratado' ? 'Reboque enviado para o local' : res.towStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                     </span>
+                                  )}
+                                  {res.firefightersDispatched && (
+                                     <span className="text-[11px] font-black text-red-650 uppercase tracking-wide block">
+                                        🚒 Bombeiros: {res.firefightersStatus === 'Tratado' ? 'Bombeiros enviados para o local' : res.firefightersStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                     </span>
+                                  )}
+                                  {res.policeDispatched && (
+                                     <span className="text-[11px] font-black text-blue-600 uppercase tracking-wide block">
+                                        👮 Polícia: {res.policeStatus === 'Tratado' ? 'Polícia enviada para o local' : res.policeStatus === 'Cancelado' ? 'Cancelado' : 'Pendente'}
+                                     </span>
+                                  )}
+                               </div>
+                            )}
                          </div>
                          <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-rose-500">
                             <Car size={32} />
