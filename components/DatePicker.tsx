@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from 'motion/react';
 interface DatePickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (startDate: Date, endDate: Date) => void;
+  onSelect: (startDate: Date, endDate: Date, checkinTime?: string) => void;
   initialStartDate?: Date;
   initialEndDate?: Date;
   title: string;
   minDate?: Date;
   unavailableDates?: Date[];
+  showTimePicker?: boolean;
 }
 
 const DatePicker: React.FC<DatePickerProps> = ({
@@ -22,11 +23,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
   initialEndDate,
   title,
   minDate = new Date(),
-  unavailableDates = []
+  unavailableDates = [],
+  showTimePicker = false
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date(initialStartDate || new Date()));
   const [startDate, setStartDate] = useState<Date | null>(initialStartDate || null);
   const [endDate, setEndDate] = useState<Date | null>(initialEndDate || null);
+  const [checkinTime, setCheckinTime] = useState<string>('14:00');
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
@@ -82,7 +85,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   const handleConfirm = () => {
     if (startDate && endDate) {
-      onSelect(startDate, endDate);
+      onSelect(startDate, endDate, showTimePicker ? checkinTime : undefined);
       onClose();
     }
   };
@@ -199,6 +202,23 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   </p>
                 </div>
               </div>
+
+              {showTimePicker && startDate && endDate && (
+                <div className="flex flex-col gap-1 text-left">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Hora Estimada de Check-in</label>
+                  <select
+                    value={checkinTime}
+                    onChange={(e) => setCheckinTime(e.target.value)}
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3 px-4 focus:bg-white focus:border-slate-900 focus:outline-none transition-all text-xs font-bold text-slate-800"
+                  >
+                    {Array.from({ length: 16 }).map((_, i) => {
+                      const h = 8 + i;
+                      const timeStr = `${h.toString().padStart(2, '0')}:00`;
+                      return <option key={timeStr} value={timeStr}>{timeStr}</option>;
+                    })}
+                  </select>
+                </div>
+              )}
 
               <button
                 disabled={!startDate || !endDate}

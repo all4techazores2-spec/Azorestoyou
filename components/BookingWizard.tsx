@@ -148,7 +148,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
     return diffDays;
   };
 
-  const handleDateSelect = (start: Date, end: Date) => {
+  const handleDateSelect = (start: Date, end: Date, checkinTime?: string) => {
     const diff = calculateDiff(start, end);
     if (step === 'accommodation') {
       const nights = diff || 1; // At least 1 night if same day? No, usually same day is not allowed.
@@ -156,7 +156,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
       onUpdateItinerary({ 
         nights: nights,
         hotelStartDate: start.toISOString(),
-        hotelEndDate: end.toISOString()
+        hotelEndDate: end.toISOString(),
+        hotelCheckinTime: checkinTime || '14:00'
       });
     } else {
       const days = diff + 1; // Days of use
@@ -606,6 +607,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
           initialStartDate={currentItinerary.hotelStartDate ? new Date(currentItinerary.hotelStartDate) : undefined}
           initialEndDate={currentItinerary.hotelEndDate ? new Date(currentItinerary.hotelEndDate) : undefined}
           unavailableDates={hotelUnavailableDates}
+          showTimePicker={true}
         />
 
         <AnimatePresence>
