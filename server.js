@@ -1461,19 +1461,22 @@ const startServer = () => {
     server.headersTimeout = 125000;
 };
 
-startServer();
-
-// SPA Catch-all (Deve ser a ÚLTIMA rota)
+// SPA Catch-all — DEVE estar antes do startServer() e depois de todas as rotas API
+// Garante que rotas como /hotel-room-service/... servem o index.html (SPA routing)
 app.use((req, res) => {
-    // Evitar cache agressivo do index.html para evitar erros 404 em assets (CSS/JS) novos após build
+    // Não aplicar a rotas de API
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API endpoint não encontrado' });
+    }
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    
     res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
         if (err) {
-            console.error("❌ Erro ao enviar index.html:", err);
-            res.status(500).send("Erro ao carregar a aplicação.");
+            console.error('❌ Erro ao enviar index.html:', err);
+            res.status(500).send('Erro ao carregar a aplicação.');
         }
     });
 });
+
+startServer();
