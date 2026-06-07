@@ -14,7 +14,7 @@ interface BookingCheckoutModalProps {
 const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, onClose, onComplete, onConfirm, cars = [] }) => {
   const [step, setStep] = useState<'data' | 'payment' | 'success'>('data');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points'>('transfer');
+  const [paymentType, setPaymentType] = useState<'mbway' | 'transfer' | 'points' | 'local'>('transfer');
 
   // Generate a STABLE unique ticket ID
   const ticketId = useMemo(() => {
@@ -58,7 +58,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
       try {
         if (onConfirm) {
           await onConfirm(ticketId, {
-            license: formData.license,
+            license: itinerary.car ? formData.license : '',
             nif: `${formData.nifType === 'Internacional' ? 'INT-' : ''}${formData.nif}`,
             nifType: formData.nifType,
             paymentMethod: paymentType
@@ -89,7 +89,8 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
   const paymentMethods = [
     { id: 'mbway', icon: Wallet, title: 'MBWay / Revolut', desc: 'Pagamento rápido via telemóvel' },
     { id: 'transfer', icon: CreditCard, title: 'Cartão de Crédito / IBAN', desc: 'Transferência direta para a empresa' },
-    { id: 'points', icon: Star, title: 'Saldo de Pontos', desc: 'Utilizar créditos Azores4you' }
+    { id: 'points', icon: Star, title: 'Saldo de Pontos', desc: 'Utilizar créditos Azores4you' },
+    { id: 'local', icon: CheckCircle, title: 'Pagar no Local', desc: 'Pague diretamente no estabelecimento' }
   ];
 
   return (
@@ -246,21 +247,23 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                       
                       {/* Driver's License & NIF details (Mandatory as per client request) */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Carta de Condução</label>
-                           <div className="relative group">
-                              <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <input 
-                                required
-                                name="license"
-                                value={formData.license}
-                                onChange={handleInputChange}
-                                placeholder="Ex: L-987654 3"
-                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
-                              />
-                           </div>
-                        </div>
-                        <div>
+                        {itinerary.car && (
+                          <div>
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Carta de Condução</label>
+                             <div className="relative group">
+                                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                                <input 
+                                  required
+                                  name="license"
+                                  value={formData.license}
+                                  onChange={handleInputChange}
+                                  placeholder="Ex: L-987654 3"
+                                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-3.5 pl-12 pr-4 focus:bg-white focus:border-blue-600 focus:outline-none transition-all text-sm font-bold placeholder:text-slate-300"
+                                />
+                             </div>
+                          </div>
+                        )}
+                        <div className={itinerary.car ? "" : "md:col-span-2"}>
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">NIF (Nacional / Internacional)</label>
                            <div className="flex gap-2">
                               <select
@@ -315,7 +318,7 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                    </div>
                    <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Pagamento</h2>
                    
-                   <div className="grid grid-cols-3 gap-2">
+                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                      {paymentMethods.map((method) => {
                        const Icon = method.icon;
                        return (
@@ -356,17 +359,32 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                           <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 text-slate-700 text-xs space-y-3">
                             <p className="font-black text-center text-blue-600 uppercase tracking-widest text-[10px]">IBAN para Transferência Bancária</p>
                             <p className="text-[10px] text-slate-500 text-center leading-normal font-bold">
-                              Efetue a transferência do valor total da reserva para o IBAN oficial da Rent-a-car:
+                              {itinerary.car 
+                                ? "Efetue a transferência do valor total da reserva para o IBAN oficial da Rent-a-car:"
+                                : "Efetue a transferência do valor total da reserva para o IBAN oficial do Alojamento:"
+                              }
                             </p>
-                            {companyIban ? (
-                              <div className="p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-center font-bold text-slate-800 text-sm tracking-wider select-all shadow-sm">
-                                {companyIban}
-                              </div>
-                            ) : (
-                              <div className="p-3 bg-white border border-amber-250 rounded-xl text-center font-bold text-amber-600">
-                                IBAN pendente de configuração pela Rent-a-car.
-                              </div>
-                            )}
+                            {itinerary.car ? (
+                               companyIban ? (
+                                 <div className="p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-center font-bold text-slate-800 text-sm tracking-wider select-all shadow-sm">
+                                   {companyIban}
+                                 </div>
+                               ) : (
+                                 <div className="p-3 bg-white border border-amber-250 rounded-xl text-center font-bold text-amber-600">
+                                   IBAN pendente de configuração pela Rent-a-car.
+                                 </div>
+                               )
+                             ) : (
+                               itinerary.hotel?.iban ? (
+                                 <div className="p-3.5 bg-white border border-blue-200 rounded-xl font-mono text-center font-bold text-slate-800 text-sm tracking-wider select-all shadow-sm">
+                                   {itinerary.hotel.iban}
+                                 </div>
+                               ) : (
+                                 <div className="p-3 bg-white border border-amber-250 rounded-xl text-center font-bold text-amber-600">
+                                   IBAN pendente de configuração pelo Alojamento.
+                                 </div>
+                               )
+                             )}
                             <p className="text-[8px] text-slate-400 text-center uppercase tracking-wider font-black">
                               Assinale o ID provisório da reserva no descritivo da transferência.
                             </p>
@@ -377,6 +395,14 @@ const BookingCheckoutModal: React.FC<BookingCheckoutModalProps> = ({ itinerary, 
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 overflow-hidden text-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100" key="points-input">
                           <p className="text-xs font-bold text-emerald-700">Saldo de Pontos Azores4you</p>
                           <p className="text-[10px] text-slate-500 mt-1">Serão deduzidos os pontos correspondentes ao valor total da viagem no seu perfil.</p>
+                        </motion.div>
+                      )}
+                      {paymentType === 'local' && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 overflow-hidden text-center p-4 bg-slate-50 rounded-2xl border border-slate-200" key="local-input">
+                          <p className="text-xs font-bold text-slate-700">Pagamento no Local</p>
+                          <p className="text-[10px] text-slate-500 mt-1">
+                            A sua reserva ficará confirmada como "Pendente" e efetuará o pagamento diretamente no estabelecimento no momento da chegada.
+                          </p>
                         </motion.div>
                       )}
                    </AnimatePresence>
