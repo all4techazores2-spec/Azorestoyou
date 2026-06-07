@@ -25,6 +25,7 @@ import AdminDashboard from './components/AdminDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
 import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
+import HotelDashboard from './components/HotelDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
@@ -1879,6 +1880,30 @@ const App: React.FC = () => {
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
 
+      if (isHotel) {
+        return (
+          <ErrorBoundary>
+            <HotelDashboard 
+              business={biz}
+              language={language}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                 setHotels(prev => prev.map(item => item.id === updated.id ? updated : item));
+                 try {
+                   await fetch(`${API_BASE_URL}/api/hotels/${updated.id}`, {
+                     method: 'PUT',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(updated),
+                   });
+                 } catch (err) {
+                   console.error("Erro ao atualizar hotel no servidor:", err);
+                 }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
+
       if (isRentCar) {
         return (
           <ErrorBoundary>
@@ -2812,7 +2837,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} hotels={hotels} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 
