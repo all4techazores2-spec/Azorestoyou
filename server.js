@@ -556,8 +556,32 @@ app.get('/api/users/:email', async (req, res) => {
             } 
         };
         db.users.push(user);
-        await writeDB(db);
     }
+
+    // Dynamic Real-time Sync: find all reservations matching this email across all businesses
+    const allReservations = [];
+    ALL_BUSINESS_COLLECTIONS.forEach(key => {
+        if (db[key]) {
+            db[key].forEach(biz => {
+                if (biz.reservations) {
+                    biz.reservations.forEach(r => {
+                        const resEmail = normalizeEmail(r.customerEmail || r.email || '');
+                        if (resEmail === email) {
+                            allReservations.push({
+                                ...r,
+                                businessId: biz.id,
+                                businessName: biz.name,
+                                businessType: key === 'restaurants' ? 'restaurant' : (key === 'hotels' ? 'hotel' : (key === 'cars' ? 'car' : key))
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    user.reservations = allReservations;
+    await writeDB(db);
     res.json(user);
 });
 
