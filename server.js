@@ -1445,7 +1445,7 @@ const startServer = () => {
             console.error("🚨 Critical database connection error:", err.message);
         });
 
-        // Force fresh deploy trigger to Render: 2026-05-25T13:16:30Z: 2026-05-24T16:08:49Z active
+        // Force fresh deploy trigger to Render: 2026-06-07T21:52:50Z active
         const selfPing = () => {
             const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
             axios.get(`${url}/api/health?t=${Date.now()}`)
