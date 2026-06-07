@@ -466,7 +466,6 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   };
 
   const categories = [
-    { id: 'messages', label: 'Mensagens / Chats', icon: <MessageSquare size={24} />, count: activeReservations.length, color: 'from-indigo-500 to-purple-650', shadow: 'shadow-indigo-500/20' },
     { id: 'packages', label: firstPackageInfo.label, icon: firstPackageInfo.sidebarIcon, count: packagesList.length, color: firstPackageInfo.color, shadow: firstPackageInfo.shadow },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
@@ -477,7 +476,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
     { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
     { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'packages' || cat.id === 'restaurants' || cat.id === 'messages');
+  ].filter(cat => cat.count > 0 || cat.id === 'history');
 
   const handleBack = () => setSelectedCategory(null);
 
