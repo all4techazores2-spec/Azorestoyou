@@ -23,6 +23,26 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
 
+  // Core business-related state lists
+  const [reservations, setReservations] = useState<any[]>(() => business.reservations || []);
+  const [rooms, setRooms] = useState<any[]>(() => business.rooms || [
+    { id: '101', name: 'Quarto 101', type: 'T1 Deluxe', status: 'Disponível', price: 120, capacity: 2, beds: 1, bathrooms: 1, area: 30, description: 'Standard deluxe room', services: ['Wi-Fi', 'AC'], gallery: [], blockedDates: [] },
+    { id: '102', name: 'Quarto 102', type: 'T2 Family', status: 'Ocupado', price: 180, capacity: 4, beds: 2, bathrooms: 1, area: 50, description: 'Family suite', services: ['Wi-Fi', 'AC', 'Kitchen'], gallery: [], blockedDates: [] },
+    { id: '103', name: 'Quarto 103', type: 'T1 Suite', status: 'Disponível', price: 220, capacity: 2, beds: 1, bathrooms: 1, area: 40, description: 'Premium suite', services: ['Wi-Fi', 'AC', 'Jacuzzi'], gallery: [], blockedDates: [] },
+    { id: '104', name: 'Quarto 104', type: 'T1 Standard', status: 'Disponível', price: 90, capacity: 2, beds: 1, bathrooms: 1, area: 25, description: 'Cozy standard room', services: ['Wi-Fi'], gallery: [], blockedDates: [] }
+  ]);
+  const [housekeeping, setHousekeeping] = useState<any[]>(() => business.housekeeping || []);
+  const [extras, setExtras] = useState<any[]>(() => business.extras || [
+    { id: 'ext_1', name: 'Pequeno-almoço no quarto', price: 15, description: 'Pequeno-almoço continental servido no quarto' },
+    { id: 'ext_2', name: 'Transfer do Aeroporto', price: 30, description: 'Serviço de transfer de e para o aeroporto' },
+    { id: 'ext_3', name: 'Aluguer de Bicicleta', price: 10, description: 'Aluguer diário de bicicleta de passeio' }
+  ]);
+
+  // Selected room for Calendar view and Room Editing
+  const [calendarRoomId, setCalendarRoomId] = useState<string>(rooms[0]?.id || '101');
+  const [editingRoom, setEditingRoom] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>(null);
+
   // iCal synchronization and manual blocking states
   const [icalBooking, setIcalBooking] = useState(business.icalBooking || '');
   const [icalAirbnb, setIcalAirbnb] = useState(business.icalAirbnb || '');
@@ -37,31 +57,25 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   const [manualBlockStart, setManualBlockStart] = useState('');
   const [manualBlockEnd, setManualBlockEnd] = useState('');
 
-  // Core business-related state lists
-  const [reservations, setReservations] = useState<any[]>(() => business.reservations || []);
-  const [rooms, setRooms] = useState<any[]>(() => business.rooms || [
-    { id: '101', name: 'Quarto 101', type: 'T1 Deluxe', status: 'Disponível', price: 120 },
-    { id: '102', name: 'Quarto 102', type: 'T2 Family', status: 'Ocupado', price: 180, guest: 'João Silva' },
-    { id: '103', name: 'Quarto 103', type: 'T1 Suite', status: 'Reservado', price: 220 },
-    { id: '104', name: 'Quarto 104', type: 'T1 Standard', status: 'Indisponível', price: 90 }
-  ]);
-  const [housekeeping, setHousekeeping] = useState<any[]>(() => business.housekeeping || [
-    { id: 'hk_1', room: '101', task: 'Limpeza Geral', status: 'Limpo', staff: 'Maria Do Carmo' },
-    { id: 'hk_2', room: '102', task: 'Troca de Lençóis', status: 'Pendente', staff: 'Ana Sousa' },
-    { id: 'hk_3', room: '104', task: 'Manutenção de A/C', status: 'Em Progresso', staff: 'Carlos Vaz' }
-  ]);
-  const [extras, setExtras] = useState<any[]>(() => business.extras || [
-    { id: 'ext_1', name: 'Pequeno-almoço no quarto', price: 15, description: 'Pequeno-almoço continental servido no quarto' },
-    { id: 'ext_2', name: 'Transfer do Aeroporto', price: 30, description: 'Serviço de transfer de e para o aeroporto' },
-    { id: 'ext_3', name: 'Aluguer de Bicicleta', price: 10, description: 'Aluguer diário de bicicleta de passeio' }
-  ]);
+  // Checkin details states
+  const [showCheckinModal, setShowCheckinModal] = useState<any | null>(null);
+  const [checkinEmployee, setCheckinEmployee] = useState('');
+
   const [selectedResChat, setSelectedResChat] = useState<any | null>(null);
   const [chatInput, setChatInput] = useState('');
+
+  const [hotelImage, setHotelImage] = useState(business.image || '');
+  const [hotelGallery, setHotelGallery] = useState<any[]>(business.gallery || []);
 
   // Sync state if business updates
   useEffect(() => {
     if (business.reservations) setReservations(business.reservations);
-    if (business.rooms) setRooms(business.rooms);
+    if (business.rooms) {
+      setRooms(business.rooms);
+      if (business.rooms.length > 0 && !business.rooms.some((r: any) => r.id === calendarRoomId)) {
+        setCalendarRoomId(business.rooms[0].id);
+      }
+    }
     if (business.housekeeping) setHousekeeping(business.housekeeping);
     if (business.extras) setExtras(business.extras);
     if (business.icalBooking !== undefined) setIcalBooking(business.icalBooking || '');
@@ -70,6 +84,8 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
     if (business.icalOther !== undefined) setIcalOther(business.icalOther || '');
     if (business.lastSync !== undefined) setLastSync(business.lastSync || null);
     if (business.blockedDates !== undefined) setBlockedDates(business.blockedDates || []);
+    if (business.image !== undefined) setHotelImage(business.image || '');
+    if (business.gallery !== undefined) setHotelGallery(business.gallery || []);
   }, [business]);
 
   const saveUpdatedBusiness = async (updatedFields: Partial<typeof business>) => {
@@ -77,18 +93,53 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
     await onUpdateBusiness(updatedBiz);
   };
 
-  const handleSync = async () => {
+  // Cloudinary image upload and delete helpers
+  const uploadImage = async (file: File): Promise<{ url: string; public_id: string; width: number; height: number } | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao carregar a imagem.');
+      return null;
+    }
+  };
+
+  const deleteImage = async (public_id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/upload/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id })
+      });
+      if (!res.ok) throw new Error('Deletion failed');
+      const data = await res.json();
+      return data.success;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  // Sync for individual rooms
+  const handleRoomSync = async (roomId: string) => {
     setIsSyncing(true);
-    // Simular delay de chamada de API/parser
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1200));
     
+    const targetRoom = rooms.find(r => r.id === roomId);
+    if (!targetRoom) return;
+
     const newBlocked: any[] = [];
     const today = new Date();
-    
     const formatDateStr = (d: Date) => d.toISOString().split('T')[0];
 
-    // Se tiver link da Booking.com
-    if (icalBooking.trim()) {
+    if (targetRoom.icalBooking?.trim()) {
       const start = new Date(today);
       start.setDate(today.getDate() + 3);
       const end = new Date(start);
@@ -101,8 +152,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       });
     }
 
-    // Se tiver link do Airbnb
-    if (icalAirbnb.trim()) {
+    if (targetRoom.icalAirbnb?.trim()) {
       const start = new Date(today);
       start.setDate(today.getDate() + 8);
       const end = new Date(start);
@@ -115,8 +165,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       });
     }
 
-    // Se tiver link do Vrbo
-    if (icalVrbo.trim()) {
+    if (targetRoom.icalVrbo?.trim()) {
       const start = new Date(today);
       start.setDate(today.getDate() + 15);
       const end = new Date(start);
@@ -129,8 +178,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       });
     }
 
-    // Se tiver link de outro iCal
-    if (icalOther.trim()) {
+    if (targetRoom.icalOther?.trim()) {
       const start = new Date(today);
       start.setDate(today.getDate() + 22);
       const end = new Date(start);
@@ -143,28 +191,26 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       });
     }
 
-    // Manter bloqueios manuais que já existiam
-    const manualBlocks = blockedDates.filter(b => b.source === 'Manual');
+    const manualBlocks = (targetRoom.blockedDates || []).filter((b: any) => b.source === 'Manual');
     const updatedBlocked = [...manualBlocks, ...newBlocked];
-    
     const nowStr = new Date().toLocaleString('pt-PT');
-    setLastSync(nowStr);
-    setBlockedDates(updatedBlocked);
+
+    const updatedRooms = rooms.map(r => r.id === roomId ? { ...r, blockedDates: updatedBlocked, lastSync: nowStr } : r);
+    setRooms(updatedRooms);
+    await saveUpdatedBusiness({ rooms: updatedRooms });
     setIsSyncing(false);
-    
-    await saveUpdatedBusiness({
-      icalBooking,
-      icalAirbnb,
-      icalVrbo,
-      icalOther,
-      lastSync: nowStr,
-      blockedDates: updatedBlocked
-    });
+  };
+
+  const handleSync = async () => {
+    // Falls back to syncing current calendar room if set
+    if (calendarRoomId) {
+      await handleRoomSync(calendarRoomId);
+    }
   };
 
   const handleManualBlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualBlockStart || !manualBlockEnd) return;
+    if (!manualBlockStart || !manualBlockEnd || !calendarRoomId) return;
     
     const newBlock = {
       id: `manual_${Date.now()}`,
@@ -173,9 +219,15 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       source: 'Manual'
     };
     
-    const updated = [...blockedDates, newBlock];
-    setBlockedDates(updated);
-    await saveUpdatedBusiness({ blockedDates: updated });
+    const updatedRooms = rooms.map(r => {
+      if (r.id === calendarRoomId) {
+        return { ...r, blockedDates: [...(r.blockedDates || []), newBlock] };
+      }
+      return r;
+    });
+    
+    setRooms(updatedRooms);
+    await saveUpdatedBusiness({ rooms: updatedRooms });
     
     setManualBlockStart('');
     setManualBlockEnd('');
@@ -183,9 +235,14 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   };
 
   const handleRemoveBlock = async (id: string) => {
-    const updated = blockedDates.filter(b => b.id !== id);
-    setBlockedDates(updated);
-    await saveUpdatedBusiness({ blockedDates: updated });
+    const updatedRooms = rooms.map(r => {
+      if (r.id === calendarRoomId) {
+        return { ...r, blockedDates: (r.blockedDates || []).filter((b: any) => b.id !== id) };
+      }
+      return r;
+    });
+    setRooms(updatedRooms);
+    await saveUpdatedBusiness({ rooms: updatedRooms });
   };
 
   const handleUpdateReservation = async (updatedRes: any) => {
@@ -206,28 +263,82 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
   };
 
   // KPIs
-  const todayStr = new Date().toLocaleDateString('pt-PT');
-  const reservationsToday = reservations.filter(r => new Date(r.createdAt || Date.now()).toLocaleDateString('pt-PT') === todayStr).length;
-  const checkinsToday = reservations.filter(r => r.checkinDate === todayStr || r.date === todayStr).length;
-  const checkoutsToday = reservations.filter(r => r.checkoutDate === todayStr).length;
-  const hostedGuests = rooms.filter(r => r.status === 'Ocupado').length;
-  const totalRevenue = reservations.filter(r => r.status === 'accepted' || r.status === 'Confirmada').reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+  const todayISO = new Date().toISOString().split('T')[0];
+  const todayPT = new Date().toLocaleDateString('pt-PT');
+  
+  const reservationsToday = reservations.filter(r => {
+    const cDate = new Date(r.createdAt || Date.now());
+    const cISO = cDate.toISOString().split('T')[0];
+    const cPT = cDate.toLocaleDateString('pt-PT');
+    return cISO === todayISO || cPT === todayPT;
+  }).length;
+
+  const checkinsToday = reservations.filter(r => {
+    return r.checkinDate === todayISO || r.checkinDate === todayPT || r.date === todayISO || r.date === todayPT;
+  }).length;
+
+  const checkoutsToday = reservations.filter(r => {
+    if (r.checkoutDate) return r.checkoutDate === todayISO || r.checkoutDate === todayPT;
+    // Fallback: estimate checkout date if nights is provided
+    if (r.nights && r.date) {
+      const d = new Date(r.date);
+      d.setDate(d.getDate() + r.nights);
+      const outISO = d.toISOString().split('T')[0];
+      const outPT = d.toLocaleDateString('pt-PT');
+      return outISO === todayISO || outPT === todayPT;
+    }
+    return false;
+  }).length;
+
+  const hostedGuests = rooms.filter(r => r.status === 'Ocupado').reduce((sum, r) => sum + (r.capacity || 2), 0);
+  const totalRevenue = reservations.filter(r => ['accepted', 'Confirmada', 'Hospedado', 'Concluído', 'Concluída'].includes(r.status)).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
   const occupancyRate = rooms.length ? Math.round((rooms.filter(r => r.status === 'Ocupado').length / rooms.length) * 100) : 0;
 
-  // Add Room
+  // Add Room States
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomType, setNewRoomType] = useState('T1 Standard');
+  const [newRoomCapacity, setNewRoomCapacity] = useState(2);
+  const [newRoomBeds, setNewRoomBeds] = useState(1);
+  const [newRoomBathrooms, setNewRoomBathrooms] = useState(1);
+  const [newRoomArea, setNewRoomArea] = useState(25);
   const [newRoomPrice, setNewRoomPrice] = useState(100);
+  const [newRoomDescription, setNewRoomDescription] = useState('');
+  const [newRoomServices, setNewRoomServices] = useState('');
   const [newRoomStatus, setNewRoomStatus] = useState('Disponível');
 
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoomName) return;
-    const newRoom = { id: `room_${Date.now()}`, name: newRoomName, type: newRoomType, price: Number(newRoomPrice), status: newRoomStatus };
+    const newRoom = {
+      id: `room_${Date.now()}`,
+      name: newRoomName,
+      type: newRoomType,
+      capacity: Number(newRoomCapacity),
+      beds: Number(newRoomBeds),
+      bathrooms: Number(newRoomBathrooms),
+      area: Number(newRoomArea),
+      price: Number(newRoomPrice),
+      description: newRoomDescription,
+      services: newRoomServices.split(',').map(s => s.trim()).filter(Boolean),
+      status: newRoomStatus,
+      gallery: [],
+      blockedDates: []
+    };
     const updated = [...rooms, newRoom];
     setRooms(updated);
     await saveUpdatedBusiness({ rooms: updated });
+    
+    // Reset Form
     setNewRoomName('');
+    setNewRoomType('T1 Standard');
+    setNewRoomCapacity(2);
+    setNewRoomBeds(1);
+    setNewRoomBathrooms(1);
+    setNewRoomArea(25);
+    setNewRoomPrice(100);
+    setNewRoomDescription('');
+    setNewRoomServices('');
+    setNewRoomStatus('Disponível');
   };
 
   // Housekeeping Task Add
@@ -646,7 +757,21 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     <h2 className="text-2xl font-black uppercase tracking-tight">Calendário de Reservas & Bloqueios</h2>
                     <p className="text-slate-400 text-xs mt-1">Mapa mensal visual de ocupação de quartos e integrações de canais.</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-4 items-center flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Unidade:</span>
+                      <select
+                        value={calendarRoomId}
+                        onChange={(e) => setCalendarRoomId(e.target.value)}
+                        className={`px-3 py-2 rounded-xl border text-xs font-black uppercase ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      >
+                        {rooms.map(r => (
+                          <option key={r.id} value={r.id}>{r.name} ({r.type})</option>
+                        ))}
+                      </select>
+                    </div>
                     <button 
                       onClick={() => setShowBlockModal(true)}
                       className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
@@ -700,11 +825,17 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                         const dayNum = idx + 1;
                         const dateStr = `2026-06-${dayNum.toString().padStart(2, '0')}`;
                         
-                        // Check if AzoresToYou reservation exists
-                        const res = reservations.find(r => r.date === dateStr && (r.status === 'Confirmada' || r.status === 'accepted' || r.status === 'Hospedado'));
+                        // Check if AzoresToYou reservation exists for this room
+                        const res = reservations.find(r => 
+                          (r.roomId === calendarRoomId || r.selectedRoom?.id === calendarRoomId) &&
+                          r.date === dateStr && 
+                          (r.status === 'Confirmada' || r.status === 'accepted' || r.status === 'Hospedado')
+                        );
                         
-                        // Check if block exists
-                        const block = blockedDates.find(b => dateStr >= b.start && dateStr <= b.end);
+                        // Check if block exists for this room
+                        const currentRoom = rooms.find(r => r.id === calendarRoomId);
+                        const roomBlockedDates = currentRoom?.blockedDates || [];
+                        const block = roomBlockedDates.find((b: any) => dateStr >= b.start && dateStr <= b.end);
 
                         let colorClass = darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800';
                         let labelText = '';
@@ -745,32 +876,37 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                   }`}>
                     <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Datas Bloqueadas Ativas</h3>
-                    {blockedDates.length === 0 ? (
-                      <p className="text-xs text-slate-450 italic py-12 text-center">Nenhuma data bloqueada no momento.</p>
-                    ) : (
-                      <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                        {blockedDates.map(b => (
-                          <div key={b.id} className={`p-3.5 rounded-xl border flex justify-between items-center ${
-                            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
-                          }`}>
-                            <div>
-                              <p className="font-bold text-xs uppercase text-slate-700 dark:text-white">
-                                {b.source === 'Manual' ? 'Bloqueio Manual' : `Sync: ${b.source}`}
-                              </p>
-                              <p className="text-[10px] text-slate-450 font-semibold mt-0.5">
-                                De {b.start} a {b.end}
-                              </p>
+                    {(() => {
+                      const currentRoom = rooms.find(r => r.id === calendarRoomId);
+                      const roomBlockedDates = currentRoom?.blockedDates || [];
+                      if (roomBlockedDates.length === 0) {
+                        return <p className="text-xs text-slate-450 italic py-12 text-center">Nenhuma data bloqueada no momento para esta unidade.</p>;
+                      }
+                      return (
+                        <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                          {roomBlockedDates.map((b: any) => (
+                            <div key={b.id} className={`p-3.5 rounded-xl border flex justify-between items-center ${
+                              darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
+                            }`}>
+                              <div>
+                                <p className="font-bold text-xs uppercase text-slate-700 dark:text-white">
+                                  {b.source === 'Manual' ? 'Bloqueio Manual' : `Sync: ${b.source}`}
+                                </p>
+                                <p className="text-[10px] text-slate-450 font-semibold mt-0.5">
+                                  De {b.start} a {b.end}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveBlock(b.id)}
+                                className="p-1.5 bg-red-500/15 hover:bg-red-500/20 text-red-500 rounded-lg transition-all cursor-pointer"
+                              >
+                                <Trash size={14} />
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleRemoveBlock(b.id)}
-                              className="p-1.5 bg-red-500/15 hover:bg-red-500/20 text-red-500 rounded-lg transition-all cursor-pointer"
-                            >
-                              <Trash size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </motion.div>
@@ -783,100 +919,274 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+                className="space-y-6"
               >
-                {/* Form to add room */}
-                <div className={`p-6 rounded-[2rem] border shadow-sm flex flex-col ${
-                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Adicionar Quarto / Unidade</h3>
-                  <form onSubmit={handleAddRoom} className="space-y-4">
-                    <div>
-                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Nome / Número do Quarto</label>
-                      <input
-                        type="text"
-                        value={newRoomName}
-                        onChange={(e) => setNewRoomName(e.target.value)}
-                        placeholder="Ex: Quarto 105"
-                        required
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
-                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Tipo de Unidade</label>
-                      <select
-                        value={newRoomType}
-                        onChange={(e) => setNewRoomType(e.target.value)}
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
-                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                        }`}
-                      >
-                        <option value="T1 Standard">T1 Standard</option>
-                        <option value="T1 Deluxe">T1 Deluxe</option>
-                        <option value="T2 Family">T2 Family</option>
-                        <option value="T1 Suite">T1 Suite</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Preço por Noite</label>
-                      <input
-                        type="number"
-                        value={newRoomPrice}
-                        onChange={(e) => setNewRoomPrice(Number(e.target.value))}
-                        required
-                        className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
-                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                        }`}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-[#0d1629] rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
-                    >
-                      Adicionar Unidade
-                    </button>
-                  </form>
-                </div>
-
-                {/* List of rooms */}
-                <div className={`lg:col-span-2 p-6 rounded-[2rem] border shadow-sm ${
-                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Quartos Registados</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {rooms.map(room => (
-                      <div key={room.id} className={`p-4 rounded-xl border flex flex-col justify-between ${
-                        darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
-                      }`}>
-                        <div>
-                          <div className="flex justify-between items-start">
-                            <span className="font-black text-sm text-slate-800 dark:text-white">{room.name}</span>
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                              room.status === 'Disponível' ? 'bg-emerald-500/10 text-emerald-500' :
-                              room.status === 'Ocupado' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
-                            }`}>
-                              {room.status}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{room.type}</p>
-                          <p className="text-xs text-amber-600 font-bold mt-2">{room.price}€ / noite</p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            if (confirm(`Remover quarto ${room.name}?`)) {
-                              const updated = rooms.filter(r => r.id !== room.id);
-                              setRooms(updated);
-                              await saveUpdatedBusiness({ rooms: updated });
-                            }
-                          }}
-                          className="mt-4 text-red-500 hover:text-red-700 text-[10px] font-black uppercase tracking-widest self-end cursor-pointer"
-                        >
-                          Remover
-                        </button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Form to add room */}
+                  <div className={`p-6 rounded-[2rem] border shadow-sm flex flex-col ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Adicionar Quarto / Unidade</h3>
+                    <form onSubmit={handleAddRoom} className="space-y-4">
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Nome / Número do Quarto</label>
+                        <input
+                          type="text"
+                          value={newRoomName}
+                          onChange={(e) => setNewRoomName(e.target.value)}
+                          placeholder="Ex: Quarto 105"
+                          required
+                          className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                          }`}
+                        />
                       </div>
-                    ))}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Tipo de Unidade</label>
+                          <select
+                            value={newRoomType}
+                            onChange={(e) => setNewRoomType(e.target.value)}
+                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          >
+                            <option value="T1 Standard">T1 Standard</option>
+                            <option value="T1 Deluxe">T1 Deluxe</option>
+                            <option value="T2 Family">T2 Family</option>
+                            <option value="T1 Suite">T1 Suite</option>
+                            <option value="Alojamento Local">Alojamento Local</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Preço por Noite</label>
+                          <input
+                            type="number"
+                            value={newRoomPrice}
+                            onChange={(e) => setNewRoomPrice(Number(e.target.value))}
+                            required
+                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Capacidade</label>
+                          <input
+                            type="number"
+                            value={newRoomCapacity}
+                            onChange={(e) => setNewRoomCapacity(Number(e.target.value))}
+                            className={`w-full px-2 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Camas</label>
+                          <input
+                            type="number"
+                            value={newRoomBeds}
+                            onChange={(e) => setNewRoomBeds(Number(e.target.value))}
+                            className={`w-full px-2 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">WCs</label>
+                          <input
+                            type="number"
+                            value={newRoomBathrooms}
+                            onChange={(e) => setNewRoomBathrooms(Number(e.target.value))}
+                            className={`w-full px-2 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Área (m²)</label>
+                          <input
+                            type="number"
+                            value={newRoomArea}
+                            onChange={(e) => setNewRoomArea(Number(e.target.value))}
+                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Estado Inicial</label>
+                          <select
+                            value={newRoomStatus}
+                            onChange={(e) => setNewRoomStatus(e.target.value)}
+                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                              darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                            }`}
+                          >
+                            <option value="Disponível">Disponível</option>
+                            <option value="Ocupado">Ocupado</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Bloqueado">Bloqueado</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Descrição</label>
+                        <textarea
+                          value={newRoomDescription}
+                          onChange={(e) => setNewRoomDescription(e.target.value)}
+                          placeholder="Descrição rápida do quarto..."
+                          rows={2}
+                          className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Serviços / Amenidades</label>
+                        <input
+                          type="text"
+                          value={newRoomServices}
+                          onChange={(e) => setNewRoomServices(e.target.value)}
+                          placeholder="Ex: Wi-Fi, AC, TV (separados por vírgula)"
+                          className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                            darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                          }`}
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-[#0d1629] rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        Adicionar Unidade
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* List of rooms */}
+                  <div className={`lg:col-span-2 p-6 rounded-[2rem] border shadow-sm ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                  }`}>
+                    <h3 className="font-extrabold uppercase text-xs tracking-widest text-slate-400 mb-4">Quartos Registados</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {rooms.map(room => {
+                        const statusColors = {
+                          'Disponível': 'bg-emerald-500/10 text-emerald-500',
+                          'Ocupado': 'bg-red-500/10 text-red-500',
+                          'Limpeza': 'bg-orange-500/10 text-orange-500',
+                          'Manutenção': 'bg-yellow-500/10 text-yellow-500',
+                          'Bloqueado': 'bg-slate-550/10 text-slate-550'
+                        };
+                        const displayImage = room.image || (room.gallery && room.gallery[0]?.url) || '';
+                        
+                        return (
+                          <div key={room.id} className={`p-4 rounded-xl border flex flex-col justify-between ${
+                            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200'
+                          }`}>
+                            <div>
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="font-black text-sm text-slate-800 dark:text-white truncate">{room.name}</span>
+                                <div className="flex gap-1 shrink-0">
+                                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${statusColors[room.status as keyof typeof statusColors] || 'bg-slate-500/10'}`}>
+                                    {room.status}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${room.active !== false ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                    {room.active !== false ? 'Ativo' : 'Desativado'}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold">{room.type}</p>
+                              
+                              {/* Automatic Image Slider Preview in Card */}
+                              <div className="w-full h-28 rounded-xl overflow-hidden my-3 bg-slate-250 dark:bg-slate-900 border border-slate-300/10 relative">
+                                {room.gallery && room.gallery.length > 0 ? (
+                                  (() => {
+                                    const galleryUrls = room.gallery.map((g: any) => typeof g === 'object' ? g.url : g);
+                                    return (
+                                      <div className="w-full h-full">
+                                        <img src={displayImage} className="w-full h-full object-cover" alt="Main" />
+                                        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 rounded text-[7px] text-white font-bold uppercase tracking-wider">
+                                          +{galleryUrls.length} Fotos
+                                        </div>
+                                      </div>
+                                    );
+                                  })()
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <Bed size={20} className="opacity-30" />
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex justify-between text-xs text-slate-400 my-2">
+                                <span>Capacidade: <strong>{room.capacity || 2} Pax</strong></span>
+                                <span>Camas: <strong>{room.beds || 1}</strong></span>
+                              </div>
+                              <p className="text-xs text-amber-600 font-extrabold">{room.price}€ / noite</p>
+                            </div>
+                            
+                            <div className="mt-4 pt-3 border-t border-slate-200/20 flex justify-between items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const updated = rooms.map(r => r.id === room.id ? { ...r, active: r.active === false ? true : false } : r);
+                                  setRooms(updated);
+                                  await saveUpdatedBusiness({ rooms: updated });
+                                }}
+                                className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded transition-colors ${
+                                  room.active !== false 
+                                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' 
+                                    : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                }`}
+                              >
+                                {room.active !== false ? 'Desativar' : 'Ativar'}
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingRoom(room);
+                                    setEditForm(JSON.parse(JSON.stringify(room)));
+                                  }}
+                                  className="text-amber-500 hover:text-amber-600 text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-500/10 rounded"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (confirm(`Remover quarto ${room.name}?`)) {
+                                      if (room.gallery && room.gallery.length > 0) {
+                                        for (const photo of room.gallery) {
+                                          if (photo.public_id) await deleteImage(photo.public_id);
+                                        }
+                                      }
+                                      const updated = rooms.filter(r => r.id !== room.id);
+                                      setRooms(updated);
+                                      await saveUpdatedBusiness({ rooms: updated });
+                                    }
+                                  }}
+                                  className="text-red-500 hover:text-red-650 text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-red-500/10 rounded"
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -904,23 +1214,51 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                       <div>
                         <p className="font-bold text-sm">🛎️ {res.customerName || res.client}</p>
                         <p className="text-xs text-slate-400 font-semibold mt-1">Datas: {res.date} ({res.days || 1} dias)</p>
+                        {res.checkinTime && (
+                          <p className="text-[10px] text-emerald-600 font-bold uppercase mt-1">
+                            Entrada: {res.checkinTime} (Funcionário: {res.checkinEmployee})
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         {res.status === 'Confirmada' ? (
                           <button
-                            onClick={async () => {
-                              const updated = { ...res, status: 'Hospedado' };
-                              await handleUpdateReservation(updated);
-                            }}
+                            type="button"
+                            onClick={() => setShowCheckinModal(res)}
                             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                           >
                             Fazer Check-In
                           </button>
                         ) : (
                           <button
+                            type="button"
                             onClick={async () => {
-                              const updated = { ...res, status: 'Concluída' };
-                              await handleUpdateReservation(updated);
+                              const updatedRes = { ...res, status: 'Concluído' };
+                              
+                              const targetRoomId = res.roomId || res.selectedRoom?.id;
+                              const targetRoom = rooms.find(r => r.id === targetRoomId);
+                              const roomName = targetRoom ? targetRoom.name : (res.selectedRoom?.number || '?');
+                              
+                              const updatedRooms = rooms.map(r => r.id === targetRoomId ? { ...r, status: 'Limpeza' } : r);
+                              setRooms(updatedRooms);
+                              
+                              const newTask = {
+                                id: `hk_${Date.now()}`,
+                                room: roomName,
+                                roomId: targetRoomId,
+                                task: 'Limpeza Geral',
+                                status: 'Pendente',
+                                staff: 'Não Atribuído'
+                              };
+                              const updatedHousekeeping = [...housekeeping, newTask];
+                              setHousekeeping(updatedHousekeeping);
+                              
+                              await handleUpdateReservation(updatedRes);
+                              await saveUpdatedBusiness({ 
+                                rooms: updatedRooms,
+                                housekeeping: updatedHousekeeping
+                              });
+                              alert('Check-out efetuado! Quarto enviado para Limpeza.');
                             }}
                             className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer"
                           >
@@ -1155,9 +1493,22 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                           <select
                             value={hk.status}
                             onChange={async (e) => {
-                              const updated = housekeeping.map(h => h.id === hk.id ? { ...h, status: e.target.value } : h);
-                              setHousekeeping(updated);
-                              await saveUpdatedBusiness({ housekeeping: updated });
+                              const newStatus = e.target.value;
+                              const updatedHk = housekeeping.map(h => h.id === hk.id ? { ...h, status: newStatus } : h);
+                              setHousekeeping(updatedHk);
+                              
+                              let updatedRooms = rooms;
+                              if (newStatus === 'Limpo') {
+                                updatedRooms = rooms.map(r => {
+                                  if (r.id === hk.roomId || r.name === hk.room) {
+                                    return { ...r, status: 'Disponível' };
+                                  }
+                                  return r;
+                                });
+                                setRooms(updatedRooms);
+                              }
+                              
+                              await saveUpdatedBusiness({ housekeeping: updatedHk, rooms: updatedRooms });
                             }}
                             className={`px-3 py-1.5 border rounded-lg text-[10px] font-black uppercase tracking-wider cursor-pointer ${
                               darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-700'
@@ -1169,9 +1520,17 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                           </select>
                           <button
                             onClick={async () => {
-                              const updated = housekeeping.filter(h => h.id !== hk.id);
-                              setHousekeeping(updated);
-                              await saveUpdatedBusiness({ housekeeping: updated });
+                              const updatedHk = housekeeping.filter(h => h.id !== hk.id);
+                              setHousekeeping(updatedHk);
+                              
+                              let updatedRooms = rooms;
+                              const targetRoom = rooms.find(r => r.id === hk.roomId || r.name === hk.room);
+                              if (targetRoom && (targetRoom.status === 'Limpeza' || targetRoom.status === 'Manutenção')) {
+                                updatedRooms = rooms.map(r => r.id === targetRoom.id ? { ...r, status: 'Disponível' } : r);
+                                setRooms(updatedRooms);
+                              }
+                              
+                              await saveUpdatedBusiness({ housekeeping: updatedHk, rooms: updatedRooms });
                             }}
                             className="p-1 hover:bg-red-500/10 text-red-500 rounded-lg transition-all cursor-pointer"
                           >
@@ -1408,7 +1767,9 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     name,
                     publicEmail,
                     phone,
-                    description
+                    description,
+                    image: hotelImage,
+                    gallery: hotelGallery
                   });
                   alert('Configurações guardadas com sucesso!');
                 }} className="space-y-4">
@@ -1459,6 +1820,143 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                       }`}
                     />
                   </div>
+
+                  {/* Foto de Perfil do Hotel */}
+                  <div className="border border-slate-200/20 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+                    <h4 className="font-extrabold uppercase text-[10px] tracking-widest text-slate-450">Foto de Perfil do Hotel</h4>
+                    <div className="flex items-center gap-4">
+                      {hotelImage ? (
+                        <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-slate-300/20 group">
+                          <img src={hotelImage.startsWith('/') ? `${API_BASE_URL}${hotelImage}` : hotelImage} className="w-full h-full object-cover" alt="Profile" />
+                          <button
+                            type="button"
+                            onClick={() => setHotelImage('')}
+                            className="absolute top-1 right-1 p-1 bg-red-600 hover:bg-red-750 text-white rounded-full transition-all cursor-pointer"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 rounded-2xl bg-slate-100 dark:bg-slate-950 flex items-center justify-center text-slate-400 border border-dashed border-slate-300">
+                          <Home size={24} className="opacity-30" />
+                        </div>
+                      )}
+                      <div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const meta = await uploadImage(file);
+                              if (meta) {
+                                setHotelImage(meta.url);
+                              }
+                            }
+                          }}
+                          className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20 file:cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-2">Formatos aceites: JPG, PNG, WEBP. Máx: 5MB.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Galeria Principal */}
+                  <div className="border border-slate-200/20 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+                    <h4 className="font-extrabold uppercase text-[10px] tracking-widest text-slate-450">Galeria Principal</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                      {hotelGallery.map((photo: any, index: number) => {
+                        const url = typeof photo === 'object' ? photo.url : photo;
+                        return (
+                          <div key={index} className="relative w-full h-24 rounded-2xl overflow-hidden border border-slate-300/20 group">
+                            <img src={url.startsWith('/') ? `${API_BASE_URL}${url}` : url} className="w-full h-full object-cover" alt={`Gallery ${index}`} />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                title="Definir Principal"
+                                onClick={() => setHotelImage(url)}
+                                className="p-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-full transition-all cursor-pointer"
+                              >
+                                <Home size={12} />
+                              </button>
+                              {index > 0 && (
+                                <button
+                                  type="button"
+                                  title="Mover para a esquerda"
+                                  onClick={() => {
+                                    const nextGallery = [...hotelGallery];
+                                    const temp = nextGallery[index];
+                                    nextGallery[index] = nextGallery[index - 1];
+                                    nextGallery[index - 1] = temp;
+                                    setHotelGallery(nextGallery);
+                                  }}
+                                  className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all cursor-pointer"
+                                >
+                                  <ChevronRight size={12} className="rotate-180" />
+                                </button>
+                              )}
+                              {index < hotelGallery.length - 1 && (
+                                <button
+                                  type="button"
+                                  title="Mover para a direita"
+                                  onClick={() => {
+                                    const nextGallery = [...hotelGallery];
+                                    const temp = nextGallery[index];
+                                    nextGallery[index] = nextGallery[index + 1];
+                                    nextGallery[index + 1] = temp;
+                                    setHotelGallery(nextGallery);
+                                  }}
+                                  className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all cursor-pointer"
+                                >
+                                  <ChevronRight size={12} />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                title="Eliminar"
+                                onClick={async () => {
+                                  const photoObj = hotelGallery[index];
+                                  if (typeof photoObj === 'object' && photoObj.public_id) {
+                                    await deleteImage(photoObj.public_id);
+                                  }
+                                  const nextGallery = hotelGallery.filter((_, idx) => idx !== index);
+                                  setHotelGallery(nextGallery);
+                                }}
+                                className="p-1 bg-red-600 hover:bg-red-755 text-white rounded-full transition-all cursor-pointer"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <label className="w-full h-24 rounded-2xl border border-dashed border-slate-305 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950 flex flex-col items-center justify-center text-slate-400 hover:text-slate-650 cursor-pointer hover:border-slate-400 transition-all">
+                        <PlusCircle size={20} className="mb-1" />
+                        <span className="text-[9px] font-black uppercase tracking-wider">Adicionar</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={async (e) => {
+                            const files = e.target.files;
+                            if (files) {
+                              const uploaded = [...hotelGallery];
+                              for (let i = 0; i < files.length; i++) {
+                                const file = files[i];
+                                const meta = await uploadImage(file);
+                                if (meta) {
+                                  uploaded.push(meta);
+                                }
+                              }
+                              setHotelGallery(uploaded);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
@@ -1565,6 +2063,509 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
       </div>
 
       {/* Manual Date Blocker Modal */}
+      <AnimatePresence>
+        {showBlockModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden z-10 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                onClick={() => setShowBlockModal(false)}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-4">Bloquear Datas Manualmente</h3>
+              <form onSubmit={handleManualBlock} className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Data de Início</label>
+                  <input
+                    type="date"
+                    required
+                    value={manualBlockStart}
+                    onChange={(e) => setManualBlockStart(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Data de Fim</label>
+                  <input
+                    type="date"
+                    required
+                    value={manualBlockEnd}
+                    onChange={(e) => setManualBlockEnd(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/10"
+                >
+                  Confirmar Bloqueio
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Room Modal */}
+      <AnimatePresence>
+        {editingRoom && editForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-4xl p-8 shadow-2xl relative overflow-hidden z-10 max-h-[90vh] overflow-y-auto ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                type="button"
+                onClick={() => { setEditingRoom(null); setEditForm(null); }}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-6 text-amber-500">Editar Quarto / Unidade: {editingRoom.name}</h3>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const updatedRooms = rooms.map(r => r.id === editForm.id ? editForm : r);
+                setRooms(updatedRooms);
+                await saveUpdatedBusiness({ rooms: updatedRooms });
+                setEditingRoom(null);
+                setEditForm(null);
+                alert('Quarto guardado com sucesso!');
+              }} className="space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Nome / Número do Quarto</label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Tipo de Unidade</label>
+                    <select
+                      value={editForm.type}
+                      onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <option value="T1 Standard">T1 Standard</option>
+                      <option value="T1 Deluxe">T1 Deluxe</option>
+                      <option value="T2 Family">T2 Family</option>
+                      <option value="T1 Suite">T1 Suite</option>
+                      <option value="Alojamento Local">Alojamento Local</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Preço por Noite (€)</label>
+                    <input
+                      type="number"
+                      required
+                      value={editForm.price}
+                      onChange={(e) => setEditForm({ ...editForm, price: Number(e.target.value) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Capacidade</label>
+                    <input
+                      type="number"
+                      value={editForm.capacity}
+                      onChange={(e) => setEditForm({ ...editForm, capacity: Number(e.target.value) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Camas</label>
+                    <input
+                      type="number"
+                      value={editForm.beds}
+                      onChange={(e) => setEditForm({ ...editForm, beds: Number(e.target.value) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Casas de Banho</label>
+                    <input
+                      type="number"
+                      value={editForm.bathrooms}
+                      onChange={(e) => setEditForm({ ...editForm, bathrooms: Number(e.target.value) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Área (m²)</label>
+                    <input
+                      type="number"
+                      value={editForm.area}
+                      onChange={(e) => setEditForm({ ...editForm, area: Number(e.target.value) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Estado</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <option value="Disponível">Disponível</option>
+                      <option value="Ocupado">Ocupado</option>
+                      <option value="Limpeza">Limpeza</option>
+                      <option value="Manutenção">Manutenção</option>
+                      <option value="Bloqueado">Bloqueado</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Serviços (separados por vírgula)</label>
+                    <input
+                      type="text"
+                      value={Array.isArray(editForm.services) ? editForm.services.join(', ') : editForm.services || ''}
+                      onChange={(e) => setEditForm({ ...editForm, services: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) })}
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                        darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">Descrição</label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={2}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+
+                {/* Gallery Manager */}
+                <div className="border-t border-slate-200/20 pt-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Galeria da Unidade</h4>
+                    <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-[9px] uppercase tracking-wider rounded-lg transition-all cursor-pointer">
+                      + Adicionar Fotos
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={async (e) => {
+                          if (!e.target.files) return;
+                          const files = Array.from(e.target.files);
+                          const uploaded = [];
+                          for (const file of files) {
+                            const img = await uploadImage(file);
+                            if (img) uploaded.push(img);
+                          }
+                          const updatedGallery = [...(editForm.gallery || []), ...uploaded];
+                          const updatedImage = editForm.image || (uploaded[0] ? uploaded[0].url : '');
+                          setEditForm({ ...editForm, gallery: updatedGallery, image: updatedImage });
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                    {(editForm.gallery || []).map((photo: any, index: number) => {
+                      const photoUrl = typeof photo === 'object' ? photo.url : photo;
+                      const isMain = editForm.image === photoUrl;
+                      return (
+                        <div key={index} className="relative group rounded-xl overflow-hidden aspect-video bg-slate-800 border border-slate-700/50">
+                          <img src={photoUrl} className="w-full h-full object-cover" alt="Gallery item" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditForm({ ...editForm, image: photoUrl })}
+                              title="Definir como Principal"
+                              className={`p-1 rounded bg-white/10 hover:bg-amber-500 text-white transition-colors ${isMain ? 'bg-amber-500 text-slate-900' : ''}`}
+                            >
+                              <Star size={12} className={isMain ? 'fill-current' : ''} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const list = [...(editForm.gallery || [])];
+                                if (index > 0) {
+                                  const temp = list[index];
+                                  list[index] = list[index - 1];
+                                  list[index - 1] = temp;
+                                  setEditForm({ ...editForm, gallery: list });
+                                }
+                              }}
+                              className="p-1 rounded bg-white/10 hover:bg-slate-700 text-white font-bold"
+                            >
+                              &larr;
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const list = [...(editForm.gallery || [])];
+                                if (index < list.length - 1) {
+                                  const temp = list[index];
+                                  list[index] = list[index + 1];
+                                  list[index + 1] = temp;
+                                  setEditForm({ ...editForm, gallery: list });
+                                }
+                              }}
+                              className="p-1 rounded bg-white/10 hover:bg-slate-700 text-white font-bold"
+                            >
+                              &rarr;
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (photo.public_id) {
+                                  await deleteImage(photo.public_id);
+                                }
+                                const updated = (editForm.gallery || []).filter((p: any) => p.public_id !== photo.public_id || p.url !== photo.url);
+                                const updatedImage = editForm.image === photoUrl ? (updated[0] ? updated[0].url : '') : editForm.image;
+                                setEditForm({ ...editForm, gallery: updated, image: updatedImage });
+                              }}
+                              className="p-1 rounded bg-white/10 hover:bg-red-500 text-white"
+                            >
+                              <Trash size={12} />
+                            </button>
+                          </div>
+                          {isMain && (
+                            <span className="absolute top-1.5 left-1.5 bg-amber-500 text-slate-950 font-black text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded shadow">
+                              Principal
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* iCal Integrations per Room */}
+                <div className="border-t border-slate-200/20 pt-4 space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Sincronização de Calendário (iCal) - Esta Unidade</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">iCal Booking.com</label>
+                      <input
+                        type="text"
+                        value={editForm.icalBooking || ''}
+                        onChange={(e) => setEditForm({ ...editForm, icalBooking: e.target.value })}
+                        placeholder="https://booking.com/feeds/co-calendar/..."
+                        className={`w-full px-4 py-2 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">iCal Airbnb</label>
+                      <input
+                        type="text"
+                        value={editForm.icalAirbnb || ''}
+                        onChange={(e) => setEditForm({ ...editForm, icalAirbnb: e.target.value })}
+                        placeholder="https://airbnb.com/calendar/ical/..."
+                        className={`w-full px-4 py-2 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">iCal Vrbo/Expedia</label>
+                      <input
+                        type="text"
+                        value={editForm.icalVrbo || ''}
+                        onChange={(e) => setEditForm({ ...editForm, icalVrbo: e.target.value })}
+                        placeholder="https://vrbo.com/icalendar/..."
+                        className={`w-full px-4 py-2 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1">iCal Externo Adicional</label>
+                      <input
+                        type="text"
+                        value={editForm.icalOther || ''}
+                        onChange={(e) => setEditForm({ ...editForm, icalOther: e.target.value })}
+                        placeholder="https://exemplo.com/ical/..."
+                        className={`w-full px-4 py-2 rounded-xl border text-xs font-semibold ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-500/5 p-4 rounded-2xl border border-slate-300/10">
+                    <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">AzoresToYou Exportar Link (Leitura)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`https://azores4you.com/api/rooms/${editForm.id}/export.ics`}
+                        className={`flex-1 px-4 py-2 rounded-xl border text-xs font-semibold bg-slate-900 border-slate-800 text-slate-400`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`https://azores4you.com/api/rooms/${editForm.id}/export.ics`);
+                          alert('Link de exportação copiado!');
+                        }}
+                        className="px-4 bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 border border-slate-350/20 rounded-xl text-xs font-bold"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Última Sincronização: {editForm.lastSync || 'Nunca'}</p>
+                    
+                    <button
+                      type="button"
+                      onClick={() => handleRoomSync(editForm.id)}
+                      className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[9px] uppercase tracking-wider rounded-lg transition-all"
+                    >
+                      Sincronizar Agora
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 border-t border-slate-200/20 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => { setEditingRoom(null); setEditForm(null); }}
+                    className="px-4 py-2.5 bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-wider"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider shadow"
+                  >
+                    Guardar Alterações
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Checkin Employee Confirmation Modal */}
+      <AnimatePresence>
+        {showCheckinModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`border rounded-3xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden z-10 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              }`}
+            >
+              <button 
+                type="button"
+                onClick={() => { setShowCheckinModal(null); setCheckinEmployee(''); }}
+                className="absolute top-6 right-6 p-2 bg-slate-500/15 hover:bg-slate-500/25 rounded-full transition-all text-slate-400 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <h3 className="text-lg font-black uppercase tracking-tight mb-4">Confirmar Entrada (Check-In)</h3>
+              <p className="text-xs text-slate-450 mb-4 font-bold">
+                Insira o nome do funcionário responsável pela receção do hóspede {showCheckinModal.customerName || showCheckinModal.client}.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 font-bold">Funcionário de Serviço</label>
+                  <input
+                    type="text"
+                    required
+                    value={checkinEmployee}
+                    onChange={(e) => setCheckinEmployee(e.target.value)}
+                    placeholder="Ex: Ana Medeiros"
+                    className={`w-full px-4 py-3 rounded-xl border text-xs font-semibold ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!checkinEmployee) {
+                      alert('Insira o nome do funcionário!');
+                      return;
+                    }
+                    const timeNow = new Date().toLocaleString('pt-PT');
+                    const updatedRes = { 
+                      ...showCheckinModal, 
+                      status: 'Hospedado',
+                      checkinTime: timeNow,
+                      checkinEmployee: checkinEmployee
+                    };
+                    
+                    // Set Room status to Ocupado
+                    const targetRoomId = showCheckinModal.roomId || showCheckinModal.selectedRoom?.id;
+                    const updatedRooms = rooms.map(r => r.id === targetRoomId ? { ...r, status: 'Ocupado' } : r);
+                    
+                    setRooms(updatedRooms);
+                    await handleUpdateReservation(updatedRes);
+                    await saveUpdatedBusiness({ rooms: updatedRooms });
+                    
+                    setShowCheckinModal(null);
+                    setCheckinEmployee('');
+                  }}
+                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                >
+                  Concluir Check-In
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showBlockModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">

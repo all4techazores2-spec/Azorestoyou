@@ -1136,19 +1136,34 @@ const App: React.FC = () => {
     console.log("💾 Persistindo pacote:", packageId, itinerary, guestDetails); // Deploy trigger
 
     if (itinerary.hotel) {
+      const roomPrice = itinerary.selectedRoom ? (Number(itinerary.selectedRoom.pricePerNight) || Number(itinerary.selectedRoom.price)) : (Number(itinerary.hotel.pricePerNight) || Number(itinerary.hotel.price));
+      const totalHotelPrice = roomPrice * (itinerary.nights || 1);
+      const startStr = itinerary.hotelStartDate || new Date().toISOString().split('T')[0];
+      const endStr = (() => {
+        const d = new Date(startStr);
+        d.setDate(d.getDate() + (itinerary.nights || 1));
+        return d.toISOString().split('T')[0];
+      })();
+
       newReservations.push({
         id: `RES_H_${Date.now()}`,
         packageId: packageId,
         type: itinerary.hotel.type, // 'hotel' or 'al'
         hotel: itinerary.hotel,
+        roomId: itinerary.selectedRoom ? itinerary.selectedRoom.id : null,
         selectedRoom: itinerary.selectedRoom ? {
           id: itinerary.selectedRoom.id,
-          number: itinerary.selectedRoom.number || itinerary.selectedRoom.roomNumber || '?',
+          number: itinerary.selectedRoom.name || itinerary.selectedRoom.number || itinerary.selectedRoom.roomNumber || '?',
           type: itinerary.selectedRoom.type || 'Standard'
         } : null,
-        date: itinerary.hotelStartDate || new Date().toISOString().split('T')[0],
+        date: startStr,
+        checkinDate: startStr,
+        checkoutDate: endStr,
         nights: itinerary.nights || 1,
         status: 'pending',
+        price: totalHotelPrice,
+        client: guestDetails?.name || userProfile?.name || 'Cliente',
+        customerName: guestDetails?.name || userProfile?.name || 'Cliente',
         selectedExtras: itinerary.selectedExtras || [],
         license: guestDetails?.license || '',
         nif: guestDetails?.nif || '',

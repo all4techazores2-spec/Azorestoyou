@@ -603,7 +603,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         console.warn("⚠️ Cloudinary environment variables are not configured. Falling back to Base64 storage.");
         const base64Data = req.file.buffer.toString('base64');
         const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
-        return res.json({ url: dataUri });
+        return res.json({ url: dataUri, public_id: null, width: 800, height: 600 });
     }
     
     try {
@@ -626,12 +626,33 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         });
 
         console.log(`✅ Cloudinary Upload successful! URL: ${uploadResult.secure_url}`);
-        res.json({ url: uploadResult.secure_url });
+        res.json({ 
+            url: uploadResult.secure_url,
+            public_id: uploadResult.public_id,
+            width: uploadResult.width,
+            height: uploadResult.height
+        });
     } catch (err) {
         console.error("❌ Cloudinary Upload failed. Gracefully falling back to Base64 storage:", err);
         const base64Data = req.file.buffer.toString('base64');
         const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
-        res.json({ url: dataUri });
+        res.json({ url: dataUri, public_id: null, width: 800, height: 600 });
+    }
+});
+
+// Delete from Cloudinary
+app.post('/api/upload/delete', async (req, res) => {
+    const { public_id } = req.body;
+    if (!public_id) {
+        return res.json({ success: true, message: 'No public_id provided (likely local fallback)' });
+    }
+    try {
+        console.log(`🗑️ Deleting from Cloudinary: ${public_id}...`);
+        const result = await cloudinary.uploader.destroy(public_id);
+        res.json({ success: true, result });
+    } catch (err) {
+        console.error("❌ Cloudinary deletion failed:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 

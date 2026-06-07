@@ -63,30 +63,48 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
   const lang = language as Language;
   const t = (key: any) => getTranslation(lang, key);
 
-  // Mock rooms if none exist
-  const rooms: Room[] = accommodation.rooms || [
-    { 
-      id: 'R1', name: 'Quarto Standard', description: 'Conforto essencial com vista para a montanha.', 
-      pricePerNight: accommodation.pricePerNight, capacity: 2, image: 'https://picsum.photos/800/600?random=20',
-      amenities: ['Wi-Fi', 'TV Plana', 'Ar Condicionado', 'Minibar'],
-      bedType: 'Casal',
-      gallery: ['https://picsum.photos/800/600?random=100', 'https://picsum.photos/800/600?random=101']
-    },
-    { 
-      id: 'R2', name: 'Quarto Deluxe', description: 'Espaçoso com varanda privada e vista mar.', 
-      pricePerNight: accommodation.pricePerNight + 40, capacity: 2, image: 'https://picsum.photos/800/600?random=21',
-      amenities: ['Wi-Fi Grátis', 'TV Plana 4K', 'Ar Condicionado', 'Minibar Premium', 'Máquina Café'],
-      bedType: 'Dupla',
-      gallery: ['https://picsum.photos/800/600?random=102', 'https://picsum.photos/800/600?random=103']
-    },
-    { 
-      id: 'R3', name: 'Suite Familiar', description: 'A solução ideal para famílias, com dois quartos comunicantes.', 
-      pricePerNight: accommodation.pricePerNight + 80, capacity: 4, image: 'https://picsum.photos/800/600?random=22',
-      amenities: ['Wi-Fi Grátis', '2 TVs Planas', 'Ar Condicionado', 'Área de Estar', 'Cozinha'],
-      bedType: 'Casal',
-      gallery: ['https://picsum.photos/800/600?random=104', 'https://picsum.photos/800/600?random=105']
-    },
-  ];
+  // Map and filter active rooms if they exist on the accommodation
+  const rooms: Room[] = (accommodation.rooms && accommodation.rooms.length > 0)
+    ? accommodation.rooms
+        .filter((r: any) => r.active !== false)
+        .map((r: any) => {
+          const galleryUrls = (r.gallery || []).map((g: any) => typeof g === 'object' ? g.url : g);
+          const firstImage = r.image || galleryUrls[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070';
+          return {
+            id: r.id,
+            name: r.name,
+            description: r.description || '',
+            pricePerNight: Number(r.price) || Number(r.pricePerNight) || accommodation.pricePerNight,
+            capacity: Number(r.capacity) || 2,
+            bedType: r.beds ? `${r.beds} Cama(s)` : (r.bedType || 'Casal') as any,
+            image: firstImage,
+            gallery: galleryUrls,
+            amenities: r.services || r.amenities || []
+          };
+        })
+    : [
+        { 
+          id: 'R1', name: 'Quarto Standard', description: 'Conforto essencial com vista para a montanha.', 
+          pricePerNight: accommodation.pricePerNight, capacity: 2, image: 'https://picsum.photos/800/600?random=20',
+          amenities: ['Wi-Fi', 'TV Plana', 'Ar Condicionado', 'Minibar'],
+          bedType: 'Casal',
+          gallery: ['https://picsum.photos/800/600?random=100', 'https://picsum.photos/800/600?random=101']
+        },
+        { 
+          id: 'R2', name: 'Quarto Deluxe', description: 'Espaçoso com varanda privada e vista mar.', 
+          pricePerNight: accommodation.pricePerNight + 40, capacity: 2, image: 'https://picsum.photos/800/600?random=21',
+          amenities: ['Wi-Fi Grátis', 'TV Plana 4K', 'Ar Condicionado', 'Minibar Premium', 'Máquina Café'],
+          bedType: 'Dupla',
+          gallery: ['https://picsum.photos/800/600?random=102', 'https://picsum.photos/800/600?random=103']
+        },
+        { 
+          id: 'R3', name: 'Suite Familiar', description: 'A solução ideal para famílias, com dois quartos comunicantes.', 
+          pricePerNight: accommodation.pricePerNight + 80, capacity: 4, image: 'https://picsum.photos/800/600?random=22',
+          amenities: ['Wi-Fi Grátis', '2 TVs Planas', 'Ar Condicionado', 'Área de Estar', 'Cozinha'],
+          bedType: 'Casal',
+          gallery: ['https://picsum.photos/800/600?random=104', 'https://picsum.photos/800/600?random=105']
+        },
+      ];
 
   const handleConfirm = () => {
     if (accommodation.type === 'al' && !rentType) return;

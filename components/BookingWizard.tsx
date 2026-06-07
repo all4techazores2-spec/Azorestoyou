@@ -207,21 +207,74 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   };
 
   const handleAccommodationConfirm = (hotel: Hotel, selectedRoom?: any, rentType?: 'room' | 'house') => {
-    if (hotel.blockedDates && currentItinerary.hotelStartDate && currentItinerary.hotelEndDate) {
+    if (currentItinerary.hotelStartDate && currentItinerary.hotelEndDate) {
       const start = new Date(currentItinerary.hotelStartDate);
       const end = new Date(currentItinerary.hotelEndDate);
-      const hasOverlap = hotel.blockedDates.some((b: any) => {
-        const bStart = new Date(b.start);
-        const bEnd = new Date(b.end);
-        return (start <= bEnd && end >= bStart);
-      });
-      
-      if (hasOverlap) {
-        alert(language === 'pt' 
-          ? 'Este alojamento não está disponível nas datas selecionadas devido a bloqueios ou reservas externas (Booking/Airbnb).' 
-          : 'This accommodation is not available on the selected dates due to blocks or external bookings (Booking/Airbnb).'
-        );
-        return;
+
+      // 1. Check room-specific blockedDates (from iCal sync or manual block on the room)
+      if (selectedRoom && selectedRoom.blockedDates) {
+        const hasOverlap = selectedRoom.blockedDates.some((b: any) => {
+          const bStart = new Date(b.start);
+          const bEnd = new Date(b.end);
+          return (start <= bEnd && end >= bStart);
+        });
+        if (hasOverlap) {
+          alert(language === 'pt' 
+            ? 'Este quarto não está disponível nas datas selecionadas devido a bloqueios ou sincronização iCal (Booking/Airbnb/Vrbo).' 
+            : 'This room is not available on the selected dates due to blocks or iCal sync (Booking/Airbnb/Vrbo).'
+          );
+          return;
+        }
+      }
+
+      // 2. Check room-specific existing reservations in this hotel
+      const reservations = (hotel as any).reservations || [];
+      if (selectedRoom && reservations.length > 0) {
+        const hasResOverlap = reservations.some((r: any) => {
+          if (['cancelled', 'Cancelada', 'Cancelado'].includes(r.status)) return false;
+          const resRoomId = r.roomId || r.selectedRoom?.id;
+          if (resRoomId !== selectedRoom.id) return false;
+
+          const rStartStr = r.checkinDate || r.date;
+          let rEndStr = r.checkoutDate;
+          if (!rEndStr && r.nights) {
+            const d = new Date(rStartStr);
+            d.setDate(d.getDate() + Number(r.nights));
+            rEndStr = d.toISOString().split('T')[0];
+          }
+
+          if (rStartStr && rEndStr) {
+            const rStart = new Date(rStartStr);
+            const rEnd = new Date(rEndStr);
+            return (start <= rEnd && end >= rStart);
+          }
+          return false;
+        });
+
+        if (hasResOverlap) {
+          alert(language === 'pt' 
+            ? 'Este quarto já se encontra reservado para as datas selecionadas.' 
+            : 'This room is already booked for the selected dates.'
+          );
+          return;
+        }
+      }
+
+      // 3. Fallback: check general hotel blockedDates
+      if (hotel.blockedDates) {
+        const hasOverlap = hotel.blockedDates.some((b: any) => {
+          const bStart = new Date(b.start);
+          const bEnd = new Date(b.end);
+          return (start <= bEnd && end >= bStart);
+        });
+        
+        if (hasOverlap) {
+          alert(language === 'pt' 
+            ? 'Este alojamento não está disponível nas datas selecionadas devido a bloqueios.' 
+            : 'This accommodation is not available on the selected dates due to blocks.'
+          );
+          return;
+        }
       }
     }
 
