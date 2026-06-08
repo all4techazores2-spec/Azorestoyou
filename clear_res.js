@@ -55,6 +55,17 @@ const clearReservations = async () => {
                         totalCleared += biz.chats.length;
                         biz.chats = [];
                     }
+                    if (biz.rooms && Array.isArray(biz.rooms)) {
+                        biz.rooms.forEach(room => {
+                            room.status = 'available';
+                            room.customerName = undefined;
+                            room.reservationTime = undefined;
+                        });
+                    }
+                    if (biz.housekeeping && Array.isArray(biz.housekeeping)) {
+                        totalCleared += biz.housekeeping.length;
+                        biz.housekeeping = [];
+                    }
                 });
             }
         });

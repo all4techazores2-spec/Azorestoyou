@@ -35,6 +35,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   initialCategory = null
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
+  const [selectedChatCategory, setSelectedChatCategory] = useState<string | null>(null);
   const [ratingTarget, setRatingTarget] = useState<any | null>(null);
   const [showBillPopup, setShowBillPopup] = useState<any | null>(null);
   const [concludedSuccess, setConcludedSuccess] = useState<boolean>(false);
@@ -48,6 +49,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
   useEffect(() => {
     if (initialCategory) {
       setSelectedCategory(initialCategory);
+      setSelectedChatCategory(null);
     }
   }, [initialCategory]);
 
@@ -404,7 +406,7 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     id,
     items: packagesMap[id],
     date: packagesMap[id][0].date,
-    status: packagesMap[id].every((r: any) => r.status === 'accepted') ? 'accepted' : 'pending'
+    status: packagesMap[id].every((r: any) => ['accepted', 'Confirmada', 'Confirmado', 'Hospedado', 'Concluído', 'active', 'finished'].includes(r.status)) ? 'accepted' : 'pending'
   }));
 
   const getResType = (r: any) => r.type || r.businessType || 'restaurant';
@@ -471,8 +473,21 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     shadow: 'shadow-blue-600/20'
   };
 
+  const chatCategories = [
+    { id: 'alojamento', label: 'Alojamento', icon: <Hotel size={24} />, types: ['hotel', 'al'], color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
+    { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, types: ['restaurant'], color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
+    { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, types: ['car'], color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
+    { id: 'flights', label: 'Voos', icon: <Plane size={24} />, types: ['flight'], color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
+    { id: 'landscapes', label: 'Atividades', icon: <Camera size={24} />, types: ['landscape'], color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
+    { id: 'beauty', label: 'Beleza & Bem-Estar', icon: <Sparkles size={24} />, types: ['beauty'], color: 'from-fuchsia-500 to-pink-600', shadow: 'shadow-fuchsia-500/20' },
+    { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, types: ['shop'], color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
+  ].filter(cat => 
+    localReservations.some(r => cat.types.includes(getResType(r)))
+  );
+
   const categories = [
     { id: 'packages', label: firstPackageInfo.label, icon: firstPackageInfo.sidebarIcon, count: packagesList.length, color: firstPackageInfo.color, shadow: firstPackageInfo.shadow },
+    { id: 'messages', label: 'Mensagens', icon: <MessageSquare size={24} />, count: localReservations.length, color: 'from-indigo-600 to-indigo-850', shadow: 'shadow-indigo-500/20' },
     { id: 'history', label: 'Histórico', icon: <Clock size={24} />, count: historyReservations.length, color: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-500/20' },
     { id: 'restaurants', label: 'Restaurantes', icon: <UtensilsCrossed size={24} />, count: restaurantReservations.length, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
     { id: 'landscapes', label: 'Paisagens', icon: <Camera size={24} />, count: landscapeReservations.length, color: 'from-orange-400 to-rose-500', shadow: 'shadow-orange-500/20' },
@@ -482,9 +497,15 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
     { id: 'shops', label: 'Lojas & Comércio', icon: <ShoppingBag size={24} />, count: shopReservations.length, color: 'from-indigo-500 to-violet-600', shadow: 'shadow-indigo-500/20' },
     { id: 'flights', label: 'Voos', icon: <Plane size={24} />, count: flightReservations.length, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
     { id: 'cars', label: 'Aluguer de Carros', icon: <Car size={24} />, count: carReservations.length, color: 'from-rose-500 to-pink-600', shadow: 'shadow-rose-500/20' },
-  ].filter(cat => cat.count > 0 || cat.id === 'history');
+  ].filter(cat => cat.count > 0 || cat.id === 'history' || cat.id === 'messages');
 
-  const handleBack = () => setSelectedCategory(null);
+  const handleBack = () => {
+    if (selectedCategory === 'messages' && selectedChatCategory) {
+      setSelectedChatCategory(null);
+    } else {
+      setSelectedCategory(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-6 bg-slate-900/40 backdrop-blur-sm">
@@ -514,10 +535,22 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
             )}
             <div className="text-left">
               <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                {selectedCategory ? categories.find(c => c.id === selectedCategory)?.label : 'Os Meus Momentos'}
+                {selectedCategory ? (
+                  selectedCategory === 'messages' && selectedChatCategory ? (
+                    `Mensagens: ${chatCategories.find(c => c.id === selectedChatCategory)?.label || 'Chat'}`
+                  ) : (
+                    categories.find(c => c.id === selectedCategory)?.label || 'Mensagens'
+                  )
+                ) : 'Os Meus Momentos'}
               </h2>
               <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-0.5">
-                {selectedCategory ? `Reservas em ${categories.find(c => c.id === selectedCategory)?.label}` : 'Gestão de Reservas e Experiências'}
+                {selectedCategory ? (
+                  selectedCategory === 'messages' && selectedChatCategory ? (
+                    `Conversas em ${chatCategories.find(c => c.id === selectedChatCategory)?.label}`
+                  ) : (
+                    `Reservas em ${categories.find(c => c.id === selectedCategory)?.label || 'Mensagens'}`
+                  )
+                ) : 'Gestão de Reservas e Experiências'}
               </p>
             </div>
           </div>
@@ -1053,36 +1086,116 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                  })}
 
                 {/* UNIFIED MESSAGES / CHAT VIEW */}
-                {selectedCategory === 'messages' && activeReservations.map((res) => {
-                  const hotelName = res.hotel?.name || res.hotelName;
-                  const carModel = res.car?.model || res.vehicle;
-                  const restName = res.restaurantName || res.businessName || res.itemName;
-                  const displayName = hotelName || carModel || restName || 'Reserva AzoresToYou';
-                  
-                  return (
-                    <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm flex items-center justify-between gap-4 mb-4">
-                      <div className="text-left">
-                        <span className="bg-indigo-50 text-indigo-650 text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-100">
-                          {res.type === 'hotel' || res.type === 'al' ? 'Alojamento' : res.type === 'car' ? 'Viatura' : res.type === 'restaurant' ? 'Restaurante' : 'Serviço'}
-                        </span>
-                        <h3 className="font-black text-base text-slate-800 tracking-tight mt-1">{displayName}</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{res.date} • {res.time || res.checkinTime || 'N/A'}</p>
-                      </div>
-                      <button
-                        onClick={() => handleOpenEmergencyChat(res)}
-                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-600/10"
+                {selectedCategory === 'messages' && (
+                  <AnimatePresence mode="wait">
+                    {!selectedChatCategory ? (
+                      <motion.div
+                        key="chat-categories"
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 30 }}
+                        transition={{ duration: 0.25 }}
+                        className="grid grid-cols-1 gap-4 py-4"
                       >
-                        <MessageSquare size={14} /> Chat
-                      </button>
-                    </div>
-                  );
-                })}
-
-                {selectedCategory === 'messages' && activeReservations.length === 0 && (
-                   <div className="py-12 text-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200 mb-6">
-                     <MessageSquare size={48} className="mx-auto mb-4 text-slate-200" />
-                     <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Sem conversas ativas no momento</p>
-                   </div>
+                        {chatCategories.length > 0 ? (
+                          chatCategories.map((cat) => {
+                            const resList = localReservations.filter(r => cat.types.includes(getResType(r)));
+                            const hasActive = resList.some(r => !['finished', 'concluido', 'concluído', 'concluida', 'concluída'].includes((r.status || '').toLowerCase()));
+                            
+                            return (
+                              <button
+                                key={cat.id}
+                                onClick={() => setSelectedChatCategory(cat.id)}
+                                className="group flex items-center justify-between p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300"
+                              >
+                                <div className="flex items-center gap-6">
+                                  <div className={`w-16 h-16 bg-gradient-to-br ${cat.color} rounded-3xl flex items-center justify-center text-white shadow-lg ${cat.shadow} group-hover:scale-110 transition-transform`}>
+                                    {cat.icon}
+                                  </div>
+                                  <div className="text-left">
+                                    <h3 className="font-black text-xl text-slate-800 tracking-tight">{cat.label}</h3>
+                                    <p className="text-xs font-bold text-slate-400 mt-1">
+                                      {resList.length === 1 ? '1 negócio' : `${resList.length} negócios`}
+                                      {hasActive ? ' • Ativo' : ' • Histórico'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                  <ArrowRight size={20} />
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="py-24 text-center">
+                            <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
+                              <MessageSquare size={48} className="text-slate-200" />
+                              <div className="absolute top-0 right-0 w-6 h-6 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 mb-2">Sem conversas?</h3>
+                            <p className="text-slate-400 font-bold max-w-xs mx-auto text-sm leading-relaxed">As suas conversas ativas e passadas aparecerão aqui.</p>
+                          </div>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="chat-businesses"
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.25 }}
+                        className="space-y-4"
+                      >
+                        {localReservations
+                          .filter(r => {
+                            const cat = chatCategories.find(c => c.id === selectedChatCategory);
+                            return cat ? cat.types.includes(getResType(r)) : false;
+                          })
+                          .map((res) => {
+                            const hotelName = res.hotel?.name || res.hotelName;
+                            const carModel = res.car?.model || res.vehicle;
+                            const restName = res.restaurantName || res.businessName || res.itemName;
+                            const displayName = hotelName || carModel || restName || 'Reserva AzoresToYou';
+                            
+                            const statusLower = (res.status || '').toLowerCase();
+                            const isFinished = ['finished', 'concluido', 'concluído', 'concluida', 'concluída'].includes(statusLower);
+                            
+                            return (
+                              <div key={res.id} className="bg-white rounded-[2.5rem] border border-slate-100 p-6 shadow-sm flex items-center justify-between gap-4">
+                                <div className="text-left">
+                                  <span className={`text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                                    isFinished 
+                                      ? 'bg-slate-150 text-slate-500 border-slate-200' 
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                  }`}>
+                                    {isFinished ? 'Checkout Realizado' : 'Reserva Ativa'}
+                                  </span>
+                                  <h3 className="font-black text-base text-slate-800 tracking-tight mt-1">{displayName}</h3>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                    {res.date} • {res.time || res.checkinTime || 'N/A'}
+                                  </p>
+                                </div>
+                                {isFinished ? (
+                                  <button
+                                    disabled
+                                    className="px-4 py-2.5 bg-slate-100 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-250 cursor-not-allowed flex items-center gap-1.5"
+                                  >
+                                    <MessageSquare size={14} className="opacity-50" /> Chat Inativo
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleOpenEmergencyChat(res)}
+                                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-600/10 active:scale-95"
+                                  >
+                                    <MessageSquare size={14} /> Chat
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 )}
 
                 {/* PACKAGES VIEW */}
@@ -1134,57 +1247,67 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                                 )}
                                              </div>
                                           )}
-                                       </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                       {item.type === 'car' ? (
-                                         <div className="flex flex-col items-end gap-2">
-                                           {item.status === 'finished' ? (
-                                             <div className="text-right">
-                                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
-                                                 🏁 Finalizado
-                                               </span>
-                                               {item.checkoutDate && item.checkoutTime && (
-                                                 <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
-                                                   Check-out: {item.checkoutDate} às {item.checkoutTime}
-                                                 </span>
-                                               )}
-                                             </div>
-                                           ) : (item.status === 'active' || item.checkinTime) ? (
-                                             <div className="text-right flex flex-col items-end gap-1">
-                                               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
-                                                 🛎️ Check-in às {item.checkinTime || 'Confirmado'}
-                                               </span>
-                                               <button
-                                                 onClick={() => handleCarCheckOut(item)}
-                                                 className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
-                                               >
-                                                 Check-Out
-                                               </button>
-                                             </div>
-                                           ) : (item.status === 'accepted' || item.status === 'Confirmada') ? (
-                                             <div className="text-right">
-                                               <button
-                                                 onClick={() => handleCarCheckIn(item)}
-                                                 className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
-                                               >
-                                                 Check-In
-                                               </button>
-                                             </div>
-                                           ) : (
-                                             <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
-                                               ⏳ Em Aprovação
-                                             </span>
-                                           )}
-                                         </div>
-                                       ) : (
-                                         <>
-                                           <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                                           <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                              {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
-                                           </span>
-                                         </>
-                                       )}
+                                          {(item.type === 'car' || item.type === 'hotel' || item.type === 'al') ? (
+                                          <div className="flex flex-col items-end gap-2">
+                                            {['finished', 'Concluído', 'concluida', 'Concluída'].includes(item.status) ? (
+                                              <div className="text-right">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
+                                                  🏁 Finalizado
+                                                </span>
+                                                {item.checkoutDate && item.checkoutTime && (
+                                                  <span className="text-[9px] font-bold text-slate-400 block mt-0.5">
+                                                    Check-out: {item.checkoutDate} às {item.checkoutTime}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            ) : (['active', 'Hospedado', 'occupied', 'ocupado', 'ativo'].includes(item.status) || item.checkinTime) ? (
+                                              <div className="text-right flex flex-col items-end gap-1">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
+                                                  🛎️ Check-in às {item.checkinTime || 'Confirmado'}
+                                                </span>
+                                                {item.checkoutTime && (
+                                                  <span className="text-[9px] font-bold text-slate-400 block mb-1">
+                                                    Check-out: {item.checkoutTime}
+                                                  </span>
+                                                )}
+                                                <button
+                                                  onClick={() => item.type === 'car' ? handleCarCheckOut(item) : handleHotelCheckOut(item)}
+                                                  className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                                >
+                                                  Check-Out
+                                                </button>
+                                              </div>
+                                            ) : (['accepted', 'Confirmada', 'Confirmado'].includes(item.status)) ? (
+                                              <div className="text-right flex flex-col items-end gap-1">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 block">
+                                                  Confirmado {item.checkinTime ? `(Check-in: ${item.checkinTime})` : ''}
+                                                </span>
+                                                {item.checkoutTime && (
+                                                  <span className="text-[9px] font-bold text-slate-400 block mb-1">
+                                                    Check-out: {item.checkoutTime}
+                                                  </span>
+                                                )}
+                                                <button
+                                                  onClick={() => item.type === 'car' ? handleCarCheckIn(item) : handleHotelCheckIn(item)}
+                                                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+                                                >
+                                                  Check-In
+                                                </button>
+                                              </div>
+                                            ) : (
+                                              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                                ⏳ Em Aprovação
+                                              </span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${item.status === 'accepted' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${item.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                               {item.status === 'accepted' ? 'Confirmado' : 'Em Aprovação'}
+                                            </span>
+                                          </>
+                                        )}
                                     </div>
                                  </div>
                                  {item.type === 'car' && (item.checkinTime || item.status === 'active') && item.status !== 'finished' && (
@@ -1199,17 +1322,18 @@ const MyReservationsModal: React.FC<MyReservationsModalProps> = ({
                                     </div>
                                  )}
                               </div>
-                           ))}
-                        </div>
- 
-                        <div className="px-6 pb-6 pt-2">
+                           </div>
+                        ))}
+                     </div>
+                     
+                     <div className="px-6 pb-6 pt-2">
                            <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                  {React.cloneElement(pkgInfo.icon as React.ReactElement, { size: 16, className: 'text-blue-500' })}
                                  <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">{pkgInfo.footerText}</span>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${pkg.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                 {pkg.status === 'accepted' ? 'Reserva Finalizada' : 'Aguardar Aprovação'}
+                                 {pkg.status === 'accepted' ? 'Confirmado' : 'Aguardar Aprovação'}
                               </span>
                            </div>
                         </div>
