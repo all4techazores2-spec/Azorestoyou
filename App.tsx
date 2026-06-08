@@ -1203,7 +1203,8 @@ const App: React.FC = () => {
         license: guestDetails?.license || '',
         nif: guestDetails?.nif || '',
         nifType: guestDetails?.nifType || 'Nacional',
-        paymentMethod: guestDetails?.paymentMethod || 'transfer'
+        paymentMethod: guestDetails?.paymentMethod || 'transfer',
+        rentType: itinerary.rentType || null
       });
     }
 

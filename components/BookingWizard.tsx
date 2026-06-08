@@ -234,7 +234,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
         const hasResOverlap = reservations.some((r: any) => {
           if (['cancelled', 'Cancelada', 'Cancelado'].includes(r.status)) return false;
           const resRoomId = r.roomId || r.selectedRoom?.id;
-          if (resRoomId !== selectedRoom.id) return false;
+          if (resRoomId !== selectedRoom.id && r.rentType !== 'house') return false;
 
           const rStartStr = r.checkinDate || r.date;
           let rEndStr = r.checkoutDate;
@@ -254,8 +254,38 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
 
         if (hasResOverlap) {
           alert(language === 'pt' 
-            ? 'Este quarto já se encontra reservado para as datas selecionadas.' 
-            : 'This room is already booked for the selected dates.'
+            ? 'Este quarto já se encontra reservado (ou a propriedade foi alugada por inteiro) para as datas selecionadas.' 
+            : 'This room is already booked (or the property has been rented as a whole) for the selected dates.'
+          );
+          return;
+        }
+      }
+
+      // 2.2. If booking the whole house, check if there is ANY overlapping reservation in this hotel
+      if (rentType === 'house' && reservations.length > 0) {
+        const hasResOverlap = reservations.some((r: any) => {
+          if (['cancelled', 'Cancelada', 'Cancelado'].includes(r.status)) return false;
+
+          const rStartStr = r.checkinDate || r.date;
+          let rEndStr = r.checkoutDate;
+          if (!rEndStr && r.nights) {
+            const d = new Date(rStartStr);
+            d.setDate(d.getDate() + Number(r.nights));
+            rEndStr = d.toISOString().split('T')[0];
+          }
+
+          if (rStartStr && rEndStr) {
+            const rStart = new Date(rStartStr);
+            const rEnd = new Date(rEndStr);
+            return (start <= rEnd && end >= rStart);
+          }
+          return false;
+        });
+
+        if (hasResOverlap) {
+          alert(language === 'pt' 
+            ? 'A propriedade não se encontra totalmente disponível para as datas selecionadas (existem quartos ou a casa já ocupados).' 
+            : 'The property is not fully available for the selected dates (there are rooms or the house already occupied).'
           );
           return;
         }

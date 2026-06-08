@@ -356,10 +356,10 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
     await saveUpdatedBusiness({ rooms: updatedRooms });
   };
 
-  const handleUpdateReservation = async (updatedRes: any) => {
+  const handleUpdateReservation = async (updatedRes: any, additionalFields: any = {}) => {
     const updatedList = reservations.map(r => r.id === updatedRes.id ? updatedRes : r);
     setReservations(updatedList);
-    await saveUpdatedBusiness({ reservations: updatedList });
+    await saveUpdatedBusiness({ reservations: updatedList, ...additionalFields });
 
     // Sync notification logic
     try {
@@ -712,17 +712,33 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     </div>
                     <div className="grid grid-cols-7 gap-2">
                       {Array.from({ length: 28 }).map((_, idx) => {
-                        const states = ['Disponível', 'Ocupado', 'Reservado', 'Indisponível'];
-                        const state = states[(idx * 7) % 4];
+                        const dayNum = idx + 1;
+                        const dateStr = `2026-06-${dayNum.toString().padStart(2, '0')}`;
+                        
+                        const hasRes = reservations.some(r => 
+                          r.date === dateStr && 
+                          (r.status === 'Confirmada' || r.status === 'accepted' || r.status === 'Hospedado')
+                        );
+                        
+                        const hasBlock = rooms.some(r => 
+                          (r.blockedDates || []).some((b: any) => dateStr >= b.start && dateStr <= b.end)
+                        );
+                        
+                        let state: 'Disponível' | 'Ocupado' | 'Reservado' = 'Disponível';
+                        if (hasRes) {
+                          state = 'Reservado';
+                        } else if (hasBlock) {
+                          state = 'Ocupado';
+                        }
+                        
                         const colors = {
                           'Disponível': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                          'Ocupado': 'bg-red-500/10 text-red-500 border-red-500/20',
-                          'Reservado': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                          'Indisponível': 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                          'Ocupado': 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+                          'Reservado': 'bg-amber-500/10 text-amber-500 border-amber-500/20'
                         };
                         return (
                           <div key={idx} className={`p-3 rounded-xl border text-center font-black text-xs ${colors[state]}`}>
-                            {idx + 1}
+                            {dayNum}
                           </div>
                         );
                       })}
@@ -970,9 +986,9 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                         const dayNum = idx + 1;
                         const dateStr = `2026-06-${dayNum.toString().padStart(2, '0')}`;
                         
-                        // Check if AzoresToYou reservation exists for this room
+                        // Check if AzoresToYou reservation exists for this room (or house as a whole)
                         const res = reservations.find(r => 
-                          (r.roomId === calendarRoomId || r.selectedRoom?.id === calendarRoomId) &&
+                          (r.roomId === calendarRoomId || r.selectedRoom?.id === calendarRoomId || r.rentType === 'house') &&
                           r.date === dateStr && 
                           (r.status === 'Confirmada' || r.status === 'accepted' || r.status === 'Hospedado')
                         );
@@ -1433,8 +1449,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                               const updatedHousekeeping = [...housekeeping, newTask];
                               setHousekeeping(updatedHousekeeping);
                               
-                              await handleUpdateReservation(updatedRes);
-                              await saveUpdatedBusiness({ 
+                              await handleUpdateReservation(updatedRes, { 
                                 rooms: updatedRooms,
                                 housekeeping: updatedHousekeeping
                               });
@@ -3148,8 +3163,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                     const updatedRooms = rooms.map(r => r.id === targetRoomId ? { ...r, status: 'Ocupado' } : r);
                     
                     setRooms(updatedRooms);
-                    await handleUpdateReservation(updatedRes);
-                    await saveUpdatedBusiness({ rooms: updatedRooms });
+                    await handleUpdateReservation(updatedRes, { rooms: updatedRooms });
                     
                     setShowCheckinModal(null);
                     setCheckinEmployee('');
