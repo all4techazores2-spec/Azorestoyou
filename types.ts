@@ -283,6 +283,7 @@ export interface Restaurant {
   reviews_list?: { id: string, rating: number, comment: string, customerName: string, date: string }[];
   businessType?: 'restaurant' | 'shop' | 'beauty';
   subcategory?: BeautySubCategory | string;
+  softwareVersion?: 'normal' | 'pro' | string;
   services?: Service[];
   openingHours?: string;
   bookingPolicy?: 'required' | 'recommended';

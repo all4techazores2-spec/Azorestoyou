@@ -1260,16 +1260,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             
             {/* Subcategory selection based on Tab */}
             {activeTab === 'beauty' && (
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
-                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
-                  <option value="beauty_salon">Salão de Beleza</option>
-                  <option value="hairdresser">Cabeleireiro</option>
-                  <option value="barber">Barbearia</option>
-                  <option value="manicure">Manicure</option>
-                  <option value="massage">Massagem</option>
-                </select>
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                  <select 
+                    className="w-full border p-2 rounded-lg bg-white font-bold" 
+                    value={editingItem.subcategory} 
+                    onChange={e => {
+                      const sub = e.target.value;
+                      setEditingItem({
+                        ...editingItem,
+                        subcategory: sub,
+                        softwareVersion: sub === 'barber' ? (editingItem.softwareVersion || 'normal') : undefined
+                      });
+                    }}
+                  >
+                    <option value="">Selecione uma subcategoria...</option>
+                    <option value="beauty_salon">Salão de Beleza</option>
+                    <option value="hairdresser">Cabeleireiro</option>
+                    <option value="barber">Barbearia</option>
+                    <option value="manicure">Manicure</option>
+                    <option value="massage">Massagem</option>
+                  </select>
+                </div>
+                {editingItem.subcategory === 'barber' && (
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Versão do Software</label>
+                    <select 
+                      className="w-full border p-2 rounded-lg bg-white font-bold text-blue-600" 
+                      value={editingItem.softwareVersion || 'normal'} 
+                      onChange={e => setEditingItem({...editingItem, softwareVersion: e.target.value})}
+                    >
+                      <option value="normal">Versão Normal</option>
+                      <option value="pro">Versão Avançada</option>
+                    </select>
+                  </div>
+                )}
+              </>
             )}
             {activeTab === 'shops' && (
               <div>

@@ -26,6 +26,8 @@ import BusinessDashboard from './components/BusinessDashboard';
 import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
+import BarberNormalDashboard from './components/BarberNormalDashboard';
+import BarberProDashboard from './components/BarberProDashboard';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
 import FavoritesModal from './components/FavoritesModal';
@@ -1945,6 +1947,28 @@ const App: React.FC = () => {
       const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car' || targetId.startsWith('RC') || targetId.startsWith('CAR');
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
+
+      if (isBeauty && biz.subcategory === 'barber') {
+        if (biz.softwareVersion === 'pro') {
+          return (
+            <ErrorBoundary>
+              <BarberProDashboard 
+                business={biz}
+                onLogout={handleLogout}
+              />
+            </ErrorBoundary>
+          );
+        } else {
+          return (
+            <ErrorBoundary>
+              <BarberNormalDashboard 
+                business={biz}
+                onLogout={handleLogout}
+              />
+            </ErrorBoundary>
+          );
+        }
+      }
 
       if (isHotel) {
         return (
