@@ -1964,6 +1964,18 @@ const App: React.FC = () => {
               <BarberNormalDashboard 
                 business={biz}
                 onLogout={handleLogout}
+                onUpdateBusiness={async (updated) => {
+                  setBeauty(prev => prev.map(item => item.id === updated.id ? updated : item));
+                  try {
+                    await fetch(`${API_BASE_URL}/api/beauty/${updated.id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updated),
+                    });
+                  } catch (err) {
+                    console.error("Erro ao atualizar barbearia no servidor:", err);
+                  }
+                }}
               />
             </ErrorBoundary>
           );
