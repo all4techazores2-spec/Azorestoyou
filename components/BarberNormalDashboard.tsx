@@ -3,7 +3,7 @@ import { Restaurant, Service } from '../types';
 import { 
   LogOut, Calendar, Users, Scissors, Clock, CheckCircle, 
   ShoppingBag, Image as ImageIcon, Star, Settings, Info, 
-  Menu, X, Bell, Plus, Upload, Trash2, Check, DollarSign, Edit, Eye 
+  Menu, X, Bell, Plus, Upload, Trash2, Check, DollarSign, Edit, Eye, ChevronDown 
 } from 'lucide-react';
 
 interface BarberNormalDashboardProps {
@@ -16,11 +16,11 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'services' | 'pos' | 'gallery' | 'reviews' | 'profile' | 'settings' | 'help'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Local editable states
+  // Local editable states matching mockup fields
   const [description, setDescription] = useState(business.description || 'Barbearia premium com serviços de corte, barba e estética.');
   const [phone, setPhone] = useState(business.phone || '+351 912 345 678');
   const [address, setAddress] = useState(business.address || 'Rua Principal, Ponta Delgada');
-  const [openingHours, setOpeningHours] = useState(business.openingHours || '09:00-13:00, 14:00-19:00');
+  const [openingHours, setOpeningHours] = useState(business.openingHours || '09:00 - 19:00');
 
   // POS sales states
   const [selectedServiceId, setSelectedServiceId] = useState('');
@@ -38,22 +38,26 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   // Services list
   const services: Service[] = business.services || [
     { id: 's1', name: 'Corte Masculino', description: 'Corte de cabelo moderno ou clássico', price: 12.00, duration: 30, image: '' },
-    { id: 's2', name: 'Barba', description: 'Alinhamento com navalha e toalha quente', price: 10.00, duration: 20, image: '' },
-    { id: 's3', name: 'Corte + Barba', description: 'Combo premium completo', price: 20.00, duration: 50, image: '' },
-    { id: 's4', name: 'Infantil', description: 'Corte para crianças até 12 anos', price: 10.00, duration: 25, image: '' }
+    { id: 's2', name: 'Barba', description: 'Alinhamento com navalha e toalha quente', price: 8.00, duration: 20, image: '' },
+    { id: 's3', name: 'Corte + Barba', description: 'Combo premium completo', price: 18.00, duration: 50, image: '' },
+    { id: 's4', name: 'Corte Infantil', description: 'Corte para crianças até 12 anos', price: 10.00, duration: 25, image: '' },
+    { id: 's5', name: 'Degradê', description: 'Corte fade moderno', price: 12.00, duration: 30, image: '' }
   ];
 
   // Default reviews fallback
   const reviews = business.reviews_list || [
-    { id: 'r1', customerName: 'João Silva', rating: 5, comment: 'Excelente atendimento, corte degradê perfeito!', date: '2026-06-11', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John' },
-    { id: 'r2', customerName: 'Pedro Medeiros', rating: 5, comment: 'A melhor barbearia da ilha. Recomendo vivamente.', date: '2026-06-10', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pete' }
+    { id: 'r1', customerName: 'Carlos Martins', rating: 5, comment: 'Excelente atendimento! Ambiente top e profissional muito dedicado.', date: 'Há 2 dias', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256' },
+    { id: 'r2', customerName: 'André Santos', rating: 5, comment: 'Muito bom serviço, sempre saio satisfeito!', date: 'Há 1 semana', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256' }
   ];
 
   const reservations = business.reservations || [
-    { id: 'res1', customerName: 'Rui Costa', time: '10:30', date: 'Hoje', status: 'accepted', customerPhone: '+351 911 222 333', serviceName: 'Corte Masculino' },
-    { id: 'res2', customerName: 'Hugo Santos', time: '11:45', date: 'Hoje', status: 'pending', customerPhone: '+351 911 444 555', serviceName: 'Corte + Barba' },
-    { id: 'res3', customerName: 'Miguel Ramos', time: '15:15', date: 'Hoje', status: 'accepted', customerPhone: '+351 922 777 888', serviceName: 'Barba' }
+    { id: 'res1', customerName: 'João Silva', time: '10:00', date: 'Hoje', status: 'accepted', customerPhone: '+351 911 222 333', serviceName: 'Corte + Barba', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256' },
+    { id: 'res2', customerName: 'Pedro Costa', time: '11:30', date: 'Hoje', status: 'accepted', customerPhone: '+351 911 444 555', serviceName: 'Degradê', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256' },
+    { id: 'res3', customerName: 'Miguel Sousa', time: '14:00', date: 'Hoje', status: 'accepted', customerPhone: '+351 922 777 888', serviceName: 'Corte', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256' },
+    { id: 'res4', customerName: 'Rafael Lima', time: '15:30', date: 'Hoje', status: 'pending', customerPhone: '+351 922 111 222', serviceName: 'Barba', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256' },
+    { id: 'res5', customerName: 'Lucas Oliveira', time: '17:00', date: 'Hoje', status: 'pending', customerPhone: '+351 933 555 444', serviceName: 'Corte + Barba', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256' }
   ];
+
   const gallery = business.gallery || [
     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070',
     'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070'
@@ -64,10 +68,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const servicePrice = selectedService ? selectedService.price : 0;
   const productsTotal = addedProducts.reduce((sum, p) => sum + p.price, 0);
   const subtotal = servicePrice + productsTotal;
-  const iva = Math.round((subtotal * 0.18) * 100) / 100; // 18% standard Azores IVA
+  const iva = Math.round((subtotal * 0.18) * 100) / 100;
   const total = Math.round((subtotal + iva) * 100) / 100;
 
-  // Add Product to Sale
   const handleAddProduct = () => {
     if (extraProduct && extraProductPrice > 0) {
       setAddedProducts([...addedProducts, { name: extraProduct, price: extraProductPrice }]);
@@ -76,7 +79,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
   };
 
-  // Finalize Sale
   const handleFinalizeSale = () => {
     if (!selectedService && addedProducts.length === 0) {
       alert('Selecione pelo menos um serviço ou adicione um produto.');
@@ -98,7 +100,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     const updatedSales = [newSale, ...salesHistory];
     setSalesHistory(updatedSales);
 
-    // Save
     const updated = {
       ...business,
       salesHistory: updatedSales
@@ -106,13 +107,10 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     onUpdateBusiness(updated);
 
     alert(`Venda Finalizada com sucesso!\nValor Total: €${total.toFixed(2)} (${paymentMethod})`);
-    
-    // Reset form
     setSelectedServiceId('');
     setAddedProducts([]);
   };
 
-  // Add to gallery
   const handlePhotoUpload = () => {
     const url = prompt('Introduza o URL da imagem da Barbearia:');
     if (url && url.trim()) {
@@ -125,31 +123,32 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
   };
 
+  const totalSalesAmount = salesHistory.reduce((sum, sale) => sum + (sale.price || 0), 0);
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans flex overflow-hidden">
+    <div className="min-h-screen bg-[#050505] text-white font-sans flex overflow-hidden selection:bg-[#D4AF37] selection:text-black">
       
       {/* SIDEBAR */}
       <aside className={`bg-[#0d0d0d] border-r border-[rgba(255,215,0,0.15)] flex flex-col transition-all duration-300 z-50 shrink-0 ${
         sidebarOpen ? 'w-64' : 'w-20'
       }`}>
-        {/* Brand/Logo */}
-        <div className="p-6 border-b border-[rgba(255,215,0,0.15)] flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black border border-[#D4AF37] rounded-[18px] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.25)]">
-              <span className="text-lg font-black text-[#D4AF37]">B</span>
+        {/* Brand/Logo Section */}
+        <div className="p-6 border-b border-[rgba(255,215,0,0.15)] flex flex-col items-center text-center">
+          <div className="flex flex-col items-center justify-center">
+            {/* Crown Icon */}
+            <svg className="w-5 h-5 text-[#D4AF37] mb-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3 5.5 5.5-1.5-2.5 7h-12l-2.5-7 5.5 1.5zM21 16h-18v2h18zM19 19h-14v2h14z" />
+            </svg>
+            <div className="w-12 h-12 bg-black border border-[#D4AF37] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.25)]">
+              <span className="text-xl font-black text-[#D4AF37]">B</span>
             </div>
             {sidebarOpen && (
-              <div>
-                <h1 className="text-xs font-black tracking-widest text-[#D4AF37] uppercase">BARBEARIA</h1>
-                <p className="text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest">ESTADO NORMAL</p>
+              <div className="mt-2.5">
+                <h1 className="text-xs font-black tracking-[0.2em] text-[#D4AF37] uppercase">BARBEARIA SILVA</h1>
+                <p className="text-[7px] text-[#AFAFAF] font-black uppercase tracking-[0.3em] mt-0.5">PREMIUM</p>
               </div>
             )}
           </div>
-          {sidebarOpen && (
-            <button onClick={() => setSidebarOpen(false)} className="text-neutral-500 hover:text-[#D4AF37] lg:hidden">
-              <X size={18} />
-            </button>
-          )}
         </div>
 
         {/* Sidebar Nav */}
@@ -158,7 +157,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
             { id: 'appointments', label: 'Agenda', icon: '📅' },
             { id: 'services', label: 'Serviços', icon: '✂️' },
-            { id: 'pos', label: 'POS / Vendas', icon: '💳' },
+            { id: 'pos', label: 'POS / Vendas', icon: '💳', badge: 'NOVO' },
             { id: 'gallery', label: 'Galeria', icon: '🖼' },
             { id: 'reviews', label: 'Avaliações', icon: '⭐' },
             { id: 'profile', label: 'Perfil', icon: '👤' },
@@ -170,12 +169,17 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               onClick={() => setActiveTab(item.id as any)}
               className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-[18px] text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
                 activeTab === item.id 
-                  ? 'bg-black border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
+                  ? 'bg-gradient-to-r from-amber-500/10 to-yellow-600/5 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
                   : 'border-transparent text-[#AFAFAF] hover:bg-neutral-900/50 hover:text-white'
               }`}
             >
               <span className="text-base">{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
+              {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+              {sidebarOpen && item.badge && (
+                <span className="bg-[#D4AF37] text-black text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -184,13 +188,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         <div className="p-4 border-t border-[rgba(255,215,0,0.15)] bg-black/20">
           <div className="flex items-center gap-3">
             <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256" 
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256" 
               alt="Avatar" 
               className="w-10 h-10 rounded-full object-cover border border-[#D4AF37]/30"
             />
             {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-white truncate">Carlos</p>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-black text-white truncate">Carlos Almeida</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                   <span className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest">Online</span>
@@ -206,7 +210,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         </div>
       </aside>
 
-      {/* MAIN CONTENT CONTAINER */}
+      {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* HEADER */}
@@ -215,112 +219,133 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-neutral-400 hover:text-white">
               <Menu size={20} />
             </button>
-            <div>
+            <div className="text-left">
               <p className="text-[10px] text-[#AFAFAF] font-bold uppercase tracking-wider">Bem-vindo de volta,</p>
-              <h2 className="text-sm font-black text-[#D4AF37] uppercase tracking-widest">Carlos!</h2>
+              <h2 className="text-xl font-black text-white">Carlos!</h2>
             </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <span className="text-[10px] text-[#AFAFAF] font-black uppercase tracking-widest hidden md:block">
-              {new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </span>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#D4AF37]" />
+              <div className="text-left leading-none">
+                <p className="text-[10px] text-white font-black">20 de Maio, 2024</p>
+                <p className="text-[8px] text-[#AFAFAF] font-medium mt-0.5">Segunda-feira</p>
+              </div>
+            </div>
             
             <div className="relative text-neutral-400 hover:text-[#D4AF37] cursor-pointer">
               <Bell size={18} />
-              <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-[#D4AF37] rounded-full" />
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#D4AF37] text-black text-[7px] font-black flex items-center justify-center rounded-full">
+                3
+              </span>
             </div>
 
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256" 
-              alt="User Profile" 
-              className="w-8 h-8 rounded-full object-cover border border-[#D4AF37]/30"
-            />
+            {/* Carlos Almeida User Badge */}
+            <div className="flex items-center gap-2 border-l border-amber-500/10 pl-6 cursor-pointer group">
+              <img 
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256" 
+                alt="Carlos Almeida" 
+                className="w-8 h-8 rounded-full object-cover border border-[#D4AF37]/30"
+              />
+              <div className="text-left leading-none hidden sm:block">
+                <p className="text-[11px] font-black text-white group-hover:text-[#D4AF37] transition-all">Carlos Almeida</p>
+                <p className="text-[9px] text-[#AFAFAF] font-medium mt-0.5">Barbeiro</p>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#D4AF37]" />
+            </div>
           </div>
         </header>
 
-        {/* WORKSPACE VIEW */}
+        {/* WORKSPACE AREA */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
           {/* TAB: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <>
               {/* HERO COVER BANNER */}
-              <div className="relative rounded-[18px] overflow-hidden border border-[rgba(255,215,0,0.15)] min-h-[180px] flex items-end">
+              <div className="relative rounded-[18px] overflow-hidden border border-[rgba(255,215,0,0.15)] min-h-[160px] flex items-end">
                 <img 
-                  src={business.image || 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070'} 
+                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070" 
                   alt="Barbershop" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-25"
+                  className="absolute inset-0 w-full h-full object-cover opacity-20"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
-                <div className="relative z-10 p-6 space-y-2">
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-xl font-black text-white">{business.name}</h3>
-                    <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                <div className="relative z-10 p-6 space-y-3 text-left w-full">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-2xl font-black text-white">Barbearia Silva</h3>
+                    <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1 h-1 bg-emerald-400 rounded-full" />
                       ATIVO
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#AFAFAF] font-bold uppercase tracking-wider">
-                    "O seu perfil está visível para todos os clientes."
+                  <p className="text-xs text-[#AFAFAF]">
+                    O seu perfil está visível para todos os clientes.
                   </p>
+                  <button 
+                    onClick={() => setActiveTab('profile')}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-black/50 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all"
+                  >
+                    <Edit size={12} className="text-[#D4AF37]" /> Editar Perfil
+                  </button>
                 </div>
               </div>
 
               {/* 5 ALIGNED CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* CARD 1 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)]">
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
                   <div>
                     <span className="text-lg">📅</span>
                     <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Agendamentos Hoje</p>
-                    <h4 className="text-2xl font-black text-white mt-2">{reservations.length}</h4>
+                    <h4 className="text-3xl font-black text-white mt-2">5</h4>
                   </div>
                   <button 
                     onClick={() => setActiveTab('appointments')}
-                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95"
+                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 text-center"
                   >
                     Ver Agenda
                   </button>
                 </div>
 
                 {/* CARD 2 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)]">
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
                   <div>
                     <span className="text-lg">⭐</span>
                     <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Avaliação Média</p>
-                    <h4 className="text-2xl font-black text-[#D4AF37] mt-2">{business.rating || 4.8}</h4>
+                    <h4 className="text-3xl font-black text-[#D4AF37] mt-2">4.8</h4>
                     <div className="flex text-amber-500 text-xs mt-1">★★★★★</div>
                   </div>
-                  <p className="text-[9px] text-[#AFAFAF] mt-2 font-bold uppercase">{reviews.length} avaliações</p>
+                  <p className="text-[9px] text-[#AFAFAF] mt-2 font-bold uppercase">128 avaliações</p>
                 </div>
 
                 {/* CARD 3 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)]">
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
                   <div>
                     <span className="text-lg">👥</span>
                     <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Novos Clientes</p>
-                    <h4 className="text-2xl font-black text-white mt-2">6</h4>
+                    <h4 className="text-3xl font-black text-white mt-2">3</h4>
                   </div>
                   <button 
                     onClick={() => setActiveTab('appointments')}
-                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95"
+                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 text-center"
                   >
                     Ver Clientes
                   </button>
                 </div>
 
                 {/* CARD 4 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)]">
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
                   <div>
                     <span className="text-lg">👁</span>
                     <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Visualizações Perfil</p>
-                    <h4 className="text-2xl font-black text-white mt-2">128</h4>
+                    <h4 className="text-3xl font-black text-white mt-2">156</h4>
                   </div>
                   <p className="text-[9px] text-[#AFAFAF] mt-2 font-bold uppercase">Este mês</p>
                 </div>
 
-                {/* CARD 5 */}
-                <div className="bg-[#0d0d0d] border border-[#D4AF37]/30 rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                {/* CARD 5 (POS SALES) */}
+                <div className="bg-[#0d0d0d] border border-[#D4AF37]/30 rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] text-left">
                   <div>
                     <span className="text-lg">💳</span>
                     <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">POS / Vendas</p>
@@ -328,42 +353,44 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                   <button 
                     onClick={() => setActiveTab('pos')}
-                    className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 shadow-[0_4px_10px_rgba(212,175,55,0.2)]"
+                    className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 shadow-[0_4px_10px_rgba(212,175,55,0.2)] text-center"
                   >
                     ABRIR POS
                   </button>
                 </div>
               </div>
 
-              {/* TWO COLUMN GRID */}
+              {/* MAIN ROWS AND SECTIONS */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* PRÓXIMOS AGENDAMENTOS */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 lg:col-span-2">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Próximos Agendamentos</h4>
-                    <button onClick={() => setActiveTab('appointments')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver Todos</button>
+                    <button onClick={() => setActiveTab('appointments')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver todos</button>
                   </div>
                   <div className="space-y-3">
                     {reservations.map((r, i) => (
-                      <div key={i} className="bg-black/40 border border-neutral-900 rounded-[18px] p-4 flex justify-between items-center hover:border-[#D4AF37]/25 transition-all">
+                      <div key={i} className="bg-black/40 border border-neutral-900 rounded-[18px] p-4 flex justify-between items-center hover:border-[#D4AF37]/25 transition-all text-left">
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-[#D4AF37] bg-[#D4AF37]/5 px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/20">{r.time}</span>
+                          <span className="text-xs font-black text-white bg-black border border-neutral-800 px-3 py-1.5 rounded-lg">{r.time}</span>
                           <img 
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`} 
+                            src={r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`} 
                             alt="" 
-                            className="w-8 h-8 rounded-full bg-neutral-900"
+                            className="w-8 h-8 rounded-full object-cover bg-neutral-900 border border-neutral-800"
                           />
                           <div>
                             <p className="text-xs font-black text-white">{r.customerName}</p>
                             <p className="text-[9px] text-[#AFAFAF] mt-0.5">{r.serviceName}</p>
                           </div>
                         </div>
-                        <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
-                          r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>
-                          {r.status === 'accepted' ? 'Confirmado' : 'Pendente'}
-                        </span>
+                        <div className="flex items-center gap-4">
+                          <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
+                            r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {r.status === 'accepted' ? 'Confirmado' : 'Pendente'}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -372,85 +399,119 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 {/* HORÁRIO DE FUNCIONAMENTO */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Horário Funcionamento</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Horário de Funcionamento</h4>
                     <button onClick={() => setActiveTab('profile')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
                   </div>
-                  <div className="space-y-2 text-xs">
-                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map(day => (
-                      <div key={day} className="flex justify-between items-center border-b border-neutral-900 pb-1.5 text-[11px]">
-                        <span className="text-[#AFAFAF] font-bold">{day}</span>
-                        <span className="text-white font-black">
-                          {day === 'Sábado' ? '09:00 - 13:00' : day === 'Domingo' ? 'Fechado' : openingHours}
-                        </span>
+                  <div className="space-y-2.5 text-xs text-left">
+                    {[
+                      { day: 'Segunda', hours: '09:00 - 19:00' },
+                      { day: 'Terça', hours: '09:00 - 19:00' },
+                      { day: 'Quarta', hours: '09:00 - 19:00' },
+                      { day: 'Quinta', hours: '09:00 - 19:00' },
+                      { day: 'Sexta', hours: '09:00 - 20:00' },
+                      { day: 'Sábado', hours: '09:00 - 17:00' },
+                      { day: 'Domingo', hours: 'Fechado' }
+                    ].map(entry => (
+                      <div key={entry.day} className="flex justify-between items-center border-b border-neutral-900 pb-1.5 text-[11px]">
+                        <span className="text-[#AFAFAF] font-bold">{entry.day}</span>
+                        <span className="text-white font-black">{entry.hours}</span>
                       </div>
                     ))}
                   </div>
+                  <button 
+                    onClick={() => setActiveTab('profile')}
+                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
+                  >
+                    Ver horário completo
+                  </button>
                 </div>
 
-                {/* SERVIÇOS LIST */}
+                {/* SERVIÇOS */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Serviços</h4>
-                    <div className="flex gap-2">
-                      <button onClick={() => setActiveTab('services')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
-                      <span className="text-neutral-700">|</span>
-                      <button onClick={() => setActiveTab('services')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver Todos</button>
-                    </div>
+                    <button onClick={() => setActiveTab('services')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-left">
                     {services.map(s => (
                       <div key={s.id} className="flex justify-between items-center pb-2 border-b border-neutral-900">
-                        <div>
+                        <div className="flex items-center gap-2">
+                          <Scissors className="w-3.5 h-3.5 text-[#D4AF37]" />
                           <p className="text-xs font-black text-white">{s.name}</p>
-                          <p className="text-[8px] text-[#AFAFAF] font-bold uppercase tracking-widest mt-0.5">{s.duration} mins</p>
                         </div>
-                        <span className="text-xs font-black text-[#D4AF37]">€{s.price.toFixed(2)}</span>
+                        <span className="text-xs font-black text-white">€{s.price}</span>
                       </div>
                     ))}
                   </div>
+                  <button 
+                    onClick={() => setActiveTab('services')}
+                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
+                  >
+                    Ver todos os serviços
+                  </button>
                 </div>
 
                 {/* ÚLTIMAS AVALIAÇÕES */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Últimas Avaliações</h4>
-                    <button onClick={() => setActiveTab('reviews')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver Todas</button>
+                    <button onClick={() => setActiveTab('reviews')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver todas</button>
                   </div>
-                  <div className="space-y-3">
-                    {reviews.slice(0, 1).map(rev => (
-                      <div key={rev.id} className="space-y-2 text-xs">
+                  <div className="space-y-4 text-left">
+                    {reviews.map(rev => (
+                      <div key={rev.id} className="space-y-2 text-xs border-b border-neutral-900 pb-3 last:border-0 last:pb-0">
                         <div className="flex items-center gap-2">
-                          <img src={rev.avatar} className="w-6 h-6 rounded-full bg-neutral-900" alt="" />
-                          <span className="font-black text-white">{rev.customerName}</span>
-                          <span className="text-amber-500 font-bold ml-auto">★★★★★</span>
+                          <img src={rev.avatar} className="w-6 h-6 rounded-full object-cover bg-neutral-900 border border-neutral-800" alt="" />
+                          <div>
+                            <p className="font-black text-white text-[11px]">{rev.customerName}</p>
+                            <div className="flex text-amber-500 text-[9px]">★★★★★</div>
+                          </div>
+                          <span className="text-[9px] text-[#AFAFAF] font-bold ml-auto">{rev.date}</span>
                         </div>
-                        <p className="text-neutral-400 italic text-[11px]">"{rev.comment}"</p>
-                        <p className="text-[8px] text-[#AFAFAF] uppercase tracking-wider">{rev.date}</p>
+                        <p className="text-neutral-400 italic text-[11px] leading-relaxed">"{rev.comment}"</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* PERFIL UPDATE CARD */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex flex-col justify-between">
+                {/* MANTENHA O SEU PERFIL ATUALIZADO */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex flex-col justify-between text-left">
                   <div className="space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Perfil</h4>
-                    <p className="text-xs text-[#AFAFAF] font-medium leading-relaxed">
-                      "Mantenha o seu perfil atualizado para obter mais clientes."
-                    </p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-black text-[#D4AF37]">
-                        <span>Completude do Perfil</span>
-                        <span>85%</span>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Mantenha o seu perfil atualizado</h4>
+                    
+                    <div className="flex items-center gap-4 py-3">
+                      {/* Circular Progress Wheel */}
+                      <div className="relative w-16 h-16 shrink-0">
+                        <svg className="w-full h-full transform -rotate-95" viewBox="0 0 36 36">
+                          <path
+                            className="text-neutral-900"
+                            strokeWidth="3"
+                            stroke="currentColor"
+                            fill="none"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                          <path
+                            className="text-[#D4AF37]"
+                            strokeDasharray="85, 100"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="none"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-sm font-black text-white">85%</span>
+                        </div>
                       </div>
-                      <div className="w-full bg-neutral-900 rounded-full h-1.5 overflow-hidden border border-amber-500/10">
-                        <div className="bg-[#D4AF37] h-full rounded-full" style={{ width: '85%' }} />
-                      </div>
+                      <p className="text-[11px] text-[#AFAFAF] leading-normal font-bold">
+                        Adicione mais fotos e informações para atrair mais clientes.
+                      </p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="w-full mt-4 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-white text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all"
+                    className="w-full mt-4 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
                   >
                     Editar Perfil
                   </button>
@@ -459,21 +520,22 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               </div>
 
               {/* QUICK ACTION CARDS */}
-              <div className="space-y-3">
+              <div className="space-y-3 text-left">
                 <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Ações Rápidas</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: '💳 POS / Vendas', action: () => setActiveTab('pos') },
-                    { label: '📸 Adicionar Fotos', action: handlePhotoUpload },
-                    { label: '✂️ Editar Serviços', action: () => setActiveTab('services') },
-                    { label: '🕐 Atualizar Horário', action: () => setActiveTab('profile') }
+                    { label: '💳 POS / Vendas', desc: 'Vendas e pagamentos', action: () => setActiveTab('pos') },
+                    { label: '📸 Adicionar Fotos', desc: 'À galeria', action: handlePhotoUpload },
+                    { label: '✂️ Editar Serviços', desc: 'Gerir preços', action: () => setActiveTab('services') },
+                    { label: '🕐 Atualizar Horário', desc: 'Funcionamento', action: () => setActiveTab('profile') }
                   ].map((btn, idx) => (
                     <button 
                       key={idx}
                       onClick={btn.action}
-                      className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/50 rounded-[18px] py-4 px-3 text-center transition-all duration-300 font-black text-[10px] uppercase tracking-wider text-[#AFAFAF] hover:text-white hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] bg-black/40"
+                      className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/50 rounded-[18px] p-4 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] bg-black/40 flex flex-col justify-between min-h-[90px]"
                     >
-                      {btn.label}
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white">{btn.label}</span>
+                      <span className="text-[8px] text-[#AFAFAF] uppercase tracking-widest mt-1 block">{btn.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -483,7 +545,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: AGENDA */}
           {activeTab === 'appointments' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
+            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Agenda Completa</h2>
               <div className="space-y-3">
                 {reservations.map((r, idx) => (
@@ -504,7 +566,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: SERVIÇOS */}
           {activeTab === 'services' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
+            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <div className="flex justify-between items-center">
                 <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Gestão de Serviços</h2>
                 <button 
@@ -554,16 +616,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             </div>
           )}
 
-          {/* TAB: POS / VENDAS (SIMPLIFICADO) */}
+          {/* TAB: POS / VENDAS */}
           {activeTab === 'pos' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* POS Sales Form */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
               <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 lg:col-span-2">
                 <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">POS - Caixa Registadora</h2>
                 
                 <div className="space-y-4">
-                  {/* Select Service */}
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Selecionar Serviço</label>
                     <select
@@ -578,13 +637,12 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     </select>
                   </div>
 
-                  {/* Add simulated product */}
                   <div className="border-t border-neutral-900 pt-4 space-y-3">
                     <label className="block text-[10px] font-black uppercase tracking-widest text-[#AFAFAF]">Adicionar Produto Extra</label>
                     <div className="flex gap-2">
                       <input 
                         type="text" 
-                        placeholder="Nome do produto (ex: Cera Modeladora)"
+                        placeholder="Nome do produto"
                         value={extraProduct}
                         onChange={(e) => setExtraProduct(e.target.value)}
                         className="flex-1 bg-black border border-neutral-800 rounded-[18px] p-3 text-white text-xs"
@@ -604,7 +662,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       </button>
                     </div>
 
-                    {/* Added Products Basket */}
                     {addedProducts.length > 0 && (
                       <div className="bg-black/35 p-3 rounded-[18px] border border-neutral-900 space-y-2">
                         {addedProducts.map((p, idx) => (
@@ -617,7 +674,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     )}
                   </div>
 
-                  {/* Invoice Summary */}
                   <div className="bg-black p-4 rounded-[18px] border border-neutral-900 text-xs space-y-2">
                     <div className="flex justify-between text-[#AFAFAF]">
                       <span>Subtotal</span>
@@ -633,7 +689,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     </div>
                   </div>
 
-                  {/* Payment Methods */}
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Método Pagamento</label>
                     <div className="grid grid-cols-4 gap-2">
@@ -655,14 +710,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   
                   <button
                     onClick={handleFinalizeSale}
-                    className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-[18px] transition-all duration-300 active:scale-95"
+                    className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-[18px] transition-all duration-300 active:scale-95 text-center"
                   >
                     FINALIZAR VENDA
                   </button>
                 </div>
               </div>
 
-              {/* Transactions History */}
               <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
                 <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Histórico Vendas</h2>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
@@ -682,7 +736,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: GALERIA */}
           {activeTab === 'gallery' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
+            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <div className="flex justify-between items-center">
                 <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Galeria</h2>
                 <button 
@@ -720,7 +774,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: AVALIAÇÕES */}
           {activeTab === 'reviews' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
+            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Avaliações</h2>
               <div className="space-y-4">
                 {reviews.map((rev, idx) => (
@@ -739,7 +793,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: PERFIL */}
           {activeTab === 'profile' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
+            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Perfil do Barbeiro</h2>
               <div className="space-y-4 max-w-xl">
                 <div>
@@ -783,40 +837,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 >
                   Guardar Alterações
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: DEFINIÇÕES */}
-          {activeTab === 'settings' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
-              <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Definições</h2>
-              <div className="space-y-4 text-xs max-w-md">
-                <div className="flex justify-between items-center py-2 border-b border-neutral-900">
-                  <span className="font-bold text-[#AFAFAF]">Notificações no Navegador</span>
-                  <input type="checkbox" defaultChecked className="accent-[#D4AF37]" />
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-neutral-900">
-                  <span className="font-bold text-[#AFAFAF]">Tema Visual</span>
-                  <span className="font-black text-[#D4AF37]">Premium Gold & Dark</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: AJUDA */}
-          {activeTab === 'help' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
-              <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Ajuda</h2>
-              <div className="space-y-4 text-xs leading-relaxed max-w-xl text-[#AFAFAF]">
-                <div>
-                  <h4 className="font-black uppercase tracking-widest text-[#D4AF37] mb-1">Como usar a Caixa Registadora?</h4>
-                  <p>Aceda a **POS / Vendas**, selecione o serviço que realizou ao cliente, adicione opcionais se necessário, escolha o método de pagamento e clique em **Finalizar Venda**.</p>
-                </div>
-                <div>
-                  <h4 className="font-black uppercase tracking-widest text-[#D4AF37] mb-1">Dúvidas ou Suporte</h4>
-                  <p>Envie um e-mail de suporte para support@azorestoyou.com para qualquer esclarecimento sobre a sua conta Standard.</p>
-                </div>
               </div>
             </div>
           )}
