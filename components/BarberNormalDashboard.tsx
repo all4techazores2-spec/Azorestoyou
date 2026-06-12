@@ -3,7 +3,8 @@ import { Restaurant, Service } from '../types';
 import { 
   LogOut, Calendar, Users, Scissors, Clock, CheckCircle, 
   ShoppingBag, Image as ImageIcon, Star, Settings, Info, 
-  Menu, X, Bell, Plus, Upload, Trash2, Check, DollarSign, Edit, Eye, ChevronDown 
+  Menu, X, Bell, Plus, Upload, Trash2, Check, DollarSign, Edit, Eye, ChevronDown,
+  Home, HelpCircle, User, CreditCard
 } from 'lucide-react';
 
 interface BarberNormalDashboardProps {
@@ -152,15 +153,15 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         {/* Sidebar Nav */}
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {[
-            { id: 'dashboard', label: 'Dashboard', icon: '🏠' },
-            { id: 'appointments', label: 'Agenda', icon: '📅' },
-            { id: 'services', label: 'Serviços', icon: '✂️' },
-            { id: 'pos', label: 'POS / Vendas', icon: '💳', badge: 'NOVO' },
-            { id: 'gallery', label: 'Galeria', icon: '🖼' },
-            { id: 'reviews', label: 'Avaliações', icon: '⭐' },
-            { id: 'profile', label: 'Perfil', icon: '👤' },
-            { id: 'settings', label: 'Definições', icon: '⚙' },
-            { id: 'help', label: 'Ajuda', icon: '❓' },
+            { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
+            { id: 'appointments', label: 'Agenda', icon: <Calendar className="w-4 h-4" /> },
+            { id: 'services', label: 'Serviços', icon: <Scissors className="w-4 h-4" /> },
+            { id: 'pos', label: 'POS / Vendas', icon: <CreditCard className="w-4 h-4" />, badge: 'NOVO' },
+            { id: 'gallery', label: 'Galeria', icon: <ImageIcon className="w-4 h-4" /> },
+            { id: 'reviews', label: 'Avaliações', icon: <Star className="w-4 h-4" /> },
+            { id: 'profile', label: 'Perfil', icon: <User className="w-4 h-4" /> },
+            { id: 'settings', label: 'Definições', icon: <Settings className="w-4 h-4" /> },
+            { id: 'help', label: 'Ajuda', icon: <HelpCircle className="w-4 h-4" /> },
           ].map((item) => (
             <button
               key={item.id}
@@ -171,7 +172,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   : 'border-transparent text-[#AFAFAF] hover:bg-neutral-900/50 hover:text-white'
               }`}
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="shrink-0">{item.icon}</span>
               {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
               {sidebarOpen && item.badge && (
                 <span className="bg-[#D4AF37] text-black text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
@@ -212,7 +213,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       <div className="flex-1 flex flex-col overflow-hidden relative">
         
         {/* Right side decoration layer (haircut models fading into background) */}
-        <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-black/80 to-transparent pointer-events-none z-10 hidden xl:block overflow-hidden opacity-30">
+        <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-black/85 to-transparent pointer-events-none z-10 hidden xl:block overflow-hidden opacity-25">
           <div className="flex flex-col gap-6 py-12 items-center">
             <img className="w-16 h-16 rounded-xl object-cover grayscale" src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100" alt="" />
             <img className="w-16 h-16 rounded-xl object-cover grayscale" src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=100" alt="" />
@@ -297,14 +298,14 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       ATIVO
                     </span>
                   </div>
-                  <p className="text-xs text-[#AFAFAF] font-medium leading-relaxed">
+                  <p className="text-xs text-[#AFAFAF]">
                     O seu perfil está visível para todos os clientes.
                   </p>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-black/60 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-black/50 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all"
                   >
-                    <Edit size={11} className="text-[#D4AF37]" /> Editar Perfil
+                    <Edit size={12} className="text-[#D4AF37]" /> Editar Perfil
                   </button>
                 </div>
 
@@ -318,60 +319,90 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 
                 {/* CARD 1 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-                    <span className="text-lg">📅</span>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                      <Calendar className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest">Agendamentos Hoje</p>
+                      <h4 className="text-2xl font-black text-white mt-1">5</h4>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Agendamentos Hoje</p>
-                    <h4 className="text-xl font-black text-white mt-0.5">5</h4>
-                    <button onClick={() => setActiveTab('appointments')} className="text-[8px] text-[#D4AF37] font-black uppercase hover:underline mt-1 block">Ver Agenda</button>
-                  </div>
+                  <button 
+                    onClick={() => setActiveTab('appointments')}
+                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
+                  >
+                    Ver Agenda
+                  </button>
                 </div>
 
                 {/* CARD 2 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-                    <span className="text-lg">⭐</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Avaliação Média</p>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <h4 className="text-xl font-black text-[#D4AF37]">4.8</h4>
-                      <div className="flex text-amber-500 text-[8px] tracking-tighter">★★★★★</div>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-full border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] text-xs font-black">★</div>
                     </div>
-                    <p className="text-[8px] text-[#AFAFAF] mt-1 font-bold uppercase">128 avaliações</p>
+                    <div>
+                      <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest">Avaliação Média</p>
+                      <h4 className="text-2xl font-black text-[#D4AF37] mt-1">4.8</h4>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex text-amber-500 text-[8px] tracking-tighter">★★★★★</div>
+                    <span className="text-[8px] text-[#AFAFAF] font-bold uppercase">128 avaliações</span>
                   </div>
                 </div>
 
                 {/* CARD 3 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-                    <span className="text-lg">👥</span>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest">Novos Clientes</p>
+                      <h4 className="text-2xl font-black text-white mt-1">3</h4>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Novos Clientes</p>
-                    <h4 className="text-xl font-black text-white mt-0.5">3</h4>
-                    <button onClick={() => setActiveTab('appointments')} className="text-[8px] text-[#D4AF37] font-black uppercase hover:underline mt-1 block">Ver Clientes</button>
-                  </div>
+                  <button 
+                    onClick={() => setActiveTab('appointments')}
+                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
+                  >
+                    Ver Clientes
+                  </button>
                 </div>
 
                 {/* CARD 4 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
-                    <span className="text-lg">👁</span>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                      <Eye className="w-5 h-5 text-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest">Visualizações Perfil</p>
+                      <h4 className="text-2xl font-black text-white mt-1">156</h4>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Visualizações Perfil</p>
-                    <h4 className="text-xl font-black text-white mt-0.5">156</h4>
-                    <p className="text-[8px] text-[#AFAFAF] mt-1 font-bold uppercase">Este mês</p>
-                  </div>
+                  <p className="text-[8px] text-[#AFAFAF] mt-4 font-bold uppercase">Este mês</p>
                 </div>
 
-                {/* CARD 5 (ABRIR POS) */}
+                {/* CARD 5 (POS SALES) */}
                 <div className="bg-[#0d0d0d] border border-[#D4AF37]/30 rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] text-left">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">💳</span>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                      {/* POS terminal machine SVG drawing */}
+                      <svg className="w-5 h-5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="5" y="3" width="14" height="18" rx="2" />
+                        <rect x="8" y="6" width="8" height="4" rx="1" />
+                        <circle cx="9" cy="13" r="1" />
+                        <circle cx="12" cy="13" r="1" />
+                        <circle cx="15" cy="13" r="1" />
+                        <circle cx="9" cy="16" r="1" />
+                        <circle cx="12" cy="16" r="1" />
+                        <circle cx="15" cy="16" r="1" />
+                      </svg>
+                    </div>
                     <div className="min-w-0">
                       <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">POS / Vendas</p>
                       <p className="text-[7px] text-[#AFAFAF] mt-0.5 font-medium leading-tight">Faça vendas e receba pagamentos</p>
@@ -379,7 +410,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                   <button 
                     onClick={() => setActiveTab('pos')}
-                    className="w-full mt-3 py-2 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
+                    className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-[0_4px_10px_rgba(212,175,55,0.2)] text-center"
                   >
                     ABRIR POS
                   </button>
@@ -403,7 +434,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                           <img 
                             src={r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`} 
                             alt="" 
-                            className="w-7 h-7 rounded-full object-cover bg-neutral-900 shrink-0"
+                            className="w-7 h-7 rounded-full object-cover bg-neutral-900 shrink-0 border border-neutral-800"
                           />
                           <div className="min-w-0">
                             <p className="text-[11px] font-black text-white truncate">{r.customerName}</p>
@@ -439,7 +470,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                   <button 
                     onClick={() => setActiveTab('services')}
-                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
+                    className="w-full mt-2 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
                     Ver todos os serviços
                   </button>
@@ -469,7 +500,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
+                    className="w-full mt-2 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
                     Ver horário completo
                   </button>
@@ -490,7 +521,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     {reviews.map(rev => (
                       <div key={rev.id} className="space-y-2 text-xs border-b border-neutral-900 pb-3 last:border-0 last:pb-0">
                         <div className="flex items-center gap-2.5">
-                          <img src={rev.avatar} className="w-6.5 h-6.5 rounded-full object-cover bg-neutral-900 shrink-0" alt="" />
+                          <img src={rev.avatar} className="w-6.5 h-6.5 rounded-full object-cover bg-neutral-900 shrink-0 border border-neutral-800" alt="" />
                           <div>
                             <p className="font-black text-white text-[11px] leading-tight">{rev.customerName}</p>
                             <div className="flex text-[#D4AF37] text-[8px] tracking-tighter mt-0.5">★★★★★</div>
@@ -872,7 +903,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         </div>
 
         {/* FOOTER */}
-        <footer className="bg-[#0d0d0d] border-t border-[rgba(255,215,0,0.15)] py-4 px-6 text-center text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest shrink-0 animate-in fade-in">
+        <footer className="bg-[#0d0d0d] border-t border-[rgba(255,215,0,0.15)] py-4 px-6 text-center text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest shrink-0">
           &copy; {new Date().getFullYear()} AzoresToYou. Todos os direitos reservados.
         </footer>
 

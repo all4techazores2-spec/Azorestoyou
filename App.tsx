@@ -28,11 +28,12 @@ import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
 import BarberNormalDashboard from './components/BarberNormalDashboard';
 import BarberProDashboard from './components/BarberProDashboard';
+import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
 import FavoritesModal from './components/FavoritesModal';
 import CommunitySection from './components/CommunitySection';
-import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn, UtensilsCrossed } from 'lucide-react';
+import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn, UtensilsCrossed, Scissors } from 'lucide-react';
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
 import { getTranslation } from './translations';
@@ -354,6 +355,7 @@ const App: React.FC = () => {
 
   // Modal State
   const [showPackageModal, setShowPackageModal] = useState(false);
+  const [showBarberLogin, setShowBarberLogin] = useState(false);
   const [showBusIslandModal, setShowBusIslandModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showMarketplaceFavorites, setShowMarketplaceFavorites] = useState(false);
@@ -1775,6 +1777,25 @@ const App: React.FC = () => {
     );
   }
 
+  // --- BARBER LOGIN VIEW ---
+  if (showBarberLogin) {
+    return (
+      <ErrorBoundary>
+        <BarberLogin 
+          beautyList={beauty}
+          onBack={() => setShowBarberLogin(false)}
+          onLoginSuccess={(businessId, softwareVersion) => {
+            setIsBusiness(true);
+            setIsStaff(false);
+            setCurrentBusinessId(businessId);
+            setHasEnteredApp(true);
+            setShowBarberLogin(false);
+          }}
+        />
+      </ErrorBoundary>
+    );
+  }
+
   if (!hasEnteredApp) {
     return (
       <LandingPage 
@@ -2214,6 +2235,7 @@ const App: React.FC = () => {
             isAuthenticated={isAuthenticated}
             userProfile={userProfile}
             scrolled={scrolled}
+            onShowBarberLogin={() => setShowBarberLogin(true)}
           />
         )}
       </div>
@@ -2378,6 +2400,23 @@ const App: React.FC = () => {
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  </button>
+
+                  {/* Área do Barbeiro */}
+                  <button 
+                    onClick={() => { setShowBarberLogin(true); setMobileMenuOpen(false); }}
+                    className="flex items-center justify-between w-full px-4 py-4 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/25 rounded-2xl transition-all active:scale-95 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-amber-500/20 text-[#D4AF37] rounded-xl">
+                        <Scissors size={18} />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-black text-amber-500 text-[12px] block">Área do Barbeiro</span>
+                        <span className="text-[9px] text-amber-500/60 font-bold uppercase tracking-widest">Acesso Profissional</span>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-[#D4AF37]/50 group-hover:text-[#D4AF37] transition-colors" />
                   </button>
 
                   {/* Logout */}

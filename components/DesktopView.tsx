@@ -5,7 +5,7 @@ import {
   Search, Map, Heart, User, ChevronDown, ChevronLeft, ChevronRight, Play, 
   Utensils, Bus, Car, Tent, LayoutGrid, Mountain, 
   Facebook, Instagram, Youtube, Send, ArrowRight,
-  ShieldCheck, Globe, Clock, Tag, CreditCard, Apple
+  ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors
 } from 'lucide-react';
 import AzoresLogo from './AzoresLogo';
 import { Language } from '../types';
@@ -19,6 +19,7 @@ interface DesktopViewProps {
   onOpenIslandSelection: () => void;
   isAuthenticated: boolean;
   userProfile?: any;
+  onShowBarberLogin?: () => void;
 }
 
 export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> = ({
@@ -28,7 +29,8 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
   onShowProfile,
   isAuthenticated,
   userProfile,
-  scrolled
+  scrolled,
+  onShowBarberLogin
 }) => {
   return (
     <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg py-3' : 'bg-transparent py-6'}`}>
@@ -59,6 +61,16 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
         </nav>
 
         <div className="flex items-center gap-6">
+          {onShowBarberLogin && (
+            <button 
+              onClick={onShowBarberLogin} 
+              className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${scrolled ? 'text-amber-600 hover:text-amber-700' : 'text-[#D4AF37] hover:text-amber-400 drop-shadow-md'}`}
+            >
+              <Scissors size={14} />
+              Barbeiro
+            </button>
+          )}
+
           <button onClick={onShowFavorites} className={`p-2 rounded-full transition-all hover:bg-white/10 ${scrolled ? 'text-slate-400 hover:text-red-500' : 'text-white drop-shadow-md'}`}>
             <Heart size={24} />
           </button>
