@@ -16,7 +16,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'services' | 'pos' | 'gallery' | 'reviews' | 'profile' | 'settings' | 'help'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Local editable states matching mockup fields
+  // Local editable states
   const [description, setDescription] = useState(business.description || 'Barbearia premium com serviços de corte, barba e estética.');
   const [phone, setPhone] = useState(business.phone || '+351 912 345 678');
   const [address, setAddress] = useState(business.address || 'Rua Principal, Ponta Delgada');
@@ -123,8 +123,6 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
   };
 
-  const totalSalesAmount = salesHistory.reduce((sum, sale) => sum + (sale.price || 0), 0);
-
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans flex overflow-hidden selection:bg-[#D4AF37] selection:text-black">
       
@@ -211,8 +209,17 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       </aside>
 
       {/* MAIN CONTAINER */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         
+        {/* Right side decoration layer (haircut models fading into background) */}
+        <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-black/80 to-transparent pointer-events-none z-10 hidden xl:block overflow-hidden opacity-30">
+          <div className="flex flex-col gap-6 py-12 items-center">
+            <img className="w-16 h-16 rounded-xl object-cover grayscale" src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100" alt="" />
+            <img className="w-16 h-16 rounded-xl object-cover grayscale" src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=100" alt="" />
+            <img className="w-16 h-16 rounded-xl object-cover grayscale" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100" alt="" />
+          </div>
+        </div>
+
         {/* HEADER */}
         <header className="bg-[#0d0d0d] border-b border-[rgba(255,215,0,0.15)] px-6 py-4 flex justify-between items-center sticky top-0 z-40 shrink-0">
           <div className="flex items-center gap-4">
@@ -220,8 +227,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               <Menu size={20} />
             </button>
             <div className="text-left">
-              <p className="text-[10px] text-[#AFAFAF] font-bold uppercase tracking-wider">Bem-vindo de volta,</p>
-              <h2 className="text-xl font-black text-white">Carlos!</h2>
+              <p className="text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest leading-none mb-1">Bem-vindo de volta,</p>
+              <h2 className="text-xl font-black text-white leading-none">Carlos!</h2>
             </div>
           </div>
           
@@ -236,12 +243,12 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             
             <div className="relative text-neutral-400 hover:text-[#D4AF37] cursor-pointer">
               <Bell size={18} />
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#D4AF37] text-black text-[7px] font-black flex items-center justify-center rounded-full">
+              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#D4AF37] text-black text-[7px] font-black flex items-center justify-center rounded-full">
                 3
               </span>
             </div>
 
-            {/* Carlos Almeida User Badge */}
+            {/* User Profile dropdown badge */}
             <div className="flex items-center gap-2 border-l border-amber-500/10 pl-6 cursor-pointer group">
               <img 
                 src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256" 
@@ -258,151 +265,193 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         </header>
 
         {/* WORKSPACE AREA */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-[1300px] w-full mx-auto">
 
           {/* TAB: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <>
               {/* HERO COVER BANNER */}
-              <div className="relative rounded-[18px] overflow-hidden border border-[rgba(255,215,0,0.15)] min-h-[160px] flex items-end">
+              <div className="relative rounded-[18px] overflow-hidden border border-[rgba(255,215,0,0.15)] min-h-[160px] flex items-center justify-between p-6">
+                
+                {/* Left side clipper outline */}
+                <div className="absolute top-4 left-6 opacity-10 pointer-events-none hidden md:block">
+                  <svg className="w-16 h-16 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="9" y="2" width="6" height="16" rx="2" />
+                    <path d="M12 18v4" />
+                    <path d="M7 6h10" />
+                  </svg>
+                </div>
+
                 <img 
-                  src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070" 
+                  src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070" 
                   alt="Barbershop" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-20"
+                  className="absolute inset-0 w-full h-full object-cover opacity-15"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
-                <div className="relative z-10 p-6 space-y-3 text-left w-full">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/75 to-transparent" />
+                
+                <div className="relative z-10 text-left space-y-2.5 max-w-lg">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-2xl font-black text-white">Barbearia Silva</h3>
+                    <h3 className="text-2xl font-black text-white tracking-tight">Barbearia Silva</h3>
                     <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                       <span className="w-1 h-1 bg-emerald-400 rounded-full" />
                       ATIVO
                     </span>
                   </div>
-                  <p className="text-xs text-[#AFAFAF]">
+                  <p className="text-xs text-[#AFAFAF] font-medium leading-relaxed">
                     O seu perfil está visível para todos os clientes.
                   </p>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-black/50 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-black/60 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
                   >
-                    <Edit size={12} className="text-[#D4AF37]" /> Editar Perfil
+                    <Edit size={11} className="text-[#D4AF37]" /> Editar Perfil
                   </button>
+                </div>
+
+                {/* Right side haircut graphic */}
+                <div className="relative z-10 w-28 h-28 rounded-xl overflow-hidden border border-[#D4AF37]/20 shadow-lg hidden sm:block">
+                  <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200" className="w-full h-full object-cover" alt="" />
                 </div>
               </div>
 
               {/* 5 ALIGNED CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
                 {/* CARD 1 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
                     <span className="text-lg">📅</span>
-                    <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Agendamentos Hoje</p>
-                    <h4 className="text-3xl font-black text-white mt-2">5</h4>
                   </div>
-                  <button 
-                    onClick={() => setActiveTab('appointments')}
-                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 text-center"
-                  >
-                    Ver Agenda
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Agendamentos Hoje</p>
+                    <h4 className="text-xl font-black text-white mt-0.5">5</h4>
+                    <button onClick={() => setActiveTab('appointments')} className="text-[8px] text-[#D4AF37] font-black uppercase hover:underline mt-1 block">Ver Agenda</button>
+                  </div>
                 </div>
 
                 {/* CARD 2 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
                     <span className="text-lg">⭐</span>
-                    <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Avaliação Média</p>
-                    <h4 className="text-3xl font-black text-[#D4AF37] mt-2">4.8</h4>
-                    <div className="flex text-amber-500 text-xs mt-1">★★★★★</div>
                   </div>
-                  <p className="text-[9px] text-[#AFAFAF] mt-2 font-bold uppercase">128 avaliações</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Avaliação Média</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <h4 className="text-xl font-black text-[#D4AF37]">4.8</h4>
+                      <div className="flex text-amber-500 text-[8px] tracking-tighter">★★★★★</div>
+                    </div>
+                    <p className="text-[8px] text-[#AFAFAF] mt-1 font-bold uppercase">128 avaliações</p>
+                  </div>
                 </div>
 
                 {/* CARD 3 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
                     <span className="text-lg">👥</span>
-                    <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Novos Clientes</p>
-                    <h4 className="text-3xl font-black text-white mt-2">3</h4>
                   </div>
-                  <button 
-                    onClick={() => setActiveTab('appointments')}
-                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 text-center"
-                  >
-                    Ver Clientes
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Novos Clientes</p>
+                    <h4 className="text-xl font-black text-white mt-0.5">3</h4>
+                    <button onClick={() => setActiveTab('appointments')} className="text-[8px] text-[#D4AF37] font-black uppercase hover:underline mt-1 block">Ver Clientes</button>
+                  </div>
                 </div>
 
                 {/* CARD 4 */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
-                  <div>
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex items-center gap-4 hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
+                  <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
                     <span className="text-lg">👁</span>
-                    <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">Visualizações Perfil</p>
-                    <h4 className="text-3xl font-black text-white mt-2">156</h4>
                   </div>
-                  <p className="text-[9px] text-[#AFAFAF] mt-2 font-bold uppercase">Este mês</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">Visualizações Perfil</p>
+                    <h4 className="text-xl font-black text-white mt-0.5">156</h4>
+                    <p className="text-[8px] text-[#AFAFAF] mt-1 font-bold uppercase">Este mês</p>
+                  </div>
                 </div>
 
-                {/* CARD 5 (POS SALES) */}
+                {/* CARD 5 (ABRIR POS) */}
                 <div className="bg-[#0d0d0d] border border-[#D4AF37]/30 rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] text-left">
-                  <div>
+                  <div className="flex items-center gap-3">
                     <span className="text-lg">💳</span>
-                    <p className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest mt-1">POS / Vendas</p>
-                    <p className="text-[8px] text-[#AFAFAF] mt-2 font-medium">Faça vendas e receba pagamentos</p>
+                    <div className="min-w-0">
+                      <p className="text-[8px] text-[#AFAFAF] font-black uppercase tracking-widest truncate">POS / Vendas</p>
+                      <p className="text-[7px] text-[#AFAFAF] mt-0.5 font-medium leading-tight">Faça vendas e receba pagamentos</p>
+                    </div>
                   </div>
                   <button 
                     onClick={() => setActiveTab('pos')}
-                    className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all active:scale-95 shadow-[0_4px_10px_rgba(212,175,55,0.2)] text-center"
+                    className="w-full mt-3 py-2 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
                   >
                     ABRIR POS
                   </button>
                 </div>
               </div>
 
-              {/* MAIN ROWS AND SECTIONS */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* THREE COLUMN GRID SECTION (MATCHING MOCKUP 4-3-3 RATIO) */}
+              <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
                 
-                {/* PRÓXIMOS AGENDAMENTOS */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 lg:col-span-2">
+                {/* PRÓXIMOS AGENDAMENTOS (lg:col-span-4) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-4 text-left">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Próximos Agendamentos</h4>
                     <button onClick={() => setActiveTab('appointments')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver todos</button>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {reservations.map((r, i) => (
-                      <div key={i} className="bg-black/40 border border-neutral-900 rounded-[18px] p-4 flex justify-between items-center hover:border-[#D4AF37]/25 transition-all text-left">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-black text-white bg-black border border-neutral-800 px-3 py-1.5 rounded-lg">{r.time}</span>
+                      <div key={i} className="bg-black/30 border border-neutral-900 rounded-[14px] p-3 flex justify-between items-center hover:border-[#D4AF37]/20 transition-all">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-[11px] font-black text-white bg-black px-2.5 py-1 rounded border border-neutral-800 shrink-0">{r.time}</span>
                           <img 
                             src={r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`} 
                             alt="" 
-                            className="w-8 h-8 rounded-full object-cover bg-neutral-900 border border-neutral-800"
+                            className="w-7 h-7 rounded-full object-cover bg-neutral-900 shrink-0"
                           />
-                          <div>
-                            <p className="text-xs font-black text-white">{r.customerName}</p>
-                            <p className="text-[9px] text-[#AFAFAF] mt-0.5">{r.serviceName}</p>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black text-white truncate">{r.customerName}</p>
+                            <p className="text-[8px] text-[#AFAFAF] truncate mt-0.5">{r.serviceName}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className={`text-[8px] font-black uppercase px-2.5 py-1 rounded-full ${
-                            r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          }`}>
-                            {r.status === 'accepted' ? 'Confirmado' : 'Pendente'}
-                          </span>
-                        </div>
+                        <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                          r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        }`}>
+                          {r.status === 'accepted' ? 'Confirmado' : 'Pendente'}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* HORÁRIO DE FUNCIONAMENTO */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                {/* SERVIÇOS (lg:col-span-3) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-3 text-left">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Serviços</h4>
+                    <button onClick={() => setActiveTab('services')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
+                  </div>
+                  <div className="space-y-3">
+                    {services.map(s => (
+                      <div key={s.id} className="flex justify-between items-center pb-1.5 border-b border-neutral-900 text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Scissors className="w-3 h-3 text-[#D4AF37] shrink-0" />
+                          <span className="text-[#AFAFAF] font-bold truncate">{s.name}</span>
+                        </div>
+                        <span className="text-white font-black shrink-0">€{s.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('services')}
+                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
+                  >
+                    Ver todos os serviços
+                  </button>
+                </div>
+
+                {/* HORÁRIO DE FUNCIONAMENTO (lg:col-span-3) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-3 text-left">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Horário de Funcionamento</h4>
                     <button onClick={() => setActiveTab('profile')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
                   </div>
-                  <div className="space-y-2.5 text-xs text-left">
+                  <div className="space-y-2 text-[11px]">
                     {[
                       { day: 'Segunda', hours: '09:00 - 19:00' },
                       { day: 'Terça', hours: '09:00 - 19:00' },
@@ -412,7 +461,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       { day: 'Sábado', hours: '09:00 - 17:00' },
                       { day: 'Domingo', hours: 'Fechado' }
                     ].map(entry => (
-                      <div key={entry.day} className="flex justify-between items-center border-b border-neutral-900 pb-1.5 text-[11px]">
+                      <div key={entry.day} className="flex justify-between items-center border-b border-neutral-900 pb-1 text-[11px]">
                         <span className="text-[#AFAFAF] font-bold">{entry.day}</span>
                         <span className="text-white font-black">{entry.hours}</span>
                       </div>
@@ -420,53 +469,33 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
+                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
                     Ver horário completo
                   </button>
                 </div>
 
-                {/* SERVIÇOS */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Serviços</h4>
-                    <button onClick={() => setActiveTab('services')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Editar</button>
-                  </div>
-                  <div className="space-y-4 text-left">
-                    {services.map(s => (
-                      <div key={s.id} className="flex justify-between items-center pb-2 border-b border-neutral-900">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="w-3.5 h-3.5 text-[#D4AF37]" />
-                          <p className="text-xs font-black text-white">{s.name}</p>
-                        </div>
-                        <span className="text-xs font-black text-white">€{s.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button 
-                    onClick={() => setActiveTab('services')}
-                    className="w-full mt-2 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
-                  >
-                    Ver todos os serviços
-                  </button>
-                </div>
+              </div>
 
-                {/* ÚLTIMAS AVALIAÇÕES */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+              {/* BOTTOM ROW (RATIO 4-3-3) */}
+              <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+                
+                {/* ÚLTIMAS AVALIAÇÕES (lg:col-span-4) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-4 text-left">
                   <div className="flex justify-between items-center">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Últimas Avaliações</h4>
                     <button onClick={() => setActiveTab('reviews')} className="text-[9px] font-black text-[#AFAFAF] hover:text-white uppercase tracking-widest">Ver todas</button>
                   </div>
-                  <div className="space-y-4 text-left">
+                  <div className="space-y-4">
                     {reviews.map(rev => (
                       <div key={rev.id} className="space-y-2 text-xs border-b border-neutral-900 pb-3 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-2">
-                          <img src={rev.avatar} className="w-6 h-6 rounded-full object-cover bg-neutral-900 border border-neutral-800" alt="" />
+                        <div className="flex items-center gap-2.5">
+                          <img src={rev.avatar} className="w-6.5 h-6.5 rounded-full object-cover bg-neutral-900 shrink-0" alt="" />
                           <div>
-                            <p className="font-black text-white text-[11px]">{rev.customerName}</p>
-                            <div className="flex text-amber-500 text-[9px]">★★★★★</div>
+                            <p className="font-black text-white text-[11px] leading-tight">{rev.customerName}</p>
+                            <div className="flex text-[#D4AF37] text-[8px] tracking-tighter mt-0.5">★★★★★</div>
                           </div>
-                          <span className="text-[9px] text-[#AFAFAF] font-bold ml-auto">{rev.date}</span>
+                          <span className="text-[8px] text-[#AFAFAF] font-bold ml-auto">{rev.date}</span>
                         </div>
                         <p className="text-neutral-400 italic text-[11px] leading-relaxed">"{rev.comment}"</p>
                       </div>
@@ -474,18 +503,17 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </div>
                 </div>
 
-                {/* MANTENHA O SEU PERFIL ATUALIZADO */}
-                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex flex-col justify-between text-left">
+                {/* MANTENHA O PERFIL ATUALIZADO (lg:col-span-3) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between text-left lg:col-span-3">
                   <div className="space-y-3">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Mantenha o seu perfil atualizado</h4>
                     
                     <div className="flex items-center gap-4 py-3">
-                      {/* Circular Progress Wheel */}
-                      <div className="relative w-16 h-16 shrink-0">
-                        <svg className="w-full h-full transform -rotate-95" viewBox="0 0 36 36">
+                      <div className="relative w-14 h-14 shrink-0">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                           <path
                             className="text-neutral-900"
-                            strokeWidth="3"
+                            strokeWidth="2.5"
                             stroke="currentColor"
                             fill="none"
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -493,7 +521,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                           <path
                             className="text-[#D4AF37]"
                             strokeDasharray="85, 100"
-                            strokeWidth="3"
+                            strokeWidth="2.5"
                             strokeLinecap="round"
                             stroke="currentColor"
                             fill="none"
@@ -501,44 +529,44 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-sm font-black text-white">85%</span>
+                          <span className="text-xs font-black text-white">85%</span>
                         </div>
                       </div>
-                      <p className="text-[11px] text-[#AFAFAF] leading-normal font-bold">
+                      <p className="text-[10px] text-[#AFAFAF] leading-normal font-bold">
                         Adicione mais fotos e informações para atrair mais clientes.
                       </p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setActiveTab('profile')}
-                    className="w-full mt-4 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[10px] font-black uppercase tracking-widest rounded-[18px] transition-all text-center"
+                    className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
                     Editar Perfil
                   </button>
                 </div>
 
-              </div>
-
-              {/* QUICK ACTION CARDS */}
-              <div className="space-y-3 text-left">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Ações Rápidas</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: '💳 POS / Vendas', desc: 'Vendas e pagamentos', action: () => setActiveTab('pos') },
-                    { label: '📸 Adicionar Fotos', desc: 'À galeria', action: handlePhotoUpload },
-                    { label: '✂️ Editar Serviços', desc: 'Gerir preços', action: () => setActiveTab('services') },
-                    { label: '🕐 Atualizar Horário', desc: 'Funcionamento', action: () => setActiveTab('profile') }
-                  ].map((btn, idx) => (
-                    <button 
-                      key={idx}
-                      onClick={btn.action}
-                      className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/50 rounded-[18px] p-4 text-left transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] bg-black/40 flex flex-col justify-between min-h-[90px]"
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white">{btn.label}</span>
-                      <span className="text-[8px] text-[#AFAFAF] uppercase tracking-widest mt-1 block">{btn.desc}</span>
-                    </button>
-                  ))}
+                {/* AÇÕES RÁPIDAS (lg:col-span-3) */}
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-3 text-left lg:col-span-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Ações Rápidas</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: '💳 POS / Vendas', desc: 'Vendas e pagamentos', action: () => setActiveTab('pos') },
+                      { label: '📸 Adicionar Fotos', desc: 'À galeria', action: handlePhotoUpload },
+                      { label: '✂️ Editar Serviços', desc: 'Gerir preços', action: () => setActiveTab('services') },
+                      { label: '🕐 Atualizar Horário', desc: 'Funcionamento', action: () => setActiveTab('profile') }
+                    ].map((btn, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={btn.action}
+                        className="bg-black border border-neutral-900 hover:border-[#D4AF37]/45 rounded-xl p-3 text-left transition-all duration-300 hover:scale-[1.03] flex flex-col justify-between min-h-[75px]"
+                      >
+                        <span className="text-[9px] font-black uppercase tracking-wider text-white">{btn.label}</span>
+                        <span className="text-[7px] text-[#AFAFAF] uppercase tracking-widest mt-1.5 block">{btn.desc}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
               </div>
             </>
           )}
@@ -844,7 +872,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         </div>
 
         {/* FOOTER */}
-        <footer className="bg-[#0d0d0d] border-t border-[rgba(255,215,0,0.15)] py-4 px-6 text-center text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest shrink-0">
+        <footer className="bg-[#0d0d0d] border-t border-[rgba(255,215,0,0.15)] py-4 px-6 text-center text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest shrink-0 animate-in fade-in">
           &copy; {new Date().getFullYear()} AzoresToYou. Todos os direitos reservados.
         </footer>
 
