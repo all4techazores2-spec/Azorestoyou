@@ -1975,7 +1975,10 @@ const App: React.FC = () => {
             <ErrorBoundary>
               <BarberProDashboard 
                 business={biz}
-                onLogout={handleLogout}
+                onLogout={() => {
+                  handleLogout();
+                  setShowBarberLogin(true);
+                }}
               />
             </ErrorBoundary>
           );
@@ -1984,7 +1987,10 @@ const App: React.FC = () => {
             <ErrorBoundary>
               <BarberNormalDashboard 
                 business={biz}
-                onLogout={handleLogout}
+                onLogout={() => {
+                  handleLogout();
+                  setShowBarberLogin(true);
+                }}
                 onUpdateBusiness={async (updated) => {
                   setBeauty(prev => prev.map(item => item.id === updated.id ? updated : item));
                   try {
@@ -2061,11 +2067,15 @@ const App: React.FC = () => {
             staffRole={staffRole || undefined}
             staffEmail={userProfile?.email}
             onLogout={() => { 
+              const isBarber = biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia';
               setIsAuthenticated(false); 
               setIsBusiness(false); 
               setIsStaff(false);
               setStaffRole(null);
               setCurrentBusinessId(null); 
+              if (isBarber) {
+                setShowBarberLogin(true);
+              }
             }}
             onSync={(updated) => {
                // Update local state dynamically
