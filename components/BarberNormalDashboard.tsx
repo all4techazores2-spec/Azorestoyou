@@ -50,6 +50,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     { id: 's5', name: 'Coloração', description: 'Coloração completa', price: 25.00, duration: 60, image: 'https://images.unsplash.com/photo-1605497746444-ac9dbd324ce4?w=300', category: 'COLORAÇÃO' },
   ];
 
+  const services = business.services && business.services.length > 0 ? business.services : servicesCatalog;
+
   const productsCatalog = [
     { id: 'p1', name: 'Pomada Modeladora', price: 10.00, image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=300' },
     { id: 'p2', name: 'Gel Fixação Forte', price: 8.00, image: 'https://images.unsplash.com/photo-1527799863830-5731454955a8?w=300' },
