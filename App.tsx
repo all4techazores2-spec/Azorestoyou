@@ -250,6 +250,22 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // --- DETEÇÃO DE RESERVA/MARCAÇÃO DIRETA (LINK DE TESTE) ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get('book');
+    if (bookId) {
+      console.log("⚡ Deteção de Marcação Direta para o ID:", bookId);
+      setHasEnteredApp(true);
+      if (bookId.startsWith('BEA')) {
+        setExploreCategory('beauty');
+      } else {
+        setExploreCategory('restaurants');
+      }
+      setSelectedTrailId(bookId);
+    }
+  }, [beauty, restaurants]);
+
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
     const loadCaches = async () => {

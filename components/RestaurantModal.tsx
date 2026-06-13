@@ -61,6 +61,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [selectedDishIdx, setSelectedDishIdx] = useState<number | null>(null);
   const [showFullMenuPopup, setShowFullMenuPopup] = useState(false);
   
+  const [guestStep, setGuestStep] = useState<'details' | 'minipos'>('details');
+
   // Follow and Like state for individual business
   const [isFollowed, setIsFollowed] = useState(() => {
     if (!restaurant) return false;
@@ -166,6 +168,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     if (selectedDate && selectedTime) {
       setShowBookingPopup(true);
       setPopupStep('notes');
+      setGuestStep('details');
     }
   }, [selectedDate, selectedTime]);
 
@@ -211,14 +214,21 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   };
 
   const startBooking = () => {
-    if (!isAuthenticated && onShowAuth) {
-      onShowAuth();
-    } else {
-      setBookingStep('datetime');
-    }
+    setBookingStep('datetime');
   };
 
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleDetailsConfirm = () => {
+    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
+      alert('Por favor, preencha todos os campos do contacto.');
+      return;
+    }
+    const parts = customerName.trim().split(' ');
+    setFirstName(parts[0] || '');
+    setLastName(parts.slice(1).join(' ') || '');
+    setGuestStep('minipos');
+  };
 
   const handleFinalize = async () => {
     if (isProcessing) return;
@@ -330,11 +340,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           setUserCredits(userCredits + earnedFromItems);
         }
       }
-
-      setTimeout(() => {
-        console.log('Fechando modal após sucesso.');
-        onClose();
-      }, 3500);
+      // Mantemos o modal aberto para apresentar o ecrã/popup publicitário final
     } catch (error) {
       console.error('Erro ao processar reserva:', error);
       alert(currentLang === 'pt' ? 'Erro ao processar a marcação. Verifique a sua ligação ao servidor.' : 'Error processing appointment. Check your server connection.');
@@ -980,70 +986,105 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           </div>
                         </div>
 
-                        {isBeauty ? (
+                        {guestStep === 'details' ? (
                           <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Primeiro Nome</label>
-                                <input 
-                                  type="text"
-                                  value={firstName}
-                                  onChange={(e) => setFirstName(e.target.value)}
-                                  placeholder="Ex: João"
-                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Último Nome</label>
-                                <input 
-                                  type="text"
-                                  value={lastName}
-                                  onChange={(e) => setLastName(e.target.value)}
-                                  placeholder="Ex: Silva"
-                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  required
-                                />
-                              </div>
+                            <div>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Nome Completo</label>
+                              <input 
+                                type="text"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                                placeholder="Ex: João Silva"
+                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                required
+                              />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Telemóvel</label>
-                                <input 
-                                  type="tel"
-                                  value={customerPhone}
-                                  onChange={(e) => setCustomerPhone(e.target.value)}
-                                  placeholder="9xxxxxxxx"
-                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Email</label>
-                                <input 
-                                  type="email"
-                                  value={customerEmail}
-                                  onChange={(e) => setCustomerEmail(e.target.value)}
-                                  placeholder="email@exemplo.com"
-                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  required
-                                />
+                            <div>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Telemóvel</label>
+                              <input 
+                                type="tel"
+                                value={customerPhone}
+                                onChange={(e) => setCustomerPhone(e.target.value)}
+                                placeholder="9xxxxxxxx"
+                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Email</label>
+                              <input 
+                                type="email"
+                                value={customerEmail}
+                                onChange={(e) => setCustomerEmail(e.target.value)}
+                                placeholder="email@exemplo.com"
+                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                required
+                              />
+                            </div>
+                            
+                            <button 
+                              onClick={handleDetailsConfirm}
+                              className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6"
+                            >
+                              Confirmar Dados
+                              <ArrowRight className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2 text-xs text-slate-300">
+                              <p className="font-black text-[10px] text-slate-500 uppercase tracking-widest">Confirme os seus dados</p>
+                              <div className="grid grid-cols-2 gap-3 mt-1">
+                                <div>
+                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Nome Completo</label>
+                                  <input 
+                                    type="text"
+                                    value={customerName}
+                                    onChange={(e) => {
+                                      setCustomerName(e.target.value);
+                                      const parts = e.target.value.trim().split(' ');
+                                      setFirstName(parts[0] || '');
+                                      setLastName(parts.slice(1).join(' ') || '');
+                                    }}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Telemóvel</label>
+                                  <input 
+                                    type="tel"
+                                    value={customerPhone}
+                                    onChange={(e) => setCustomerPhone(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                  />
+                                </div>
+                                <div className="col-span-2">
+                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Email</label>
+                                  <input 
+                                    type="email"
+                                    value={customerEmail}
+                                    onChange={(e) => setCustomerEmail(e.target.value)}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                  />
+                                </div>
                               </div>
                             </div>
 
                             {/* Mini-POS Services selector */}
                             <div>
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Selecione os Serviços (Mini-POS)</label>
-                              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                                 {(restaurant.services && restaurant.services.length > 0 
                                   ? restaurant.services.filter((s: any) => s.isActive !== false)
-                                  : [
-                                    { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
-                                    { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
-                                    { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 },
-                                    { id: 's4', name: 'Degradê', price: 15.00, duration: 30 },
-                                    { id: 's5', name: 'Coloração', price: 25.00, duration: 60 }
-                                  ]).map((s: any) => {
+                                  : (restaurant.dishes && restaurant.dishes.length > 0
+                                      ? restaurant.dishes.map((d: any) => ({ id: d.id, name: d.name, price: d.price, duration: 30 }))
+                                      : [
+                                          { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
+                                          { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
+                                          { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 }
+                                        ]
+                                    )
+                                ).map((s: any) => {
                                   const isSelected = selectedServices.some(item => item.id === s.id);
                                   return (
                                     <div 
@@ -1065,105 +1106,36 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                 })}
                               </div>
                             </div>
-                          </div>
-                        ) : (
-                          isBeauty && (
-                            <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
-                              isTimeFull 
-                                ? 'bg-red-500/10 border-red-500/25 text-red-400' 
-                                : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
-                            }`}>
-                              <div className="flex items-center gap-2">
-                                <Scissors size={14} className={isTimeFull ? 'text-red-400' : 'text-emerald-400'} />
-                                <span>{isTimeFull ? 'Sem vagas de serviço disponíveis' : 'Vagas de serviço disponíveis'}</span>
+
+                            {isBeauty && isTimeFull && (
+                              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
+                                ⚠️ Lamento, mas já não temos vagas (cadeiras livres) disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
                               </div>
-                              <span className="font-black text-sm">{isTimeFull ? 'Esgotado' : `${availableChairs} / ${totalChairs}`}</span>
-                            </div>
-                          )
-                        )}
+                            )}
 
-                        <div className="space-y-4">
-                          {isBeauty && isTimeFull && (
-                            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
-                              ⚠️ Lamento, mas já não temos vagas (cadeiras livres) disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
-                            </div>
-                          )}
-
-                          <div>
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
-                            <textarea 
-                              value={bookingNote}
-                              onChange={(e) => setBookingNote(e.target.value)}
-                              placeholder="Ex: Alergias, mesa perto da janela, aniversário..."
-                              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-24"
-                            />
-                          </div>
-
-
-
-                          {/* Dynamic Payment Fields */}
-                          {paymentType === 'mbway' && (
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 pt-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Número de Telemóvel MBWay</label>
-                              <input 
-                                type="tel"
-                                value={mbwayPhone}
-                                onChange={(e) => setMbwayPhone(e.target.value)}
-                                placeholder="9xxxxxxxx"
-                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                            <div>
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                              <textarea 
+                                value={bookingNote}
+                                onChange={(e) => setBookingNote(e.target.value)}
+                                placeholder="Ex: Algum pedido especial para o agendamento..."
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
                               />
-                            </motion.div>
-                          )}
+                            </div>
 
-                          {paymentType === 'transfer' && (
-                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-2">
-                              <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Número do Cartão</label>
-                                <input 
-                                  type="text"
-                                  value={cardNumber}
-                                  onChange={(e) => setCardNumber(e.target.value)}
-                                  placeholder="0000 0000 0000 0000"
-                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Validade</label>
-                                  <input 
-                                    type="text"
-                                    value={cardExpiry}
-                                    onChange={(e) => setCardExpiry(e.target.value)}
-                                    placeholder="MM/AA"
-                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">CVV</label>
-                                  <input 
-                                    type="text"
-                                    value={cardCvv}
-                                    onChange={(e) => setCardCvv(e.target.value)}
-                                    placeholder="000"
-                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                  />
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </div>
-
-                        <button 
-                          disabled={isProcessing || !paymentType || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
-                          onClick={handleFinalize}
-                          className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                            ${(!paymentType || isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)) 
-                              ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                              : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
-                        >
-                          {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : (isBeauty && selectedServices.length === 0) ? 'Selecione pelo menos 1 serviço' : 'Confirmar Reserva'}
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
+                            <button 
+                              disabled={isProcessing || (isBeauty && isTimeFull) || selectedServices.length === 0}
+                              onClick={handleFinalize}
+                              className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
+                                ${(isProcessing || (isBeauty && isTimeFull) || selectedServices.length === 0) 
+                                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                                  : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                            >
+                              {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : selectedServices.length === 0 ? 'Selecione pelo menos 1 serviço' : 'Confirmar Reserva'}
+                              <ArrowRight className="w-5 h-5" />
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     </div>
                   )}
@@ -1392,23 +1364,58 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }} 
                 animate={{ opacity: 1, scale: 1 }} 
-                className="h-full flex flex-col items-center justify-center p-12 text-center min-h-[500px]"
+                className="h-full flex flex-col items-center justify-center p-8 text-center min-h-[500px] bg-slate-900 text-white rounded-[2.5rem] relative overflow-hidden"
               >
-                <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-xl shadow-emerald-100 animate-bounce">
-                  <CheckCircle size={48} strokeWidth={3} />
+                {/* Visual blur background items */}
+                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-3xl flex items-center justify-center mb-6 shadow-2xl ring-4 ring-emerald-500/20 animate-bounce">
+                  <CheckCircle size={40} strokeWidth={2.5} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">{getTranslation(currentLang, 'booking_success')}</h3>
-                <p className="text-slate-500 mb-10 max-w-sm leading-relaxed font-medium">
-                  A sua reserva em <strong className="text-slate-800">{restaurant.name}</strong> para o dia <strong className="text-red-600">{selectedDate?.toLocaleDateString()}</strong> às <strong className="text-red-600">{selectedTime}</strong> foi confirmada.
-                  <br/><br/>
-                  Receberá uma confirmação no seu e-mail.
+                
+                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Marcação Efetuada!</h3>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">
+                  {restaurant.name} • {selectedDate?.toLocaleDateString()} às {selectedTime}
                 </p>
-                <button 
-                  onClick={onClose} 
-                  className="w-full py-5 bg-slate-900 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-xl hover:bg-black transition-all active:scale-[0.98]"
-                >
-                  Concluir e Voltar
-                </button>
+
+                {/* ADVERTISING / FISHING BANNER */}
+                <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-8 text-left space-y-4 shadow-xl backdrop-blur-md">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⚡</span>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400">Sabia que...?</h4>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Evite faturas em papel</p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-slate-300 text-xs font-medium leading-relaxed">
+                    Pode consultar e gerir todas as suas faturas de forma 100% digital e automática com o seu NIF através do nosso portal oficial.
+                  </p>
+                  
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
+                    <p className="text-white font-black text-sm tracking-tight">faturas.azorestoyou.pt</p>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Aceda ao seu painel fiscal nos Açores</p>
+                  </div>
+                </div>
+
+                <div className="w-full max-w-sm space-y-3">
+                  <a 
+                    href="https://azorestoyou.pt" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    🚀 Aceder a AzoresToYou.pt
+                  </a>
+                  
+                  <button 
+                    onClick={onClose} 
+                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95"
+                  >
+                    Concluir e Voltar
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

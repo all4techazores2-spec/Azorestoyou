@@ -228,10 +228,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           setSelectedRestaurant(item as any);
           if (onSelectedItemIdHandled) onSelectedItemIdHandled();
         }
+      } else if (category === 'beauty') {
+        const item = beauty.find(b => b.id === selectedItemId);
+        if (item) {
+          setSelectedRestaurant(item as any);
+          if (onSelectedItemIdHandled) onSelectedItemIdHandled();
+        }
       }
       // Add other categories as needed
     }
-  }, [selectedItemId, category, activities, restaurants, onSelectedItemIdHandled]);
+  }, [selectedItemId, category, activities, restaurants, beauty, onSelectedItemIdHandled]);
 
   
   const isNearby = destinationIsland?.startsWith('nearby:');
