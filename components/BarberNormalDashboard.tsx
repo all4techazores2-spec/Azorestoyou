@@ -68,6 +68,40 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const [observations, setObservations] = useState<string>('');
   const [completedSale, setCompletedSale] = useState<any | null>(null);
 
+  // New features states
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  
+  // Services states
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [editingService, setEditingService] = useState<any | null>(null);
+  const [serviceForm, setServiceForm] = useState({
+    name: '',
+    category: 'Corte',
+    description: '',
+    price: '',
+    duration: '30',
+    image: '',
+    isActive: true
+  });
+
+  // Business info editor states
+  const [bizForm, setBizForm] = useState({
+    name: business.name || '',
+    welcomeName: business.welcomeName || '',
+    phone: business.phone || '',
+    email: business.email || '',
+    iban: business.iban || '',
+    address: business.address || '',
+    postalCode: business.postalCode || '',
+    island: business.island || 'São Miguel',
+    concelho: business.concelho || '',
+    googleMapsLink: business.googleMapsLink || business.mapUrl || '',
+    description: business.description || '',
+    logo: business.logo || '',
+    coverImage: business.coverImage || business.image || ''
+  });
+
   const [salesHistory, setSalesHistory] = useState<any[]>(() => {
     return (business as any).salesHistory || [
       { id: 'S1', serviceName: 'Corte Degradê & Fade', price: 15.00, paymentMethod: 'Dinheiro', timestamp: new Date(Date.now() - 3600000).toISOString() },
@@ -77,11 +111,11 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
   // Catalogs
   const servicesCatalog = [
-    { id: 's1', name: 'Corte Masculino', description: 'Corte completo', price: 12.00, duration: 30, image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300', category: 'CORTE' },
-    { id: 's2', name: 'Barba Tradicional', description: 'Barba + Toalha Quente', price: 8.00, duration: 20, image: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300', category: 'BARBA' },
-    { id: 's3', name: 'Corte + Barba', description: 'Pacote completo', price: 18.00, duration: 45, image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=300', category: 'CORTE + BARBA' },
-    { id: 's4', name: 'Degradê', description: 'Degradê completo', price: 15.00, duration: 30, image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=300', category: 'DEGRADÊ' },
-    { id: 's5', name: 'Coloração', description: 'Coloração completa', price: 25.00, duration: 60, image: 'https://images.unsplash.com/photo-1605497746444-ac9dbd324ce4?w=300', category: 'COLORAÇÃO' },
+    { id: 's1', name: 'Corte Masculino', description: 'Corte completo', price: 12.00, duration: 30, image: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300', category: 'Corte', isActive: true },
+    { id: 's2', name: 'Barba Tradicional', description: 'Barba + Toalha Quente', price: 8.00, duration: 20, image: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300', category: 'Barba', isActive: true },
+    { id: 's3', name: 'Corte + Barba', description: 'Pacote completo', price: 18.00, duration: 45, image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=300', category: 'Corte + Barba', isActive: true },
+    { id: 's4', name: 'Degradê', description: 'Degradê completo', price: 15.00, duration: 30, image: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=300', category: 'Degradê', isActive: true },
+    { id: 's5', name: 'Coloração', description: 'Coloração completa', price: 25.00, duration: 60, image: 'https://images.unsplash.com/photo-1605497746444-ac9dbd324ce4?w=300', category: 'Coloração', isActive: true },
   ];
 
   const services = business.services && business.services.length > 0 ? business.services : servicesCatalog;
@@ -353,6 +387,58 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!bizForm.name.trim()) {
+      alert('O nome do negócio é obrigatório.');
+      return;
+    }
+    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3001'
+      : 'https://azorestoyou-1.onrender.com';
+    try {
+      const updatedBusiness = {
+        ...business,
+        name: bizForm.name.trim(),
+        welcomeName: bizForm.welcomeName.trim(),
+        description: bizForm.description.trim(),
+        phone: bizForm.phone.trim(),
+        email: bizForm.email.trim(),
+        address: bizForm.address.trim(),
+        iban: bizForm.iban.trim(),
+        googleMapsLink: bizForm.googleMapsLink.trim(),
+        mapUrl: bizForm.googleMapsLink.trim(),
+        logo: bizForm.logo.trim(),
+        coverImage: bizForm.coverImage.trim(),
+        openingHours: openingHours.trim()
+      };
+
+      // Try to persist changes on the server (best effort)
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/businesses/${business.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Business-Id': String(business.id)
+          },
+          body: JSON.stringify(updatedBusiness)
+        });
+        if (!res.ok) {
+          console.warn('Servidor retornou erro ao guardar perfil:', res.status);
+        }
+      } catch (fetchErr) {
+        console.warn('Erro de rede ao guardar perfil, a atualizar localmente:', fetchErr);
+      }
+
+      // Always update local state
+      onUpdateBusiness(updatedBusiness);
+      alert('✅ Perfil atualizado com sucesso!');
+    } catch (err) {
+      console.error('Erro ao guardar perfil:', err);
+      alert('Erro ao guardar alterações. Tente novamente.');
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans flex overflow-hidden selection:bg-[#D4AF37] selection:text-black">
       
@@ -363,16 +449,26 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         {/* Brand/Logo Section */}
         <div className="p-6 border-b border-[rgba(255,215,0,0.15)] flex flex-col items-center text-center">
           <div className="flex flex-col items-center justify-center">
-            {/* Crown Icon */}
-            <svg className="w-5 h-5 text-[#D4AF37] mb-1" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l3 5.5 5.5-1.5-2.5 7h-12l-2.5-7 5.5 1.5zM21 16h-18v2h18zM19 19h-14v2h14z" />
-            </svg>
-            <div className="w-12 h-12 bg-black border border-[#D4AF37] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.25)]">
-              <span className="text-xl font-black text-[#D4AF37]">B</span>
-            </div>
+            {business.logo ? (
+              <img 
+                src={business.logo} 
+                alt={business.name} 
+                className="w-12 h-12 rounded-full object-cover border border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)]" 
+              />
+            ) : (
+              <>
+                {/* Crown Icon */}
+                <svg className="w-5 h-5 text-[#D4AF37] mb-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3 5.5 5.5-1.5-2.5 7h-12l-2.5-7 5.5 1.5zM21 16h-18v2h18zM19 19h-14v2h14z" />
+                </svg>
+                <div className="w-12 h-12 bg-black border border-[#D4AF37] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.25)]">
+                  <span className="text-xl font-black text-[#D4AF37]">{business.name ? business.name.substring(0, 1).toUpperCase() : 'B'}</span>
+                </div>
+              </>
+            )}
             {sidebarOpen && (
               <div className="mt-2.5">
-                <h1 className="text-xs font-black tracking-[0.2em] text-[#D4AF37] uppercase">BARBEARIA SILVA</h1>
+                <h1 className="text-xs font-black tracking-[0.2em] text-[#D4AF37] uppercase truncate max-w-[180px]">{business.name || 'BARBEARIA'}</h1>
                 <p className="text-[7px] text-[#AFAFAF] font-black uppercase tracking-[0.3em] mt-0.5">PREMIUM</p>
               </div>
             )}
@@ -417,13 +513,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         <div className="p-4 border-t border-[rgba(255,215,0,0.15)] bg-black/20">
           <div className="flex items-center gap-3">
             <img 
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256" 
+              src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"} 
               alt="Avatar" 
               className="w-10 h-10 rounded-full object-cover border border-[#D4AF37]/30"
             />
             {sidebarOpen && (
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-black text-white truncate">Carlos Almeida</p>
+                <p className="text-xs font-black text-white truncate">{business.welcomeName || business.name || "Carlos Almeida"}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                   <span className="text-[9px] text-[#AFAFAF] font-black uppercase tracking-widest">Online</span>
@@ -459,16 +555,19 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             </button>
             <div className="text-left">
               <p className="text-[9px] text-[#AFAFAF] font-bold uppercase tracking-widest leading-none mb-1">Bem-vindo de volta,</p>
-              <h2 className="text-xl font-black text-white leading-none">Carlos!</h2>
+              <h2 className="text-xl font-black text-white leading-none">{business.welcomeName || business.name || 'Parceiro'}!</h2>
             </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#D4AF37]" />
+            <div 
+              onClick={() => setShowCalendarModal(true)}
+              className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors group"
+            >
+              <Calendar className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
               <div className="text-left leading-none">
-                <p className="text-[10px] text-white font-black">20 de Maio, 2024</p>
-                <p className="text-[8px] text-[#AFAFAF] font-medium mt-0.5">Segunda-feira</p>
+                <p className="text-[10px] text-white font-black">{new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-[8px] text-[#AFAFAF] font-medium mt-0.5 uppercase tracking-widest">{new Date().toLocaleDateString('pt-PT', { weekday: 'long' })}</p>
               </div>
             </div>
             
@@ -478,16 +577,16 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 3
               </span>
             </div>
-
+ 
             {/* User Profile dropdown badge */}
             <div className="flex items-center gap-2 border-l border-amber-500/10 pl-6 cursor-pointer group">
               <img 
-                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256" 
-                alt="Carlos Almeida" 
+                src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"} 
+                alt="Avatar" 
                 className="w-8 h-8 rounded-full object-cover border border-[#D4AF37]/30"
               />
               <div className="text-left leading-none hidden sm:block">
-                <p className="text-[11px] font-black text-white group-hover:text-[#D4AF37] transition-all">Carlos Almeida</p>
+                <p className="text-[11px] font-black text-white group-hover:text-[#D4AF37] transition-all">{business.welcomeName || business.name || "Carlos Almeida"}</p>
                 <p className="text-[9px] text-[#AFAFAF] font-medium mt-0.5">Barbeiro</p>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#D4AF37]" />
@@ -514,15 +613,15 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 </div>
 
                 <img 
-                  src="https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070" 
-                  alt="Barbershop" 
+                  src={business.coverImage || business.image || "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070"} 
+                  alt={business.name || 'Barbearia'} 
                   className="absolute inset-0 w-full h-full object-cover opacity-15"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/75 to-transparent" />
                 
                 <div className="relative z-10 text-left space-y-2.5 max-w-lg">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-2xl font-black text-white tracking-tight">Barbearia Silva</h3>
+                    <h3 className="text-2xl font-black text-white tracking-tight">{business.name || 'Barbearia'}</h3>
                     <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                       <span className="w-1 h-1 bg-emerald-400 rounded-full" />
                       ATIVO
@@ -539,9 +638,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </button>
                 </div>
 
-                {/* Right side haircut graphic */}
+                {/* Right side logo or fallback */}
                 <div className="relative z-10 w-28 h-28 rounded-xl overflow-hidden border border-[#D4AF37]/20 shadow-lg hidden sm:block">
-                  <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200" className="w-full h-full object-cover" alt="" />
+                  <img src={business.logo || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200"} className="w-full h-full object-cover" alt="" />
                 </div>
               </div>
 
@@ -1229,18 +1328,29 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                                 ? 'http://localhost:3001'
                                 : 'https://azorestoyou-1.onrender.com';
                               try {
+                                // Soft-release: use PUT to mark block as cancelled, preserving history
                                 const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
                                 if (activeB) {
                                   await fetch(`${API_BASE_URL}/api/chair-blocks/${activeB.id}`, {
-                                    method: 'DELETE'
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'cancelled' })
+                                  });
+                                } else {
+                                  // If no active block, just update chair status directly
+                                  await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'available' })
                                   });
                                 }
                                 loadChairsData();
                               } catch (err) {
+                                console.error('Erro ao libertar cadeira:', err);
                                 loadChairsData();
                               }
                             }}
-                            className="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            className="py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-700/40 text-emerald-400 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
                           >
                             Tornar Disponível
                           </button>
@@ -1255,53 +1365,155 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: SERVIÇOS */}
           {activeTab === 'services' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
-              <div className="flex justify-between items-center">
-                <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Gestão de Serviços</h2>
+            <div className="space-y-6 text-left animate-in fade-in duration-300">
+              {/* Header */}
+              <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Catálogo de Serviços</h2>
+                  <p className="text-xs text-[#AFAFAF] mt-1">{services.filter((s: any) => s.isActive !== false).length} serviços ativos</p>
+                </div>
                 <button 
                   onClick={() => {
-                    const name = prompt('Nome do serviço:');
-                    const price = parseFloat(prompt('Preço (€):') || '0');
-                    if (name && price > 0) {
-                      const updated = {
-                        ...business,
-                        services: [...services, { id: `s_${Date.now()}`, name, price, duration: 30, description: '', image: '' }]
-                      };
-                      onUpdateBusiness(updated);
-                    }
+                    setEditingService(null);
+                    setServiceForm({ name: '', category: 'Corte', description: '', price: '', duration: '30', image: '', isActive: true });
+                    setShowServiceForm(true);
                   }}
-                  className="bg-black border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 rounded-[18px] text-xs font-black uppercase tracking-wider transition-all"
+                  className="bg-black border border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#D4AF37] px-5 py-2.5 rounded-[18px] text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2"
                 >
-                  + Adicionar Serviço
+                  <Plus size={14} /> Novo Serviço
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {services.map((s) => (
-                  <div key={s.id} className="bg-black p-5 rounded-[18px] border border-neutral-900 flex justify-between items-center">
-                    <div>
-                      <h3 className="font-bold text-white text-sm">{s.name}</h3>
-                      <p className="text-[10px] text-[#AFAFAF] uppercase tracking-wider mt-0.5">{s.duration} mins</p>
+
+              {/* Service Form Modal */}
+              {showServiceForm && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.25)] rounded-[24px] max-w-lg w-full p-7 space-y-5 text-left shadow-2xl">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-[#D4AF37]">{editingService ? 'Editar Serviço' : 'Novo Serviço'}</h3>
+                      <button onClick={() => setShowServiceForm(false)} className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-white flex items-center justify-center hover:bg-neutral-800 transition-all"><X size={14} /></button>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-[#D4AF37] font-black text-sm">€{s.price.toFixed(2)}</span>
-                      <button 
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome do Serviço *</label>
+                        <input type="text" value={serviceForm.name} onChange={e => setServiceForm(p => ({...p, name: e.target.value}))} placeholder="Ex: Corte Masculino" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Categoria</label>
+                        <select value={serviceForm.category} onChange={e => setServiceForm(p => ({...p, category: e.target.value}))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]">
+                          {['Corte','Barba','Corte + Barba','Infantil','Degradê','Coloração','Sobrancelha','Outros'].map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Preço (€) *</label>
+                        <input type="number" min="0" step="0.50" value={serviceForm.price} onChange={e => setServiceForm(p => ({...p, price: e.target.value}))} placeholder="12.00" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Duração (minutos)</label>
+                        <input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm(p => ({...p, duration: e.target.value}))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]" />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL da Imagem</label>
+                        <input type="text" value={serviceForm.image} onChange={e => setServiceForm(p => ({...p, image: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Descrição</label>
+                        <textarea value={serviceForm.description} onChange={e => setServiceForm(p => ({...p, description: e.target.value}))} placeholder="Descreva o serviço brevemente..." rows={2} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button
                         onClick={() => {
-                          if (confirm('Eliminar este serviço?')) {
-                            const updated = {
-                              ...business,
-                              services: services.filter(item => item.id !== s.id)
-                            };
-                            onUpdateBusiness(updated);
+                          if (!serviceForm.name.trim() || !serviceForm.price) { alert('Nome e preço são obrigatórios.'); return; }
+                          let updatedServices: any[];
+                          if (editingService) {
+                            updatedServices = services.map((s: any) => s.id === editingService.id ? { ...s, ...serviceForm, price: parseFloat(serviceForm.price), duration: parseInt(serviceForm.duration) } : s);
+                          } else {
+                            updatedServices = [...services, { id: `s_${Date.now()}`, ...serviceForm, price: parseFloat(serviceForm.price), duration: parseInt(serviceForm.duration), isActive: true }];
                           }
+                          onUpdateBusiness({ ...business, services: updatedServices });
+                          setShowServiceForm(false);
                         }}
-                        className="text-red-400 hover:text-red-500 p-2 bg-red-500/10 rounded-xl"
+                        className="flex-1 py-3 bg-[#D4AF37] hover:bg-amber-500 text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all"
                       >
-                        <Trash2 size={14} />
+                        {editingService ? 'Guardar Alterações' : 'Criar Serviço'}
                       </button>
+                      <button onClick={() => setShowServiceForm(false)} className="px-5 py-3 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all">Cancelar</button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Services by Category */}
+              {['Corte','Barba','Corte + Barba','Infantil','Degradê','Coloração','Sobrancelha','Outros'].map(cat => {
+                const catServices = services.filter((s: any) => s.category === cat);
+                if (catServices.length === 0) return null;
+                return (
+                  <div key={cat} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">✂️ {cat}</h3>
+                      <div className="flex-1 h-px bg-[rgba(255,215,0,0.1)]" />
+                      <span className="text-[8px] text-[#AFAFAF] font-bold uppercase">{catServices.filter((s: any) => s.isActive !== false).length} ativos</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {catServices.map((s: any) => (
+                        <div key={s.id} className={`bg-[#0d0d0d] border rounded-[18px] overflow-hidden transition-all hover:scale-[1.02] ${ s.isActive === false ? 'border-neutral-800 opacity-50' : 'border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/30' }`}>
+                          {s.image && <img src={s.image} alt={s.name} className="w-full h-28 object-cover" />}
+                          {!s.image && <div className="w-full h-28 bg-black/50 flex items-center justify-center text-4xl">✂️</div>}
+                          <div className="p-4 space-y-2">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-xs font-black text-white truncate">{s.name}</h4>
+                                <p className="text-[9px] text-[#AFAFAF] mt-0.5 line-clamp-1">{s.description || 'Sem descrição'}</p>
+                              </div>
+                              {s.isActive === false && <span className="text-[7px] bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded-full uppercase font-black ml-2 shrink-0">Inativo</span>}
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[#D4AF37] font-black text-sm">€{parseFloat(s.price).toFixed(2)}</span>
+                              <span className="text-[9px] text-[#AFAFAF] font-bold">{s.duration} min</span>
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => {
+                                  setEditingService(s);
+                                  setServiceForm({ name: s.name, category: s.category || 'Outros', description: s.description || '', price: String(s.price), duration: String(s.duration || 30), image: s.image || '', isActive: s.isActive !== false });
+                                  setShowServiceForm(true);
+                                }}
+                                className="flex-1 py-1.5 bg-black border border-neutral-800 hover:border-[#D4AF37]/50 text-white text-[8px] font-black uppercase rounded-lg transition-all flex items-center justify-center gap-1"
+                              >
+                                <Edit size={10} /> Editar
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (s.isActive === false) {
+                                    // Re-activate
+                                    const updated = services.map((item: any) => item.id === s.id ? { ...item, isActive: true } : item);
+                                    onUpdateBusiness({ ...business, services: updated });
+                                  } else {
+                                    if (!confirm(`Desativar "${s.name}"? O serviço ficará oculto para os clientes mas o histórico é mantido.`)) return;
+                                    const updated = services.map((item: any) => item.id === s.id ? { ...item, isActive: false } : item);
+                                    onUpdateBusiness({ ...business, services: updated });
+                                  }
+                                }}
+                                className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg transition-all ${ s.isActive === false ? 'bg-emerald-900/30 border border-emerald-700/40 text-emerald-400' : 'bg-amber-900/20 border border-amber-700/30 text-amber-400' }`}
+                              >
+                                {s.isActive === false ? 'Ativar' : 'Desativar'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {services.length === 0 && (
+                <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] py-16 text-center">
+                  <div className="text-4xl mb-3">✂️</div>
+                  <p className="text-sm font-black text-white">Ainda não tem serviços</p>
+                  <p className="text-xs text-[#AFAFAF] mt-1">Clique em "Novo Serviço" para começar</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1666,51 +1878,87 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
           {/* TAB: PERFIL */}
           {activeTab === 'profile' && (
-            <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
-              <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Perfil do Barbeiro</h2>
-              <div className="space-y-4 max-w-xl">
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Descrição da Barbearia</label>
-                  <textarea
-                    className="w-full bg-black border border-neutral-800 rounded-[18px] p-3 text-white text-xs h-24 focus:outline-none focus:border-[#D4AF37]/50"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Telemóvel</label>
-                  <input
-                    type="text"
-                    className="w-full bg-black border border-neutral-800 rounded-[18px] p-3 text-white text-xs font-bold focus:outline-none focus:border-[#D4AF37]/50"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Morada</label>
-                  <input
-                    type="text"
-                    className="w-full bg-black border border-neutral-800 rounded-[18px] p-3 text-white text-xs font-bold focus:outline-none focus:border-[#D4AF37]/50"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-[#AFAFAF] mb-2">Horário Funcionamento (Dias Úteis)</label>
-                  <input
-                    type="text"
-                    className="w-full bg-black border border-neutral-800 rounded-[18px] p-3 text-white text-xs font-bold focus:outline-none focus:border-[#D4AF37]/50"
-                    value={openingHours}
-                    onChange={(e) => setOpeningHours(e.target.value)}
-                  />
-                </div>
-                <button
-                  onClick={handleSaveProfile}
-                  className="px-6 py-3 bg-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-[18px] hover:bg-amber-500 transition-all"
-                >
-                  Guardar Alterações
-                </button>
+            <div className="space-y-6 text-left animate-in fade-in duration-300">
+              <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6">
+                <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37] mb-1">Editar Negócio</h2>
+                <p className="text-xs text-[#AFAFAF]">Estas informações aparecem no seu perfil público.</p>
               </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* LEFT COL */}
+                <div className="space-y-5">
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Identidade</h3>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome do Negócio *</label>
+                      <input type="text" value={bizForm.name} onChange={e => setBizForm(p => ({...p, name: e.target.value}))} placeholder="Ex: BragaBarber" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome de Boas-Vindas (saudação)</label>
+                      <input type="text" value={bizForm.welcomeName} onChange={e => setBizForm(p => ({...p, welcomeName: e.target.value}))} placeholder="Ex: Carlos" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <p className="text-[8px] text-[#AFAFAF] mt-1">Aparece como: "Bem-vindo de volta, Carlos!"</p>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Descrição</label>
+                      <textarea value={bizForm.description} onChange={e => setBizForm(p => ({...p, description: e.target.value}))} rows={3} placeholder="Descreva a sua barbearia..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
+                    </div>
+                  </div>
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Contactos</h3>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Telemóvel</label>
+                      <input type="text" value={bizForm.phone} onChange={e => setBizForm(p => ({...p, phone: e.target.value}))} placeholder="+351 912 345 678" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Email</label>
+                      <input type="email" value={bizForm.email} onChange={e => setBizForm(p => ({...p, email: e.target.value}))} placeholder="barbearia@email.com" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Morada</label>
+                      <input type="text" value={bizForm.address} onChange={e => setBizForm(p => ({...p, address: e.target.value}))} placeholder="Rua Principal, Ponta Delgada" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Google Maps (link)</label>
+                      <input type="text" value={bizForm.googleMapsLink} onChange={e => setBizForm(p => ({...p, googleMapsLink: e.target.value}))} placeholder="https://maps.google.com/..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                  </div>
+                </div>
+                {/* RIGHT COL */}
+                <div className="space-y-5">
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Imagens</h3>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL do Logótipo</label>
+                      <input type="text" value={bizForm.logo} onChange={e => setBizForm(p => ({...p, logo: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      {bizForm.logo && <img src={bizForm.logo} alt="Logo" className="w-16 h-16 rounded-full object-cover border border-[#D4AF37]/30 mt-2" />}
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL da Imagem de Capa</label>
+                      <input type="text" value={bizForm.coverImage} onChange={e => setBizForm(p => ({...p, coverImage: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      {bizForm.coverImage && <img src={bizForm.coverImage} alt="Capa" className="w-full h-24 rounded-xl object-cover border border-neutral-800 mt-2" />}
+                    </div>
+                  </div>
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Horário de Funcionamento</h3>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Dias Úteis (texto livre)</label>
+                      <input type="text" value={openingHours} onChange={e => setOpeningHours(e.target.value)} placeholder="09:00 - 19:00" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                  </div>
+                  <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Dados Fiscais</h3>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">IBAN</label>
+                      <input type="text" value={bizForm.iban} onChange={e => setBizForm(p => ({...p, iban: e.target.value}))} placeholder="PT50 0000 0000 0000 0000 0000 0" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleSaveProfile}
+                className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-xs font-black uppercase tracking-widest rounded-[18px] transition-all shadow-[0_4px_20px_rgba(212,175,55,0.2)] active:scale-[0.98]"
+              >
+                💾 Guardar Todas as Alterações
+              </button>
             </div>
           )}
         </div>
@@ -1720,9 +1968,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
           <div className="flex items-center gap-6">
             <span>Caixa: <span className="text-white">CAIXA 01</span></span>
             <span className="hidden sm:inline-block text-neutral-800">|</span>
-            <span>Atendente: <span className="text-white">Carlos Almeida</span></span>
+            <span>Atendente: <span className="text-white">{business.welcomeName || business.name || 'Barbeiro'}</span></span>
             <span className="hidden sm:inline-block text-neutral-800">|</span>
-            <span>Turno: <span className="text-white">Manhã</span></span>
+            <span>Negócio: <span className="text-white">{business.name || '—'}</span></span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -1890,6 +2138,119 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
           </div>
         </div>
       )}
+      {/* CALENDAR MODAL - DARK LUXURY */}
+      {showCalendarModal && (() => {
+        const year = currentCalendarMonth.getFullYear();
+        const month = currentCalendarMonth.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+        // Filter reservations strictly by this business
+        const bizReservations = (business.reservations || []).filter((r: any) => {
+          if (r.businessId && r.businessId !== business.id) return false;
+          return true;
+        });
+
+        const getReservationsForDay = (day: number) => {
+          const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          return bizReservations.filter((r: any) => {
+            const rDate = r.date || r.reservationDate || r.dateTime?.split('T')[0] || '';
+            return rDate === dateStr;
+          });
+        };
+
+        const today = new Date();
+        const isToday = (day: number) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+
+        return (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg" onClick={() => setShowCalendarModal(false)}>
+            <div
+              className="bg-[#080808] border border-[rgba(212,175,55,0.3)] rounded-[28px] w-full max-w-2xl shadow-[0_0_60px_rgba(212,175,55,0.08)] text-left overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Calendar Header */}
+              <div className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent border-b border-[rgba(212,175,55,0.2)] p-6 flex justify-between items-center">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]/60">{business.name || 'Barbearia'}</p>
+                  <h2 className="text-xl font-black text-white mt-0.5">{monthNames[month]} {year}</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setCurrentCalendarMonth(new Date(year, month - 1, 1))}
+                    className="w-9 h-9 bg-black/60 border border-[rgba(212,175,55,0.2)] hover:border-[#D4AF37] text-[#D4AF37] rounded-xl flex items-center justify-center transition-all text-sm font-black"
+                  >‹</button>
+                  <button
+                    onClick={() => setCurrentCalendarMonth(new Date())}
+                    className="px-4 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 text-[#D4AF37] rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
+                  >Hoje</button>
+                  <button
+                    onClick={() => setCurrentCalendarMonth(new Date(year, month + 1, 1))}
+                    className="w-9 h-9 bg-black/60 border border-[rgba(212,175,55,0.2)] hover:border-[#D4AF37] text-[#D4AF37] rounded-xl flex items-center justify-center transition-all text-sm font-black"
+                  >›</button>
+                  <button
+                    onClick={() => setShowCalendarModal(false)}
+                    className="w-9 h-9 bg-black/60 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 rounded-xl flex items-center justify-center transition-all"
+                  ><X size={14} /></button>
+                </div>
+              </div>
+
+              {/* Day Names Row */}
+              <div className="grid grid-cols-7 border-b border-[rgba(212,175,55,0.1)]">
+                {dayNames.map(d => (
+                  <div key={d} className="py-3 text-center text-[8px] font-black uppercase tracking-widest text-[#D4AF37]/50">{d}</div>
+                ))}
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 p-2 gap-1">
+                {Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }).map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                  const dayResvs = getReservationsForDay(day);
+                  const confirmed = dayResvs.filter((r: any) => r.status === 'accepted').length;
+                  const pending = dayResvs.filter((r: any) => r.status === 'pending').length;
+                  const isDayToday = isToday(day);
+                  return (
+                    <div
+                      key={day}
+                      className={`rounded-xl p-2 min-h-[60px] text-left cursor-default transition-all hover:bg-white/5 border ${ isDayToday ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5' : 'border-transparent' }`}
+                    >
+                      <span className={`text-[10px] font-black block leading-none ${ isDayToday ? 'text-[#D4AF37]' : 'text-white/60' }`}>{day}</span>
+                      {dayResvs.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {confirmed > 0 && (
+                            <div className="w-full bg-emerald-500/15 border border-emerald-500/20 rounded px-1 py-0.5 flex items-center gap-1">
+                              <span className="w-1 h-1 bg-emerald-400 rounded-full shrink-0" />
+                              <span className="text-[7px] font-black text-emerald-400 truncate">{confirmed} conf.</span>
+                            </div>
+                          )}
+                          {pending > 0 && (
+                            <div className="w-full bg-amber-500/15 border border-amber-500/20 rounded px-1 py-0.5 flex items-center gap-1">
+                              <span className="w-1 h-1 bg-amber-400 rounded-full shrink-0" />
+                              <span className="text-[7px] font-black text-amber-400 truncate">{pending} pend.</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="border-t border-[rgba(212,175,55,0.1)] p-4 flex items-center gap-6">
+                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-400 rounded-full" /><span className="text-[9px] text-[#AFAFAF] font-bold uppercase">Confirmados</span></div>
+                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-400 rounded-full" /><span className="text-[9px] text-[#AFAFAF] font-bold uppercase">Pendentes</span></div>
+                <div className="flex items-center gap-2"><span className="w-2 h-2 bg-[#D4AF37] rounded-full" /><span className="text-[9px] text-[#AFAFAF] font-bold uppercase">Hoje</span></div>
+                <span className="ml-auto text-[8px] text-neutral-600 font-bold uppercase">Total: {bizReservations.length} reservas</span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

@@ -35,7 +35,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   userProfile,
   onShowMap
 }) => {
-  // API_BASE_URL centralized in config.ts
+  const isBeauty = restaurant ? (restaurant.businessType === 'beauty' || (restaurant.id && restaurant.id.startsWith('BEA')) || (restaurant as any).id?.startsWith('BEA')) : false;
+  const isShop = restaurant ? (restaurant.businessType === 'shop') : false;
+  const isAutoRepair = restaurant ? (restaurant.businessType === 'auto_repair') : false;
+  const isOffice = restaurant ? (restaurant.businessType === 'office') : false;
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -172,11 +175,6 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   };
 
   if (!restaurant) return null;
-
-  const isBeauty = restaurant.businessType === 'beauty' || (restaurant.id && restaurant.id.startsWith('BEA')) || (restaurant as any).id?.startsWith('BEA');
-  const isShop = restaurant.businessType === 'shop';
-  const isAutoRepair = restaurant.businessType === 'auto_repair';
-  const isOffice = restaurant.businessType === 'office';
 
   const getSafeImage = (img: string | undefined | null): string => {
     if (!img) return 'https://picsum.photos/400/300?random=1';
@@ -1037,13 +1035,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                             <div>
                               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Selecione os Serviços (Mini-POS)</label>
                               <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                {(restaurant.services && restaurant.services.length > 0 ? restaurant.services : [
-                                  { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
-                                  { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
-                                  { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 },
-                                  { id: 's4', name: 'Degradê', price: 15.00, duration: 30 },
-                                  { id: 's5', name: 'Coloração', price: 25.00, duration: 60 }
-                                ]).map((s: any) => {
+                                {(restaurant.services && restaurant.services.length > 0 
+                                  ? restaurant.services.filter((s: any) => s.isActive !== false)
+                                  : [
+                                    { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
+                                    { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
+                                    { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 },
+                                    { id: 's4', name: 'Degradê', price: 15.00, duration: 30 },
+                                    { id: 's5', name: 'Coloração', price: 25.00, duration: 60 }
+                                  ]).map((s: any) => {
                                   const isSelected = selectedServices.some(item => item.id === s.id);
                                   return (
                                     <div 

@@ -144,6 +144,10 @@ app.get('/api/debug-db', async (req, res) => {
 // Generic Business Update Handler
 const handleBusinessUpdate = async (req, res) => {
     const { id } = req.params;
+    const clientBusinessId = req.headers['x-business-id'] || req.body.id;
+    if (clientBusinessId && clientBusinessId !== id) {
+        return res.status(403).json({ error: "Acesso negado: Não tem permissão para alterar este negócio." });
+    }
     try {
         const db = await readDB();
         let targetArray = null;
@@ -721,6 +725,9 @@ app.post('/api/reset-db', async (req, res) => {
 
 // --- CLEAR ALL RESERVATIONS + ORDERS + CHATS (for testing) ---
 app.post('/api/clear-reservations', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: "Permissão negada em ambiente de produção." });
+    }
     try {
         const db = await readDB();
         let totalCleared = 0;
@@ -1506,8 +1513,75 @@ app.post('/api/chair-blocks', async (req, res) => {
     }
 });
 
+app.put('/api/chair-blocks/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await readDB();
+        const idx = (db.chairBlocks || []).findIndex(b => b.id === id);
+        if (idx === -1) return res.status(404).send("Block not found");
+        db.chairBlocks[idx] = { ...db.chairBlocks[idx], ...req.body, updatedAt: new Date().toISOString() };
+        await writeDB(db);
+        res.json(db.chairBlocks[idx]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/chair-blocks/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await readDB();
+        const idx = (db.chairBlocks || []).findIndex(b => b.id === id);
+        if (idx === -1) return res.status(404).send("Block not found");
+        
+        const block = db.chairBlocks[idx];
+        block.status = block.status === 'blocked' ? 'cancelled' : 'completed';
+        block.updatedAt = new Date().toISOString();
+        
+        if (block.appointmentId) {
+            const ALL_BUSINESS_COLLECTIONS = [
+                'restaurants', 'beauty', 'shops', 'services', 'offices', 
+                'hotels', 'cars', 'it_services', 'perfumes', 'animals', 
+                'real_estate', 'gyms', 'stands', 'auto_repairs', 
+                'auto_electronics', 'used_market', 'activities', 'flights', 'bus-schedules', 'marketplace_ads', 'marketplace_chats',
+                'bars', 'events', 'municipal'
+            ];
+            ALL_BUSINESS_COLLECTIONS.forEach(k => {
+                if (db[k]) {
+                    db[k].forEach(biz => {
+                        if (biz.reservations) {
+                            const r = biz.reservations.find(resv => resv.id === block.appointmentId);
+                            if (r) {
+                                r.status = r.status === 'in_service' ? 'completed' : 'cancelled';
+                            }
+                        }
+                    });
+                }
+            });
+            if (db.users) {
+                db.users.forEach(u => {
+                    if (u.reservations) {
+                        const r = u.reservations.find(resv => resv.id === block.appointmentId);
+                        if (r) {
+                            r.status = r.status === 'in_service' ? 'completed' : 'cancelled';
+                        }
+                    }
+                });
+            }
+        }
+        
+        await writeDB(db);
+        res.json({ success: true, block });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- CLEAR ALL RESERVATIONS FOR TESTING ---
 app.post('/api/admin/clear-reservations', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ error: "Permissão negada em ambiente de produção." });
+    }
     try {
         const db = await readDB();
         

@@ -132,6 +132,10 @@ const deleteCloudinaryFolder = async () => {
 };
 
 const main = async () => {
+    if (process.env.NODE_ENV === 'production') {
+        console.error("🚨 Erro: Esta operação de limpeza não é permitida em ambiente de produção!");
+        process.exit(1);
+    }
     console.log("🚀 INICIANDO LIMPEZA COMPLETA (BASE DE DADOS + CLOUDINARY)...");
     await connectDB();
     // Esperar ligação estabelecer

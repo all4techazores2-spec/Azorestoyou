@@ -1,6 +1,10 @@
 import { readDB, writeDB, connectDB } from './db.js';
 
 const clearReservations = async () => {
+    if (process.env.NODE_ENV === 'production') {
+        console.error("🚨 Erro: Esta operação de limpeza não é permitida em ambiente de produção!");
+        process.exit(1);
+    }
     console.log("🧹 Iniciando limpeza manual...");
     await connectDB();
     // Esperar um pouco para a ligação à BD ser estabelecida

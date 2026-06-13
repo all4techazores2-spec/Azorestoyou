@@ -1,6 +1,10 @@
 import { readDB, writeDB, connectDB } from './db.js';
 
 const clearAll = async () => {
+    if (process.env.NODE_ENV === 'production') {
+        console.error("🚨 Erro: Esta operação de limpeza não é permitida em ambiente de produção!");
+        process.exit(1);
+    }
     console.log("🧹 Limpeza TOTAL a iniciar...");
     await connectDB();
     await new Promise(resolve => setTimeout(resolve, 5000));
