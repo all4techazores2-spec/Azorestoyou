@@ -128,7 +128,8 @@ const DEFAULT_DB = {
     it_services: [], perfumes: [], bars: [], events: [], municipal: [], users: [], posts: [],
     marketplace_ads: [],
     hotel_room_qr_codes: [],
-    hotel_room_requests: []
+    hotel_room_requests: [],
+    sales: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests

@@ -1058,7 +1058,16 @@ app.post('/api/reservations', async (req, res) => {
             'al': 'hotels',
             'car': 'cars'
         };
-        const key = typeMap[businessType] || 'restaurants';
+        let key = typeMap[businessType];
+        if (!key && businessId) {
+            if (businessId.startsWith('BEA')) key = 'beauty';
+            else if (businessId.startsWith('R')) key = 'restaurants';
+            else if (businessId.startsWith('S')) key = 'shops';
+            else if (businessId.startsWith('O')) key = 'offices';
+            else if (businessId.startsWith('H')) key = 'hotels';
+            else if (businessId.startsWith('C')) key = 'cars';
+        }
+        if (!key) key = 'restaurants';
         const business = db[key]?.find(b => b.id === businessId);
 
         if (business) {
@@ -1113,6 +1122,48 @@ app.post('/api/reservations', async (req, res) => {
         }
     } catch (err) {
         console.error("❌ CRITICAL EXCEPTION inside POST /api/reservations:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- SALES / POS TRANSACTIONS ---
+app.post('/api/sales', async (req, res) => {
+    console.log("📥 RECEIVED sales request:", req.body);
+    try {
+        const db = await readDB();
+        if (!db.sales) db.sales = [];
+        
+        const newSale = {
+            id: req.body.id || `SALE_${Date.now()}`,
+            barberId: req.body.barberId,
+            clientId: req.body.clientId || null,
+            services: req.body.services || [],
+            products: req.body.products || [],
+            subtotal: Number(req.body.subtotal) || 0,
+            vat: Number(req.body.vat) || 0,
+            discount: Number(req.body.discount) || 0,
+            total: Number(req.body.total) || 0,
+            paymentMethod: req.body.paymentMethod || 'Dinheiro',
+            createdAt: req.body.createdAt || new Date().toISOString()
+        };
+        
+        db.sales.push(newSale);
+        
+        // Also update the business's own salesHistory and client details
+        if (req.body.barberId) {
+            const business = db.beauty?.find(b => b.id === req.body.barberId);
+            if (business) {
+                if (!business.salesHistory) business.salesHistory = [];
+                business.salesHistory.push(newSale);
+            }
+        }
+        
+        console.log("💾 Persisting sale to database...");
+        await writeDB(db);
+        console.log(`🎉 Sale [${newSale.id}] successfully created!`);
+        res.status(201).json(newSale);
+    } catch (err) {
+        console.error("❌ CRITICAL EXCEPTION inside POST /api/sales:", err);
         res.status(500).json({ error: err.message });
     }
 });
