@@ -20,6 +20,18 @@ const normalizeEmail = (email) => {
     return email.toLowerCase().trim();
 };
 
+const timeToMinutes = (t) => {
+    if (!t || typeof t !== 'string') return 0;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + (m || 0);
+};
+
+const minutesToTime = (min) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 // Multer Memory Storage (For Base64 storage in MongoDB)
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -1071,6 +1083,59 @@ app.post('/api/reservations', async (req, res) => {
         const business = db[key]?.find(b => b.id === businessId);
 
         if (business) {
+            // Validate duplicates for beauty/barber shops based on chairs availability
+            if (key === 'beauty') {
+                const requestedDate = req.body.date;
+                const requestedTime = req.body.time;
+
+                let chairsForBiz = (db.chairs || []).filter(c => c.businessId === businessId && c.isActive !== false);
+                if (chairsForBiz.length === 0) {
+                    const defaultChair = {
+                        id: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                        chairId: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                        barberId: businessId,
+                        businessId: businessId,
+                        chairName: 'Cadeira 1',
+                        chairNumber: 1,
+                        status: 'available',
+                        isActive: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    if (!db.chairs) db.chairs = [];
+                    db.chairs.push(defaultChair);
+                    chairsForBiz = [defaultChair];
+                }
+
+                let duration = 30;
+                const items = req.body.preOrder || req.body.preorder || [];
+                if (items.length > 0) {
+                    duration = items.reduce((sum, item) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+                }
+
+                const tStartMin = timeToMinutes(requestedTime);
+                const tEndMin = tStartMin + duration;
+
+                const availableChairs = chairsForBiz.filter(chair => {
+                    const blocks = (db.chairBlocks || []).filter(b => 
+                        (b.chairId === chair.id || b.chairId === chair.chairId) &&
+                        b.date === requestedDate &&
+                        b.status !== 'cancelled' &&
+                        b.status !== 'completed'
+                    );
+                    const hasOverlap = blocks.some(b => {
+                        const bStart = timeToMinutes(b.startTime);
+                        const bEnd = timeToMinutes(b.endTime);
+                        return tStartMin < bEnd && tEndMin > bStart;
+                    });
+                    return !hasOverlap;
+                });
+
+                if (availableChairs.length === 0) {
+                    console.warn(`⚠️ Overlap reservation blocked: Barber [${businessId}], Date [${requestedDate}], Time [${requestedTime}] - No free chairs`);
+                    return res.status(400).send("Nenhuma cadeira disponível para este horário.");
+                }
+            }
+
             console.log(`✅ Business found: [${business.name}]. Adding reservation...`);
             if (!business.reservations) business.reservations = [];
             business.reservations.push(reservation);
@@ -1137,6 +1202,8 @@ app.post('/api/sales', async (req, res) => {
             id: req.body.id || `SALE_${Date.now()}`,
             barberId: req.body.barberId,
             clientId: req.body.clientId || null,
+            appointmentId: req.body.appointmentId || null,
+            chairId: req.body.chairId || null,
             services: req.body.services || [],
             products: req.body.products || [],
             subtotal: Number(req.body.subtotal) || 0,
@@ -1157,6 +1224,51 @@ app.post('/api/sales', async (req, res) => {
                 business.salesHistory.push(newSale);
             }
         }
+
+        // Conclude the linked appointment and chair block
+        if (req.body.appointmentId) {
+            const apptId = req.body.appointmentId;
+            ALL_BUSINESS_COLLECTIONS.forEach(k => {
+                if (db[k]) {
+                    db[k].forEach(biz => {
+                        if (biz.reservations) {
+                            const r = biz.reservations.find(resv => resv.id === apptId);
+                            if (r) {
+                                r.status = 'completed';
+                            }
+                        }
+                    });
+                }
+            });
+
+            if (db.users) {
+                db.users.forEach(user => {
+                    if (user.reservations) {
+                        const r = user.reservations.find(resv => resv.id === apptId);
+                        if (r) {
+                            r.status = 'completed';
+                            // Push concluding notification to client profile
+                            if (!user.notifications) user.notifications = [];
+                            user.notifications.unshift({
+                                id: `NTF_${Date.now()}`,
+                                title: `Agendamento Concluído`,
+                                text: `Serviço concluído. Obrigado pela sua visita.`,
+                                date: new Date().toLocaleDateString(),
+                                read: false,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                    }
+                });
+            }
+
+            if (db.chairBlocks) {
+                const block = db.chairBlocks.find(b => b.appointmentId === apptId);
+                if (block) {
+                    block.status = 'completed';
+                }
+            }
+        }
         
         console.log("💾 Persisting sale to database...");
         await writeDB(db);
@@ -1164,6 +1276,232 @@ app.post('/api/sales', async (req, res) => {
         res.status(201).json(newSale);
     } catch (err) {
         console.error("❌ CRITICAL EXCEPTION inside POST /api/sales:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- CHAIRS ROOM MODULE ---
+app.get('/api/chairs', async (req, res) => {
+    const { businessId } = req.query;
+    if (!businessId) {
+        return res.status(400).send("businessId is required");
+    }
+    try {
+        const db = await readDB();
+        if (!db.chairs) db.chairs = [];
+        
+        let chairsForBiz = db.chairs.filter(c => c.businessId === businessId);
+        
+        // Auto-initialize 1 default chair if none exist
+        if (chairsForBiz.length === 0) {
+            const defaultChair = {
+                id: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                chairId: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                barberId: businessId,
+                businessId: businessId,
+                chairName: 'Cadeira 1',
+                chairNumber: 1,
+                status: 'available',
+                isActive: true,
+                createdAt: new Date().toISOString()
+            };
+            db.chairs.push(defaultChair);
+            await writeDB(db);
+            chairsForBiz = [defaultChair];
+        }
+        
+        // Compute real-time status of each chair based on current timestamp
+        const now = new Date();
+        const currentTimeString = minutesToTime(now.getHours() * 60 + now.getMinutes());
+        const currentDateString = now.toISOString().split('T')[0];
+        
+        const computedChairs = chairsForBiz.map(chair => {
+            if (!chair.isActive) {
+                return { ...chair, status: 'inactive' };
+            }
+            // Find active blocks for this chair today
+            const activeBlocks = (db.chairBlocks || []).filter(b => 
+                (b.chairId === chair.id || b.chairId === chair.chairId) &&
+                b.date === currentDateString &&
+                b.status !== 'cancelled' &&
+                b.status !== 'completed'
+            );
+            
+            // Check if current time falls within any block
+            const currentBlock = activeBlocks.find(b => {
+                const bStart = timeToMinutes(b.startTime);
+                const bEnd = timeToMinutes(b.endTime);
+                const tNow = timeToMinutes(currentTimeString);
+                return tNow >= bStart && tNow <= bEnd;
+            });
+            
+            let status = 'available';
+            let currentAppointmentId = null;
+            let currentClientId = null;
+            let currentServiceId = null;
+            let blockedFrom = null;
+            let blockedUntil = null;
+            
+            if (currentBlock) {
+                if (currentBlock.status === 'reserved') status = 'Reservada';
+                else if (currentBlock.status === 'in_service') status = 'Em Atendimento';
+                else if (currentBlock.status === 'blocked') status = 'Bloqueada';
+                else if (currentBlock.status === 'cleaning') status = 'Limpeza';
+                
+                currentAppointmentId = currentBlock.appointmentId || null;
+                blockedFrom = currentBlock.startTime;
+                blockedUntil = currentBlock.endTime;
+                
+                // Lookup client and service if there is an appointmentId
+                if (currentAppointmentId) {
+                    const beautyBiz = db.beauty?.find(b => b.id === businessId);
+                    if (beautyBiz && beautyBiz.reservations) {
+                        const appt = beautyBiz.reservations.find(r => r.id === currentAppointmentId);
+                        if (appt) {
+                            currentClientId = appt.customerEmail || appt.customerName || null;
+                            currentServiceId = appt.serviceName || (appt.preOrder && appt.preOrder.map(po => po.dish?.name).join(', ')) || null;
+                        }
+                    }
+                }
+            }
+            
+            return {
+                ...chair,
+                status,
+                currentAppointmentId,
+                currentClientId,
+                currentServiceId,
+                blockedFrom,
+                blockedUntil
+            };
+        });
+        
+        res.json(computedChairs);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/chairs', async (req, res) => {
+    const { businessId, chairName, chairNumber } = req.body;
+    if (!businessId || !chairName) {
+        return res.status(400).send("businessId and chairName are required");
+    }
+    try {
+        const db = await readDB();
+        if (!db.chairs) db.chairs = [];
+        
+        const newChair = {
+            id: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            chairId: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            barberId: businessId,
+            businessId: businessId,
+            chairName: chairName,
+            chairNumber: Number(chairNumber) || (db.chairs.filter(c => c.businessId === businessId).length + 1),
+            status: 'available',
+            isActive: true,
+            createdAt: new Date().toISOString()
+        };
+        
+        db.chairs.push(newChair);
+        await writeDB(db);
+        res.status(201).json(newChair);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/chairs/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await readDB();
+        if (!db.chairs) db.chairs = [];
+        const idx = db.chairs.findIndex(c => c.id === id || c.chairId === id);
+        if (idx === -1) {
+            return res.status(404).send("Chair not found");
+        }
+        
+        db.chairs[idx] = { ...db.chairs[idx], ...req.body, updatedAt: new Date().toISOString() };
+        await writeDB(db);
+        res.json(db.chairs[idx]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/chairs/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await readDB();
+        if (!db.chairs) db.chairs = [];
+        const idx = db.chairs.findIndex(c => c.id === id || c.chairId === id);
+        if (idx === -1) {
+            return res.status(404).send("Chair not found");
+        }
+        
+        // Soft delete if the chair has bookings or sales linked
+        const hasHistory = (db.chairBlocks || []).some(b => b.chairId === id) || 
+                           (db.sales || []).some(s => s.chairId === id);
+                           
+        if (hasHistory) {
+            db.chairs[idx].isActive = false;
+            db.chairs[idx].updatedAt = new Date().toISOString();
+            console.log(`Active chair block detected. Performing Soft-Delete.`);
+        } else {
+            db.chairs.splice(idx, 1);
+        }
+        
+        await writeDB(db);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/chair-blocks', async (req, res) => {
+    const { businessId } = req.query;
+    try {
+        const db = await readDB();
+        if (!db.chairBlocks) db.chairBlocks = [];
+        const filtered = businessId ? db.chairBlocks.filter(b => b.businessId === businessId) : db.chairBlocks;
+        res.json(filtered);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/chair-blocks', async (req, res) => {
+    const { chairId, date, startTime, endTime, status, reason, businessId } = req.body;
+    if (!chairId || !date || !startTime || !endTime) {
+        return res.status(400).send("chairId, date, startTime, and endTime are required");
+    }
+    try {
+        const db = await readDB();
+        if (!db.chairBlocks) db.chairBlocks = [];
+        
+        const newBlock = {
+            id: `BLK_${Date.now()}`,
+            chairId,
+            appointmentId: req.body.appointmentId || null,
+            barberId: businessId,
+            businessId,
+            date,
+            startTime,
+            endTime,
+            status: status || 'blocked',
+            reason: reason || 'Bloqueio Manual',
+            createdAt: new Date().toISOString()
+        };
+        db.chairBlocks.push(newBlock);
+        await writeDB(db);
+        res.status(201).json(newBlock);
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -1263,6 +1601,136 @@ app.put('/api/reservations/:id', async (req, res) => {
                 if (biz.reservations) {
                     const idx = biz.reservations.findIndex(r => r.id === id);
                     if (idx !== -1) {
+                        // Validate chair availability if confirming a beauty booking
+                        if ((key === 'beauty' || biz.businessType === 'beauty') && req.body.status === 'accepted') {
+                            let chairId = req.body.chairId || biz.reservations[idx].chairId;
+                            let chairsForBiz = (db.chairs || []).filter(c => c.businessId === biz.id && c.isActive !== false);
+                            
+                            if (chairsForBiz.length === 0) {
+                                const defaultChair = {
+                                    id: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                                    chairId: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                                    barberId: biz.id,
+                                    businessId: biz.id,
+                                    chairName: 'Cadeira 1',
+                                    chairNumber: 1,
+                                    status: 'available',
+                                    isActive: true,
+                                    createdAt: new Date().toISOString()
+                                };
+                                if (!db.chairs) db.chairs = [];
+                                db.chairs.push(defaultChair);
+                                chairsForBiz = [defaultChair];
+                            }
+
+                            let duration = 30;
+                            const items = req.body.preOrder || req.body.preorder || biz.reservations[idx].preOrder || biz.reservations[idx].preorder || [];
+                            if (items.length > 0) {
+                                duration = items.reduce((sum, item) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+                            }
+                            const slotStart = req.body.time || biz.reservations[idx].time;
+                            const slotEnd = minutesToTime(timeToMinutes(slotStart) + duration);
+
+                            let selectedChair = null;
+                            const checkChairAvailability = (chair, date, start, end) => {
+                                const blocks = (db.chairBlocks || []).filter(b => 
+                                    (b.chairId === chair.id || b.chairId === chair.chairId) &&
+                                    b.date === date &&
+                                    b.status !== 'cancelled' &&
+                                    b.status !== 'completed'
+                                );
+                                const hasOverlap = blocks.some(b => {
+                                    const bStart = timeToMinutes(b.startTime);
+                                    const bEnd = timeToMinutes(b.endTime);
+                                    return timeToMinutes(start) < bEnd && timeToMinutes(end) > bStart;
+                                });
+                                return !hasOverlap;
+                            };
+
+                            const targetDate = req.body.date || biz.reservations[idx].date;
+                            if (chairId) {
+                                const chair = chairsForBiz.find(c => c.id === chairId || c.chairId === chairId);
+                                if (chair && checkChairAvailability(chair, targetDate, slotStart, slotEnd)) {
+                                    selectedChair = chair;
+                                }
+                            }
+
+                            if (!selectedChair) {
+                                // Find first available chair
+                                const availableChairs = chairsForBiz.filter(chair => checkChairAvailability(chair, targetDate, slotStart, slotEnd));
+                                if (availableChairs.length === 0) {
+                                    return res.status(400).json({ error: "Nenhuma cadeira disponível para este horário." });
+                                }
+                                selectedChair = availableChairs[0];
+                                chairId = selectedChair.id;
+                            }
+
+                            req.body.chairId = chairId;
+                            req.body.chairName = selectedChair.chairName;
+
+                            if (!db.chairBlocks) db.chairBlocks = [];
+                            const existingBlockIdx = db.chairBlocks.findIndex(b => b.appointmentId === id);
+                            const newBlock = {
+                                id: `BLK_${Date.now()}`,
+                                chairId: chairId,
+                                appointmentId: id,
+                                barberId: biz.id,
+                                businessId: biz.id,
+                                date: req.body.date || biz.reservations[idx].date,
+                                startTime: slotStart,
+                                endTime: slotEnd,
+                                status: 'reserved',
+                                reason: 'Marcação Confirmada',
+                                createdAt: new Date().toISOString()
+                            };
+                            if (existingBlockIdx !== -1) {
+                                db.chairBlocks[existingBlockIdx] = { ...db.chairBlocks[existingBlockIdx], ...newBlock, id: db.chairBlocks[existingBlockIdx].id };
+                            } else {
+                                db.chairBlocks.push(newBlock);
+                            }
+                        }
+
+                        // Handle other transitions
+                        if ((key === 'beauty' || biz.businessType === 'beauty')) {
+                            if (req.body.status === 'in_service') {
+                                if (db.chairBlocks) {
+                                    const block = db.chairBlocks.find(b => b.appointmentId === id);
+                                    if (block) block.status = 'in_service';
+                                }
+                            }
+                            if (req.body.status === 'cancelled' || req.body.status === 'rejected') {
+                                if (db.chairBlocks) {
+                                    const block = db.chairBlocks.find(b => b.appointmentId === id);
+                                    if (block) block.status = 'cancelled';
+                                }
+                            }
+                            if (req.body.status === 'completed') {
+                                if (db.chairBlocks) {
+                                    const block = db.chairBlocks.find(b => b.appointmentId === id);
+                                    if (block) block.status = 'completed';
+                                }
+                            }
+                            if (req.body.status === 'rescheduled') {
+                                let duration = 30;
+                                const items = req.body.preOrder || req.body.preorder || biz.reservations[idx].preOrder || biz.reservations[idx].preorder || [];
+                                if (items.length > 0) {
+                                    duration = items.reduce((sum, item) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+                                }
+                                const slotStart = req.body.time || biz.reservations[idx].time;
+                                const slotEnd = minutesToTime(timeToMinutes(slotStart) + duration);
+
+                                if (db.chairBlocks) {
+                                    const block = db.chairBlocks.find(b => b.appointmentId === id);
+                                    if (block) {
+                                        block.date = req.body.date || biz.reservations[idx].date;
+                                        block.startTime = slotStart;
+                                        block.endTime = slotEnd;
+                                        block.status = 'reserved';
+                                    }
+                                }
+                            }
+                        }
+
                         biz.reservations[idx] = { ...biz.reservations[idx], ...req.body };
                         const updatedRes = biz.reservations[idx];
                         updatedReservation = updatedRes;
@@ -1360,6 +1828,47 @@ app.put('/api/reservations/:id', async (req, res) => {
                 }
             }
         });
+    }
+
+    // 3. Adicionar Notificação ao Cliente se o estado foi alterado
+    if (updatedReservation && req.body.status) {
+        const clientEmail = updatedReservation.customerEmail ? updatedReservation.customerEmail.toLowerCase().trim() : '';
+        const clientUser = db.users?.find(u => normalizeEmail(u.email) === clientEmail);
+        
+        if (clientUser) {
+            if (!clientUser.notifications) clientUser.notifications = [];
+            
+            const statusMap = {
+                'pending': 'Pendente',
+                'accepted': 'Confirmado',
+                'rejected': 'Recusado',
+                'rescheduled': 'Reagendado',
+                'cancelled': 'Cancelado',
+                'finished': 'Concluído'
+            };
+            const statusLabel = statusMap[req.body.status] || req.body.status;
+            
+            let notifText = `O seu agendamento para o dia ${updatedReservation.date} às ${updatedReservation.time} foi alterado para: ${statusLabel}.`;
+            if (updatedReservation.businessType === 'beauty' || updatedReservation.businessId?.startsWith('BEA')) {
+                if (req.body.status === 'accepted') {
+                    notifText = `Agendamento confirmado para ${updatedReservation.time} na ${updatedReservation.chairName || 'sua cadeira'}.`;
+                } else if (req.body.status === 'in_service') {
+                    notifText = `O seu atendimento começou.`;
+                } else if (req.body.status === 'completed' || req.body.status === 'finished') {
+                    notifText = `Serviço concluído. Obrigado pela sua visita.`;
+                }
+            }
+
+            clientUser.notifications.unshift({
+                id: `NTF_${Date.now()}`,
+                title: `Agendamento ${statusLabel}`,
+                text: notifText,
+                date: new Date().toLocaleDateString(),
+                read: false,
+                timestamp: new Date().toISOString()
+            });
+            console.log(`🔔 Notificação de estado [${statusLabel}] adicionada para o utilizador ${clientEmail}`);
+        }
     }
 
     if (found) {

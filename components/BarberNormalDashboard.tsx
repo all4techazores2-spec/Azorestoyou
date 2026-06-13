@@ -14,8 +14,42 @@ interface BarberNormalDashboardProps {
 }
 
 const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business, onUpdateBusiness, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'services' | 'pos' | 'gallery' | 'reviews' | 'profile' | 'settings' | 'help'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'services' | 'pos' | 'gallery' | 'reviews' | 'profile' | 'settings' | 'help' | 'room'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Chairs room module states
+  const [chairs, setChairs] = useState<any[]>([]);
+  const [chairBlocks, setChairBlocks] = useState<any[]>([]);
+  const [showAssignModal, setShowAssignModal] = useState<any | null>(null);
+  const [showAddChair, setShowAddChair] = useState(false);
+  const [newChairName, setNewChairName] = useState('');
+  const [selectedPosReservation, setSelectedPosReservation] = useState<any | null>(null);
+
+  const loadChairsData = async () => {
+    try {
+      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:3001'
+        : 'https://azorestoyou-1.onrender.com';
+      const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${business.id}`);
+      if (resChairs.ok) {
+        const dataChairs = await resChairs.json();
+        setChairs(dataChairs);
+      }
+      const resBlocks = await fetch(`${API_BASE_URL}/api/chair-blocks?businessId=${business.id}`);
+      if (resBlocks.ok) {
+        const dataBlocks = await resBlocks.json();
+        setChairBlocks(dataBlocks);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar dados das cadeiras:", e);
+    }
+  };
+
+  React.useEffect(() => {
+    if (business.id) {
+      loadChairsData();
+    }
+  }, [business.id, activeTab]);
   
   // Local editable states
   const [description, setDescription] = useState(business.description || 'Barbearia premium com serviços de corte, barba e estética.');
@@ -78,6 +112,104 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070',
     'https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070'
   ];
+
+  const timeToMinutes = (t: string) => {
+    if (!t) return 0;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + (m || 0);
+  };
+
+  const minutesToTime = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  const getAvailableChairsForResv = (resv: any) => {
+    if (!resv) return [];
+    let duration = 30;
+    const items = resv.preOrder || resv.preorder || [];
+    if (items.length > 0) {
+      duration = items.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+    }
+    const slotStart = resv.time;
+    const slotEnd = minutesToTime(timeToMinutes(slotStart) + duration);
+    
+    return chairs.filter(chair => {
+      if (!chair.isActive) return false;
+      const blocks = chairBlocks.filter(b => 
+        (b.chairId === chair.id || b.chairId === chair.chairId) &&
+        b.date === resv.date &&
+        b.status !== 'cancelled' &&
+        b.status !== 'completed'
+      );
+      const hasOverlap = blocks.some(b => {
+        const bStart = timeToMinutes(b.startTime);
+        const bEnd = timeToMinutes(b.endTime);
+        return timeToMinutes(slotStart) < bEnd && timeToMinutes(slotEnd) > bStart;
+      });
+      return !hasOverlap;
+    });
+  };
+
+  const confirmReservationWithChair = async (resv: any, chairId: string) => {
+    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3001'
+      : 'https://azorestoyou-1.onrender.com';
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reservations/${resv.id || resv._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'accepted', chairId })
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Erro ao confirmar agendamento.');
+      }
+      const updatedRes = await res.json();
+      
+      // Update locally
+      const updatedReservations = (business.reservations || []).map((rv: any) => 
+        (rv.id === resv.id || rv._id === resv._id) ? { ...rv, status: 'accepted', chairId, chairName: updatedRes.chairName } : rv
+      );
+      onUpdateBusiness({
+        ...business,
+        reservations: updatedReservations
+      });
+      setShowAssignModal(null);
+      loadChairsData();
+      alert(`Agendamento confirmado com sucesso na cadeira: ${updatedRes.chairName}`);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Erro ao atualizar estado.');
+    }
+  };
+
+  const handlePOSForReservation = (resv: any) => {
+    setClientName(resv.customerName || 'Cliente Geral');
+    setSelectedPosReservation(resv);
+    
+    // Load pre-selected services in cart
+    const preselected: any[] = [];
+    const items = resv.preOrder || resv.preorder || [];
+    items.forEach((item: any) => {
+      const svc = services.find((s: any) => s.name === item.dish?.name || s.name === item.name);
+      if (svc) {
+        preselected.push({ ...svc, type: 'service', quantity: 1 });
+      } else {
+        preselected.push({
+          id: item.dish?.id || `s_${Date.now()}_${Math.random()}`,
+          name: item.dish?.name || item.name,
+          price: item.dish?.price || item.price || 15,
+          duration: item.dish?.duration || item.duration || 30,
+          type: 'service',
+          quantity: 1
+        });
+      }
+    });
+    setCart(preselected);
+    setActiveTab('pos');
+  };
 
   // Hotkeys Listener
   React.useEffect(() => {
@@ -158,6 +290,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       id: `SALE_${Date.now()}`,
       barberId: business.id,
       clientId: clientName !== 'Cliente Geral' ? clientName : null,
+      appointmentId: selectedPosReservation?.id || null,
+      chairId: selectedPosReservation?.chairId || null,
       services: cart.filter(i => i.type === 'service').map(i => ({ serviceId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
       products: cart.filter(i => i.type === 'product').map(i => ({ productId: i.id, name: i.name, price: i.price, quantity: i.quantity })),
       subtotal: subtotal,
@@ -183,11 +317,24 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       // Open success receipt modal
       setCompletedSale(savedSale);
 
+      // Update local reservation status if matching POS selection
+      if (selectedPosReservation) {
+        const updatedReservations = (business.reservations || []).map((rv: any) => 
+          (rv.id === selectedPosReservation.id) ? { ...rv, status: 'completed' } : rv
+        );
+        onUpdateBusiness({
+          ...business,
+          reservations: updatedReservations
+        });
+      }
+
       // Clean up states
       setCart([]);
       setObservations('');
       setDiscountPercent(0);
       setClientName('Cliente Geral');
+      setSelectedPosReservation(null);
+      loadChairsData();
     } catch (err) {
       console.error(err);
       alert('Erro ao finalizar a venda. Por favor, tente novamente.');
@@ -237,6 +384,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
           {[
             { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
             { id: 'appointments', label: 'Agenda', icon: <Calendar className="w-4 h-4" /> },
+            { id: 'room', label: 'Ver Sala', icon: <Eye className="w-4 h-4" />, badge: 'LIVE' },
             { id: 'services', label: 'Serviços', icon: <Scissors className="w-4 h-4" /> },
             { id: 'pos', label: 'POS / Vendas', icon: <CreditCard className="w-4 h-4" />, badge: 'NOVO' },
             { id: 'gallery', label: 'Galeria', icon: <ImageIcon className="w-4 h-4" /> },
@@ -689,18 +837,418 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Agenda Completa</h2>
               <div className="space-y-3">
-                {reservations.map((r, idx) => (
-                  <div key={idx} className="bg-black/50 border border-neutral-900 p-4 rounded-[18px] flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-[#D4AF37] bg-[#D4AF37]/5 px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/20">{r.time}</span>
-                      <div>
-                        <p className="text-xs font-black text-white">{r.customerName}</p>
-                        <p className="text-[9px] text-[#AFAFAF] mt-0.5">{r.customerPhone || 'Sem contacto'}</p>
+                {reservations.map((r, idx) => {
+                  const updateStatus = async (newStatus: string) => {
+                    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                      ? 'http://localhost:3001'
+                      : 'https://azorestoyou-1.onrender.com';
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/api/reservations/${r.id || r._id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                      });
+                      if (!res.ok) throw new Error('Falha ao atualizar estado.');
+                      const updatedReservation = await res.json();
+                      
+                      // Update business reservations array locally
+                      const updatedReservations = (business.reservations || []).map((resv: any) => 
+                        (resv.id === r.id || resv._id === r._id) ? { ...resv, status: newStatus } : resv
+                      );
+                      onUpdateBusiness({
+                        ...business,
+                        reservations: updatedReservations
+                      });
+                      alert(`Estado atualizado para: ${newStatus}`);
+                    } catch (err) {
+                      console.error(err);
+                      alert('Erro ao atualizar estado do agendamento.');
+                    }
+                  };
+
+                  return (
+                    <div key={idx} className="bg-black/50 border border-neutral-900 p-4 rounded-[18px] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-[#D4AF37] bg-[#D4AF37]/5 px-2.5 py-1.5 rounded-lg border border-[#D4AF37]/20">{r.time}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-black text-white">{r.customerName}</p>
+                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
+                              r.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                              r.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                              r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                              'bg-neutral-800 text-neutral-400'
+                            }`}>
+                              {r.status === 'accepted' ? 'Confirmado' : r.status === 'pending' ? 'Pendente' : r.status === 'rejected' ? 'Recusado' : r.status}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-[#AFAFAF] mt-0.5">{r.customerPhone || 'Sem contacto'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <span className="text-xs text-white/80 font-medium">{r.serviceName || (r.preOrder && r.preOrder.map((po: any) => po.dish?.name).join(', '))}</span>
+                        <div className="flex gap-2">
+                          {r.status === 'pending' && (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  const avChairs = getAvailableChairsForResv(r);
+                                  if (chairs.length === 1 && avChairs.length === 1) {
+                                    confirmReservationWithChair(r, avChairs[0].id);
+                                  } else {
+                                    setShowAssignModal(r);
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                              >
+                                Confirmar
+                              </button>
+                              <button 
+                                onClick={() => updateStatus('rejected')}
+                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                              >
+                                Recusar
+                              </button>
+                            </>
+                          )}
+                          {r.status === 'accepted' && (
+                            <button 
+                              onClick={() => updateStatus('cancelled')}
+                              className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                            >
+                              Cancelar
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <span className="text-xs text-white/80 font-medium">{r.serviceName}</span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: VER SALA */}
+          {activeTab === 'room' && (
+            <div className="space-y-6 text-left animate-in fade-in duration-300">
+              <div className="flex justify-between items-center bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6">
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Ver Sala (Cadeiras)</h2>
+                  <p className="text-xs text-[#AFAFAF] mt-1">Gerencie a ocupação em tempo real e associe cadeiras ao POS e Agenda.</p>
+                </div>
+                <button 
+                  onClick={() => setShowAddChair(true)}
+                  className="bg-black hover:bg-neutral-900 border border-[#D4AF37]/50 text-[#D4AF37] px-6 py-3 rounded-[18px] text-xs font-black uppercase tracking-wider transition-all"
+                >
+                  + Adicionar Cadeira
+                </button>
+              </div>
+
+              {showAddChair && (
+                <div className="bg-[#0D0D0D] border border-[#D4AF37]/30 rounded-[18px] p-6 space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Nova Cadeira de Barbearia</h3>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <input 
+                      type="text" 
+                      placeholder="Nome da Cadeira (Ex: Cadeira Principal)" 
+                      value={newChairName} 
+                      onChange={(e) => setNewChairName(e.target.value)}
+                      className="flex-1 bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]"
+                    />
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={async () => {
+                          if (!newChairName.trim()) return;
+                          const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                            ? 'http://localhost:3001'
+                            : 'https://azorestoyou-1.onrender.com';
+                          try {
+                            const res = await fetch(`${API_BASE_URL}/api/chairs`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ businessId: business.id, chairName: newChairName.trim() })
+                            });
+                            if (!res.ok) throw new Error('Falha ao adicionar cadeira.');
+                            setNewChairName('');
+                            setShowAddChair(false);
+                            loadChairsData();
+                          } catch (err) {
+                            console.error(err);
+                            alert('Erro ao criar cadeira.');
+                          }
+                        }}
+                        className="bg-[#D4AF37] hover:bg-[#b8962d] text-black px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider"
+                      >
+                        Gravar
+                      </button>
+                      <button 
+                        onClick={() => setShowAddChair(false)}
+                        className="bg-neutral-800 hover:bg-neutral-700 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
-                ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {chairs.filter(c => c.isActive !== false).map((chair) => {
+                  const colorMap: Record<string, string> = {
+                    'available': '#10B981',
+                    'Reservada': '#3B82F6',
+                    'Em Atendimento': '#D4AF37',
+                    'Bloqueada': '#EF4444',
+                    'Limpeza': '#6B7280',
+                    'inactive': '#374151'
+                  };
+                  const statusColor = colorMap[chair.status] || '#10B981';
+
+                  const handleStatusUpdate = async (status: string) => {
+                    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                      ? 'http://localhost:3001'
+                      : 'https://azorestoyou-1.onrender.com';
+                    try {
+                      if (status === 'blocked' || status === 'cleaning') {
+                        const date = new Date().toISOString().split('T')[0];
+                        await fetch(`${API_BASE_URL}/api/chair-blocks`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            chairId: chair.id,
+                            businessId: business.id,
+                            date,
+                            startTime: '08:00',
+                            endTime: '22:00',
+                            status,
+                            reason: status === 'cleaning' ? 'Limpeza de Cadeira' : 'Bloqueio Manual'
+                          })
+                        });
+                      } else {
+                        await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status })
+                        });
+                      }
+                      loadChairsData();
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  };
+
+                  const handleDeleteChair = async () => {
+                    if (!confirm('Deseja mesmo eliminar esta cadeira?')) return;
+                    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                      ? 'http://localhost:3001'
+                      : 'https://azorestoyou-1.onrender.com';
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
+                        method: 'DELETE'
+                      });
+                      if (!res.ok) throw new Error();
+                      loadChairsData();
+                    } catch (err) {
+                      console.error(err);
+                      alert('Erro ao eliminar cadeira.');
+                    }
+                  };
+
+                  const handleStartService = async () => {
+                    if (!chair.currentAppointmentId) return;
+                    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                      ? 'http://localhost:3001'
+                      : 'https://azorestoyou-1.onrender.com';
+                    try {
+                      await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'in_service' })
+                      });
+                      
+                      const updatedReservations = (business.reservations || []).map((rv: any) => 
+                        (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'in_service' } : rv
+                      );
+                      onUpdateBusiness({
+                        ...business,
+                        reservations: updatedReservations
+                      });
+                      
+                      loadChairsData();
+                      alert('Atendimento iniciado com sucesso!');
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  };
+
+                  const handleReleaseChair = async () => {
+                    if (!chair.currentAppointmentId) return;
+                    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                      ? 'http://localhost:3001'
+                      : 'https://azorestoyou-1.onrender.com';
+                    try {
+                      await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'completed' })
+                      });
+                      
+                      const updatedReservations = (business.reservations || []).map((rv: any) => 
+                        (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'completed' } : rv
+                      );
+                      onUpdateBusiness({
+                        ...business,
+                        reservations: updatedReservations
+                      });
+                      
+                      loadChairsData();
+                      alert('Cadeira libertada.');
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  };
+
+                  return (
+                    <div 
+                      key={chair.id} 
+                      className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex flex-col justify-between hover:scale-[1.02] transition-all hover:shadow-[0_0_15px_rgba(212,175,55,0.05)]"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-black border border-[#D4AF37]/20 flex items-center justify-center shrink-0">
+                              <Scissors className="w-5 h-5 text-[#D4AF37]" />
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-black text-white uppercase tracking-wider">{chair.chairName}</h3>
+                              <p className="text-[8px] text-[#AFAFAF] font-bold uppercase tracking-widest mt-0.5">Nº {chair.chairNumber}</p>
+                            </div>
+                          </div>
+                          <span 
+                            className="text-[8px] font-black uppercase px-2.5 py-1 rounded-full border" 
+                            style={{ 
+                              color: statusColor, 
+                              borderColor: `${statusColor}33`, 
+                              backgroundColor: `${statusColor}10` 
+                            }}
+                          >
+                            {chair.status === 'available' ? 'Disponível' : chair.status}
+                          </span>
+                        </div>
+
+                        {(chair.status === 'Reservada' || chair.status === 'Em Atendimento') && (
+                          <div className="p-3 bg-black/40 border border-neutral-900 rounded-xl text-xs space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-neutral-500 text-[8px] font-black uppercase">Cliente:</span>
+                              <span className="font-bold text-white truncate max-w-[120px]">{chair.currentClientId || 'Cliente Geral'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-neutral-500 text-[8px] font-black uppercase">Serviço:</span>
+                              <span className="font-bold text-[#D4AF37] truncate max-w-[120px]">{chair.currentServiceId || 'Corte'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-neutral-500 text-[8px] font-black uppercase">Horário:</span>
+                              <span className="font-bold text-white">{chair.blockedFrom} - {chair.blockedUntil}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-6 flex flex-col gap-2">
+                        {chair.status === 'Reservada' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button 
+                              onClick={handleStartService}
+                              className="py-2.5 bg-[#D4AF37] hover:bg-[#b8962d] text-black text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Iniciar Serviço
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                if (chair.currentAppointmentId) {
+                                  const r = business.reservations?.find(resv => resv.id === chair.currentAppointmentId);
+                                  if (r) handlePOSForReservation(r);
+                                }
+                              }}
+                              className="py-2.5 bg-black border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Venda
+                            </button>
+                          </div>
+                        )}
+
+                        {chair.status === 'Em Atendimento' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button 
+                              onClick={async () => {
+                                if (chair.currentAppointmentId) {
+                                  const r = business.reservations?.find(resv => resv.id === chair.currentAppointmentId);
+                                  if (r) handlePOSForReservation(r);
+                                }
+                              }}
+                              className="py-2.5 bg-[#D4AF37] hover:bg-[#b8962d] text-black text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Venda / Pagar
+                            </button>
+                            <button 
+                              onClick={handleReleaseChair}
+                              className="py-2.5 bg-neutral-850 hover:bg-neutral-800 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Libertar Cadeira
+                            </button>
+                          </div>
+                        )}
+
+                        {chair.status === 'available' && (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <button 
+                              onClick={() => handleStatusUpdate('cleaning')}
+                              className="py-2 bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 text-neutral-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Limpeza
+                            </button>
+                            <button 
+                              onClick={() => handleStatusUpdate('blocked')}
+                              className="py-2 bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 text-neutral-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Bloquear
+                            </button>
+                            <button 
+                              onClick={handleDeleteChair}
+                              className="py-2 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+
+                        {chair.status !== 'available' && chair.status !== 'Reservada' && chair.status !== 'Em Atendimento' && (
+                          <button 
+                            onClick={async () => {
+                              const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                                ? 'http://localhost:3001'
+                                : 'https://azorestoyou-1.onrender.com';
+                              try {
+                                const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
+                                if (activeB) {
+                                  await fetch(`${API_BASE_URL}/api/chair-blocks/${activeB.id}`, {
+                                    method: 'DELETE'
+                                  });
+                                }
+                                loadChairsData();
+                              } catch (err) {
+                                loadChairsData();
+                              }
+                            }}
+                            className="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
+                          >
+                            Tornar Disponível
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1287,6 +1835,58 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             >
               Fechar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ATRIBUIR CADEIRA */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.25)] rounded-[24px] max-w-md w-full p-6 space-y-6 text-left">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#D4AF37]">Atribuir Cadeira</h3>
+                <p className="text-[9px] text-[#AFAFAF] mt-0.5">Selecione uma cadeira disponível para a reserva de {showAssignModal.customerName}.</p>
+              </div>
+              <button 
+                onClick={() => setShowAssignModal(null)}
+                className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-white flex items-center justify-center hover:bg-neutral-800 transition-all"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="bg-black/50 border border-neutral-900 p-4 rounded-xl space-y-2 text-xs text-neutral-400">
+              <p>📅 <strong className="text-white">Data:</strong> {showAssignModal.date}</p>
+              <p>🕒 <strong className="text-white">Hora:</strong> {showAssignModal.time}</p>
+              <p>✂️ <strong className="text-white">Serviço:</strong> {showAssignModal.serviceName || (showAssignModal.preOrder && showAssignModal.preOrder.map((po: any) => po.dish?.name).join(', '))}</p>
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {getAvailableChairsForResv(showAssignModal).map((chair) => (
+                <div 
+                  key={chair.id}
+                  onClick={() => confirmReservationWithChair(showAssignModal, chair.id)}
+                  className="p-3 bg-black/40 border border-neutral-900 hover:border-[#D4AF37] rounded-xl flex justify-between items-center cursor-pointer transition-all hover:bg-black/80"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center text-[#D4AF37]">
+                      <Scissors size={14} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white">{chair.chairName}</p>
+                      <p className="text-[8px] text-[#AFAFAF] font-bold">Número {chair.chairNumber}</p>
+                    </div>
+                  </div>
+                  <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-black uppercase">Disponível</span>
+                </div>
+              ))}
+              {getAvailableChairsForResv(showAssignModal).length === 0 && (
+                <div className="py-8 text-center text-xs text-neutral-500 font-bold uppercase tracking-wider bg-black/30 border border-neutral-900 rounded-xl">
+                  Nenhuma cadeira disponível.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

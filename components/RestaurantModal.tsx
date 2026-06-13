@@ -101,6 +101,46 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [cardCvv, setCardCvv] = useState('');
   
   const bookingFee = 5.00; // Default booking fee for Beauty services
+  const [firstName, setFirstName] = useState(userProfile?.name ? userProfile.name.split(' ')[0] : '');
+  const [lastName, setLastName] = useState(userProfile?.name ? userProfile.name.split(' ').slice(1).join(' ') : '');
+  const [selectedServices, setSelectedServices] = useState<any[]>([]);
+  const [chairs, setChairs] = useState<any[]>([]);
+  const [chairBlocks, setChairBlocks] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (restaurant && isBeauty) {
+      const loadChairsData = async () => {
+        try {
+          const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:3001'
+            : 'https://azorestoyou-1.onrender.com';
+          const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${restaurant.id}`);
+          if (resChairs.ok) {
+            const dataChairs = await resChairs.json();
+            setChairs(dataChairs);
+          }
+          const resBlocks = await fetch(`${API_BASE_URL}/api/chair-blocks?businessId=${restaurant.id}`);
+          if (resBlocks.ok) {
+            const dataBlocks = await resBlocks.json();
+            setChairBlocks(dataBlocks);
+          }
+        } catch (e) {
+          console.error("Erro ao carregar cadeiras:", e);
+        }
+      };
+      loadChairsData();
+    }
+  }, [restaurant, isBeauty]);
+
+  const toggleServiceSelection = (service: any) => {
+    setSelectedServices(prev => {
+      const exists = prev.find(s => s.id === service.id);
+      if (exists) {
+        return prev.filter(s => s.id !== service.id);
+      }
+      return [...prev, service];
+    });
+  };
 
   // Sync user profile data when it changes
   useEffect(() => {
@@ -214,7 +254,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       const reservationData = {
         businessId: restaurant.id,
         businessType: restaurant.businessType,
-        customerName: customerName,
+        customerName: isBeauty ? `${firstName} ${lastName}`.trim() : customerName,
         customerEmail: customerEmail,
         customerPhone: customerPhone,
         date: selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -222,8 +262,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         guests: (isBeauty || isAutoRepair || isOffice) ? 1 : guests,
         notes: isAutoRepair ? `[MATRÍCULA: ${licensePlate}] ${bookingNote}` : bookingNote,
         paymentType: paymentType,
-        preOrder: preorderSelected ? orderItems : [],
-        prepRequested: preorderSelected,
+        preOrder: isBeauty 
+          ? selectedServices.map(s => ({ dish: { name: s.name, price: s.price, duration: s.duration || 30 }, quantity: 1 }))
+          : (preorderSelected ? orderItems : []),
+        prepRequested: isBeauty ? true : preorderSelected,
         requestedTime: prepTimeChoice === 'custom' ? customPrepTime : prepTimeChoice,
         status: 'pending',
         // Payment details
@@ -347,7 +389,26 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   };
 
   const getFilteredTimeSlots = () => {
-    const rawHours = restaurant.openingHours || (isBeauty ? '09:00-13:00, 14:00-19:00' : '12:00-15:00, 19:00-23:00');
+    if (!selectedDate) return [];
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Check if closed on Sunday (0)
+    if (isBeauty && dayOfWeek === 0) {
+      return []; // Encerrado ao Domingo
+    }
+    
+    let rawHours = restaurant.openingHours || (isBeauty ? '09:00-13:00, 14:00-19:00' : '12:00-15:00, 19:00-23:00');
+    
+    if (isBeauty) {
+      if (dayOfWeek === 6) { // Sábado: 09:00-17:00
+        rawHours = '09:00-17:00';
+      } else if (dayOfWeek === 5) { // Sexta: 09:00-20:00
+        rawHours = '09:00-20:00';
+      } else { // Segunda-Quinta: 09:00-19:00
+        rawHours = '09:00-19:00';
+      }
+    }
+    
     const ranges = rawHours.split(',').map(r => r.trim());
     const slots: string[] = [];
     
@@ -364,15 +425,101 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       }
     });
     
-    if (slots.length > 0) return slots;
+    // If not beauty or no reservations, return standard slots
+    if (!isBeauty || !restaurant.reservations) {
+      return slots.length > 0 ? slots : (isBeauty ? [
+        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
+      ] : [
+        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+        '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'
+      ]);
+    }
     
-    return isBeauty ? [
-      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
-      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
-    ] : [
-      '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-      '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'
-    ];
+    // Filter slots by existing reservation times and duration chosen
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    const activeReservations = restaurant.reservations.filter((r: any) => 
+      (r.status === 'accepted' || r.status === 'pending') &&
+      (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
+    );
+    
+    const totalDuration = selectedServices.length > 0 
+      ? selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0)
+      : 30;
+
+    if (isBeauty) {
+      const activeChairs = chairs.filter(c => c.isActive !== false);
+      if (activeChairs.length > 0) {
+        return slots.filter(slot => {
+          const slotStart = timeToMinutes(slot);
+          const slotEnd = slotStart + totalDuration;
+          
+          // Check opening hours
+          const fallsWithinHours = ranges.some(range => {
+            const parts = range.split('-');
+            if (parts.length === 2) {
+              const startMin = timeToMinutes(parts[0]);
+              const endMin = timeToMinutes(parts[1]);
+              return slotStart >= startMin && slotEnd <= endMin;
+            }
+            return false;
+          });
+          if (!fallsWithinHours) return false;
+          
+          // Check if at least one chair is available
+          const hasAvailableChair = activeChairs.some(chair => {
+            const blocks = chairBlocks.filter(b => 
+              (b.chairId === chair.id || b.chairId === chair.chairId) &&
+              b.date === selectedDateStr &&
+              b.status !== 'cancelled' &&
+              b.status !== 'completed'
+            );
+            const hasOverlap = blocks.some(b => {
+              const bStart = timeToMinutes(b.startTime);
+              const bEnd = timeToMinutes(b.endTime);
+              return slotStart < bEnd && slotEnd > bStart;
+            });
+            return !hasOverlap;
+          });
+          
+          return hasAvailableChair;
+        });
+      }
+    }
+
+    return slots.filter(slot => {
+      const slotStart = timeToMinutes(slot);
+      const slotEnd = slotStart + totalDuration;
+      
+      // Check if slot falls outside opening hours
+      const fallsWithinHours = ranges.some(range => {
+        const parts = range.split('-');
+        if (parts.length === 2) {
+          const startMin = timeToMinutes(parts[0]);
+          const endMin = timeToMinutes(parts[1]);
+          return slotStart >= startMin && slotEnd <= endMin;
+        }
+        return false;
+      });
+      if (!fallsWithinHours) return false;
+      
+      // Check overlap with existing active reservations
+      const overlaps = activeReservations.some((r: any) => {
+        const rStart = timeToMinutes(r.time);
+        
+        let rDuration = 30;
+        if (r.preOrder && r.preOrder.length > 0) {
+          rDuration = r.preOrder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+        } else if (r.preorder && r.preorder.length > 0) {
+          rDuration = r.preorder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+        }
+        const rEnd = rStart + rDuration;
+        
+        return slotStart < rEnd && slotEnd > rStart;
+      });
+      
+      return !overlaps;
+    });
   };
 
   const timeSlots = getFilteredTimeSlots();
@@ -380,6 +527,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const getChairsAvailability = () => {
     if (!selectedDate || !selectedTime) return { total: 12, available: 12, isFull: false };
     
+    if (isBeauty) {
+      return { total: 12, available: 12, isFull: false }; // Always free
+    }
+
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
     const total = restaurant.tables ? restaurant.tables.length : 12;
     
@@ -831,18 +982,104 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           </div>
                         </div>
 
-                        {isBeauty && (
-                          <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
-                            isTimeFull 
-                              ? 'bg-red-500/10 border-red-500/25 text-red-400' 
-                              : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
-                          }`}>
-                            <div className="flex items-center gap-2">
-                              <Scissors size={14} className={isTimeFull ? 'text-red-400' : 'text-emerald-400'} />
-                              <span>{isTimeFull ? 'Sem vagas de serviço disponíveis' : 'Vagas de serviço disponíveis'}</span>
+                        {isBeauty ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Primeiro Nome</label>
+                                <input 
+                                  type="text"
+                                  value={firstName}
+                                  onChange={(e) => setFirstName(e.target.value)}
+                                  placeholder="Ex: João"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Último Nome</label>
+                                <input 
+                                  type="text"
+                                  value={lastName}
+                                  onChange={(e) => setLastName(e.target.value)}
+                                  placeholder="Ex: Silva"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
                             </div>
-                            <span className="font-black text-sm">{isTimeFull ? 'Esgotado' : `${availableChairs} / ${totalChairs}`}</span>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Telemóvel</label>
+                                <input 
+                                  type="tel"
+                                  value={customerPhone}
+                                  onChange={(e) => setCustomerPhone(e.target.value)}
+                                  placeholder="9xxxxxxxx"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Email</label>
+                                <input 
+                                  type="email"
+                                  value={customerEmail}
+                                  onChange={(e) => setCustomerEmail(e.target.value)}
+                                  placeholder="email@exemplo.com"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            {/* Mini-POS Services selector */}
+                            <div>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Selecione os Serviços (Mini-POS)</label>
+                              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                {(restaurant.services && restaurant.services.length > 0 ? restaurant.services : [
+                                  { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
+                                  { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
+                                  { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 },
+                                  { id: 's4', name: 'Degradê', price: 15.00, duration: 30 },
+                                  { id: 's5', name: 'Coloração', price: 25.00, duration: 60 }
+                                ]).map((s: any) => {
+                                  const isSelected = selectedServices.some(item => item.id === s.id);
+                                  return (
+                                    <div 
+                                      key={s.id} 
+                                      onClick={() => toggleServiceSelection(s)}
+                                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                        isSelected 
+                                          ? 'border-red-500 bg-red-500/10 text-white shadow-md' 
+                                          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                      }`}
+                                    >
+                                      <div>
+                                        <p className="text-xs font-black uppercase tracking-tight">{s.name}</p>
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{s.duration || 30} minutos</p>
+                                      </div>
+                                      <span className="text-xs font-black text-red-500">{s.price}€</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           </div>
+                        ) : (
+                          isBeauty && (
+                            <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+                              isTimeFull 
+                                ? 'bg-red-500/10 border-red-500/25 text-red-400' 
+                                : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                <Scissors size={14} className={isTimeFull ? 'text-red-400' : 'text-emerald-400'} />
+                                <span>{isTimeFull ? 'Sem vagas de serviço disponíveis' : 'Vagas de serviço disponíveis'}</span>
+                              </div>
+                              <span className="font-black text-sm">{isTimeFull ? 'Esgotado' : `${availableChairs} / ${totalChairs}`}</span>
+                            </div>
+                          )
                         )}
 
                         <div className="space-y-4">
@@ -917,14 +1154,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                         </div>
 
                         <button 
-                          disabled={isProcessing || !paymentType || (isBeauty && isTimeFull)}
+                          disabled={isProcessing || !paymentType || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
                           onClick={handleFinalize}
                           className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                            ${(!paymentType || isProcessing || (isBeauty && isTimeFull)) 
+                            ${(!paymentType || isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)) 
                               ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
                               : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
                         >
-                          {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : 'Confirmar Reserva'}
+                          {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : (isBeauty && selectedServices.length === 0) ? 'Selecione pelo menos 1 serviço' : 'Confirmar Reserva'}
                           <ArrowRight className="w-5 h-5" />
                         </button>
                       </motion.div>

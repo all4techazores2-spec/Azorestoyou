@@ -88,6 +88,16 @@ const clearReservations = async () => {
             db.marketplace_chats = [];
         }
 
+        if (db.chairBlocks && db.chairBlocks.length > 0) {
+            totalCleared += db.chairBlocks.length;
+            db.chairBlocks = [];
+        }
+
+        if (db.sales && db.sales.length > 0) {
+            totalCleared += db.sales.length;
+            db.sales = [];
+        }
+
         await writeDB(db);
         console.log(`✅ Limpeza concluída com sucesso! Total de items limpos: ${totalCleared}`);
         process.exit(0);

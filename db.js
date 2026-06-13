@@ -129,7 +129,9 @@ const DEFAULT_DB = {
     marketplace_ads: [],
     hotel_room_qr_codes: [],
     hotel_room_requests: [],
-    sales: []
+    sales: [],
+    chairs: [],
+    chairBlocks: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests
