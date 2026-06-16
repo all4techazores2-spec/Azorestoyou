@@ -131,7 +131,8 @@ const DEFAULT_DB = {
     hotel_room_requests: [],
     sales: [],
     chairs: [],
-    chairBlocks: []
+    chairBlocks: [],
+    slider: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests

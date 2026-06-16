@@ -3507,8 +3507,237 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
              </div>
            )}
 
+          {activeTab === 'slider' && (
+             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 mb-20">
+                <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+                   <div>
+                     <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Homepage Slider</h2>
+                     <p className="text-slate-400 font-medium italic">Gerir fotos, títulos, subtítulos, descrições e botões do slider principal</p>
+                   </div>
+                   <button
+                     onClick={async () => {
+                       setIsSavingSlider(true);
+                       try {
+                         const res = await fetch(`${API_BASE_URL}/api/slider`, {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json' },
+                           body: JSON.stringify(sliderData)
+                         });
+                         if (!res.ok) throw new Error("Erro ao guardar");
+                         alert("✅ Slider guardado com sucesso!");
+                       } catch (err) {
+                         alert("❌ Erro ao guardar: " + err.message);
+                       } finally {
+                         setIsSavingSlider(false);
+                       }
+                     }}
+                     disabled={isSavingSlider}
+                     className="px-8 py-4 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-2"
+                   >
+                     {isSavingSlider ? <span className="animate-spin">🔄</span> : <span className="text-xs">💾</span>}
+                     Guardar Alterações
+                   </button>
+                </div>
+
+                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+                   <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                      <h3 className="text-xl font-black text-slate-800 uppercase">Slides ({sliderData.length})</h3>
+                      <button
+                        onClick={() => {
+                          const newSlide = {
+                            image: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?auto=format&fit=crop&q=80&w=1200',
+                            tag: 'EXPERIÊNCIA AÇORES',
+                            title: 'Descubra São Miguel',
+                            subtitle: 'A natureza em estado puro para as suas férias perfeitas.',
+                            buttonText: 'EXPLORAR AGORA',
+                            buttonLink: '/explorar'
+                          };
+                          setSliderData([...sliderData, newSlide]);
+                        }}
+                        className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-1"
+                      >
+                        <Plus size={12} /> Adicionar Slide
+                      </button>
+                   </div>
+
+                   <div className="grid grid-cols-1 gap-6">
+                      {sliderData.map((slide, idx) => (
+                        <div key={idx} className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-200 relative group flex flex-col lg:flex-row gap-6">
+                           <div className="w-full lg:w-1/3 space-y-3">
+                              <div className="aspect-[16/9] rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative">
+                                 <img src={slide.image} className="w-full h-full object-cover" alt="" />
+                                 <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] font-black px-2 py-0.5 rounded">
+                                   Slide #{idx + 1}
+                                 </div>
+                              </div>
+                              <div className="flex gap-2">
+                                 <label className={`flex-1 cursor-pointer py-2 px-3 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all flex items-center justify-center gap-1 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    {isUploading ? <span className="animate-spin">🔄</span> : <span className="text-xs">➕</span>}
+                                    Upload Foto
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      accept="image/*,.webp"
+                                      disabled={isUploading}
+                                      onChange={async (e) => {
+                                        if (e.target.files?.[0]) {
+                                          setIsUploading(true);
+                                          try {
+                                            const fd = new FormData();
+                                            fd.append('image', e.target.files[0]);
+                                            const res = await fetch(`${API_BASE_URL}/api/upload`, {
+                                              method: 'POST',
+                                              body: fd
+                                            });
+                                            if (!res.ok) throw new Error("Erro no upload");
+                                            const rdata = await res.json();
+                                            const updated = [...sliderData];
+                                            updated[idx] = { ...updated[idx], image: rdata.url };
+                                            setSliderData(updated);
+                                          } catch (err) {
+                                            alert(err.message);
+                                          } finally {
+                                            setIsUploading(false);
+                                          }
+                                        }
+                                      }}
+                                    />
+                                 </label>
+                              </div>
+                           </div>
+
+                           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Tag/Etiqueta Superior</label>
+                                 <input
+                                   value={slide.tag || ''}
+                                   onChange={e => {
+                                     const updated = [...sliderData];
+                                     updated[idx] = { ...updated[idx], tag: e.target.value };
+                                     setSliderData(updated);
+                                   }}
+                                   className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                                   placeholder="EXPERIÊNCIA AÇORES"
+                                 />
+                              </div>
+
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Título (Nome do Slide)</label>
+                                 <input
+                                   value={slide.title || ''}
+                                   onChange={e => {
+                                     const updated = [...sliderData];
+                                     updated[idx] = { ...updated[idx], title: e.target.value };
+                                     setSliderData(updated);
+                                   }}
+                                   className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                                   placeholder="Descubra São Miguel"
+                                 />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Subtítulo/Descrição</label>
+                                 <textarea
+                                   value={slide.subtitle || ''}
+                                   onChange={e => {
+                                     const updated = [...sliderData];
+                                     updated[idx] = { ...updated[idx], subtitle: e.target.value };
+                                     setSliderData(updated);
+                                   }}
+                                   rows={2}
+                                   className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                                   placeholder="A natureza em estado puro para as suas férias perfeitas."
+                                 />
+                              </div>
+
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Texto do Botão</label>
+                                 <input
+                                   value={slide.buttonText || ''}
+                                   onChange={e => {
+                                     const updated = [...sliderData];
+                                     updated[idx] = { ...updated[idx], buttonText: e.target.value };
+                                     setSliderData(updated);
+                                   }}
+                                   className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                                   placeholder="EXPLORAR AGORA"
+                                 />
+                              </div>
+
+                              <div>
+                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Link do Botão</label>
+                                 <input
+                                   value={slide.buttonLink || ''}
+                                   onChange={e => {
+                                     const updated = [...sliderData];
+                                     updated[idx] = { ...updated[idx], buttonLink: e.target.value };
+                                     setSliderData(updated);
+                                   }}
+                                   className="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none mt-1"
+                                   placeholder="/explorar"
+                                 />
+                              </div>
+                           </div>
+
+                           {/* Slide Actions (Absolute Position on Hover/Visible on Mobile) */}
+                           <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => {
+                                  if (idx > 0) {
+                                    const updated = [...sliderData];
+                                    const temp = updated[idx];
+                                    updated[idx] = updated[idx - 1];
+                                    updated[idx - 1] = temp;
+                                    setSliderData(updated);
+                                  }
+                                }}
+                                disabled={idx === 0}
+                                className="p-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                              >
+                                <span>⬅️</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (idx < sliderData.length - 1) {
+                                    const updated = [...sliderData];
+                                    const temp = updated[idx];
+                                    updated[idx] = updated[idx + 1];
+                                    updated[idx + 1] = temp;
+                                    setSliderData(updated);
+                                  }
+                                }}
+                                disabled={idx === sliderData.length - 1}
+                                className="p-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-100 disabled:opacity-30"
+                              >
+                                <span>➡️</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm("Tem a certeza que deseja remover este slide?")) {
+                                    setSliderData(sliderData.filter((_, i) => i !== idx));
+                                  }
+                                }}
+                                className="p-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-100"
+                              >
+                                <span>🗑️</span>
+                              </button>
+                           </div>
+                        </div>
+                      ))}
+
+                      {sliderData.length === 0 && (
+                        <div className="py-12 border-2 border-dashed border-slate-200 rounded-[2rem] text-center">
+                           <span className="text-4xl">🖼️</span>
+                           <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4">Nenhum slide disponível. Adicione um slide para começar.</p>
+                        </div>
+                      )}
+                   </div>
+                </div>
+             </div>
+           )}
+
           {/* LIST VIEW */}
-          {activeTab !== 'dashboard' && activeTab !== 'suppliers' && !editingItem && (
+          {activeTab !== 'dashboard' && activeTab !== 'suppliers' && activeTab !== 'slider' && !editingItem && (
             <div className="space-y-6">
                 
                 <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] shadow-sm mb-8 border border-slate-100">

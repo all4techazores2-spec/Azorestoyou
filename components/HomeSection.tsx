@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Wine, Calendar, Landmark } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
 
 interface HomeSectionProps {
   language: Language;
@@ -26,25 +27,40 @@ const HomeSection: React.FC<HomeSectionProps> = ({
 }) => {
   const [catPage, setCatPage] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [slides, setSlides] = useState<any[]>([]);
   const t = (key: any) => getTranslation(language, key);
 
-  const heroImages = [
-    '/hero/11.jpg',
-    '/hero/12.jpg',
-    '/hero/13.jpg',
-    '/hero/14.jpg',
-    '/hero/15.jpg',
-    '/hero/16.jpg',
-    '/hero/17.webp',
-    '/hero/18.jpg'
+  const defaultSlides = [
+    { id: 'slide_1', image: '/hero/11.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_2', image: '/hero/12.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_3', image: '/hero/13.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_4', image: '/hero/14.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_5', image: '/hero/15.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_6', image: '/hero/16.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_7', image: '/hero/17.webp', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+    { id: 'slide_8', image: '/hero/18.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' }
   ];
 
-  React.useEffect(() => {
+  const activeSlides = slides.length > 0 ? slides : defaultSlides;
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/slider`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSlides(data);
+        }
+      })
+      .catch(err => console.error("Error fetching homepage slider:", err));
+  }, []);
+
+  useEffect(() => {
+    if (activeSlides.length === 0) return;
     const timer = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroImages.length);
+      setHeroIndex((prev) => (prev + 1) % activeSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [activeSlides.length]);
 
   const categories = [
     { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-4 h-4 text-green-600" /> },
@@ -100,16 +116,18 @@ const HomeSection: React.FC<HomeSectionProps> = ({
       {/* Hero Slider - IMERSIVO & FULL SCREEN FEEL */}
       <div className="relative h-[85vh] w-full overflow-hidden shadow-2xl">
         <AnimatePresence mode="popLayout">
-          <motion.img 
-            key={heroIndex}
-            src={heroImages[heroIndex]} 
-            alt="Hero" 
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          {activeSlides.length > 0 && activeSlides[heroIndex] && (
+            <motion.img 
+              key={heroIndex}
+              src={activeSlides[heroIndex].image.startsWith('data:') || activeSlides[heroIndex].image.startsWith('http') || activeSlides[heroIndex].image.startsWith('/hero') ? activeSlides[heroIndex].image : `${API_BASE_URL}${activeSlides[heroIndex].image}`} 
+              alt="Hero" 
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
         </AnimatePresence>
         
         {/* Efeito Vinheta e Gradiente Imersivo */}
@@ -117,35 +135,46 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
         
         <div className="absolute inset-0 flex flex-col justify-end p-10 pb-24">
-          <motion.div
-            key={`text-${heroIndex}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 1 }}
-          >
-            <div className="bg-white/20 backdrop-blur-md border border-white/30 px-4 py-1.5 rounded-full w-fit mb-6">
-              <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Experiência Açores</span>
-            </div>
-            
-            <h2 className="text-5xl font-black text-white mb-4 leading-none tracking-tighter drop-shadow-2xl">
-              Descubra<br/>{featuredIsland}
-            </h2>
-            <p className="text-lg text-white/90 font-bold mb-8 tracking-tight max-w-[280px] drop-shadow-md">A natureza em estado puro para as suas férias perfeitas.</p>
-            
-            <div className="flex gap-3">
-              <button className="bg-white text-slate-900 px-8 py-4 rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">
-                 Explorar agora
-              </button>
-              <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-6 py-4 rounded-[2rem] active:scale-95 transition-all">
-                 <ArrowRight size={20} />
-              </button>
-            </div>
-          </motion.div>
+          {activeSlides.length > 0 && activeSlides[heroIndex] && (
+            <motion.div
+              key={`text-${heroIndex}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 1 }}
+            >
+              <div className="bg-white/20 backdrop-blur-md border border-white/30 px-4 py-1.5 rounded-full w-fit mb-6">
+                <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
+                  {activeSlides[heroIndex].subtitle}
+                </span>
+              </div>
+              
+              <h2 className="text-5xl font-black text-white mb-4 leading-none tracking-tighter drop-shadow-2xl">
+                {activeSlides[heroIndex].title.replace('{island}', featuredIsland).replace('São Miguel', featuredIsland).split('\n').map((line: string, i: number) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i < activeSlides[heroIndex].title.replace('{island}', featuredIsland).replace('São Miguel', featuredIsland).split('\n').length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </h2>
+              <p className="text-lg text-white/90 font-bold mb-8 tracking-tight max-w-[280px] drop-shadow-md">
+                {activeSlides[heroIndex].description}
+              </p>
+              
+              <div className="flex gap-3">
+                <button className="bg-white text-slate-900 px-8 py-4 rounded-[2rem] text-xs font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">
+                  {activeSlides[heroIndex].buttonText}
+                </button>
+                <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-6 py-4 rounded-[2rem] active:scale-95 transition-all">
+                  <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Dots Paginação Minimalistas */}
         <div className="absolute bottom-12 right-10 flex flex-col gap-2">
-           {heroImages.map((_, i) => (
+           {activeSlides.map((_, i) => (
              <div key={i} className={`w-1 rounded-full transition-all duration-500 ${heroIndex === i ? 'h-8 bg-white' : 'h-2 bg-white/40'}`}></div>
            ))}
         </div>

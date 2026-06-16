@@ -852,6 +852,41 @@ app.post('/api/posts', async (req, res) => {
     res.status(201).json(newPost);
 });
 
+// --- SLIDER MANAGEMENT ENDPOINTS ---
+app.get('/api/slider', async (req, res) => {
+    try {
+        const db = await readDB();
+        if (!db.slider || db.slider.length === 0) {
+            const defaultSlides = [
+              { id: 'slide_1', image: '/hero/11.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_2', image: '/hero/12.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_3', image: '/hero/13.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_4', image: '/hero/14.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_5', image: '/hero/15.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_6', image: '/hero/16.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_7', image: '/hero/17.webp', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+              { id: 'slide_8', image: '/hero/18.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' }
+            ];
+            db.slider = defaultSlides;
+            await writeDB(db);
+        }
+        res.json(db.slider);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/slider', async (req, res) => {
+    try {
+        const db = await readDB();
+        db.slider = req.body;
+        await writeDB(db);
+        res.json({ success: true, slider: db.slider });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- HOTEL ROOM SERVICE QR CODES & REQUESTS ---
 app.get('/api/hotel_room_qr_codes', async (req, res) => {
     try {
