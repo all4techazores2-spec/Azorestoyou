@@ -1021,14 +1021,41 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                 required
                               />
                             </div>
+
+                            {/* Alguma nota ou restrição directly on first step for restaurants */}
+                            {!isBeauty && (
+                              <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                                <textarea 
+                                  value={bookingNote}
+                                  onChange={(e) => setBookingNote(e.target.value)}
+                                  placeholder="Ex: Algum pedido especial para o agendamento..."
+                                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
+                                />
+                              </div>
+                            )}
                             
-                            <button 
-                              onClick={handleDetailsConfirm}
-                              className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6"
-                            >
-                              Confirmar Dados
-                              <ArrowRight className="w-5 h-5" />
-                            </button>
+                            {!isBeauty ? (
+                              <button 
+                                disabled={isProcessing}
+                                onClick={handleFinalize}
+                                className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6
+                                  ${isProcessing 
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                                    : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                              >
+                                {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
+                                <ArrowRight className="w-5 h-5" />
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={handleDetailsConfirm}
+                                className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6"
+                              >
+                                Seguinte
+                                <ArrowRight className="w-5 h-5" />
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-4">
@@ -1070,18 +1097,18 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                               </div>
                             </div>
 
-                            {/* Mini-POS Services selector */}
+                            {/* Mini-POS Services selector for Beauty (Barbers/Salons) with modern cards layout */}
                             <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Selecione os Serviços (Mini-POS)</label>
-                              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Selecione os Serviços</label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                                 {(restaurant.services && restaurant.services.length > 0 
                                   ? restaurant.services.filter((s: any) => s.isActive !== false)
                                   : (restaurant.dishes && restaurant.dishes.length > 0
-                                      ? restaurant.dishes.map((d: any) => ({ id: d.id, name: d.name, price: d.price, duration: 30 }))
+                                      ? restaurant.dishes.map((d: any) => ({ id: d.id || d.name, name: d.name, price: d.price, duration: 30, image: d.image }))
                                       : [
-                                          { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30 },
-                                          { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20 },
-                                          { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45 }
+                                          { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30, image: '' },
+                                          { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20, image: '' },
+                                          { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45, image: '' }
                                         ]
                                     )
                                 ).map((s: any) => {
@@ -1090,17 +1117,42 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                     <div 
                                       key={s.id} 
                                       onClick={() => toggleServiceSelection(s)}
-                                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                      className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
                                         isSelected 
-                                          ? 'border-red-500 bg-red-500/10 text-white shadow-md' 
-                                          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                          ? 'border-red-500 bg-red-500/10 text-white shadow-lg shadow-red-500/10' 
+                                          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20'
                                       }`}
                                     >
-                                      <div>
-                                        <p className="text-xs font-black uppercase tracking-tight">{s.name}</p>
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{s.duration || 30} minutos</p>
+                                      {/* Image Container */}
+                                      <div className="h-28 overflow-hidden bg-slate-950 relative shrink-0">
+                                        <img 
+                                          src={getSafeImage(s.image)} 
+                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                                          alt={s.name} 
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                                        
+                                        {/* Selection Checkmark Indicator */}
+                                        {isSelected && (
+                                          <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg">
+                                            <CheckCircle size={14} />
+                                          </div>
+                                        )}
+
+                                        {/* Price Badge */}
+                                        <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-red-600 text-white font-black text-[10px] rounded-lg shadow-md">
+                                          {s.price}€
+                                        </div>
                                       </div>
-                                      <span className="text-xs font-black text-red-500">{s.price}€</span>
+
+                                      {/* Details */}
+                                      <div className="p-3 flex-1 flex flex-col justify-between min-h-[60px]">
+                                        <h5 className="text-[11px] font-black uppercase tracking-tight line-clamp-2 leading-tight">{s.name}</h5>
+                                        <div className="flex items-center gap-1 mt-1.5">
+                                          <Clock size={10} className="text-slate-400" />
+                                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{s.duration || 30} min</span>
+                                        </div>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -1124,14 +1176,20 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                             </div>
 
                             <button 
-                              disabled={isProcessing || (isBeauty && isTimeFull) || selectedServices.length === 0}
+                              disabled={isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
                               onClick={handleFinalize}
                               className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                                ${(isProcessing || (isBeauty && isTimeFull) || selectedServices.length === 0) 
+                                ${(isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)) 
                                   ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
                                   : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
                             >
-                              {isProcessing ? 'A processar...' : (isBeauty && isTimeFull) ? 'Sem vagas disponíveis' : selectedServices.length === 0 ? 'Selecione pelo menos 1 serviço' : 'Confirmar Reserva'}
+                              {isProcessing 
+                                ? 'A processar...' 
+                                : (isBeauty && isTimeFull) 
+                                  ? 'Sem vagas disponíveis' 
+                                  : (isBeauty && selectedServices.length === 0) 
+                                    ? 'Selecione pelo menos 1 serviço' 
+                                    : 'Confirmar Reserva'}
                               <ArrowRight className="w-5 h-5" />
                             </button>
                           </div>
