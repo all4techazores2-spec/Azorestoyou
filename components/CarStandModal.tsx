@@ -84,12 +84,18 @@ const CarStandModal: React.FC<CarStandModalProps> = ({
                      <div className="flex items-center gap-2.5 text-xs font-black uppercase tracking-widest opacity-90 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/5"><Users size={16} className="text-blue-400" /> {featured[currentSlide].seats} Lugares</div>
                      <div className="flex items-center gap-2.5 text-xs font-black uppercase tracking-widest opacity-90 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/5"><Fuel size={16} className="text-blue-400" /> {featured[currentSlide].fuelType}</div>
                      <div className="h-8 w-[1px] bg-white/20" />
-                     <button 
-                       onClick={() => setSelectedCarForTestDrive(featured[currentSlide])}
-                       className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95"
-                     >
-                       Agendar Agora
-                     </button>
+                     {stand.isConfirmed !== false ? (
+                       <button 
+                         onClick={() => setSelectedCarForTestDrive(featured[currentSlide])}
+                         className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95"
+                       >
+                         Agendar Agora
+                       </button>
+                     ) : (
+                       <span className="px-4 py-2 bg-amber-500/20 text-amber-200 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/20 backdrop-blur-md">
+                         Apenas Informativo
+                       </span>
+                     )}
                   </div>
                </div>
 
@@ -103,6 +109,17 @@ const CarStandModal: React.FC<CarStandModalProps> = ({
           )}
 
           <div className="p-8">
+            {stand.isConfirmed === false && (
+              <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left mb-6">
+                <span className="text-xl">ℹ️</span>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
+                  <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
+                    Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Viaturas em Exposição</h2>
@@ -166,12 +183,18 @@ const CarStandModal: React.FC<CarStandModalProps> = ({
                           </div>
                           <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Disponível</span>
                        </div>
-                       <button 
-                         onClick={() => setSelectedCarForTestDrive(car)}
-                         className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-slate-200"
-                       >
-                         Agendar Test Drive
-                       </button>
+                       {stand.isConfirmed !== false ? (
+                         <button 
+                           onClick={() => setSelectedCarForTestDrive(car)}
+                           className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-slate-200"
+                         >
+                           Agendar Test Drive
+                         </button>
+                       ) : (
+                         <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                           Apenas Informativo
+                         </div>
+                       )}
                     </div>
                   </div>
                 </motion.div>

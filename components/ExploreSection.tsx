@@ -1457,17 +1457,23 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   <div className="p-6">
                     <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
                     
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          const biz = { ...s, businessType: 'auto_repair' as const };
-                          setSelectedRestaurant(biz);
-                        }}
-                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
-                      >
-                        <Ticket size={18} />
-                        Reservar
-                      </button>
+                    <div className="flex gap-2 w-full">
+                      {s.isConfirmed !== false ? (
+                        <button 
+                          onClick={() => {
+                            const biz = { ...s, businessType: 'auto_repair' as const };
+                            setSelectedRestaurant(biz);
+                          }}
+                          className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
+                        >
+                          <Ticket size={18} />
+                          Reservar
+                        </button>
+                      ) : (
+                        <div className="flex-1 py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                          Apenas Informativo
+                        </div>
+                      )}
                       <button 
                         onClick={() => {
                           const url = (s.latitude && s.longitude) 
@@ -1515,7 +1521,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       case 'real_estate': return renderStandardBusiness(allRealEstate, t('nav_real_estate'), <Building2 />, '#3F51B5');
       case 'gyms': return renderStandardBusiness(allGyms, t('nav_gyms'), <Dumbbell />, '#000000');
       case 'stands': return renderStandardBusiness(allStands, t('nav_stands'), <CarFront />, '#212121');
-      case 'offices': return renderStandardBusiness(allOffices, t('nav_offices'), <Briefcase />, '#455A64', false);
+      case 'offices': return renderStandardBusiness(allOffices, t('nav_offices'), <Briefcase />, '#455A64', true);
       case 'it_services': return renderStandardBusiness(allITServices, t('nav_it_services'), <Laptop />, '#2196F3');
       case 'perfumes': return renderStandardBusiness(allPerfumes, t('nav_perfumes'), <Pipette />, '#E91E63');
       case 'bars': return renderStandardBusiness(allBars, t('nav_bars'), <Wine />, '#7B1FA2');
@@ -1612,18 +1618,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                          }
                        }
                      }}
-                     className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
                    >
                      <Map size={16} /> Direções
                    </button>
-                   {allowBooking && (
-                     <button 
-                       onClick={() => setSelectedOffice(s)}
-                       className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                     >
-                       <Calendar size={16} /> Agendar Visita
-                     </button>
-                   )}
+                   {allowBooking && (s.isConfirmed !== false ? (
+                      <button 
+                        onClick={() => setSelectedOffice(s)}
+                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                      >
+                        <Calendar size={16} /> Agendar Visita
+                      </button>
+                    ) : (
+                      <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                        Apenas Informativo
+                      </div>
+                    ))}
                    {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
                       <button 
                         onClick={() => setSelectedShop(s)}
@@ -1761,13 +1771,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setSelectedRestaurant({ ...s, businessType: 'auto_repair' as any })}
-                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10"
-                  >
-                    Agendar / Reservar
-                  </button>
+                <div className="flex gap-2 w-full">
+                  {s.isConfirmed !== false ? (
+                    <button 
+                      onClick={() => setSelectedRestaurant({ ...s, businessType: 'auto_repair' as any })}
+                      className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10"
+                    >
+                      Agendar / Reservar
+                    </button>
+                  ) : (
+                    <div className="flex-1 py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                      Apenas Informativo
+                    </div>
+                  )}
                   <button 
                     onClick={() => {
                       const url = (s.latitude && s.longitude) 

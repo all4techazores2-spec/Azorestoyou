@@ -130,118 +130,141 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
         </div>
 
         <div className="p-4 md:p-8 pt-0 overflow-y-auto max-h-[65vh]">
-          <AnimatePresence mode="wait">
-            {step === 'datetime' && (
-              <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                  <div className="flex justify-between items-center mb-3">
-                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronLeft size={14} /></button>
-                    <span className="text-[10px] font-black uppercase tracking-widest">{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
-                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronRight size={14} /></button>
-                  </div>
-                  <div className="grid grid-cols-7 gap-0.5">
-                    {['D','S','T','Q','Q','S','S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[8px] font-black text-slate-300 py-0.5">{d}</div>)}
-                    {Array.from({ length: firstDay(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={i} />)}
-                    {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
-                      const day = i + 1;
-                      const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
-                      const isSelected = selectedDate.toDateString() === date.toDateString();
-                      const isPast = date < new Date(new Date().setHours(0,0,0,0));
-                      return (
-                        <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-8 w-8 rounded-lg text-[10px] font-bold transition-all ${
-                          isSelected ? 'bg-blue-600 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
-                        }`}>{day}</button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <Clock size={12} /> Horário Disponível
-                  </h4>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {timeSlots.map(t => (
-                      <button key={t} onClick={() => setSelectedTime(t)} className={`py-2 rounded-lg text-[10px] font-black transition-all border ${
-                        selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
-                      }`}>{t}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <button 
-                  disabled={!selectedTime}
-                  onClick={handleNext}
-                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-                    selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                  }`}
-                >
-                  Próximo Passo <ArrowRight size={16} />
-                </button>
-              </motion.div>
-            )}
-
-            {step === 'details' && (
-              <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <div className="space-y-3">
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                    <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome Completo" className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Telemóvel" className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20" />
+          {office.isConfirmed === false ? (
+            <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left my-4">
+              <span className="text-xl">ℹ️</span>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
+                <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
+                  Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              {step === 'datetime' && (
+                <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <div className="flex justify-between items-center mb-3">
+                      <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronLeft size={14} /></button>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
+                      <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronRight size={14} /></button>
                     </div>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                      <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    <div className="grid grid-cols-7 gap-0.5">
+                      {['D','S','T','Q','Q','S','S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[8px] font-black text-slate-300 py-0.5">{d}</div>)}
+                      {Array.from({ length: firstDay(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={i} />)}
+                      {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
+                        const day = i + 1;
+                        const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+                        const isSelected = selectedDate.toDateString() === date.toDateString();
+                        const isPast = date < new Date(new Date().setHours(0,0,0,0));
+                        return (
+                          <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-8 w-8 rounded-lg text-[10px] font-bold transition-all ${
+                            isSelected ? 'bg-blue-600 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
+                          }`}>{day}</button>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className="relative">
-                    <MessageSquare className="absolute left-4 top-5 text-slate-300" size={16} />
-                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Assunto ou notas adicionais..." rows={4} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none" />
+
+                  <div>
+                    <h4 className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <Clock size={12} /> Horário Disponível
+                    </h4>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {timeSlots.map(t => (
+                        <button key={t} onClick={() => setSelectedTime(t)} className={`py-2 rounded-lg text-[10px] font-black transition-all border ${
+                          selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
+                        }`}>{t}</button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-4">
-                  <p className="text-[10px] font-bold text-blue-600 leading-relaxed">
-                    O seu pedido será enviado para o escritório e ficará a aguardar confirmação. Receberá uma notificação assim que for aprovado.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button onClick={() => setStep('datetime')} className="px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-200 transition-all">Voltar</button>
                   <button 
-                    disabled={isSubmitting || !name || !phone}
-                    onClick={handleSubmit}
-                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl disabled:bg-slate-100 disabled:text-slate-300"
+                    disabled={!selectedTime}
+                    onClick={handleNext}
+                    className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
+                      selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                    }`}
                   >
-                    {isSubmitting ? 'Enviando...' : 'Solicitar Agendamento'}
+                    Próximo Passo <ArrowRight size={16} />
                   </button>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
 
-            {step === 'success' && (
-              <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="py-12 text-center space-y-6">
-                <div className="w-20 h-20 bg-green-50 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-green-100 animate-bounce">
-                  <CheckCircle size={40} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Pedido Enviado!</h3>
-                  <p className="text-sm text-slate-500 font-medium mt-2 max-w-[280px] mx-auto leading-relaxed">
-                    O seu pedido de agendamento foi submetido com sucesso. Aguarde pela nossa confirmação.
-                  </p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 text-left space-y-2">
-                   <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Escritório</span> <span>{office.name}</span></div>
-                   <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Data</span> <span>{selectedDate.toLocaleDateString()}</span></div>
-                   <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Hora</span> <span>{selectedTime}</span></div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {step === 'details' && (
+                <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">Nome Completo</label>
+                      <div className="relative flex items-center">
+                        <User className="absolute left-4 text-slate-400" size={16} />
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700" placeholder="ex: João Silva" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">Contacto Telefónico</label>
+                      <div className="relative flex items-center">
+                        <Phone className="absolute left-4 text-slate-400" size={16} />
+                        <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700" placeholder="ex: 912 345 678" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">Endereço de Email</label>
+                      <div className="relative flex items-center">
+                        <Mail className="absolute left-4 text-slate-400" size={16} />
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700" placeholder="ex: viajor@email.com" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">Notas Especiais (Opcional)</label>
+                      <div className="relative flex items-start">
+                        <MessageSquare className="absolute left-4 top-4 text-slate-400" size={16} />
+                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 resize-none" placeholder="Ex: Preciso de acesso a cadeira de rodas..." />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={() => setStep('datetime')} className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                      Voltar
+                    </button>
+                    <button 
+                      disabled={!name || !phone || !email || isSubmitting}
+                      onClick={handleSubmit}
+                      className={`flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                        name && phone && email && !isSubmitting ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-700' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      }`}
+                    >
+                      {isSubmitting ? 'A enviar...' : 'Solicitar Visita'} <CheckCircle size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 'success' && (
+                <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="py-12 text-center space-y-6">
+                  <div className="w-20 h-20 bg-green-50 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-green-100 animate-bounce">
+                    <CheckCircle size={40} />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Pedido Enviado!</h3>
+                    <p className="text-sm text-slate-500 font-medium mt-2 max-w-[280px] mx-auto leading-relaxed">
+                      O seu pedido de agendamento foi submetido com sucesso. Aguarde pela nossa confirmação.
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 text-left space-y-2">
+                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Escritório</span> <span>{office.name}</span></div>
+                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Data</span> <span>{selectedDate.toLocaleDateString()}</span></div>
+                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Hora</span> <span>{selectedTime}</span></div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </motion.div>
     </div>

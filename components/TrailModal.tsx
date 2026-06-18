@@ -333,6 +333,17 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
               <div className="p-6 md:p-8">
                 {bookingStep === 'main' && !showGuidePrompt && !showGuideList && !showMap && (
                   <>
+                    {trail.isConfirmed === false && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left mb-6">
+                        <span className="text-xl">ℹ️</span>
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
+                          <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
+                            Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     {trail.type === 'trail' && (
                       <div className="grid grid-cols-3 gap-4 mb-8">
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center text-center">
@@ -386,7 +397,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       </div>
                     </div>
                     <div className="mt-8 flex flex-col gap-3">
-                      {trail.type !== 'trail' && trail.isPaid && (
+                      {trail.type !== 'trail' && trail.isPaid && trail.isConfirmed !== false && (
                         <button onClick={handleStartBooking} className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-100 transition-all">
                           <Check className="w-5 h-5" /> Fazer Reserva
                         </button>
