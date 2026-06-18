@@ -824,23 +824,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           subcategory: '',
           dishes: [],
           services: [],
-          mapUrl: ''
+          mapUrl: '',
+          isConfirmed: true
         };
         break;
       case 'activities':
-        newItem = { id: `ACT${timestamp}`, title: '', type: 'activity', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: true, price: 10, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
+        newItem = { id: `ACT${timestamp}`, title: '', type: 'activity', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: true, price: 10, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '', isConfirmed: true };
         break;
       case 'trails':
-        newItem = { id: `TRL${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
+        newItem = { id: `TRL${timestamp}`, title: '', type: 'trail', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '', isConfirmed: true };
         break;
       case 'poi':
-        newItem = { id: `POI${timestamp}`, title: '', type: 'poi', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '' };
+        newItem = { id: `POI${timestamp}`, title: '', type: 'poi', island: 'PDL', image: '', description: '', distance: '', duration: '', difficulty: 'Moderado', isPaid: false, price: 0, bookingPolicy: 'Reserva obrigatória com 24h de antecedência.', email: '', phone: '', address: '', mapUrl: '', adminEmail: '', adminPassword: '', isConfirmed: true };
         break;
       case 'flights':
-        newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '' };
+        newItem = { id: `FLI${timestamp}`, airline: '', flightNumber: '', origin: 'LIS', destination: 'PDL', departureTime: '00:00', arrivalTime: '00:00', price: 0, status: 'A Horas', stops: 0, duration: '', isConfirmed: true };
         break;
       case 'hotels':
-        newItem = { id: `HOT${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel', mapUrl: '' };
+        newItem = { id: `HOT${timestamp}`, name: '', island: 'PDL', stars: 4, pricePerNight: 0, image: '', description: '', type: hotelFilter !== 'all' ? hotelFilter : 'hotel', mapUrl: '', isConfirmed: true };
         break;
       case 'cars':
         newItem = { 
@@ -854,7 +855,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           description: '', 
           adminEmail: '', 
           adminPassword: '', 
-          cars: [] 
+          cars: [],
+          isConfirmed: true
         };
         break;
       case 'buses':
@@ -1436,14 +1438,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {commonInput(t('item_rating'), 'rating', 'number')}
             {commonInput(t('item_reviews'), 'reviews', 'number')}
             
-            <div className="flex items-center gap-4 py-2 border-b border-slate-100 pb-4">
-               <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={editingItem.isPremium} onChange={e => setEditingItem({...editingItem, isPremium: e.target.checked})} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
-                  <span className="text-sm font-bold text-slate-700">Destaque Premium</span>
-               </label>
-               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${editingItem.isPremium ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-slate-100 text-slate-400'}`}>
-                  {editingItem.isPremium ? 'Premium / Pago' : 'Grátis'}
-               </span>
+            <div className="flex flex-col md:flex-row md:items-center gap-6 py-3 border-b border-slate-100 pb-4 md:col-span-2">
+               <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                     <input type="checkbox" checked={editingItem.isPremium} onChange={e => setEditingItem({...editingItem, isPremium: e.target.checked})} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                     <span className="text-sm font-bold text-slate-700">Destaque Premium</span>
+                  </label>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${editingItem.isPremium ? 'bg-amber-100 text-amber-600 border border-amber-200' : 'bg-slate-100 text-slate-400'}`}>
+                     {editingItem.isPremium ? 'Premium / Pago' : 'Grátis'}
+                  </span>
+               </div>
+               
+               <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                     <input type="checkbox" checked={editingItem.isConfirmed !== false} onChange={e => setEditingItem({...editingItem, isConfirmed: e.target.checked})} className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" />
+                     <span className="text-sm font-bold text-slate-700 text-emerald-700">Negócio Confirmado (Permite Reservas/Agendamentos)</span>
+                  </label>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${editingItem.isConfirmed !== false ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-rose-100 text-rose-600 border border-rose-200'}`}>
+                     {editingItem.isConfirmed !== false ? 'Confirmado' : 'Não Confirmado'}
+                  </span>
+               </div>
             </div>
 
             {commonInput('Google Maps Link', 'mapUrl', 'text', true)}

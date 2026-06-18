@@ -258,6 +258,7 @@ export interface Restaurant {
   reviews: number;
   image: string;
   description: string;
+  isConfirmed?: boolean;
   dishes?: Dish[];
   products?: Product[];
   tables?: RestaurantTable[];

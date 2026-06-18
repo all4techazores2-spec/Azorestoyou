@@ -169,7 +169,7 @@ const MOCK_BEAUTY_SERVICES: any[] = [
 ];
 
 // ── LIVE CLOCK CARD ──
-const LiveClockCard: React.FC<{ businessName: string; island: string; photos?: string[] }> = ({ businessName, island, photos = [] }) => {
+const LiveClockCard: React.FC<{ businessName: string; island: string; photos?: string[]; isRestaurant?: boolean }> = ({ businessName, island, photos = [], isRestaurant }) => {
   const [now, setNow] = React.useState(new Date());
   const [activePhotoIdx, setActivePhotoIdx] = React.useState(0);
   React.useEffect(() => {
@@ -193,6 +193,58 @@ const LiveClockCard: React.FC<{ businessName: string; island: string; photos?: s
   const weatherOptions = ['☁️ 18°C', '⛅ 21°C', '☀️ 24°C', '🌦️ 16°C'];
   const weatherStr = weatherOptions[now.getDate() % 4];
   const hasPhotos = photos && photos.length > 0;
+  
+  const defaultBg = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80';
+  const bgImage = hasPhotos ? photos[activePhotoIdx] : defaultBg;
+
+  if (isRestaurant) {
+    return (
+      <div className="relative rounded-[18px] p-8 overflow-hidden shadow-2xl border border-white/5 bg-[#141B23] w-full min-h-[180px] flex items-center">
+        {/* Background with blur and premium overlay */}
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="popLayout">
+            <motion.img
+              key={bgImage}
+              src={bgImage}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 0.35, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.2 }}
+              className="absolute inset-0 w-full h-full object-cover filter blur-[3px]"
+            />
+          </AnimatePresence>
+          <div className="absolute inset-0 bg-slate-950/80 mix-blend-multiply pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
+        </div>
+
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6 w-full">
+          <div className="flex-1 text-center md:text-left space-y-3">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+              <span className="text-xl">{greetEmoji}</span>
+              <p className="text-white text-2xl font-light tracking-tight">{greeting}, <span className="font-semibold text-[#D4AF37]">{businessName}</span></p>
+              
+              {/* Live indicator in green */}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 ml-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                <span className="text-[#10B981] text-[8px] font-black uppercase tracking-widest">Ao Vivo</span>
+              </div>
+            </div>
+            <p className="text-[#9AA4B2] text-xs font-medium">{dateCapital}</p>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2">
+              <span className="bg-white/5 border border-white/10 text-white/80 text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full backdrop-blur-sm">📍 {island || 'Açores'}</span>
+              <span className="bg-white/5 border border-white/10 text-white/80 text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full backdrop-blur-sm">{weatherStr}</span>
+            </div>
+          </div>
+
+          <div className="text-center md:text-right shrink-0 space-y-2">
+            <p className="font-mono font-light text-[#D4AF37]" style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', letterSpacing: '0.05em', textShadow: '0 0 30px rgba(212,175,55,0.2)' }}>{timeStr}</p>
+            <p className="text-[#9AA4B2] text-[9px] font-black uppercase tracking-[0.2em]">MICHELIN PORTAL • GMT</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative rounded-[3rem] p-8 overflow-hidden shadow-2xl shadow-slate-900/30 w-full">
       {hasPhotos ? (
@@ -2663,7 +2715,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     );
   }
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
+    <div className={`min-h-screen ${isRestaurant ? 'bg-[#0A0F16] text-white' : 'bg-slate-50 text-slate-900'} flex font-sans overflow-hidden relative`}>
       {/* ── BARRA DE NAVEGAÇÃO MOBILE ── */}
       {isStaff ? (
         <StaffBottomNav
@@ -2689,15 +2741,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         </button>
       )}
 
-      <div className={`fixed left-0 top-0 h-full bg-[#1e293b] text-slate-400 w-80 flex flex-col z-50 border-r border-slate-700/30 shadow-2xl overflow-hidden transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed left-0 top-0 h-full ${isRestaurant ? 'bg-[#0A0F16] border-white/5 text-slate-400' : 'bg-[#1e293b] border-slate-700/30 text-slate-400'} w-80 flex flex-col z-50 border-r shadow-2xl overflow-hidden transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* ... existing sidebar content ... */}
-          <div className="p-8 flex items-center gap-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
-             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                <AzoresLogo size={28} color="white" />
+          <div className={`p-8 flex items-center gap-4 border-b ${isRestaurant ? 'border-white/5 bg-white/[0.02]' : 'border-white/5 bg-white/5'} backdrop-blur-sm`}>
+             <div className={`w-12 h-12 ${isRestaurant ? 'bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 border border-[#D4AF37]/20' : 'bg-blue-600 shadow-lg shadow-blue-600/20'} rounded-xl flex items-center justify-center`}>
+                <AzoresLogo size={28} color={isRestaurant ? '#D4AF37' : 'white'} />
              </div>
              <div>
                 <h1 className="text-white font-black text-sm uppercase tracking-widest leading-none mb-1">{business.name}</h1>
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] leading-none">{isHotel ? 'Boutique Hotel' : isRentCar ? 'Rent-a-Car' : isBeauty ? 'Salão de Beleza' : 'Gestão de Negócio'}</p>
+                <p className={`text-[10px] font-bold ${isRestaurant ? 'text-[#D4AF37]' : 'text-blue-400'} uppercase tracking-[0.2em] leading-none`}>{isHotel ? 'Boutique Hotel' : isRentCar ? 'Rent-a-Car' : isBeauty ? 'Salão de Beleza' : isRestaurant ? 'Michelin Portal' : 'Gestão de Negócio'}</p>
              </div>
           </div>
 
@@ -2717,34 +2769,52 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${
+                className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-300 group ${
                   activeTab === item.id 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black' 
-                    : 'hover:bg-white/5 hover:text-white'
+                    ? isRestaurant 
+                      ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89030] text-[#0A0F16] shadow-lg shadow-[#D4AF37]/20 font-black' 
+                      : 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                    : isRestaurant 
+                      ? 'text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-lg transition-all ${activeTab === item.id ? 'bg-white/20' : 'group-hover:bg-slate-700'}`}>
+                  <div className={`p-2 rounded-lg transition-all ${
+                    activeTab === item.id 
+                      ? isRestaurant 
+                        ? 'bg-[#0A0F16]/10 text-[#0A0F16]' 
+                        : 'bg-white/20 text-white'
+                      : isRestaurant 
+                        ? 'text-[#9AA4B2] group-hover:bg-[#0D1117] group-hover:text-white' 
+                        : 'text-slate-400 group-hover:bg-slate-700 group-hover:text-white'
+                  }`}>
                     {item.icon}
                   </div>
-                  <span className="text-xs uppercase tracking-widest">{item.label}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
                 </div>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md animate-pulse shadow-lg shadow-red-500/20">{item.badge}</span>
+                  <span className={`text-[10px] font-black px-2 py-1 rounded-md animate-pulse shadow-lg ${
+                    activeTab === item.id 
+                      ? isRestaurant 
+                        ? 'bg-[#0A0F16] text-[#D4AF37]' 
+                        : 'bg-white text-blue-600'
+                      : 'bg-red-500 text-white shadow-red-500/20'
+                  }`}>{item.badge}</span>
                 )}
               </button>
             ))}
           </div>
 
           {/* User Profile Card (Estilo Foto 2) */}
-          <div className="p-6 border-t border-white/5 bg-slate-900/50 mt-auto">
-             <div className="bg-slate-800/40 p-4 rounded-2xl flex items-center gap-4 mb-4 border border-white/5 shadow-inner">
-                <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-blue-500/30">
+          <div className={`p-6 border-t ${isRestaurant ? 'border-white/5 bg-[#080C11]' : 'border-slate-700/30 bg-slate-900/50'} mt-auto`}>
+             <div className={`${isRestaurant ? 'bg-[#141B23]' : 'bg-slate-800/40'} p-4 rounded-2xl flex items-center gap-4 mb-4 border border-white/5 shadow-inner`}>
+                <div className={`w-10 h-10 rounded-xl overflow-hidden border ${isRestaurant ? 'border-[#D4AF37]/30' : 'border-blue-500/30'}`}>
                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden text-left">
                    <p className="text-white font-black text-xs truncate">{displayName}</p>
-                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">{displayRole}</p>
+                   <p className={`text-[9px] ${isRestaurant ? 'text-[#9AA4B2]' : 'text-slate-500'} font-bold uppercase tracking-widest truncate`}>{displayRole}</p>
                 </div>
                 <button onClick={onLogout} className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
                    <LogOut size={16} />
@@ -2755,7 +2825,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                onClick={() => { 
                  setClosingDrawerOpen(true);
                }}
-               className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/25 flex items-center justify-center gap-2 cursor-pointer"
+               className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-600/25 flex items-center justify-center gap-2 cursor-pointer"
              >
                🔒 Fechar Caixa
              </button>
@@ -2764,12 +2834,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
       {/* Main Container */}
       <main className={`flex-1 min-h-screen flex flex-col relative overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'}`}>
-        {/* Top Header - Estilo Foto 2 */}
-        <header className="sticky top-0 bg-white border-b border-slate-100 h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40 shadow-sm">
+        {/* Top Header - Estilo Fine Dining Premium ou Padrão */}
+        <header className={`sticky top-0 ${isRestaurant ? 'bg-[#0D1117]/85 backdrop-blur-xl border-b border-white/5 shadow-xl' : 'bg-white border-b border-slate-100 shadow-sm'} h-16 md:h-24 flex items-center justify-between px-4 lg:px-10 z-40`}>
             <div className="flex items-center gap-3 mr-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all active:scale-95 flex items-center justify-center cursor-pointer border border-slate-150 shadow-sm"
+                className={`p-2.5 ${isRestaurant ? 'bg-[#141B23] hover:bg-[#1C2430] text-[#9AA4B2] hover:text-white border border-white/5' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-150'} rounded-xl transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow-md`}
                 title={sidebarOpen ? "Ocultar Menu" : "Mostrar Menu"}
               >
                 <Menu size={18} />
@@ -2814,7 +2884,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                     alert('Para instalar no seu dispositivo:\n\n1. Abra as opções do seu navegador.\n2. Escolha "Instalar App" ou "Adicionar ao ecrã principal".');
                   }
                 }}
-                className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-500/10 cursor-pointer border border-blue-500/20"
+                className={`hidden md:flex items-center gap-2 ${isRestaurant ? 'bg-gradient-to-r from-[#D4AF37] to-[#B89030] text-[#0A0F16] shadow-lg shadow-[#D4AF37]/10 border border-[#D4AF37]/20' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 border border-blue-500/20'} px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all cursor-pointer`}
                 title="Instalar App localmente no Tablet"
               >
                 <Package size={14} className="animate-bounce" />
@@ -2826,21 +2896,21 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
               <div className="flex-1 flex justify-between items-center w-full">
                 {/* Lado Esquerdo: Avatar & Nome do Operador (Oculto em Mobile Pequeno) */}
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200">
+                  <div className={`w-8 h-8 rounded-lg overflow-hidden border ${isRestaurant ? 'border-white/10 bg-[#141B23]' : 'border-slate-200'}`}>
                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayAvatarSeed)}`} alt="Avatar" className="w-full h-full object-cover" />
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-slate-800 font-black text-xs leading-none">{displayName}</p>
-                    <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 leading-none">{displayRole}</p>
+                    <p className={`font-black text-xs leading-none ${isRestaurant ? 'text-white' : 'text-slate-800'}`}>{displayName}</p>
+                    <p className={`text-[8px] font-bold uppercase tracking-widest mt-1 leading-none ${isRestaurant ? 'text-[#9AA4B2]' : 'text-slate-400'}`}>{displayRole}</p>
                   </div>
                 </div>
 
                 {/* Centro: Relógio Digital Ticking e Data Atual (Sempre visível e centralizado) */}
                 <div className="flex-1 flex flex-col items-center justify-center text-center">
-                  <p className="font-mono font-black text-slate-800 text-lg md:text-2xl tracking-widest leading-none">
+                  <p className={`font-mono font-black text-lg md:text-2xl tracking-widest leading-none ${isRestaurant ? 'text-[#D4AF37]' : 'text-slate-800'}`}>
                     {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </p>
-                  <p className="text-[8px] md:text-[9px] font-black text-blue-600 uppercase tracking-[0.2em] mt-1 leading-none">
+                  <p className={`text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] mt-1 leading-none ${isRestaurant ? 'text-white/50' : 'text-blue-600'}`}>
                     {currentTime.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </p>
                 </div>
@@ -2848,7 +2918,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 {/* Lado Direito: Botão Sair / Logout */}
                 <button 
                   onClick={() => setShowClockOutPopup(true)} 
-                  className="p-2 md:p-3 bg-red-50 text-red-500 rounded-xl md:rounded-2xl hover:bg-red-500 hover:text-white transition-all group flex items-center gap-1.5 font-black text-[9px] uppercase tracking-widest cursor-pointer shadow-sm border border-red-100"
+                  className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all group flex items-center gap-1.5 font-black text-[9px] uppercase tracking-widest cursor-pointer shadow-md ${isRestaurant ? 'bg-red-500/10 text-rose-400 border border-rose-500/20' : 'bg-red-50 text-red-500 border border-red-105'}`}
                 >
                   <LogOut size={14} className="group-hover:scale-110 transition-transform" />
                   <span>Sair</span>
@@ -2860,33 +2930,35 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 <div className="flex items-center gap-2 md:gap-6">
                    <button 
                      onClick={() => setSidebarOpen(!sidebarOpen)}
-                     className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all lg:hidden"
+                     className={`p-2 md:p-3 rounded-xl md:rounded-2xl transition-all lg:hidden ${isRestaurant ? 'bg-[#141B23] text-slate-400 hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}`}
                    >
                       <Menu size={20} />
                    </button>
-                   <div>
-                      <h2 className="text-sm md:text-xl font-black text-slate-800 flex items-center gap-2 md:gap-3">
+                   <div className="text-left">
+                      <h2 className={`text-sm md:text-xl font-black flex items-center gap-2 md:gap-3 leading-none ${isRestaurant ? 'text-white' : 'text-slate-800'}`}>
                          Olá, {displayName.split(' ')[0]}! 👋
                       </h2>
-                      <p className="hidden md:block text-[11px] text-slate-400 font-bold uppercase tracking-widest">Aqui está o resumo do seu negócio hoje.</p>
+                      <p className={`hidden md:block text-[11px] font-bold uppercase tracking-widest mt-1.5 leading-none ${isRestaurant ? 'text-[#9AA4B2]' : 'text-slate-400'}`}>
+                        {isRestaurant ? 'Gestão Michelin e Analytics Premium.' : 'Aqui está o resumo do seu negócio hoje.'}
+                      </p>
                    </div>
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-6">
-                   <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
-                      <Calendar size={18} className="text-blue-500" />
-                      <span className="text-xs font-black text-slate-600 uppercase tracking-widest">
+                   <div className={`hidden sm:flex items-center gap-3 px-5 py-3 rounded-2xl border ${isRestaurant ? 'bg-[#141B23] border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                      <Calendar size={18} className={isRestaurant ? 'text-[#D4AF37]' : 'text-blue-500'} />
+                      <span className={`text-xs font-black uppercase tracking-widest ${isRestaurant ? 'text-[#9AA4B2]' : 'text-slate-600'}`}>
                          {new Date().toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
                       </span>
                    </div>
 
                    <div className="flex items-center gap-2 md:gap-3">
-                      <button onClick={() => window.location.reload()} className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all group">
+                      <button onClick={() => window.location.reload()} className={`p-2 md:p-3 border rounded-xl md:rounded-2xl transition-all group ${isRestaurant ? 'bg-[#141B23] border-white/5 text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 border-slate-150 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'}`}>
                          <Clock size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                       </button>
-                      <button className="p-2 md:p-3 bg-slate-50 text-slate-400 rounded-xl md:rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all relative">
+                      <button className={`p-2 md:p-3 border rounded-xl md:rounded-2xl transition-all relative ${isRestaurant ? 'bg-[#141B23] border-white/5 text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 border-slate-150 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}`}>
                          <Bell size={18} />
-                         <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
+                         <span className={`absolute top-2 right-2 w-2 h-2 rounded-full border shadow-sm ${isRestaurant ? 'bg-red-500 border-[#0D1117]' : 'bg-red-500 border-white'}`}></span>
                       </button>
                    </div>
                 </div>
@@ -5275,10 +5347,10 @@ ${items.map((it, i) => `        <Line>
             };
 
             return (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 text-white">
 
                 {/* ── LIVE CLOCK ── */}
-                <LiveClockCard businessName={business.name} island={business.island || ''} photos={(business as any).clockPhotos || []} />
+                <LiveClockCard businessName={business.name} island={business.island || ''} photos={(business as any).clockPhotos || []} isRestaurant={isRestaurant} />
 
                 {/* ── ACTION BUTTONS ── */}
                 <div className="flex flex-wrap items-center justify-end gap-3">
@@ -5345,7 +5417,7 @@ ${items.map((it, i) => `        <Line>
                                     deleteReservation(res.id);
                                   }
                                 }} 
-                                className="w-10 h-10 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all border border-red-100 active:scale-95"
+                                className="w-10 h-10 bg-red-500/10 hover:bg-red-500 text-rose-400 hover:text-white rounded-xl flex items-center justify-center transition-all border border-red-500/20 active:scale-95 cursor-pointer"
                               >
                                 <Trash2 size={16} />
                               </button>

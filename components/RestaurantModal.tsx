@@ -837,6 +837,17 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
                   {/* Main Action Button */}
                   <div className="flex flex-col gap-3 pb-8">
+                    {restaurant.isConfirmed === false && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left">
+                        <span className="text-xl">ℹ️</span>
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
+                          <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
+                            Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <button 
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
@@ -845,14 +856,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       {isBeauty ? 'Ver Serviços' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
-                    <button 
-                      onClick={startBooking}
-                      className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
-                    >
-                      <CalendarCheck className="w-5 h-5" /> 
-                      {isBeauty ? 'Agendar Serviço' : 'Fazer Reserva Agora'}
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
+                    {restaurant.isConfirmed !== false && (
+                      <button 
+                        onClick={startBooking}
+                        className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                      >
+                        <CalendarCheck className="w-5 h-5" /> 
+                        {isBeauty ? 'Agendar Serviço' : 'Fazer Reserva Agora'}
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    )}
                     <button 
                       onClick={() => {
                         const query = `${restaurant.name}, ${restaurant.island}, Azores`;
@@ -1288,12 +1301,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     >
                       <UtensilsCrossed size={18} /> Ver Ementa Completa
                     </button>
-                    <button 
-                      onClick={() => setBookingStep('datetime')}
-                      className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
-                    >
-                      <CalendarCheck size={18} /> Reservar Mesa Agora
-                    </button>
+                    {restaurant.isConfirmed !== false && (
+                      <button 
+                        onClick={() => setBookingStep('datetime')}
+                        className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                      >
+                        <CalendarCheck size={18} /> Reservar Mesa Agora
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1370,16 +1385,18 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                   </div>
                                </div>
 
-                               <button 
-                                 onClick={() => {
-                                   setSelectedDishIdx(null);
-                                   setBookingStep('datetime');
-                                 }}
-                                 className="w-full md:w-auto px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
-                               >
-                                 <CalendarCheck size={18} className="group-hover:rotate-12 transition-transform" />
-                                 Reservar Mesa Agora
-                               </button>
+                               {restaurant.isConfirmed !== false && (
+                                 <button 
+                                   onClick={() => {
+                                     setSelectedDishIdx(null);
+                                     setBookingStep('datetime');
+                                   }}
+                                   className="w-full md:w-auto px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                                 >
+                                   <CalendarCheck size={18} className="group-hover:rotate-12 transition-transform" />
+                                   Reservar Mesa Agora
+                                 </button>
+                               )}
 
                                {/* Mobile Navigation */}
                                <div className="flex md:hidden justify-center gap-4 pt-4">
