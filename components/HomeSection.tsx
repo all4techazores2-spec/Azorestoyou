@@ -5,6 +5,7 @@ import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
+import { WeatherWidget } from './WeatherWidget';
 
 interface HomeSectionProps {
   language: Language;
@@ -14,6 +15,7 @@ interface HomeSectionProps {
   restaurants: Restaurant[];
   featuredIsland?: string;
   onOpenIslandSelection: () => void;
+  onSearch?: (query: string) => void;
 }
 
 const HomeSection: React.FC<HomeSectionProps> = ({ 
@@ -23,7 +25,8 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   onShowNotifications,
   restaurants,
   featuredIsland = "São Miguel",
-  onOpenIslandSelection
+  onOpenIslandSelection,
+  onSearch
 }) => {
   const [catPage, setCatPage] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -62,12 +65,59 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     return () => clearInterval(timer);
   }, [activeSlides.length]);
 
-  const categories = [
-    { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-4 h-4 text-green-600" /> },
-    { id: 'restaurants', label: 'Restaurantes', icon: <Utensils className="w-4 h-4 text-orange-500" /> },
-    { id: 'landscapes', label: 'Praias', icon: <Camera className="w-4 h-4 text-blue-500" /> },
-    { id: 'accommodation', label: 'Alojamentos', icon: <Tent className="w-4 h-4 text-purple-600" /> },
-  ];
+  const [searchVal, setSearchVal] = useState('');
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+    }
+  }, []);
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Pesquisa por voz não disponível neste dispositivo.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-PT';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event);
+      setIsListening(false);
+      alert("Erro ao escutar. Por favor, tente novamente.");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const speechToText = event.results[0][0].transcript;
+      setSearchVal(speechToText);
+      if (onSearch) {
+        onSearch(speechToText);
+      }
+    };
+
+    recognition.start();
+  };
+
+  const handleTextSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onSearch) {
+      onSearch(searchVal);
+    }
+  };
 
   const quickIcons = [
     { id: 'restaurants', label: 'Restaurantes', icon: <Utensils className="w-6 h-6" />, color: 'bg-orange-500' },
@@ -188,8 +238,21 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           <input 
             type="text" 
             placeholder="O que deseja explorar hoje?" 
-            className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-12 pr-4 text-sm font-medium shadow-xl shadow-slate-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            value={searchVal}
+            onChange={(e) => setSearchVal(e.target.value)}
+            onKeyDown={handleTextSubmit}
+            className="w-full h-14 bg-white border border-slate-100 rounded-2xl pl-12 pr-12 text-sm font-medium shadow-xl shadow-slate-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
+          <button 
+            type="button"
+            onClick={handleVoiceSearch}
+            className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-green-600'}`}
+            title="Pesquisa por voz"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+            </svg>
+          </button>
         </div>
         <button 
           onClick={onOpenIslandSelection}
@@ -259,6 +322,9 @@ const HomeSection: React.FC<HomeSectionProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Live ticking clock & weather widget */}
+      <WeatherWidget />
 
       {/* Perto de si Section */}
       <div className="space-y-4">

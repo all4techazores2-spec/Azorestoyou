@@ -11,6 +11,7 @@ import {
 import AzoresLogo from './AzoresLogo';
 import { Language } from '../types';
 import { API_BASE_URL } from '../config';
+import { WeatherWidget } from './WeatherWidget';
 
 interface DesktopViewProps {
   language: Language;
@@ -22,6 +23,7 @@ interface DesktopViewProps {
   isAuthenticated: boolean;
   userProfile?: any;
   onShowBarberLogin?: () => void;
+  onSearch?: (query: string) => void;
 }
 
 export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> = ({
@@ -197,6 +199,52 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
   const [scrolled, setScrolled] = useState(false);
   const [categoryPage, setCategoryPage] = useState(0);
   const [slides, setSlides] = useState<any[]>([]);
+  
+  const [searchVal, setSearchVal] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Pesquisa por voz não disponível neste dispositivo.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-PT';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event);
+      setIsListening(false);
+      alert("Erro ao escutar. Por favor, tente novamente.");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const speechToText = event.results[0][0].transcript;
+      setSearchVal(speechToText);
+      if (props.onSearch) {
+        props.onSearch(speechToText);
+      }
+    };
+
+    recognition.start();
+  };
+
+  const handleTextSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && props.onSearch) {
+      props.onSearch(searchVal);
+    }
+  };
 
   const defaultSlides = [
     { id: 'slide_d1', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Descubra\nTodas as Ilhas', description: 'A natureza em estado puro para as suas férias perfeitas nos Açores.', buttonText: 'Explorar agora' },
@@ -331,8 +379,21 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 <input 
                   type="text" 
                   placeholder="O que deseja explorar hoje? (Atrações, hotéis, restaurantes...)" 
-                  className="w-full h-16 bg-transparent border-none text-white placeholder-slate-500 pl-14 pr-4 focus:outline-none focus:ring-0 font-semibold text-lg"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  onKeyDown={handleTextSubmit}
+                  className="w-full h-16 bg-transparent border-none text-white placeholder-slate-500 pl-14 pr-16 focus:outline-none focus:ring-0 font-semibold text-lg"
                 />
+                <button 
+                  type="button"
+                  onClick={handleVoiceSearch}
+                  className={`absolute right-4 p-2.5 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-green-500'}`}
+                  title="Pesquisa por voz"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                  </svg>
+                </button>
               </div>
               <button 
                 onClick={onOpenIslandSelection}
@@ -380,6 +441,9 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 <ChevronRight size={18} />
               </button>
             </div>
+
+            {/* Weather & Clock Widget */}
+            <WeatherWidget />
           </motion.div>
         </div>
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">

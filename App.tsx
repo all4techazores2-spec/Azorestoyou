@@ -619,6 +619,7 @@ const App: React.FC = () => {
   }, [exploreCategory]);
 
   const [currentStep, setCurrentStep] = useState<BookingStep>('flights');
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [publicIslandFilter, setPublicIslandFilter] = useState<string>('all');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -1186,6 +1187,99 @@ const App: React.FC = () => {
     setPublicIslandFilter(islandCode);
     setExploreCategory('buses');
     setShowBusIslandModal(false);
+  };
+
+  const handleSearch = (query: string) => {
+    if (!query) return;
+    const q = query.toLowerCase().trim();
+
+    let category: ExploreCategory = null;
+    let islandCode: string | null = null;
+    let filterQuery = '';
+
+    // Check category keywords
+    if (q.includes('restaurant') || q.includes('restaurante') || q.includes('comer') || q.includes('almoço') || q.includes('jantar') || q.includes('snack') || q.includes('snack-bar') || q.includes('snackbar')) {
+      category = 'restaurants';
+    } else if (q.includes('alojamento') || q.includes('alojamentos') || q.includes('hotel') || q.includes('hoteis') || q.includes('hotéis') || q.includes('hospedar') || q.includes('quarto') || q.includes('casa') || q.includes('quartos') || q.includes('al ')) {
+      category = 'accommodation';
+    } else if (q.includes('rentcar') || q.includes('rent-a-car') || q.includes('rent a car') || q.includes('aluguer de carro') || q.includes('carro') || q.includes('carros') || q.includes('veículo') || q.includes('veiculo')) {
+      category = 'rentcar';
+    } else if (q.includes('trilho') || q.includes('trilhos') || q.includes('caminhada') || q.includes('hiking') || q.includes('sete cidades')) {
+      category = 'trails';
+    } else if (q.includes('autocarro') || q.includes('autocarros') || q.includes('bus') || q.includes('paragem') || q.includes('transporte') || q.includes('transportes')) {
+      category = 'buses';
+    } else if (q.includes('atividade') || q.includes('atividades') || q.includes('tour') || q.includes('tours') || q.includes('experiencia') || q.includes('experiência') || q.includes('experiencias')) {
+      category = 'activities';
+    } else if (q.includes('ponto') || q.includes('pontos') || q.includes('atração') || q.includes('atracao') || q.includes('miradouro') || q.includes('poi')) {
+      category = 'poi';
+    } else if (q.includes('loja') || q.includes('lojas') || q.includes('comércio') || q.includes('comercio') || q.includes('comprar')) {
+      category = 'shops';
+    } else if (q.includes('beleza') || q.includes('cabeleireiro') || q.includes('barbeiro') || q.includes('estética') || q.includes('unhas') || q.includes('estetica') || q.includes('manicure')) {
+      category = 'beauty';
+    } else if (q.includes('voo') || q.includes('voos') || q.includes('flight') || q.includes('flights') || q.includes('avião') || q.includes('aeroporto')) {
+      category = 'flights';
+    } else if (q.includes('bar') || q.includes('bares') || q.includes('noite') || q.includes('discoteca')) {
+      category = 'bars';
+    } else if (q.includes('evento') || q.includes('eventos') || q.includes('show') || q.includes('espetáculo')) {
+      category = 'events';
+    } else if (q.includes('serviço') || q.includes('servicos') || q.includes('serviços') || q.includes('oficina') || q.includes('reparação')) {
+      category = 'services';
+    }
+
+    // Check island keywords
+    const islandKeywords: Record<string, string> = {
+      'sao miguel': 'PDL', 'são miguel': 'PDL', 'ponta delgada': 'PDL', 'rabo de peixe': 'PDL', 'lagoa': 'PDL', 'ribeira grande': 'PDL', 'furnas': 'PDL', 'povoação': 'PDL', 'povoacao': 'PDL', 'nordeste': 'PDL', 'vila franca': 'PDL',
+      'terceira': 'TER', 'angra': 'TER', 'praia da vitoria': 'TER', 'praia da vitória': 'TER',
+      'faial': 'HOR', 'horta': 'HOR',
+      'pico': 'PIX', 'madalena': 'PIX', 'lajes': 'PIX', 'sao roque': 'PIX', 'são roque': 'PIX',
+      'sao jorge': 'SJZ', 'são jorge': 'SJZ', 'velas': 'SJZ', 'calheta': 'SJZ',
+      'graciosa': 'GRW', 'santa cruz': 'GRW',
+      'flores': 'FLW', 'santa cruz das flores': 'FLW',
+      'corvo': 'CVU', 'vila do corvo': 'CVU',
+      'santa maria': 'SMA', 'vila do porto': 'SMA'
+    };
+
+    for (const [kw, code] of Object.entries(islandKeywords)) {
+      if (q.includes(kw)) {
+        islandCode = code;
+        break;
+      }
+    }
+
+    // Default category to restaurants if not set
+    if (!category) {
+      category = 'restaurants';
+    }
+
+    if (islandCode) {
+      setPublicIslandFilter(islandCode);
+    }
+
+    // Filter query is the query with keywords cleaned out
+    const keywordsToRemove = [
+      'restaurante', 'restaurants', 'restaurantes', 'comer', 'almoço', 'jantar', 'snack', 'snack-bar', 'snackbar',
+      'alojamento', 'alojamentos', 'hotel', 'hoteis', 'hotéis', 'quarto', 'casa',
+      'rentcar', 'rent-a-car', 'carro', 'carros',
+      'trilho', 'trilhos', 'caminhada', 'hiking',
+      'autocarro', 'autocarros', 'bus', 'paragem', 'transporte', 'transportes',
+      'atividade', 'atividades', 'tour', 'tours', 'experiencia', 'experiência', 'experiencias',
+      'ponto', 'pontos', 'atração', 'atrações', 'atracao', 'miradouro', 'poi',
+      'loja', 'lojas', 'comércio', 'comercio', 'comprar',
+      'beleza', 'cabeleireiro', 'barbeiro', 'estética', 'estetica', 'unhas',
+      'voo', 'voos', 'flight', 'flights', 'avião', 'aeroporto',
+      'bar', 'bares', 'noite', 'discoteca', 'evento', 'eventos', 'serviço', 'serviços',
+      'sao miguel', 'são miguel', 'terceira', 'faial', 'pico', 'sao jorge', 'são jorge', 'graciosa', 'flores', 'corvo', 'santa maria',
+      'ponta delgada', 'ribeira grande', 'lagoa', 'furnas', 'povoação', 'povoacao', 'nordeste', 'vila franca', 'angra', 'praia da vitoria', 'praia da vitória', 'horta', 'madalena', 'lajes', 'sao roque', 'são roque', 'velas', 'calheta', 'santa cruz'
+    ];
+
+    let cleanQuery = q;
+    keywordsToRemove.forEach(kw => {
+      cleanQuery = cleanQuery.replace(new RegExp(`\\b${kw}\\b`, 'g'), '');
+    });
+    filterQuery = cleanQuery.replace(/\s+/g, ' ').trim();
+
+    handleNavClick(category);
+    setGlobalSearchQuery(filterQuery || query);
   };
 
   const goHome = () => {
@@ -2507,6 +2601,7 @@ const App: React.FC = () => {
                 onShowNotifications={() => setShowNotificationsModal(true)}
                 featuredIsland={selectedIslandName || "Todas as Ilhas"}
                 onOpenIslandSelection={() => setShowIslandSelection(true)}
+                onSearch={handleSearch}
               />
             </div>
             
@@ -2519,6 +2614,7 @@ const App: React.FC = () => {
               onOpenIslandSelection={() => setShowIslandSelection(true)}
               isAuthenticated={isAuthenticated}
               userProfile={userProfile}
+              onSearch={handleSearch}
             />
           </motion.div>
         ) : (
@@ -2528,6 +2624,7 @@ const App: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.3 }}
+            className="pt-36 lg:pt-40"
           >
             {/* Always keep category bar at the top when content is active for easy switching */}
             <div className="px-4">
@@ -2774,6 +2871,7 @@ const App: React.FC = () => {
                     currentLanguage={language}
                     isAuthenticated={isAuthenticated}
                     onShowAuth={() => setShowAuthModal(true)}
+                    initialSearchQuery={globalSearchQuery}
                     selectedItemId={selectedTrailId}
                     onSelectedItemIdHandled={() => setSelectedTrailId(null)}
                     // PASSING DYNAMIC DATA (Filtered)

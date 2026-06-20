@@ -20,6 +20,7 @@ interface ExploreSectionProps {
   currentLanguage?: Language;
   isAuthenticated?: boolean;
   onShowAuth?: () => void;
+  initialSearchQuery?: string;
   // Dynamic Data Props
   restaurants: Restaurant[];
   activities: Activity[];
@@ -59,6 +60,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   currentLanguage = 'pt', 
   isAuthenticated, 
   onShowAuth,
+  initialSearchQuery = '',
   restaurants = [],
   activities = [],
   busSchedules = [],
@@ -145,7 +147,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [autoElectronicsFilter, setAutoElectronicsFilter] = useState<string | null>(null);
   const [usedMarketFilter, setUsedMarketFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all');
-  const [restaurantSearch, setRestaurantSearch] = useState('');
+  const [restaurantSearch, setRestaurantSearch] = useState(initialSearchQuery);
   const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
   const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
   const [trailZoneFilter, setTrailZoneFilter] = useState<'Todos' | 'Oeste' | 'Centro' | 'Leste'>('Todos');
@@ -284,7 +286,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       const matchesType = Array.isArray(types) ? types.includes(a.type as string) : a.type === types;
       const matchesIsland = isAllIslands || a.island === targetIsland;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' ? !a.isPaid : a.isPaid);
-      return matchesType && matchesIsland && matchesPrice;
+      const matchesQuery = !restaurantSearch || 
+        a.title.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+        a.description.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        a.island.toLowerCase().includes(restaurantSearch.toLowerCase());
+      return matchesType && matchesIsland && matchesPrice && matchesQuery;
     });
     return sortItems(filtered);
   };
@@ -351,8 +357,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   const renderEmptyState = () => (
-    <div className="py-12 text-center">
-      <p className="text-slate-400 font-medium">Nenhum resultado encontrado nesta ilha ou categoria.</p>
+    <div className="py-12 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200/60 p-8 max-w-lg mx-auto">
+      <p className="text-slate-500 font-bold text-sm leading-relaxed">Nenhum resultado encontrado. Experimente pesquisar por outra categoria ou localização.</p>
     </div>
   );
 
@@ -1534,8 +1540,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const renderStandardBusiness = (items: Business[], title: string, icon: React.ReactNode, color: string, allowBooking: boolean = false) => {
     const filtered = items.filter(s => {
       const matchIsland = isAllIslands || s.island === targetIsland;
-      return matchIsland;
+      const matchSearch = !restaurantSearch || 
+        s.name.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+        s.description.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        s.island.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        (s.subcategory && s.subcategory.toLowerCase().includes(restaurantSearch.toLowerCase())) ||
+        (s.concelho && s.concelho.toLowerCase().includes(restaurantSearch.toLowerCase()));
+      return matchIsland && matchSearch;
     });
+
+    if (filtered.length === 0) return renderEmptyState();
 
     return (
       <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
