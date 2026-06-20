@@ -114,8 +114,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
         <source src="/teste.mp4" type="video/mp4" />
       </video>
 
-      {/* Camada preta semitransparente (mobile & tablet) */}
-      <div className="absolute inset-0 bg-black/40 lg:hidden z-0"></div>
+      {/* Background Image (Desktop) */}
+      <img 
+        src="/fundo.png" 
+        alt="Background" 
+        className="absolute inset-0 w-full h-full object-cover hidden lg:block z-0"
+      />
+
+      {/* Camada preta semitransparente */}
+      <div className="absolute inset-0 bg-black/40 z-0"></div>
 
       {/* Main Content */}
       <div className={`relative z-10 flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4 md:space-y-5 animate-in fade-in zoom-in duration-700 ${showAuthModal ? 'blur-sm brightness-50' : ''} transition-all`}>
@@ -127,7 +134,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
               className="max-w-[75vw] lg:max-w-[450px] h-auto object-contain mx-auto"
             />
           </div>
-          <p className="text-base md:text-lg lg:text-xl text-white lg:text-slate-700 mt-4 font-semibold tracking-wide drop-shadow-md lg:drop-shadow-none">
+          <p className="text-base md:text-lg lg:text-xl text-white mt-4 font-semibold tracking-wide drop-shadow-md">
             {t.subtitle}
           </p>
         </div>
@@ -186,7 +193,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
 
       {/* Footer / Disclaimer */}
       <div className={`relative z-10 p-6 text-center ${showAuthModal ? 'blur-sm' : ''}`}>
-        <p className="text-xs text-white lg:text-slate-400 font-medium drop-shadow-sm lg:drop-shadow-none">© 2025 BionicID. All rights reserved.</p>
+        <p className="text-xs text-white/60 font-medium drop-shadow-sm">© 2025 BionicID. All rights reserved.</p>
       </div>
 
       {/* Reusable Auth Modal */}

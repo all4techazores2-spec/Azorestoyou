@@ -856,21 +856,36 @@ app.post('/api/posts', async (req, res) => {
 app.get('/api/slider', async (req, res) => {
     try {
         const db = await readDB();
-        if (!db.slider || db.slider.length === 0) {
-            const defaultSlides = [
-              { id: 'slide_1', image: '/hero/11.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_2', image: '/hero/12.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_3', image: '/hero/13.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_4', image: '/hero/14.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_5', image: '/hero/15.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_6', image: '/hero/16.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_7', image: '/hero/17.webp', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
-              { id: 'slide_8', image: '/hero/18.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' }
-            ];
-            db.slider = defaultSlides;
-            await writeDB(db);
+        const device = req.query.device;
+        if (device === 'desktop') {
+            if (!db.slider_desktop || db.slider_desktop.length === 0) {
+                const defaultDesktopSlides = [
+                  { id: 'slide_d1', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Descubra\nTodas as Ilhas', description: 'A natureza em estado puro para as suas férias perfeitas nos Açores.', buttonText: 'Explorar agora' },
+                  { id: 'slide_d2', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Momentos\nInesquecíveis', description: 'Explore lagoas místicas, vulcões adormecidos e trilhos deslumbrantes.', buttonText: 'Explorar agora' },
+                  { id: 'slide_d3', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Alojamento\nPremium', description: 'Encontre o refúgio perfeito com todo o conforto e vistas incríveis.', buttonText: 'Explorar agora' },
+                  { id: 'slide_d4', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Gastronomia\nLocal', description: 'Delicie-se com os sabores tradicionais e pratos típicos dos Açores.', buttonText: 'Explorar agora' }
+                ];
+                db.slider_desktop = defaultDesktopSlides;
+                await writeDB(db);
+            }
+            res.json(db.slider_desktop);
+        } else {
+            if (!db.slider || db.slider.length === 0) {
+                const defaultSlides = [
+                  { id: 'slide_1', image: '/hero/11.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_2', image: '/hero/12.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_3', image: '/hero/13.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_4', image: '/hero/14.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_5', image: '/hero/15.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_6', image: '/hero/16.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_7', image: '/hero/17.webp', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
+                  { id: 'slide_8', image: '/hero/18.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' }
+                ];
+                db.slider = defaultSlides;
+                await writeDB(db);
+            }
+            res.json(db.slider);
         }
-        res.json(db.slider);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -879,9 +894,14 @@ app.get('/api/slider', async (req, res) => {
 app.post('/api/slider', async (req, res) => {
     try {
         const db = await readDB();
-        db.slider = req.body;
+        const device = req.query.device;
+        if (device === 'desktop') {
+            db.slider_desktop = req.body;
+        } else {
+            db.slider = req.body;
+        }
         await writeDB(db);
-        res.json({ success: true, slider: db.slider });
+        res.json({ success: true, slider: device === 'desktop' ? db.slider_desktop : db.slider });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

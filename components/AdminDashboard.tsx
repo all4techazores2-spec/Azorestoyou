@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Wine, Landmark
+  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Wine, Landmark, SlidersHorizontal
 } from 'lucide-react';
 
 import * as constants from '../constants';
@@ -141,6 +141,128 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [syncSelection, setSyncSelection] = useState<string[]>([]);
   const [modifiedCategories, setModifiedCategories] = useState<Set<string>>(new Set());
+
+  const [showAppSliderSettings, setShowAppSliderSettings] = useState(false);
+  const [sliderDeviceTab, setSliderDeviceTab] = useState<'desktop' | 'mobile'>('desktop');
+  const [desktopSlides, setDesktopSlides] = useState<any[]>([]);
+  const [mobileSlides, setMobileSlides] = useState<any[]>([]);
+
+  const loadAppSlides = async () => {
+    try {
+      const resD = await fetch(`${API_BASE_URL}/api/slider?device=desktop`);
+      const dataD = await resD.json();
+      setDesktopSlides(dataD || []);
+
+      const resM = await fetch(`${API_BASE_URL}/api/slider?device=mobile`);
+      const dataM = await resM.json();
+      setMobileSlides(dataM || []);
+    } catch (e) {
+      console.error("Erro ao carregar sliders:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (showAppSliderSettings) {
+      loadAppSlides();
+    }
+  }, [showAppSliderSettings]);
+
+  const handleSliderImageUpload = async (files: FileList | File[] | File, device: 'desktop' | 'mobile', index?: number) => {
+    let fileArray: File[] = [];
+    if (files instanceof FileList) {
+      fileArray = Array.from(files);
+    } else if (Array.isArray(files)) {
+      fileArray = files;
+    } else {
+      fileArray = [files];
+    }
+    if (fileArray.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of fileArray) {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) throw new Error('Falha no upload para o servidor');
+        const data = await response.json();
+        const finalUrl = data.url;
+
+        if (device === 'desktop') {
+          if (index !== undefined) {
+            setDesktopSlides(prev => {
+              const copy = [...prev];
+              copy[index] = { ...copy[index], image: finalUrl };
+              return copy;
+            });
+          } else {
+            setDesktopSlides(prev => [
+              ...prev,
+              {
+                id: `slide_desktop_${Date.now()}`,
+                image: finalUrl,
+                subtitle: 'Experiência Açores',
+                title: 'Novo Slide',
+                description: 'Insira a descrição do slide.',
+                buttonText: 'Explorar agora'
+              }
+            ]);
+          }
+        } else {
+          if (index !== undefined) {
+            setMobileSlides(prev => {
+              const copy = [...prev];
+              copy[index] = { ...copy[index], image: finalUrl };
+              return copy;
+            });
+          } else {
+            setMobileSlides(prev => [
+              ...prev,
+              {
+                id: `slide_mobile_${Date.now()}`,
+                image: finalUrl,
+                subtitle: 'Experiência Açores',
+                title: 'Novo Slide',
+                description: 'Insira a descrição do slide.',
+                buttonText: 'Explorar agora'
+              }
+            ]);
+          }
+        }
+      }
+    } catch (e) {
+      alert("Erro no upload de imagem do slider: " + e.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveSliderSettings = async (device: 'desktop' | 'mobile') => {
+    setIsSaving(true);
+    try {
+      const slides = device === 'desktop' ? desktopSlides : mobileSlides;
+      const res = await fetch(`${API_BASE_URL}/api/slider?device=${device}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(slides)
+      });
+      if (!res.ok) throw new Error('Falha ao salvar no servidor');
+      await res.json();
+      alert(`Configurações do slider ${device === 'desktop' ? 'Desktop' : 'Mobile'} salvas com sucesso!`);
+      loadAppSlides();
+    } catch (e) {
+      alert("Erro ao salvar slider: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleEmergencyRestore = async () => {
     if (!confirm('🚨 ATENÇÃO: Isto vai substituir os dados do Atlas pelos dados originais do sistema. Continuar?')) return;
@@ -2901,7 +3023,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
          </div>
 
           {/* DASHBOARD VIEW */}
-          {activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && !showAppSliderSettings && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
 
                {/* ── LIVE CLOCK BANNER ── */}
@@ -3004,7 +3126,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                </div>
 
-               {/* Categories Breakdown */}
+                {/* Secondary Row (Settings / Config) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
+                  <div 
+                    onClick={() => setShowAppSliderSettings(true)}
+                    className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                  >
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <SlidersHorizontal size={64} className="text-blue-600" />
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Configurações app</p>
+                     <p className="text-2xl font-black text-slate-800 tracking-tighter">Slider Principal</p>
+                     <div className="flex items-center gap-2 mt-4 text-[10px] font-bold text-blue-600 uppercase">
+                        Gerir Desktop & Mobile
+                     </div>
+                  </div>
+                </div>
+
+                {/* Categories Breakdown */}
                <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-xl shadow-slate-200/20">
                   <div className="flex justify-between items-center mb-10">
                     <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Performance por Categoria</h3>
@@ -3217,6 +3356,280 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </table>
                </div>
             </div>
+          )}
+
+          {activeTab === 'dashboard' && showAppSliderSettings && (
+             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                {/* Header with back button */}
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => setShowAppSliderSettings(false)}
+                        className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-800 shadow-sm border border-slate-100 hover:bg-slate-50 transition-all active:scale-90"
+                      >
+                         <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <div>
+                         <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Configurações app</h2>
+                         <p className="text-xs font-bold text-slate-400">Configure as fotos e descrições do slider principal</p>
+                      </div>
+                   </div>
+                   
+                   <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => handleSaveSliderSettings(sliderDeviceTab)}
+                        disabled={isSaving}
+                        className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-500/20 flex items-center gap-2 active:scale-95 transition-all"
+                      >
+                         {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                         Salvar Configurações
+                      </button>
+                   </div>
+                </div>
+
+                {/* Tabs / Switcher */}
+                <div className="flex gap-2 p-1.5 bg-slate-100/80 rounded-2xl w-fit border border-slate-200/50">
+                   <button 
+                     onClick={() => setSliderDeviceTab('desktop')}
+                     className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${sliderDeviceTab === 'desktop' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                   >
+                      Versão Desktop
+                   </button>
+                   <button 
+                     onClick={() => setSliderDeviceTab('mobile')}
+                     className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${sliderDeviceTab === 'mobile' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                   >
+                      Versão Mobile
+                   </button>
+                </div>
+
+                {/* Add new slide button */}
+                <div className="flex justify-between items-center bg-slate-50 border border-slate-200/50 p-6 rounded-3xl">
+                   <div>
+                      <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">Gerir Imagens do Slider ({sliderDeviceTab === 'desktop' ? 'Desktop' : 'Mobile'})</h4>
+                      <p className="text-xs text-slate-400 mt-1">Carregue ou defina as imagens e textos que aparecem no topo.</p>
+                   </div>
+                   <label className={`cursor-pointer px-6 py-3 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900 shadow-md'}`}>
+                      {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      Adicionar Slide
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*,.webp" 
+                        onChange={e => e.target.files?.[0] && handleSliderImageUpload(e.target.files[0], sliderDeviceTab)} 
+                        disabled={isUploading} 
+                      />
+                   </label>
+                </div>
+
+                {/* Slides List Grid */}
+                <div className="grid grid-cols-1 gap-6">
+                   {(sliderDeviceTab === 'desktop' ? desktopSlides : mobileSlides).map((slide, idx) => (
+                     <div key={slide.id || idx} className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-md transition-all flex flex-col xl:flex-row gap-8 items-start relative group">
+                        {/* Slide Image Preview with Replace Button */}
+                        <div className="w-full xl:w-80 h-48 rounded-[2rem] overflow-hidden bg-slate-50 border border-slate-100 relative group/img shrink-0">
+                           <img src={slide.image || '/placeholder.png'} className="w-full h-full object-cover" />
+                           <label className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-2 font-bold text-xs uppercase tracking-wider">
+                              <Camera className="w-6 h-6" />
+                              Alterar Foto
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*,.webp" 
+                                onChange={e => e.target.files?.[0] && handleSliderImageUpload(e.target.files[0], sliderDeviceTab, idx)} 
+                                disabled={isUploading} 
+                              />
+                           </label>
+                        </div>
+
+                        {/* Slide Fields */}
+                        <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Subtítulo (Opcional)</label>
+                              <input 
+                                type="text"
+                                className="w-full border border-slate-200 p-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-500 bg-slate-50/50"
+                                value={slide.subtitle || ''}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (sliderDeviceTab === 'desktop') {
+                                    setDesktopSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], subtitle: val };
+                                      return copy;
+                                    });
+                                  } else {
+                                    setMobileSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], subtitle: val };
+                                      return copy;
+                                    });
+                                  }
+                                }}
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Título</label>
+                              <input 
+                                type="text"
+                                className="w-full border border-slate-200 p-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-500 bg-slate-50/50"
+                                value={slide.title || ''}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (sliderDeviceTab === 'desktop') {
+                                    setDesktopSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], title: val };
+                                      return copy;
+                                    });
+                                  } else {
+                                    setMobileSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], title: val };
+                                      return copy;
+                                    });
+                                  }
+                                }}
+                              />
+                           </div>
+                           <div className="md:col-span-2">
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Descrição</label>
+                              <textarea 
+                                rows={2}
+                                className="w-full border border-slate-200 p-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-500 bg-slate-50/50 resize-none"
+                                value={slide.description || ''}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (sliderDeviceTab === 'desktop') {
+                                    setDesktopSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], description: val };
+                                      return copy;
+                                    });
+                                  } else {
+                                    setMobileSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], description: val };
+                                      return copy;
+                                    });
+                                  }
+                                }}
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Texto do Botão (Opcional)</label>
+                              <input 
+                                type="text"
+                                className="w-full border border-slate-200 p-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-500 bg-slate-50/50"
+                                value={slide.buttonText || ''}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (sliderDeviceTab === 'desktop') {
+                                    setDesktopSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], buttonText: val };
+                                      return copy;
+                                    });
+                                  } else {
+                                    setMobileSlides(prev => {
+                                      const copy = [...prev];
+                                      copy[idx] = { ...copy[idx], buttonText: val };
+                                      return copy;
+                                    });
+                                  }
+                                }}
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Opacidade da Foto ({slide.opacity ?? 100}%)</label>
+                              <div className="flex items-center gap-3 h-12">
+                                 <input 
+                                   type="range"
+                                   min="10"
+                                   max="100"
+                                   step="5"
+                                   className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                   value={slide.opacity ?? 100}
+                                   onChange={e => {
+                                     const val = parseInt(e.target.value);
+                                     if (sliderDeviceTab === 'desktop') {
+                                       setDesktopSlides(prev => {
+                                         const copy = [...prev];
+                                         copy[idx] = { ...copy[idx], opacity: val };
+                                         return copy;
+                                       });
+                                     } else {
+                                       setMobileSlides(prev => {
+                                         const copy = [...prev];
+                                         copy[idx] = { ...copy[idx], opacity: val };
+                                         return copy;
+                                        });
+                                      }
+                                    }}
+                                  />
+                                 <span className="text-xs font-mono font-bold text-slate-500 w-10 text-right">{slide.opacity ?? 100}%</span>
+                              </div>
+                           </div>
+                           <div className="flex items-end justify-end gap-2">
+                              <button 
+                                onClick={() => {
+                                  if (idx === 0) return;
+                                  const setSlidesFn = sliderDeviceTab === 'desktop' ? setDesktopSlides : setMobileSlides;
+                                  setSlidesFn(prev => {
+                                    const copy = [...prev];
+                                    const temp = copy[idx];
+                                    copy[idx] = copy[idx - 1];
+                                    copy[idx - 1] = temp;
+                                    return copy;
+                                  });
+                                }}
+                                disabled={idx === 0}
+                                className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all disabled:opacity-40"
+                              >
+                                 <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const slides = sliderDeviceTab === 'desktop' ? desktopSlides : mobileSlides;
+                                  if (idx === slides.length - 1) return;
+                                  const setSlidesFn = sliderDeviceTab === 'desktop' ? setDesktopSlides : setMobileSlides;
+                                  setSlidesFn(prev => {
+                                    const copy = [...prev];
+                                    const temp = copy[idx];
+                                    copy[idx] = copy[idx + 1];
+                                    copy[idx + 1] = temp;
+                                    return copy;
+                                  });
+                                }}
+                                disabled={idx === (sliderDeviceTab === 'desktop' ? desktopSlides.length : mobileSlides.length) - 1}
+                                className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all disabled:opacity-40"
+                              >
+                                 <ChevronDown className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  if (!confirm("Tem a certeza que deseja remover este slide?")) return;
+                                  const setSlidesFn = sliderDeviceTab === 'desktop' ? setDesktopSlides : setMobileSlides;
+                                  setSlidesFn(prev => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="px-5 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+                              >
+                                 <Trash2 className="w-4 h-4" />
+                                 Eliminar
+                              </button>
+                           </div>
+                        </div>
+                     </div>
+                   ))}
+                   {(sliderDeviceTab === 'desktop' ? desktopSlides : mobileSlides).length === 0 && (
+                     <div className="bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-300 p-20 text-center">
+                        <SlidersHorizontal className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                        <p className="font-black text-slate-500 uppercase tracking-widest text-sm">Sem slides configurados</p>
+                        <p className="text-xs text-slate-400 mt-2">Carregue ou adicione novas fotos para começar.</p>
+                     </div>
+                   )}
+                </div>
+             </div>
           )}
 
           {/* ACCOUNTS VIEW */}

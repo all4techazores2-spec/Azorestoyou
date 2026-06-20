@@ -2294,8 +2294,8 @@ const App: React.FC = () => {
         <nav className={`lg:hidden bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-[100] shadow-sm border-b border-slate-100 ${showAuthModal || showPackageModal ? 'blur-sm' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 relative">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center cursor-pointer h-full py-1" onClick={goHome}>
-              <img src="/pngletras.png" alt="Logo" className="h-full w-auto object-contain" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center cursor-pointer" onClick={goHome}>
+              <img src="/pngletras.png" alt="Logo" className="h-[250%] max-h-none w-auto object-contain" />
             </div>
             
             <div className="hidden md:flex items-center space-x-6">

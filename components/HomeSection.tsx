@@ -126,6 +126,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 1.5, ease: "easeInOut" }}
               className="absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: (activeSlides[heroIndex].opacity ?? 100) / 100 }}
             />
           )}
         </AnimatePresence>

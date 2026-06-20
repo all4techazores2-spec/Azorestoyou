@@ -5,10 +5,12 @@ import {
   Search, Map, Heart, User, ChevronDown, ChevronLeft, ChevronRight, Play, 
   Utensils, Bus, Car, Tent, LayoutGrid, Mountain, 
   Facebook, Instagram, Youtube, Send, ArrowRight,
-  ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors
+  ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors,
+  MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark
 } from 'lucide-react';
 import AzoresLogo from './AzoresLogo';
 import { Language } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface DesktopViewProps {
   language: Language;
@@ -33,43 +35,18 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
   onShowBarberLogin
 }) => {
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg py-3' : 'bg-transparent py-6'}`}>
-      <div className="max-w-7xl mx-auto px-8 flex items-center justify-between relative h-16">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center cursor-pointer h-full py-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <img src="/pngletras.png" alt="Logo" className="h-full w-auto object-contain drop-shadow-lg" />
+    <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg pt-4 pb-2' : 'bg-transparent pt-8 pb-4'}`}>
+      <div className="max-w-7xl mx-auto px-8 flex items-center justify-between relative h-20">
+        {/* Left spacer to push layout and match right items */}
+        <div className="w-1/4"></div>
+
+        {/* Logo centered and lowered */}
+        <div className="absolute left-1/2 top-[70%] -translate-x-1/2 -translate-y-1/2 flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <img src="/pngletras.png" alt="Logo" className="h-[280%] max-h-none w-auto object-contain drop-shadow-lg" />
         </div>
 
-        <nav className="flex items-center gap-10">
-          {['Início', 'Viagens', 'Restauração', 'Trilhos', 'Rentacar'].map((item) => (
-            <a 
-              key={item} 
-              href="#" 
-              className={`text-sm font-bold uppercase tracking-widest transition-all hover:scale-110 active:scale-95 ${scrolled ? 'text-slate-600 hover:text-green-600' : 'text-white/90 hover:text-white drop-shadow-md'}`}
-              onClick={(e) => {
-                e.preventDefault();
-                if (item === 'Início') onNavigate(null);
-                if (item === 'Restauração') onNavigate('restaurants');
-                if (item === 'Trilhos') onNavigate('trails');
-                if (item === 'Rentacar') onNavigate('rentcar');
-                if (item === 'Viagens') onNavigate('flights');
-              }}
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-6">
-          {onShowBarberLogin && (
-            <button 
-              onClick={onShowBarberLogin} 
-              className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${scrolled ? 'text-amber-600 hover:text-amber-700' : 'text-[#D4AF37] hover:text-amber-400 drop-shadow-md'}`}
-            >
-              <Scissors size={14} />
-              Barbeiro
-            </button>
-          )}
-
+        {/* Right side elements lowered to align with logo */}
+        <div className="flex items-center gap-6 justify-end w-1/4 pt-6">
           <button onClick={onShowFavorites} className={`p-2 rounded-full transition-all hover:bg-white/10 ${scrolled ? 'text-slate-400 hover:text-red-500' : 'text-white drop-shadow-md'}`}>
             <Heart size={24} />
           </button>
@@ -96,6 +73,35 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Navigation menu below the logo */}
+      <div className="flex justify-center mt-6 pb-1">
+        <nav className="flex items-center gap-10">
+          {['Início', 'Alojamento', 'Restauração', 'Trilhos', 'Rentacar', 'Todas as Categorias'].map((item) => (
+            <a 
+              key={item} 
+              href="#" 
+              className={`text-sm font-bold uppercase tracking-widest transition-all hover:scale-110 active:scale-95 ${scrolled ? 'text-slate-600 hover:text-green-600' : 'text-white/90 hover:text-white drop-shadow-md'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (item === 'Início') onNavigate(null);
+                if (item === 'Restauração') onNavigate('restaurants');
+                if (item === 'Trilhos') onNavigate('trails');
+                if (item === 'Rentacar') onNavigate('rentcar');
+                if (item === 'Alojamento') onNavigate('accommodation');
+                if (item === 'Todas as Categorias') {
+                  const element = document.getElementById('categories-section');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }
+              }}
+            >
+              {item}
+            </a>
+          ))}
+        </nav>
       </div>
     </header>
   );
@@ -189,27 +195,42 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
   } = props;
   const [heroIndex, setHeroIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [categoryPage, setCategoryPage] = useState(0);
+  const [slides, setSlides] = useState<any[]>([]);
 
-  const heroImages = [
-    'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop'
+  const defaultSlides = [
+    { id: 'slide_d1', image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Descubra\nTodas as Ilhas', description: 'A natureza em estado puro para as suas férias perfeitas nos Açores.', buttonText: 'Explorar agora' },
+    { id: 'slide_d2', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Momentos\nInesquecíveis', description: 'Explore lagoas místicas, vulcões adormecidos e trilhos deslumbrantes.', buttonText: 'Explorar agora' },
+    { id: 'slide_d3', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Alojamento\nPremium', description: 'Encontre o refúgio perfeito com todo o conforto e vistas incríveis.', buttonText: 'Explorar agora' },
+    { id: 'slide_d4', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop', subtitle: 'Experiência Açores', title: 'Gastronomia\nLocal', description: 'Delicie-se com os sabores tradicionais e pratos típicos dos Açores.', buttonText: 'Explorar agora' }
   ];
+
+  const activeSlides = slides.length > 0 ? slides : defaultSlides;
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/slider?device=desktop`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSlides(data);
+        }
+      })
+      .catch(err => console.error("Error fetching desktop slider:", err));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     
     const timer = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % heroImages.length);
+      setHeroIndex(prev => (prev + 1) % activeSlides.length);
     }, 6000);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       clearInterval(timer);
     };
-  }, []);
+  }, [activeSlides.length]);
 
   const categories = [
     { id: 'restaurants', label: 'RESTAURANTES', sub: 'Sabores locais', icon: <Utensils className="w-8 h-8 text-orange-600" />, color: '#ea580c' },
@@ -218,6 +239,20 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     { id: 'accommodation', label: 'ALOJAMENTOS', sub: 'Onde ficar', icon: <Tent className="w-8 h-8 text-purple-600" />, color: '#9333ea' },
     { id: 'activities', label: 'ATIVIDADES', sub: 'Aventuras únicas', icon: <LayoutGrid className="w-8 h-8 text-blue-600" />, color: '#2563eb' },
     { id: 'trails', label: 'TRILHOS', sub: 'Rotas incríveis', icon: <Mountain className="w-8 h-8 text-green-700" />, color: '#15803d' },
+    { id: 'poi', label: 'ATRAÇÕES', sub: 'Pontos turísticos', icon: <MapPin className="w-8 h-8 text-green-600" />, color: '#22c55e' },
+    { id: 'shops', label: 'COMÉRCIO', sub: 'Lojas e compras', icon: <ShoppingBag className="w-8 h-8 text-pink-600" />, color: '#db2777' },
+    { id: 'beauty', label: 'BELEZA', sub: 'Estética e bem-estar', icon: <Sparkles className="w-8 h-8 text-rose-500" />, color: '#f43f5e' },
+    { id: 'services', label: 'SERVIÇOS', sub: 'Profissionais', icon: <Wrench className="w-8 h-8 text-slate-600" />, color: '#475569' },
+    { id: 'auto_repair', label: 'OFICINAS', sub: 'Manutenção auto', icon: <Settings className="w-8 h-8 text-red-600" />, color: '#dc2626' },
+    { id: 'animals', label: 'ANIMAIS', sub: 'Pet shops e veterinários', icon: <Dog className="w-8 h-8 text-orange-600" />, color: '#ea580c' },
+    { id: 'real_estate', label: 'IMOBILIÁRIA', sub: 'Comprar e alugar', icon: <Building2 className="w-8 h-8 text-blue-800" />, color: '#1e40af' },
+    { id: 'gyms', label: 'GINÁSIOS', sub: 'Saúde e fitness', icon: <Dumbbell className="w-8 h-8 text-slate-800" />, color: '#1e293b' },
+    { id: 'stands', label: 'STANDS', sub: 'Venda de veículos', icon: <CarFront className="w-8 h-8 text-indigo-600" />, color: '#4f46e5' },
+    { id: 'offices', label: 'ESCRITÓRIOS', sub: 'Coworking e salas', icon: <Briefcase className="w-8 h-8 text-cyan-600" />, color: '#0891b2' },
+    { id: 'it_services', label: 'INFORMÁTICA', sub: 'Suporte e tecnologia', icon: <Laptop className="w-8 h-8 text-slate-700" />, color: '#334155' },
+    { id: 'bars', label: 'BARES/NOITE', sub: 'Diversão noturna', icon: <Wine className="w-8 h-8 text-purple-800" />, color: '#6b21a8' },
+    { id: 'events', label: 'EVENTOS', sub: 'Espetáculos e festas', icon: <Calendar className="w-8 h-8 text-amber-600" />, color: '#d97706' },
+    { id: 'municipal', label: 'SERVIÇOS PÚBLICOS', sub: 'Apoio municipal', icon: <Landmark className="w-8 h-8 text-sky-600" />, color: '#0284c7' },
   ];
 
   const features = [
@@ -246,42 +281,107 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
           >
             <div className="absolute inset-0 bg-black/30 z-10"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-10"></div>
-            <img src={heroImages[heroIndex]} alt="Azores" className="w-full h-full object-cover" />
+            <img src={activeSlides[heroIndex]?.image} alt="Azores" className="w-full h-full object-cover" style={{ opacity: (activeSlides[heroIndex]?.opacity ?? 100) / 100 }} />
           </motion.div>
         </AnimatePresence>
-
-        <div className="absolute inset-0 z-20 flex flex-col justify-center max-w-7xl mx-auto px-8">
+ 
+        {/* Left column: descriptions aligned far left */}
+        <div className="absolute left-10 top-1/2 -translate-y-1/2 z-20 max-w-xl text-left hidden xl:block">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 1 }}
-            className="max-w-2xl"
           >
             <div className="bg-white/20 backdrop-blur-xl border border-white/30 px-6 py-2 rounded-full w-fit mb-8">
-              <span className="text-[11px] font-black text-white uppercase tracking-[0.4em]">Experiência Açores</span>
+              <span className="text-[11px] font-black text-white uppercase tracking-[0.4em]">{activeSlides[heroIndex]?.subtitle || 'Experiência Açores'}</span>
             </div>
-            <h1 className="text-8xl font-black text-white mb-6 leading-[0.9] tracking-tighter">
-              Descubra<br/>Todas as Ilhas
+            <h1 className="text-7xl font-black text-white mb-6 leading-[0.9] tracking-tighter" style={{ whiteSpace: 'pre-line' }}>
+              {activeSlides[heroIndex]?.title || 'Descubra\nTodas as Ilhas'}
             </h1>
-            <p className="text-xl text-white/90 font-medium mb-12 max-w-md leading-relaxed drop-shadow-md">
-              A natureza em estado puro para as suas férias perfeitas nos Açores.
+            <p className="text-lg text-white/90 font-medium mb-10 leading-relaxed drop-shadow-md">
+              {activeSlides[heroIndex]?.description || 'A natureza em estado puro para as suas férias perfeitas nos Açores.'}
             </p>
-            <div className="flex items-center gap-6">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-10 py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-2xl shadow-green-600/30 active:scale-95 flex items-center gap-3 group">
-                Explorar agora
+            <div className="flex items-center gap-4">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl shadow-green-600/30 active:scale-95 flex items-center gap-3 group">
+                {activeSlides[heroIndex]?.buttonText || 'Explorar agora'}
                 <ArrowRight className="transition-transform group-hover:translate-x-2" />
               </button>
               <button className="flex items-center gap-4 text-white group">
-                <div className="w-16 h-16 rounded-full border-2 border-white/50 flex items-center justify-center transition-all group-hover:bg-white group-hover:border-white group-hover:text-slate-900 group-active:scale-90">
-                  <Play fill="currentColor" size={24} />
+                <div className="w-12 h-12 rounded-full border-2 border-white/50 flex items-center justify-center transition-all group-hover:bg-white group-hover:border-white group-hover:text-slate-900 group-active:scale-90">
+                  <Play fill="currentColor" size={18} />
                 </div>
-                <span className="font-black text-xs uppercase tracking-widest">Ver vídeo</span>
+                <span className="font-black text-[10px] uppercase tracking-widest">Ver vídeo</span>
               </button>
             </div>
           </motion.div>
         </div>
 
-        {/* Carousel Navigation */}
+        {/* Center column: Centered, extended search bar with categories underneath */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-full max-w-4xl px-8 flex flex-col items-center gap-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7, duration: 1 }}
+            className="w-full flex flex-col gap-6"
+          >
+            {/* Extended Search Bar */}
+            <div className="w-full shadow-2xl rounded-[2.5rem] bg-slate-950/90 backdrop-blur-2xl border border-slate-800 p-4 flex items-center gap-4">
+              <div className="flex-1 relative flex items-center">
+                <Search className="absolute left-5 text-green-500" size={24} />
+                <input 
+                  type="text" 
+                  placeholder="O que deseja explorar hoje? (Atrações, hotéis, restaurantes...)" 
+                  className="w-full h-16 bg-transparent border-none text-white placeholder-slate-500 pl-14 pr-4 focus:outline-none focus:ring-0 font-semibold text-lg"
+                />
+              </div>
+              <button 
+                onClick={onOpenIslandSelection}
+                className="h-16 bg-green-600 hover:bg-green-700 text-white px-8 rounded-2xl flex items-center gap-2 font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-green-600/20"
+              >
+                <Map size={18} />
+                Ver Mapa
+              </button>
+            </div>
+
+            {/* Categories horizontal row immediately below the search bar */}
+            <div className="w-full bg-slate-950/70 backdrop-blur-xl border border-slate-800 p-6 rounded-[2.5rem] shadow-xl flex flex-col items-center relative">
+              <div className="flex items-center gap-8 overflow-x-auto py-2 px-10 scrollbar-hide max-w-full justify-center">
+                {categories.slice(categoryPage * 6, (categoryPage + 1) * 6).map((cat) => (
+                  <button 
+                    key={cat.id} 
+                    onClick={() => onNavigate(cat.id)}
+                    className="flex flex-col items-center gap-2 group transition-all shrink-0 hover:scale-105"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg transition-transform group-hover:scale-110" style={{ color: cat.color }}>
+                      {React.cloneElement(cat.icon as React.ReactElement, { className: "w-6 h-6" })}
+                    </div>
+                    <span className="text-[10px] font-black text-white uppercase tracking-wider">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Navigation Arrows for categories inside the hero section */}
+              <button 
+                onClick={() => {
+                  const maxPage = Math.ceil(categories.length / 6) - 1;
+                  setCategoryPage(prev => (prev > 0 ? prev - 1 : maxPage));
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-10"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                onClick={() => {
+                  const maxPage = Math.ceil(categories.length / 6) - 1;
+                  setCategoryPage(prev => (prev < maxPage ? prev + 1 : 0));
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-10"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </motion.div>
+        </div>
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
           {heroImages.map((_, i) => (
             <button 
@@ -306,49 +406,78 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
         </button>
       </section>
 
-      {/* SEARCH BAR OVERLAP */}
-      <div className="relative z-40 -mt-16 max-w-5xl mx-auto px-8">
-        <div className="bg-white rounded-[3rem] p-4 shadow-2xl border border-slate-100 flex items-center gap-4"><AzoresLogo size={950} />
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white lg:text-slate-900 tracking-tight drop-shadow-lg lg:drop-shadow-none"></h1>  <input 
-              type="text" 
-              placeholder="O que deseja explorar hoje?" 
-              className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 font-medium placeholder-slate-400"
-            />
-          <button 
-            onClick={onOpenIslandSelection}
-            className="flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-green-700/20"
-          >
-            <Map size={20} />
-            Ver mapa
-          </button>
-        </div>
-      </div>
+
 
       {/* CATEGORIES */}
-      <section className="py-24 max-w-7xl mx-auto px-8">
+      <section className="py-24 max-w-7xl mx-auto px-8 relative" id="categories-section">
         <div className="flex flex-col items-center gap-4 mb-16">
           <div className="flex items-center gap-4 w-full">
             <div className="flex-1 h-[1px] bg-slate-200"></div>
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">Deslize para ver mais categorias</span>
+            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">Navegue pelas categorias</span>
             <div className="flex-1 h-[1px] bg-slate-200"></div>
           </div>
         </div>
 
-        <div className="grid grid-cols-6 gap-8">
-          {categories.map((cat) => (
-            <button 
-              key={cat.id}
-              onClick={() => onNavigate(cat.id)}
-              className="group flex flex-col items-center gap-6 p-8 rounded-[3rem] hover:bg-slate-50 transition-all active:scale-95"
+        <div className="relative px-12">
+          {/* Left Arrow Button */}
+          <button 
+            onClick={() => {
+              const maxPage = Math.ceil(categories.length / 6) - 1;
+              setCategoryPage(prev => (prev > 0 ? prev - 1 : maxPage));
+            }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all active:scale-90 z-10"
+          >
+            <ChevronLeft size={24} />
+          </button>
+
+          {/* Categories Slider Window */}
+          <div className="overflow-hidden">
+            <motion.div 
+              key={categoryPage}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-6 gap-8"
             >
-              <div className="w-24 h-24 rounded-[2rem] bg-white shadow-xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-2xl border border-slate-50" style={{ color: cat.color }}>
-                {cat.icon}
-              </div>
-              <div className="text-center">
-                <span className="block text-sm font-black text-slate-900 uppercase tracking-tighter mb-1">{cat.label}</span>
-                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cat.sub}</span>
-              </div>
-            </button>
+              {categories.slice(categoryPage * 6, (categoryPage + 1) * 6).map((cat) => (
+                <button 
+                  key={cat.id}
+                  onClick={() => onNavigate(cat.id)}
+                  className="group flex flex-col items-center gap-6 p-8 rounded-[3rem] hover:bg-slate-50 transition-all active:scale-95"
+                >
+                  <div className="w-24 h-24 rounded-[2rem] bg-white shadow-xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-2xl border border-slate-50" style={{ color: cat.color }}>
+                    {cat.icon}
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-sm font-black text-slate-900 uppercase tracking-tighter mb-1 truncate w-28">{cat.label}</span>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate w-28">{cat.sub}</span>
+                  </div>
+                </button>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right Arrow Button */}
+          <button 
+            onClick={() => {
+              const maxPage = Math.ceil(categories.length / 6) - 1;
+              setCategoryPage(prev => (prev < maxPage ? prev + 1 : 0));
+            }}
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all active:scale-90 z-10"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+
+        {/* Pagination dots */}
+        <div className="flex justify-center gap-2 mt-8">
+          {Array.from({ length: Math.ceil(categories.length / 6) }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCategoryPage(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${categoryPage === i ? 'w-8 bg-green-600' : 'w-2 bg-slate-200'}`}
+            />
           ))}
         </div>
       </section>
