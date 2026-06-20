@@ -122,7 +122,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
         
         <div className="mb-0">
           <div className="mx-auto flex items-center justify-center mb-0">
-            <AzoresLogo size={650} className="max-w-[75vw] lg:max-w-[450px]" />
+            <img 
+              src="/logo.1.png" 
+              alt="Logo" 
+              className="max-w-[75vw] lg:max-w-[450px] h-auto object-contain mx-auto"
+            />
           </div>
           <p className="text-sm md:text-base text-slate-150 lg:text-slate-600 mt-2 font-medium tracking-wide drop-shadow-md lg:drop-shadow-none">
             {t.subtitle}
