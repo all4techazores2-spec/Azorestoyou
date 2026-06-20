@@ -883,7 +883,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{r.name}</h3>
                   <div className="flex items-center gap-3 mb-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-blue-500" /> {r.island}
+                      <MapPin className="w-3 h-3 text-blue-500" /> {r.concelho ? `${r.concelho}, ` : ''}{r.island}
                     </p>
                     <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{r.cuisine}</p>
@@ -1103,7 +1103,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{b.name}</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{b.cuisine || b.island}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                {b.concelho ? `${b.concelho}, ` : ''}{b.island} {b.cuisine ? `• ${b.cuisine}` : ''}
+              </p>
               <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">{b.description}</p>
             </div>
             <ArrowRight size={20} className="text-slate-200 group-hover:text-blue-600 transition-colors mr-2" />
@@ -1572,7 +1574,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                   <MapPin className="w-3 h-3 text-blue-600" /> {s.concelho ? `${s.concelho}, ` : ''}{s.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6">
                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{s.name}</h3>

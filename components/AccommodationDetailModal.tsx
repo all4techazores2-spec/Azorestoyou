@@ -170,7 +170,9 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
             <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">{accommodation.name}</h2>
             <div className="flex items-center gap-2 text-white/80 text-sm mt-1">
               <MapPin size={14} className="text-blue-400" />
-              <span className="font-bold">{accommodation.island}</span>
+              <span className="font-bold">
+                {accommodation.concelho ? `${accommodation.concelho}, ` : ''}{accommodation.island}
+              </span>
             </div>
           </div>
 
@@ -208,6 +210,17 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-slate-400 uppercase">Telefone</span>
                     <span className="text-sm font-bold text-slate-700">{accommodation.phone || '+351 296 000 000'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 group">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
+                    <MapPin size={16} />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Localização</span>
+                    <span className="text-sm font-bold text-slate-700 truncate">
+                      {accommodation.concelho ? `${accommodation.concelho}, ` : ''}{accommodation.island}, Açores
+                    </span>
                   </div>
                 </div>
                 <button 

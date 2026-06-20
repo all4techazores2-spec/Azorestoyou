@@ -681,7 +681,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
               <div className="absolute bottom-6 left-6 right-20">
                 <div className="flex items-center gap-2 text-white/90 text-xs font-black uppercase tracking-widest mb-2">
-                  <MapPin className="w-3.5 h-3.5 text-red-400" /> {restaurant.island}
+                  <MapPin className="w-3.5 h-3.5 text-red-400" /> {restaurant.concelho ? `${restaurant.concelho}, ` : ''}{restaurant.island}
                   <span className="w-1 h-1 bg-white/30 rounded-full"></span>
                   <div className="flex items-center gap-1">
                     <Star size={12} className="text-yellow-400 fill-current" />
@@ -827,12 +827,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                           <span className="text-xs font-black text-slate-700 truncate tracking-tight">{restaurant.publicEmail}</span>
                         </div>
                      )}
-                     <div className="md:col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                      <div className="md:col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
                         <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-all shrink-0">
                           <MapPin className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
                         </div>
-                        <span className="text-xs font-black text-slate-700 tracking-tight truncate">{restaurant.island}, Azores</span>
-                     </div>
+                        <span className="text-xs font-black text-slate-700 tracking-tight truncate">
+                          {restaurant.concelho ? `${restaurant.concelho}, ` : ''}{restaurant.island}, Açores
+                        </span>
+                      </div>
                   </div>
 
                   {/* Main Action Button */}
