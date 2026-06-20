@@ -35,7 +35,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
   onShowBarberLogin
 }) => {
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg pt-4 pb-2' : 'bg-transparent pt-8 pb-4'}`}>
+    <header className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500 bg-white/95 backdrop-blur-xl shadow-lg pt-4 pb-2">
       <div className="max-w-7xl mx-auto px-8 flex items-center justify-between relative h-20">
         {/* Left spacer to push layout and match right items */}
         <div className="w-1/4"></div>
@@ -47,7 +47,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
 
         {/* Right side elements lowered to align with logo */}
         <div className="flex items-center gap-6 justify-end w-1/4 pt-6">
-          <button onClick={onShowFavorites} className={`p-2 rounded-full transition-all hover:bg-white/10 ${scrolled ? 'text-slate-400 hover:text-red-500' : 'text-white drop-shadow-md'}`}>
+          <button onClick={onShowFavorites} className="p-2 rounded-full transition-all hover:bg-slate-100 text-slate-400 hover:text-red-500">
             <Heart size={24} />
           </button>
           
@@ -60,7 +60,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
           </button>
 
           <div className="relative group">
-            <button className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${scrolled ? 'border-slate-200 text-slate-700 bg-slate-50' : 'border-white/30 text-white bg-white/10 backdrop-blur-md'}`}>
+            <button className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 text-slate-700 bg-slate-50 transition-all">
               <span className="text-[10px] font-black uppercase tracking-widest">PT</span>
               <ChevronDown size={14} />
             </button>
@@ -82,7 +82,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
             <a 
               key={item} 
               href="#" 
-              className={`text-sm font-bold uppercase tracking-widest transition-all hover:scale-110 active:scale-95 ${scrolled ? 'text-slate-600 hover:text-green-600' : 'text-white/90 hover:text-white drop-shadow-md'}`}
+              className="text-sm font-bold uppercase tracking-widest transition-all hover:scale-110 active:scale-95 text-slate-600 hover:text-green-600"
               onClick={(e) => {
                 e.preventDefault();
                 if (item === 'Início') onNavigate(null);
