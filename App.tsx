@@ -2367,7 +2367,7 @@ const App: React.FC = () => {
     <div className={`min-h-screen bg-slate-100 font-sans text-slate-800 pb-16 md:pb-0 ${showAuthModal || showPackageModal ? 'overflow-hidden h-screen' : ''}`}>
       
       {/* Desktop Global Header */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block relative z-[10000]">
         {!isAdmin && !isBusiness && !isStaff && !isSupplier && (
           <DesktopHeader 
             language={language}

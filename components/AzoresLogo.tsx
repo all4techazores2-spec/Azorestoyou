@@ -26,15 +26,6 @@ const AzoresLogo: React.FC<AzoresLogoProps> = ({ className = "", size = 40, styl
           height: 'auto',
         }}
       />
-      <img 
-        src="/pngletras2.png" 
-        alt="Azores4you Logo Text" 
-        className="max-w-full object-contain"
-        style={{ 
-          width: textWidth, 
-          height: 'auto',
-        }}
-      />
     </div>
   );
 };

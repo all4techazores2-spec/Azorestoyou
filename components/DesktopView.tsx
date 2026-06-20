@@ -37,7 +37,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
   onShowBarberLogin
 }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500 bg-white/95 backdrop-blur-xl shadow-lg pt-4 pb-2">
+    <header className="fixed top-0 left-0 right-0 z-[9999] transition-all duration-500 bg-white/95 backdrop-blur-xl shadow-lg pt-4 pb-2 pointer-events-auto">
       <div className="max-w-7xl mx-auto px-8 flex items-center justify-between relative h-20">
         {/* Left spacer to push layout and match right items */}
         <div className="w-1/4"></div>
@@ -313,9 +313,6 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
   return (
     <div className="hidden lg:block bg-white selection:bg-green-100 selection:text-green-900">
       
-      {/* HEADER */}
-      <DesktopHeader {...props} scrolled={scrolled} />
-
       {/* HERO SECTION */}
       <section className="relative h-screen min-h-[800px] w-full overflow-hidden">
         <AnimatePresence mode="wait">
@@ -566,8 +563,6 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <DesktopFooter />
     </div>
   );
 };
