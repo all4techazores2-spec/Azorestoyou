@@ -119,8 +119,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
 
       {/* Main Content */}
       <div className={`relative z-10 flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4 md:space-y-5 animate-in fade-in zoom-in duration-700 ${showAuthModal ? 'blur-sm brightness-50' : ''} transition-all`}>
-        
-        <div className="mb-0">
+        <div className="mb-6 md:mb-8">
           <div className="mx-auto flex items-center justify-center mb-0">
             <img 
               src="/logo.1.png" 
@@ -128,12 +127,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnterBooking, onEnterExplor
               className="max-w-[75vw] lg:max-w-[450px] h-auto object-contain mx-auto"
             />
           </div>
-          <p className="text-sm md:text-base text-slate-150 lg:text-slate-600 mt-2 font-medium tracking-wide drop-shadow-md lg:drop-shadow-none">
+          <p className="text-base md:text-lg lg:text-xl text-white lg:text-slate-700 mt-4 font-semibold tracking-wide drop-shadow-md lg:drop-shadow-none">
             {t.subtitle}
           </p>
         </div>
-
-        {/* Action Buttons */}
         <div className="w-full max-w-sm space-y-3">
           {/* Login Button */}
           <button 

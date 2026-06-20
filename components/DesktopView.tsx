@@ -36,8 +36,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
     <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/90 backdrop-blur-xl shadow-lg py-3' : 'bg-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-8 flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <AzoresLogo size={240} className="drop-shadow-lg" />
-          
+          <img src="/letras.png" alt="Logo" className="h-10 w-auto object-contain drop-shadow-lg" />
         </div>
 
         <nav className="flex items-center gap-10">

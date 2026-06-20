@@ -2295,10 +2295,7 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center cursor-pointer" onClick={goHome}>
-              <AzoresLogo size={44} className="mr-2" />
-              <span className="font-extrabold text-xl tracking-tight text-slate-800">
-                Azores<span className="text-emerald-600 font-black">toyou</span>
-              </span>
+              <img src="/letras.png" alt="Logo" className="h-10 w-auto object-contain" />
             </div>
             
             <div className="hidden md:flex items-center space-x-6">
@@ -2339,9 +2336,7 @@ const App: React.FC = () => {
                   <button onClick={() => setShowAuthModal(true)} className="text-sm font-bold text-blue-600">{getTranslation(language, 'login')}</button>
                 )}
               </div>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600 md:hidden relative z-[110]">
-                {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
+              {/* Menu hamburger removido */}
             </div>
           </div>
         </div>
