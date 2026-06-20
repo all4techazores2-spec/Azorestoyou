@@ -383,7 +383,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
           </motion.div>
         </div>
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
-          {heroImages.map((_, i) => (
+          {activeSlides.map((_, i) => (
             <button 
               key={i} 
               onClick={() => setHeroIndex(i)}
@@ -393,13 +393,13 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
         </div>
 
         <button 
-          onClick={() => setHeroIndex(prev => (prev - 1 + heroImages.length) % heroImages.length)}
+          onClick={() => setHeroIndex(prev => (prev - 1 + activeSlides.length) % activeSlides.length)}
           className="absolute left-8 top-1/2 -translate-y-1/2 z-30 w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all active:scale-90"
         >
           <ChevronLeft size={32} />
         </button>
         <button 
-          onClick={() => setHeroIndex(prev => (prev + 1) % heroImages.length)}
+          onClick={() => setHeroIndex(prev => (prev + 1) % activeSlides.length)}
           className="absolute right-8 top-1/2 -translate-y-1/2 z-30 w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all active:scale-90"
         >
           <ChevronRight size={32} />
