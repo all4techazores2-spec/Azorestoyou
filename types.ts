@@ -310,6 +310,7 @@ export interface Activity {
   phone?: string;
   address?: string;
   gallery?: string[];
+  gpxXml?: string;
 }
 
 export interface TourGuide {

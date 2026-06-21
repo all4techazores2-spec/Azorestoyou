@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera
+  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera, Map
 } from 'lucide-react';
 
 import * as constants from '../constants';
@@ -1971,6 +1971,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">Nenhum Ponto de Interesse Adicionado</p>
                         </div>
                       )}
+                   </div>
+                </div>
+
+                {/* GPX XML Editor */}
+                <div className="bg-slate-900/5 p-6 rounded-[2.5rem] border border-slate-200 shadow-inner mt-6">
+                   <div className="flex items-center gap-3 mb-6">
+                     <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
+                        <Map size={20} />
+                     </div>
+                     <div>
+                        <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Conteúdo do Ficheiro GPX (XML)</h4>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Cole os dados XML do trilho para visualização do percurso</p>
+                     </div>
+                   </div>
+                   <div className="space-y-1.5">
+                     <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider ml-1">Dados XML GPX</label>
+                     <textarea 
+                       className="w-full h-64 border-2 border-slate-200 p-4 rounded-2xl font-mono text-xs focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none bg-white" 
+                       placeholder={`<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Azores4you" ...>\n  <trk>\n    <trkseg>\n      <trkpt lat="37.75" lon="-25.67"/>\n    </trkseg>\n  </trk>\n</gpx>`}
+                       value={editingItem.gpxXml || ''} 
+                       onChange={e => setEditingItem({...editingItem, gpxXml: e.target.value})}
+                     />
                    </div>
                 </div>
               </div>
