@@ -19,6 +19,7 @@ import {
 import * as constants from '../constants';
 
 import { API_BASE_URL } from '../config';
+import { searchOpenStreetMapPlaces, searchWikidataTourism, checkDuplicates } from '../services/freeDataImportService';
 
 console.log("%c🚀 Azores4you v1.2.1 - Pro Instance Active", "color: #10b981; font-weight: bold; font-size: 14px;");
 
@@ -143,17 +144,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // States for "Importar com IA"
   const [showAiImportModal, setShowAiImportModal] = useState(false);
-  const [aiStep, setAiStep] = useState<1 | 2 | 3 | 'preview'>(1);
+  const [aiStep, setAiStep] = useState<1 | 2 | 3 | 'preview' | 'loading'>(1);
   const [aiMessages, setAiMessages] = useState<Array<{ sender: 'ia' | 'user', text: string, options?: string[] }>>([
     { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
   ]);
   const [aiInputValue, setAiInputValue] = useState('');
   const [aiSelectedCategory, setAiSelectedCategory] = useState('');
+  const [aiSelectedSubcategory, setAiSelectedSubcategory] = useState('');
   const [aiSelectedIsland, setAiSelectedIsland] = useState('');
   const [aiQuantity, setAiQuantity] = useState<number | 'all'>(10);
   const [aiGeneratedItems, setAiGeneratedItems] = useState<any[]>([]);
   const [aiSelectedDraftIds, setAiSelectedDraftIds] = useState<string[]>([]);
   const [aiEditingItemIndex, setAiEditingItemIndex] = useState<number | null>(null);
+  const [aiIsLoading, setAiIsLoading] = useState(false);
 
   const parseQuantity = (text: string): number | 'all' => {
     const normalized = text.toLowerCase().trim();
@@ -340,70 +343,233 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return list;
   };
 
-  const handleSendAiMessage = (userText: string) => {
+  const detectDashboardContext = () => {
+    let island = 'São Miguel';
+    if (islandFilter !== 'all') {
+      const found = Object.entries(islandMapping).find(([name, code]) => code === islandFilter || name === islandFilter);
+      if (found) island = found[0];
+    }
+
+    let category = 'Restaurantes';
+    let subcategory = '';
+
+    switch (activeTab) {
+      case 'restaurants':
+        category = 'Restaurantes';
+        subcategory = cuisineFilter !== 'all' ? cuisineFilter : '';
+        break;
+      case 'hotels':
+        category = 'Alojamentos';
+        subcategory = hotelFilter !== 'all' ? hotelFilter : '';
+        break;
+      case 'animals':
+        category = 'Lojas de Animais';
+        break;
+      case 'beauty':
+        category = 'Cabeleireiros';
+        subcategory = beautyFilter !== 'all' ? beautyFilter : '';
+        if (subcategory.toLowerCase().includes('barbeiro')) {
+          category = 'Barbeiros';
+        }
+        break;
+      case 'shops':
+        category = 'Lojas Locais';
+        subcategory = shopsFilter !== 'all' ? shopsFilter : '';
+        break;
+      case 'trails':
+        category = 'Trilhos';
+        break;
+      case 'events':
+        category = 'Eventos';
+        break;
+      case 'services':
+        subcategory = servicesFilter !== 'all' ? servicesFilter : '';
+        if (subcategory.toLowerCase().includes('táxi') || subcategory.toLowerCase().includes('taxi')) {
+          category = 'Táxis';
+        } else {
+          category = 'Farmácias';
+        }
+        break;
+      case 'buses':
+        category = 'Autocarros';
+        break;
+      case 'municipal':
+        category = 'Municípios';
+        break;
+    }
+
+    return { category, subcategory, island };
+  };
+
+  const handleSendAiMessage = async (userText: string) => {
     if (!userText.trim()) return;
 
     const newMessages = [...aiMessages, { sender: 'user' as const, text: userText }];
     setAiMessages(newMessages);
     setAiInputValue('');
 
-    setTimeout(() => {
-      if (aiStep === 1) {
-        // We selected a category
-        setAiSelectedCategory(userText);
-        setAiStep(2);
-        setAiMessages(prev => [
-          ...prev,
-          {
-            sender: 'ia' as const,
-            text: `Pretende pesquisar em todas as ilhas ou numa ilha específica?`,
-            options: ['Todas as ilhas', 'São Miguel', 'Terceira', 'Faial', 'Pico', 'São Jorge', 'Flores', 'Corvo', 'Graciosa', 'Santa Maria']
+    // Wait a brief moment to let UI render the user message
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    if (aiStep === 1) {
+      // Parse quantity selected by the admin
+      let qty: number | 'all' = 10;
+      if (userText.includes('5')) qty = 5;
+      else if (userText.includes('10')) qty = 10;
+      else if (userText.includes('20')) qty = 20;
+      else if (userText.toLowerCase().includes('todo') || userText.toLowerCase().includes('todos')) qty = 'all';
+      else {
+        qty = parseQuantity(userText);
+      }
+
+      // Hard safety limit check (max 100)
+      if (qty === 'all') qty = 100;
+      else qty = Math.min(qty, 100);
+
+      setAiQuantity(qty);
+      setAiStep(2);
+      setAiMessages(prev => [
+        ...prev,
+        {
+          sender: 'ia' as const,
+          text: `Quer pesquisar em todas as ilhas ou manter o filtro atual para "${aiSelectedIsland}"?`,
+          options: [`Manter filtro atual (${aiSelectedIsland})`, 'Pesquisar em todas as ilhas']
+        }
+      ]);
+    } else if (aiStep === 2) {
+      const isAllIslands = userText.toLowerCase().includes('todas');
+      const queryIsland = isAllIslands ? 'all' : aiSelectedIsland;
+      
+      setAiIsLoading(true);
+      setAiStep('loading');
+
+      const currentCategory = aiSelectedCategory || 'Restaurantes';
+      const qty = aiQuantity;
+      const subcat = aiSelectedSubcategory;
+
+      const catMap: Record<string, string> = {
+        'Restaurantes': 'restaurants',
+        'Alojamentos': 'hotels',
+        'Lojas de Animais': 'animals',
+        'Cabeleireiros': 'beauty',
+        'Barbeiros': 'beauty',
+        'Lojas Locais': 'shops',
+        'Trilhos': 'activities',
+        'Eventos': 'events',
+        'Táxis': 'services',
+        'Autocarros': 'buses',
+        'Farmácias': 'services',
+        'Municípios': 'municipal',
+        'Juntas de Freguesia': 'municipal'
+      };
+      const targetTab = catMap[currentCategory] || 'restaurants';
+      let existingList: any[] = [];
+      switch (targetTab) {
+        case 'restaurants': existingList = restaurants; break;
+        case 'shops': existingList = shops; break;
+        case 'beauty': existingList = beauty; break;
+        case 'services': existingList = services; break;
+        case 'auto_repairs': existingList = autoRepairs; break;
+        case 'auto_electronics': existingList = autoElectronics; break;
+        case 'used_market': existingList = usedMarket; break;
+        case 'animals': existingList = animals; break;
+        case 'real_estate': existingList = realEstate; break;
+        case 'gyms': existingList = gyms; break;
+        case 'stands': existingList = stands; break;
+        case 'offices': existingList = offices; break;
+        case 'it_services': existingList = itServices; break;
+        case 'perfumes': existingList = perfumes; break;
+        case 'bars': existingList = bars; break;
+        case 'events': existingList = events; break;
+        case 'municipal': existingList = municipal; break;
+        case 'activities': existingList = activities; break;
+        case 'flights': existingList = flights; break;
+        case 'hotels': existingList = hotels; break;
+        case 'cars': existingList = cars; break;
+        case 'buses': existingList = busSchedules; break;
+      }
+
+      try {
+        const limit = qty === 'all' ? 100 : qty;
+        let results: any[] = [];
+
+        // Determine islands to query
+        const islandsToQuery = queryIsland === 'all' 
+          ? ['São Miguel', 'Terceira', 'Faial', 'Pico', 'São Jorge', 'Flores', 'Corvo', 'Graciosa', 'Santa Maria'] 
+          : [queryIsland];
+
+        // Fetch from Wikidata for POIs/tourism, OSM for others
+        const isWikidata = currentCategory === 'Pontos Turísticos';
+
+        if (isWikidata) {
+          for (const isl of islandsToQuery) {
+            if (results.length >= limit) break;
+            try {
+              const res = await searchWikidataTourism({ island: isl, limit: limit - results.length });
+              results = [...results, ...res];
+            } catch (e) {
+              console.error(`Wikidata fetch failed for island ${isl}`, e);
+            }
           }
-        ]);
-      } else if (aiStep === 2) {
-        // We selected an island
-        setAiSelectedIsland(userText);
-        setAiStep(3);
-        setAiMessages(prev => [
-          ...prev,
-          {
-            sender: 'ia' as const,
-            text: `Quantos resultados pretende gerar/importar?`,
-            options: ['5 resultados', '10 resultados', '20 resultados', 'Todos os disponíveis', 'Quantidade personalizada']
+        } else {
+          for (const isl of islandsToQuery) {
+            if (results.length >= limit) break;
+            try {
+              const res = await searchOpenStreetMapPlaces({
+                category: currentCategory,
+                subcategory: subcat,
+                island: isl,
+                limit: limit - results.length
+              });
+              results = [...results, ...res];
+            } catch (e) {
+              console.error(`OSM fetch failed for island ${isl}`, e);
+            }
           }
-        ]);
-      } else if (aiStep === 3) {
-        // We chose a quantity / typed free text
-        let qty: number | 'all' = 10;
-        if (userText.includes('5')) qty = 5;
-        else if (userText.includes('10')) qty = 10;
-        else if (userText.includes('20')) qty = 20;
-        else if (userText.toLowerCase().includes('todo') || userText.toLowerCase().includes('todos')) qty = 'all';
-        else {
-          qty = parseQuantity(userText);
         }
 
-        setAiQuantity(qty);
+        // Enforce safety limit
+        results = results.slice(0, 100);
 
-        // Generate data
-        const currentCategory = aiSelectedCategory || 'Restaurantes';
-        const currentIsland = aiSelectedIsland || 'São Miguel';
-        const generated = generateAiMockData(currentCategory, currentIsland, qty);
+        // Deduplicate and process results
+        const processedResults = results.map(item => {
+          const isDuplicate = checkDuplicates(item, existingList);
+          return {
+            ...item,
+            isDuplicate
+          };
+        });
 
-        setAiGeneratedItems(generated);
-        setAiSelectedDraftIds(generated.map(g => g.id));
+        setAiGeneratedItems(processedResults);
+        
+        // Select only non-duplicates by default
+        const defaultSelected = processedResults.filter(r => !r.isDuplicate).map(r => r.id);
+        setAiSelectedDraftIds(defaultSelected);
+        
         setAiStep('preview');
-
         setAiMessages(prev => [
           ...prev,
           {
             sender: 'ia' as const,
-            text: `Gerados com sucesso ${generated.length} rascunhos para "${currentCategory}" na ilha "${currentIsland}". Por favor, reveja e edite os resultados abaixo antes de os importar.`
+            text: `Encontrados ${processedResults.length} resultados de ${isWikidata ? 'Wikidata' : 'OpenStreetMap'}. Detectados ${processedResults.filter(r => r.isDuplicate).length} possíveis duplicados (desmarcados por defeito). Reveja a tabela e edite se necessário antes de importar.`
           }
         ]);
+      } catch (err: any) {
+        console.error("AI data import failed:", err);
+        setAiStep(1);
+        setAiMessages(prev => [
+          ...prev,
+          {
+            sender: 'ia' as const,
+            text: `Erro ao obter dados: ${err.message || 'Todos os servidores públicos falharam.'} Por favor, tente novamente.`
+          }
+        ]);
+      } finally {
+        setAiIsLoading(false);
       }
-    }, 600);
+    }
   };
+
   const [modifiedCategories, setModifiedCategories] = useState<Set<string>>(new Set());
 
   const [showAppSliderSettings, setShowAppSliderSettings] = useState(false);
@@ -4512,11 +4678,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                      )}
                      <button 
                        onClick={() => {
-                         setAiStep(1);
-                         setAiMessages([
-                           { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
-                         ]);
-                         setShowAiImportModal(true);
+                         const ctx = detectDashboardContext();
+                          setAiSelectedCategory(ctx.category);
+                          setAiSelectedSubcategory(ctx.subcategory);
+                          setAiSelectedIsland(ctx.island);
+                          setAiStep(1);
+                          setAiMessages([
+                            {
+                              sender: 'ia',
+                              text: `Olá! Detetei que está na secção de "${ctx.category}" ${ctx.subcategory ? `(${ctx.subcategory})` : ''} na ilha "${ctx.island}".\n\nQuantos resultados pretende importar?`,
+                              options: ['5 resultados', '10 resultados', '20 resultados', 'Todos os disponíveis', 'Quantidade personalizada']
+                            }
+                          ]);
+                          setShowAiImportModal(true);
                        }}
                        className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-2"
                      >
@@ -5303,7 +5477,7 @@ Av. do Mar, Madalena, Pico
         {showAiImportModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-slate-955/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
@@ -5317,8 +5491,8 @@ Av. do Mar, Madalena, Pico
                     <Sparkles className="text-purple-300" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black uppercase tracking-tighter">Importar com Inteligência Artificial</h3>
-                    <p className="text-[10px] text-purple-200 uppercase tracking-widest font-bold opacity-80">Assistente autónomo de preenchimento de conteúdos</p>
+                    <h3 className="text-xl font-black uppercase tracking-tighter">Importar com Inteligência Artificial (Real)</h3>
+                    <p className="text-[10px] text-purple-200 uppercase tracking-widest font-bold opacity-80 font-mono">OpenStreetMap & Wikidata Integration</p>
                   </div>
                 </div>
                 <button 
@@ -5329,9 +5503,26 @@ Av. do Mar, Madalena, Pico
                 </button>
               </div>
 
-              {/* Chat View (Steps 1, 2, 3) */}
-              {aiStep !== 'preview' && (
-                <div className="flex-1 flex flex-col p-6 space-y-4 overflow-y-auto min-h-[400px] max-h-[60vh] bg-slate-50/50">
+              {/* Quality & Cache Warning Header */}
+              <div className="px-6 pt-4 bg-slate-50">
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl text-xs font-bold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span><strong>Aviso de qualidade:</strong> Os dados gratuitos podem estar incompletos. Reveja telefone, email, website e morada antes de publicar.</span>
+                </div>
+              </div>
+
+              {/* Loading State */}
+              {aiIsLoading && (
+                <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4 bg-slate-50/50 min-h-[300px]">
+                  <RefreshCw className="w-12 h-12 text-indigo-600 animate-spin" />
+                  <p className="text-sm font-black text-indigo-950 uppercase tracking-widest animate-pulse">A obter dados em tempo real...</p>
+                  <p className="text-xs text-slate-400">A consultar servidores públicos (OpenStreetMap / Wikidata). Isto pode demorar alguns segundos.</p>
+                </div>
+              )}
+
+              {/* Chat View (Steps 1, 2) */}
+              {!aiIsLoading && aiStep !== 'preview' && (
+                <div className="flex-1 flex flex-col p-6 space-y-4 overflow-y-auto min-h-[350px] max-h-[60vh] bg-slate-50/50">
                   <div className="flex-1 space-y-4">
                     {aiMessages.map((msg, i) => (
                       <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -5362,7 +5553,7 @@ Av. do Mar, Madalena, Pico
                       value={aiInputValue}
                       onChange={(e) => setAiInputValue(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendAiMessage(aiInputValue)}
-                      placeholder="Escreva livremente (ex: 'quero 5', 'todos', 'lojas de animais em São Miguel, 10 resultados')"
+                      placeholder="Escreva a quantidade ou resposta livremente (ex: 'quero 5', 'todos')"
                       className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none font-medium"
                     />
                     <button
@@ -5376,19 +5567,29 @@ Av. do Mar, Madalena, Pico
               )}
 
               {/* Preview Grid */}
-              {aiStep === 'preview' && (
+              {!aiIsLoading && aiStep === 'preview' && (
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                      <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">Pré-visualização dos Resultados da IA</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">Selecione, remova ou edite inline os rascunhos gerados.</p>
+                      <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">Registos Encontrados</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {aiSelectedCategory === 'Pontos Turísticos' ? 'Dados obtidos da Wikidata.' : 'Dados obtidos de OpenStreetMap.'} Reveja antes de publicar.
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
+                          const ctx = detectDashboardContext();
+                          setAiSelectedCategory(ctx.category);
+                          setAiSelectedSubcategory(ctx.subcategory);
+                          setAiSelectedIsland(ctx.island);
                           setAiStep(1);
                           setAiMessages([
-                            { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
+                            {
+                              sender: 'ia',
+                              text: `Olá! Detetei que está na secção de "${ctx.category}" ${ctx.subcategory ? `(${ctx.subcategory})` : ''} na ilha "${ctx.island}".\n\nQuantos resultados pretende importar?`,
+                              options: ['5 resultados', '10 resultados', '20 resultados', 'Todos os disponíveis', 'Quantidade personalizada']
+                            }
                           ]);
                         }}
                         className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
@@ -5398,7 +5599,7 @@ Av. do Mar, Madalena, Pico
                     </div>
                   </div>
 
-                  {/* Inline Editor Form if an item is selected for editing */}
+                  {/* Inline Editor Form */}
                   {aiEditingItemIndex !== null && aiGeneratedItems[aiEditingItemIndex] && (
                     <div className="p-6 bg-amber-50/50 border-b border-amber-100 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
                       <div className="col-span-1 md:col-span-3 flex justify-between items-center mb-1">
@@ -5457,85 +5658,122 @@ Av. do Mar, Madalena, Pico
 
                   {/* Table Grid */}
                   <div className="flex-1 overflow-auto max-h-[50vh]">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-100 border-b border-slate-200">
-                          <th className="px-6 py-4 w-12">
-                            <input
-                              type="checkbox"
-                              checked={aiGeneratedItems.length > 0 && aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))}
-                              onChange={() => {
-                                if (aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))) {
-                                  setAiSelectedDraftIds([]);
-                                } else {
-                                  setAiSelectedDraftIds(aiGeneratedItems.map(i => i.id));
-                                }
-                              }}
-                              className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                            />
-                          </th>
-                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Nome / Título</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Categoria / Ilha</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Contacto</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {aiGeneratedItems.map((item, idx) => (
-                          <tr key={item.id} className="hover:bg-slate-50/50">
-                            <td className="px-6 py-4">
+                    {aiGeneratedItems.length === 0 ? (
+                      <div className="p-12 text-center text-slate-400 italic text-sm">
+                        Não foram encontrados resultados gratuitos para esta pesquisa.
+                      </div>
+                    ) : (
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 border-b border-slate-200">
+                            <th className="px-6 py-4 w-12">
                               <input
                                 type="checkbox"
-                                checked={aiSelectedDraftIds.includes(item.id)}
+                                checked={aiGeneratedItems.length > 0 && aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))}
                                 onChange={() => {
-                                  if (aiSelectedDraftIds.includes(item.id)) {
-                                    setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
+                                  if (aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))) {
+                                    setAiSelectedDraftIds([]);
                                   } else {
-                                    setAiSelectedDraftIds(prev => [...prev, item.id]);
+                                    setAiSelectedDraftIds(aiGeneratedItems.map(i => i.id));
                                   }
                                 }}
                                 className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                               />
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-slate-800 text-sm">
-                                {item.name || item.title || item.company}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex gap-2">
-                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                                  {aiSelectedCategory}
-                                </span>
-                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                                  {item.island}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-xs font-mono text-slate-600">
-                              {item.phone || item.email || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 flex gap-2">
-                              <button
-                                onClick={() => setAiEditingItemIndex(idx)}
-                                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-bold transition-all"
-                              >
-                                Editar
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setAiGeneratedItems(prev => prev.filter(i => i.id !== item.id));
-                                  setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
-                                }}
-                                className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-all"
-                              >
-                                Remover
-                              </button>
-                            </td>
+                            </th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Nome / Título</th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Categoria / Ilha</th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Contacto</th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Fonte</th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Estado / Alerta</th>
+                            <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Ações</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {aiGeneratedItems.map((item, idx) => (
+                            <tr key={item.id} className={`hover:bg-slate-50/50 ${item.isDuplicate ? 'bg-amber-50/30' : ''}`}>
+                              <td className="px-6 py-4">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isDuplicate ? false : aiSelectedDraftIds.includes(item.id)}
+                                  onChange={() => {
+                                    if (aiSelectedDraftIds.includes(item.id)) {
+                                      setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
+                                    } else {
+                                      setAiSelectedDraftIds(prev => [...prev, item.id]);
+                                    }
+                                  }}
+                                  className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                />
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="font-bold text-slate-800 text-sm">
+                                  {item.name || item.title || item.company}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex gap-2">
+                                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                                    {aiSelectedCategory}
+                                  </span>
+                                  <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                                    {item.island}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-mono text-slate-600">
+                                <div className="space-y-0.5">
+                                  <div>📞 {item.phone || 'por confirmar'}</div>
+                                  <div className="text-[10px] text-slate-400">🌐 {item.website || 'por confirmar'}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="text-[10px] font-mono font-bold text-slate-500">
+                                  {item.source} ({item.sourceId})
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                {item.isDuplicate ? (
+                                  <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                                    Possível duplicado
+                                  </span>
+                                ) : (
+                                  <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                                    Novo
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 flex gap-2">
+                                <button
+                                  onClick={() => setAiEditingItemIndex(idx)}
+                                  className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Editar
+                                </button>
+                                {item.website && item.website !== 'por confirmar' && (
+                                  <a
+                                    href={item.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all text-center flex items-center"
+                                  >
+                                    Ver Fonte
+                                  </a>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    setAiGeneratedItems(prev => prev.filter(i => i.id !== item.id));
+                                    setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
+                                  }}
+                                  className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  Remover
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
 
                   {/* Actions Footer */}
@@ -5553,9 +5791,17 @@ Av. do Mar, Madalena, Pico
                       <button
                         disabled={aiSelectedDraftIds.length === 0}
                         onClick={async () => {
-                          const toImport = aiGeneratedItems.filter(item => aiSelectedDraftIds.includes(item.id));
+                          const toImport = aiGeneratedItems.filter(item => aiSelectedDraftIds.includes(item.id)).map(item => {
+                            return {
+                              ...item,
+                              phone: item.phone || 'por confirmar',
+                              email: item.email || 'por confirmar',
+                              website: item.website || 'por confirmar',
+                              address: item.address || 'por confirmar',
+                              needsReview: true
+                            };
+                          });
                           
-                          // Map Category name to actual state tab and call the respective setter
                           const catMap: Record<string, string> = {
                             'Restaurantes': 'restaurants',
                             'Alojamentos': 'hotels',
@@ -5574,9 +5820,33 @@ Av. do Mar, Madalena, Pico
 
                           const targetTab = catMap[aiSelectedCategory] || 'restaurants';
                           
-                          // Helper update function
                           const importToLocal = (list: any[], setter: (l: any[]) => void) => {
-                            setter([...list, ...toImport]);
+                            const existingIds = list.map(x => x.id);
+                            const uniqueNew = toImport.filter(x => !existingIds.includes(x.id)).map(x => {
+                              if (targetTab === 'restaurants') {
+                                return {
+                                  ...x,
+                                  latitude: x.coordinates.lat.toString(),
+                                  longitude: x.coordinates.lng.toString(),
+                                  rating: 4.0,
+                                  reviews: 0
+                                };
+                              } else if (targetTab === 'hotels') {
+                                return {
+                                  ...x,
+                                  stars: 3,
+                                  pricePerNight: 80
+                                };
+                              } else if (targetTab === 'activities') {
+                                return {
+                                  ...x,
+                                  title: x.name || x.title,
+                                  type: aiSelectedCategory === 'Trilhos' ? 'trail' : 'poi'
+                                };
+                              }
+                              return x;
+                            });
+                            setter([...list, ...uniqueNew]);
                           };
 
                           switch (targetTab) {
@@ -5604,7 +5874,6 @@ Av. do Mar, Madalena, Pico
                             case 'buses': importToLocal(busSchedules, onUpdateBusSchedules); break;
                           }
 
-                          // Switch tab so user sees their imported drafts immediately
                           if (targetTab === 'activities' && aiSelectedCategory === 'Trilhos') {
                             setActiveTab('trails');
                           } else {
@@ -5627,6 +5896,7 @@ Av. do Mar, Madalena, Pico
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };
