@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ArrowRight, Search, Heart, MessageCircle, Share2, MoreHorizontal, Send, 
+  ArrowLeft, Search, Heart, MessageCircle, Share2, MoreHorizontal, Send, 
   Image as ImageIcon, Video, Smile, Link, Mail, MessageSquare, Copy, 
-  CheckCircle2, X, Camera, Type, Palette, Filter, Music, Radio,
-  ThumbsUp, User as UserIcon
+  CheckCircle2, X, Camera, Type, Palette, Filter, Music, Radio, Bookmark,
+  ThumbsUp, User as UserIcon, MapPin, Compass, Trophy, Users, Star, Sparkles,
+  Play, Pause, Mic, Paperclip, SendHorizonal, Calendar, Check, HelpCircle,
+  Hash, ChevronLeft, ChevronRight, MessageCircleCode, CheckSquare, Bell, Menu as MenuIcon, Plus, Settings
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
@@ -30,645 +32,1186 @@ interface Post {
   likes: number;
   comments: Comment[];
   isLiked?: boolean;
+  isSaved?: boolean;
+  images?: string[];
+  checkInPlace?: string;
+  likedBy?: string[];
 }
 
 interface Comment {
   id: number;
   author: string;
+  avatar?: string;
   text: string;
   time: string;
+  likes?: number;
+  isLiked?: boolean;
+  replies?: Comment[];
+  image?: string;
+  voiceUrl?: string;
+  gif?: string;
 }
 
-const CommunitySection: React.FC<CommunitySectionProps> = ({ isAuthenticated, userName, posts, onSyncPosts, onShowAuth, onClose }) => {
-  const [communityStep, setCommunityStep] = useState<'landing' | 'feed'>('landing');
+interface Story {
+  id: number;
+  userName: string;
+  avatar: string;
+  mediaUrl: string;
+  mediaType: 'image' | 'video';
+  timestamp: number;
+}
+
+interface Reel {
+  id: number;
+  author: string;
+  avatar: string;
+  videoUrl: string;
+  caption: string;
+  likes: number;
+  comments: number;
+  isLiked?: boolean;
+  isSaved?: boolean;
+}
+
+interface Group {
+  id: string;
+  name: string;
+  banner: string;
+  description: string;
+  membersCount: number;
+  isAdmin?: boolean;
+}
+
+interface EventItem {
+  id: string;
+  title: string;
+  image: string;
+  date: string;
+  time: string;
+  island: string;
+  location: string;
+  participants: string[];
+}
+
+interface ChatMessage {
+  id: string;
+  sender: string;
+  text?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  voiceUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
+  timestamp: string;
+  read: boolean;
+}
+
+const CommunitySection: React.FC<CommunitySectionProps> = ({ 
+  isAuthenticated, 
+  userName, 
+  posts, 
+  onSyncPosts, 
+  onShowAuth, 
+  onClose 
+}) => {
+  // Mobile Tab bar navigation: 'feed' | 'explore' | 'favorites' | 'profile'
+  const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile'>('feed');
+  const [selectedExploreCategory, setSelectedExploreCategory] = useState<string>('Para ti');
   
-  // Real-time sync when entering feed
-  useEffect(() => {
-    if (communityStep === 'feed') {
-      onSyncPosts();
-    }
-  }, [communityStep]);
+  // Overlays / Drawers
+  const [showHamburgerDrawer, setShowHamburgerDrawer] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeStoryView, setActiveStoryView] = useState<Story | null>(null);
+  const [activePostDetail, setActivePostDetail] = useState<Post | null>(null);
+  const [activeChatUser, setActiveChatUser] = useState<string | null>(null);
+  const [showAISidebar, setShowAISidebar] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  // UI State
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState<number | null>(null);
-  const [showMediaEditor, setShowMediaEditor] = useState<'photo' | 'video' | null>(null);
-  const [showLiveStream, setShowLiveStream] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  // Form Composer State
   const [postText, setPostText] = useState('');
-  const [newComment, setNewComment] = useState('');
-  const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [checkInPlace, setCheckInPlace] = useState<string | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState<{ [postId: number]: number }>({});
 
-  // Editor State
-  const [editorText, setEditorText] = useState('');
-  const [editorFilter, setEditorFilter] = useState('none');
-  const [editorColor, setEditorColor] = useState('#ffffff');
+  // Comment Form State
+  const [newCommentText, setNewCommentText] = useState('');
+  const [commentFile, setCommentFile] = useState<File | null>(null);
+  const [isRecordingComment, setIsRecordingComment] = useState(false);
+  const [recordedCommentBlob, setRecordedCommentBlob] = useState<Blob | null>(null);
+  const [commentGif, setCommentGif] = useState<string | null>(null);
 
-  // Refs
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [feedCategoryFilter, setFeedCategoryFilter] = useState<string>('Todos');
 
-  const emojis = ['❤️', '🔥', '👏', '😮', '😢', '😍', '😂', '💯', '✨', '🌊', '⛰️', '🥘'];
+  // Gamification credits
+  const [userCredits, setUserCredits] = useState(() => {
+    const saved = localStorage.getItem(`credits_${userName}`);
+    return saved ? parseInt(saved, 10) : 100;
+  });
 
-  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setSelectedMedia(url);
-      setShowMediaEditor(type);
+  const addCredits = (amount: number) => {
+    setUserCredits(prev => {
+      const next = prev + amount;
+      localStorage.setItem(`credits_${userName}`, next.toString());
+      return next;
+    });
+  };
+
+  // Sync posts on load
+  useEffect(() => {
+    onSyncPosts();
+  }, []);
+
+  // Cloudinary Uploader Helper
+  const uploadFileToCloudinary = async (file: File, folder: string): Promise<string> => {
+    setIsUploadingMedia(true);
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/upload?folder=${encodeURIComponent(folder)}`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) throw new Error('Upload error');
+      const data = await res.json();
+      setIsUploadingMedia(false);
+      return data.url;
+    } catch (e) {
+      setIsUploadingMedia(false);
+      console.error(e);
+      return URL.createObjectURL(file);
     }
   };
 
+  // Mock Stories (expired in 24h)
+  const [stories, setStories] = useState<Story[]>(() => {
+    const defaults: Story[] = [
+      { id: 1, userName: 'Marta Silva', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marta', mediaUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', mediaType: 'image', timestamp: Date.now() - 3600000 },
+      { id: 2, userName: 'João Melo', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Joao', mediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800', mediaType: 'image', timestamp: Date.now() - 7200000 },
+      { id: 3, userName: 'Explora Açores', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Explora', mediaUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800', mediaType: 'image', timestamp: Date.now() - 14400000 }
+    ];
+    return defaults;
+  });
+
+  const handleStoryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFileToCloudinary(file, 'community/stories');
+    const newStory: Story = {
+      id: Date.now(),
+      userName: userName,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
+      mediaUrl: url,
+      mediaType: file.type.startsWith('video/') ? 'video' : 'image',
+      timestamp: Date.now()
+    };
+    setStories([newStory, ...stories]);
+    addCredits(50);
+    alert('História publicada! Ganhou +50 CRÉDITOS.');
+  };
+
+  // Chat message system
+  const [dmHistory, setDmHistory] = useState<{ [user: string]: ChatMessage[] }>({
+    'Mariana Silva': [
+      { id: '1', sender: 'Mariana Silva', text: 'Olá! Vais ao trilho da Lagoa do Fogo no Sábado?', timestamp: '14:20', read: true },
+      { id: '2', sender: userName, text: 'Olá Mariana! Sim, estou a pensar ir.', timestamp: '14:22', read: true }
+    ],
+    'Pedro Sousa': [
+      { id: '1', sender: 'Pedro Sousa', text: 'Consegues enviar-me a foto daquela vista de ontem?', timestamp: 'Ontem', read: true }
+    ]
+  });
+  const [chatTextInput, setChatTextInput] = useState('');
+
+  const sendChatMessage = () => {
+    if (!chatTextInput.trim() || !activeChatUser) return;
+    const msg: ChatMessage = {
+      id: Date.now().toString(),
+      sender: userName,
+      text: chatTextInput,
+      timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+    setDmHistory(prev => ({
+      ...prev,
+      [activeChatUser]: [...(prev[activeChatUser] || []), msg]
+    }));
+    setChatTextInput('');
+
+    // Auto-reply
+    setTimeout(() => {
+      const reply: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: activeChatUser,
+        text: 'Obrigado! Falo contigo em breve.',
+        timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+        read: true
+      };
+      setDmHistory(prev => ({
+        ...prev,
+        [activeChatUser]: [...(prev[activeChatUser] || []), reply]
+      }));
+    }, 1500);
+  };
+
+  // Filter categories
+  const feedCategories = ['Todos', 'Seguidores', 'Populares', 'Trilhos'];
+
+  // Handle Publish Post
   const handlePublish = async () => {
-    if (!postText && !selectedMedia) return;
+    if (!postText.trim() && selectedPhotos.length === 0 && !selectedVideo) return;
+
+    let imageUrls: string[] = [];
+    let videoUrl = '';
+
+    if (selectedPhotos.length > 0) {
+      for (const photo of selectedPhotos) {
+        const url = await uploadFileToCloudinary(photo, 'community/posts');
+        imageUrls.push(url);
+      }
+    }
+
+    if (selectedVideo) {
+      videoUrl = await uploadFileToCloudinary(selectedVideo, 'community/videos');
+    }
 
     const newPost: Post = {
       id: Date.now(),
       author: userName,
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
-      time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-      location: 'Açores',
+      time: 'Agora',
+      location: checkInPlace ? `está em ${checkInPlace}` : 'Açores',
       content: postText,
-      image: showMediaEditor === 'photo' ? selectedMedia || undefined : undefined,
-      video: showMediaEditor === 'video' ? selectedMedia || undefined : undefined,
+      image: imageUrls[0] || undefined,
+      images: imageUrls.length > 1 ? imageUrls : undefined,
+      video: videoUrl || undefined,
       likes: 0,
-      comments: []
+      comments: [],
+      checkInPlace: checkInPlace || undefined,
+      likedBy: []
     };
 
     try {
-       await fetch(`${API_BASE_URL}/api/posts`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(newPost)
-       });
-       onSyncPosts();
-       setPostText('');
-       setSelectedMedia(null);
-       setShowMediaEditor(null);
-       setEditorText('');
-    } catch (err) {
-       console.error("Error publishing post:", err);
-       alert("Erro ao publicar post. Verifique sua conexão.");
+      await fetch(`${API_BASE_URL}/api/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost)
+      });
+      onSyncPosts();
+      setPostText('');
+      setSelectedPhotos([]);
+      setSelectedVideo(null);
+      setCheckInPlace(null);
+      setShowCreateModal(false);
+      addCredits(100);
+      alert('Publicado com sucesso! Ganhou +100 CRÉDITOS.');
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const toggleLike = async (id: number) => {
-    const updatedPosts = posts.map(p => 
-      p.id === id ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked } : p
-    );
-    
-    try {
-       await fetch(`${API_BASE_URL}/api/posts`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(updatedPosts)
-       });
-       onSyncPosts();
-    } catch (err) {
-       console.error("Error liking post:", err);
-    }
-  };
-
-  const handleAddComment = async (postId: number) => {
-    if (!newComment.trim()) return;
-    const updatedPosts = posts.map(p => 
-      p.id === postId ? { ...p, comments: [...p.comments, { id: Date.now(), author: userName, text: newComment, time: 'Agora' }] } : p
-    );
+  const handlePostLike = async (post: Post) => {
+    const updated = posts.map(p => {
+      if (p.id === post.id) {
+        const isLiked = !p.isLiked;
+        const likedBy = p.likedBy || [];
+        const likes = isLiked ? p.likes + 1 : p.likes - 1;
+        const finalLikedBy = isLiked ? [...likedBy, userName] : likedBy.filter(u => u !== userName);
+        const newP = { ...p, isLiked, likes, likedBy: finalLikedBy };
+        
+        // Update local state if opened in details
+        if (activePostDetail?.id === post.id) {
+          setActivePostDetail(newP);
+        }
+        return newP;
+      }
+      return p;
+    });
 
     try {
-       await fetch(`${API_BASE_URL}/api/posts`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(updatedPosts)
-       });
-       onSyncPosts();
-       setNewComment('');
-    } catch (err) {
-       console.error("Error commenting:", err);
+      await fetch(`${API_BASE_URL}/api/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      onSyncPosts();
+      addCredits(5);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  // Live Stream Simulation
-  useEffect(() => {
-    if (showLiveStream && videoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => { if (videoRef.current) videoRef.current.srcObject = stream; })
-        .catch(err => console.error("Camera error:", err));
+  const handlePostSave = async (post: Post) => {
+    const updated = posts.map(p => {
+      if (p.id === post.id) {
+        const newP = { ...p, isSaved: !p.isSaved };
+        if (activePostDetail?.id === post.id) {
+          setActivePostDetail(newP);
+        }
+        return newP;
+      }
+      return p;
+    });
+    try {
+      await fetch(`${API_BASE_URL}/api/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      onSyncPosts();
+    } catch (e) {
+      console.error(e);
     }
-  }, [showLiveStream]);
+  };
 
-  if (communityStep === 'landing') {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between p-12 overflow-hidden"
-      >
-        {/* Background Video */}
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          playsInline 
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
-        >
-           <source src="/comu.mp4" type="video/mp4" />
-        </video>
+  // Submit comment
+  const handleCommentSubmit = async () => {
+    if (!newCommentText.trim() && !commentFile) return;
 
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/80 pointer-events-none" />
+    let imageUrl = '';
+    if (commentFile) {
+      imageUrl = await uploadFileToCloudinary(commentFile, 'community/comments');
+    }
 
-        <div className="flex-1 flex flex-col items-center justify-center max-w-sm w-full text-center space-y-12 relative z-10">
-           <motion.div 
-             initial={{ scale: 0.8, opacity: 0 }}
-             animate={{ scale: 1, opacity: 1 }}
-             transition={{ delay: 0.2, type: 'spring' }}
-             className="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20 overflow-hidden"
-           >
-              <AzoresLogo size={120} />
-           </motion.div>
+    const newComment: Comment = {
+      id: Date.now(),
+      author: userName,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
+      text: newCommentText,
+      time: 'Agora',
+      likes: 0,
+      image: imageUrl || undefined
+    };
 
-           <motion.div
-             initial={{ y: 20, opacity: 0 }}
-             animate={{ y: 0, opacity: 1 }}
-             transition={{ delay: 0.3 }}
-             className="space-y-4"
-           >
-              <h1 className="text-4xl font-black text-white uppercase tracking-tighter leading-tight">
-                Comunidade <br/>
-                Azores<span className="text-green-400">Toyou</span>
-              </h1>
-              <p className="text-white/70 font-bold uppercase tracking-[0.2em] text-[11px]">
-                Onde as Histórias Ganham Vida
-              </p>
-           </motion.div>
+    if (!activePostDetail) return;
+    const finalPost = { ...activePostDetail, comments: [...activePostDetail.comments, newComment] };
+    setActivePostDetail(finalPost);
 
-           <div className="w-full space-y-4">
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setCommunityStep('feed')}
-                className="w-full py-5 rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3 group"
-                style={{ background: 'linear-gradient(to right, #1A75BB, #2C7A2E)', color: 'white' }}
-              >
-                 Entrar <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
+    const updated = posts.map(p => p.id === activePostDetail.id ? finalPost : p);
+    try {
+      await fetch(`${API_BASE_URL}/api/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      onSyncPosts();
+      setNewCommentText('');
+      setCommentFile(null);
+      addCredits(20);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onClose}
-                className="w-full py-4 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border border-rose-100"
-              >
-                 Sair da Comunidade
-              </motion.button>
-           </div>
-        </div>
-
-        <motion.div className="text-center space-y-2 relative z-10">
-           <p className="text-[10px] text-white font-black uppercase tracking-widest">AzoresToYou Social Network</p>
-           <p className="text-[8px] text-white/40 font-bold uppercase tracking-tighter">© 2025 BionicID. All rights reserved.</p>
-        </motion.div>
-      </motion.div>
-    );
-  }
+  // Filter posts
+  const filteredPosts = posts.filter(p => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return p.content.toLowerCase().includes(q) || p.author.toLowerCase().includes(q);
+    }
+    if (feedCategoryFilter === 'Trilhos') {
+      return p.content.toLowerCase().includes('trilho') || p.location.toLowerCase().includes('trilho');
+    }
+    if (feedCategoryFilter === 'Populares') {
+      return p.likes >= 10;
+    }
+    return true;
+  });
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen bg-[#F0F2F5] pb-24"
-    >
-      {/* Hidden Inputs */}
-      <input type="file" accept="image/*" ref={photoInputRef} className="hidden" onChange={(e) => handleMediaSelect(e, 'photo')} />
-      <input type="file" accept="video/*" ref={videoInputRef} className="hidden" onChange={(e) => handleMediaSelect(e, 'video')} />
+    <div className="min-h-screen bg-[#F5F7FA] text-[#071A3D] font-sans antialiased pb-24 relative select-none">
+      
+      {/* Dynamic hidden input for stories */}
+      <input 
+        type="file" 
+        id="story-upload-file-mobile" 
+        accept="image/*,video/*" 
+        className="hidden" 
+        onChange={handleStoryUpload} 
+      />
 
-      {/* UNIPAGE Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm px-4 h-14 flex items-center justify-between">
-         <div className="flex items-center gap-2">
-            <AzoresLogo size={32} />
-            <span className="text-lg font-black tracking-tighter uppercase text-slate-900">
-               Azores<span className="text-green-600">Toyou</span>
+      {/* Desktop Wrapper Frame - centered layout */}
+      <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col border-x border-slate-100">
+        
+        {/* ================= FIXED HEADER ================= */}
+        <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
+          <button onClick={() => setShowHamburgerDrawer(true)} className="p-2 hover:bg-slate-50 rounded-full transition-all text-[#071A3D]">
+            <MenuIcon size={20} />
+          </button>
+          
+          <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveMobileTab('feed')}>
+            <AzoresLogo size={26} />
+            <span className="text-sm font-black tracking-tighter uppercase text-[#071A3D]">
+              Azores<span className="text-[#00B857]">Toyou</span>
             </span>
-         </div>
-         <div className="flex-1 max-w-md mx-4 hidden sm:block">
-            <div className="relative group">
-               <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-               <input type="text" placeholder="Pesquisar..." className="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all" />
-            </div>
-         </div>
-         <div className="flex items-center gap-3">
-            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 bg-slate-200 rounded-full overflow-hidden border border-slate-100 cursor-pointer">
-               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Profile" className="w-full h-full object-cover" />
-            </motion.div>
-         </div>
-      </header>
+          </div>
 
-      <div className="max-w-xl mx-auto py-6 px-4 space-y-6">
-         {/* Create Post Section */}
-         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
-            <div className="flex gap-3">
-               <div className="w-10 h-10 bg-slate-100 rounded-full flex-shrink-0 overflow-hidden">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
-               </div>
-               <div className="flex-1 relative">
-                  <textarea 
+          <div className="flex items-center gap-1">
+            <button onClick={() => { setSearchQuery(''); setActiveMobileTab('explore'); }} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D]">
+              <Search size={18} />
+            </button>
+            <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D] relative">
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+            </button>
+            <button onClick={() => setActiveMobileTab('profile')} className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden ml-1">
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
+            </button>
+          </div>
+        </header>
+
+        {/* ================= MAIN SCROLL CONTAINER ================= */}
+        <main className="flex-1 overflow-y-auto">
+          
+          {/* ================= TABS: FEED TAB ================= */}
+          {activeMobileTab === 'feed' && (
+            <div className="space-y-4 py-4 px-3">
+              
+              {/* Stories Bar */}
+              <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-none border-b border-slate-50">
+                {/* Create Story */}
+                <div 
+                  className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+                  onClick={() => document.getElementById('story-upload-file-mobile')?.click()}
+                >
+                  <div className="relative w-14 h-14 rounded-full border border-slate-200 p-[2px] bg-slate-50 flex items-center justify-center overflow-hidden">
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Minha" className="w-full h-full object-cover rounded-full" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                      <Plus size={16} className="text-white font-black" />
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-550 truncate w-14 text-center">A tua história</span>
+                </div>
+
+                {/* Friends Stories */}
+                {stories.map(story => (
+                  <div 
+                    key={story.id} 
+                    className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+                    onClick={() => setActiveStoryView(story)}
+                  >
+                    <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-[#0066FF] to-[#00B857]">
+                      <div className="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden">
+                        <img src={story.avatar} alt={story.userName} className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-650 truncate w-14 text-center">{story.userName}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Publication Composer trigger button */}
+              <div 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-all"
+              >
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-9 h-9 rounded-full border border-slate-150" />
+                <span className="text-xs text-slate-450 font-semibold">No que estás a pensar, {userName}?</span>
+              </div>
+
+              {/* Categories Navigation scroll */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {feedCategories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setFeedCategoryFilter(cat)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex-shrink-0 ${
+                      feedCategoryFilter === cat 
+                        ? 'bg-[#00B857] text-white' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Feed posts list */}
+              <div className="space-y-4">
+                {filteredPosts.map(post => {
+                  const currentIdx = activeCarouselIndex[post.id] || 0;
+                  const postImages = post.images || (post.image ? [post.image] : []);
+                  const hasCarousel = postImages.length > 1;
+
+                  return (
+                    <div key={post.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                      
+                      {/* Card Header */}
+                      <div className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img src={post.avatar} alt="Avatar" className="w-10 h-10 rounded-full border border-slate-100" />
+                          <div>
+                            <h4 className="text-xs font-black text-[#071A3D] leading-none flex items-center gap-1.5">
+                              <span>{post.author}</span>
+                              {post.checkInPlace && (
+                                <span className="text-[10px] text-slate-450 font-semibold lowercase">
+                                  está em <strong className="text-[#00B857]">{post.checkInPlace}</strong>
+                                </span>
+                              )}
+                            </h4>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-1">
+                              {post.location} • {post.time}
+                            </p>
+                          </div>
+                        </div>
+                        <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-full">
+                          <MoreHorizontal size={16} />
+                        </button>
+                      </div>
+
+                      {/* Text content */}
+                      {post.content && (
+                        <div 
+                          className="px-4 pb-3 cursor-pointer"
+                          onClick={() => setActivePostDetail(post)}
+                        >
+                          <p className="text-xs font-semibold text-slate-700 leading-relaxed">{post.content}</p>
+                        </div>
+                      )}
+
+                      {/* Media */}
+                      {postImages.length > 0 && (
+                        <div className="relative aspect-square bg-slate-50 overflow-hidden cursor-pointer" onClick={() => setActivePostDetail(post)}>
+                          <img src={postImages[currentIdx]} alt="Media" className="w-full h-full object-cover" />
+                          
+                          {/* Indicator label */}
+                          {hasCarousel && (
+                            <div className="absolute top-3 right-3 bg-black/60 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                              {currentIdx + 1}/{postImages.length}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {post.video && (
+                        <div className="relative aspect-square bg-black flex items-center justify-center">
+                          <video src={post.video} controls muted autoPlay loop playsInline className="w-full h-full object-cover" />
+                        </div>
+                      )}
+
+                      {/* Action Bar */}
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button onClick={() => handlePostLike(post)} className={`flex items-center gap-1 ${post.isLiked ? 'text-rose-500' : 'text-[#071A3D]'}`}>
+                              <Heart size={18} className={post.isLiked ? 'fill-current' : ''} />
+                              <span className="text-[10px] font-black">{post.likes}</span>
+                            </button>
+
+                            <button onClick={() => setActivePostDetail(post)} className="flex items-center gap-1 text-[#071A3D]">
+                              <MessageCircle size={18} />
+                              <span className="text-[10px] font-black">{post.comments.length}</span>
+                            </button>
+
+                            <button onClick={() => alert('Link copiado!')} className="text-[#071A3D]">
+                              <Share2 size={18} />
+                            </button>
+                          </div>
+
+                          <button onClick={() => handlePostSave(post)} className={post.isSaved ? 'text-[#00B857]' : 'text-[#071A3D]'}>
+                            <Bookmark size={18} className={post.isSaved ? 'fill-current' : ''} />
+                          </button>
+                        </div>
+
+                        {/* Liked list summary */}
+                        {post.likedBy && post.likedBy.length > 0 && (
+                          <p className="text-[9px] text-slate-500 font-bold">
+                            Gostos de <strong className="text-[#071A3D]">{post.likedBy[0]}</strong> e {post.likes - 1} outras pessoas
+                          </p>
+                        )}
+
+                        {post.comments.length > 0 && (
+                          <button 
+                            onClick={() => setActivePostDetail(post)}
+                            className="text-[10px] text-slate-400 font-bold hover:underline"
+                          >
+                            Ver todos os {post.comments.length} comentários
+                          </button>
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= TABS: EXPLORAR TAB ================= */}
+          {activeMobileTab === 'explore' && (
+            <div className="space-y-4 py-4 px-3">
+              
+              {/* Search input field */}
+              <div className="relative">
+                <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar pessoas, trilhos, locais..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold focus:ring-1 focus:ring-[#00B857] text-[#071A3D]"
+                />
+              </div>
+
+              {/* Tag filters */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {['Para ti', 'Trilhos', 'Natureza', 'Praias', 'Restaurantes'].map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedExploreCategory(tag)}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex-shrink-0 ${
+                      selectedExploreCategory === tag 
+                        ? 'bg-[#00B857] text-white' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tendências */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Tendências</h4>
+                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todas</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { hashtag: '#Azores', count: '1.2K posts' },
+                    { hashtag: '#SãoMiguel', count: '980 posts' },
+                    { hashtag: '#Trilhos', count: '756 posts' },
+                    { hashtag: '#Natureza', count: '643 posts' }
+                  ].map((trend, i) => (
+                    <div key={i} className="p-3 bg-slate-50 rounded-xl flex flex-col justify-between cursor-pointer" onClick={() => { setSearchQuery(trend.hashtag); setActiveMobileTab('feed'); }}>
+                      <span className="text-xs font-black text-[#071A3D]">{trend.hashtag}</span>
+                      <span className="text-[9px] text-slate-400 font-bold mt-1">{trend.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Suggested Users */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Pessoas sugeridas</h4>
+                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todas</button>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Ana Ferreira', island: 'São Miguel' },
+                    { name: 'Diogo C.', island: 'Terceira' },
+                    { name: 'Explora Açores', island: 'Faial' }
+                  ].map((user, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5" onClick={() => setActiveChatUser(user.name)}>
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt="Avatar" className="w-8 h-8 rounded-full border border-slate-150" />
+                        <div>
+                          <p className="text-xs font-black text-[#071A3D] leading-none">{user.name}</p>
+                          <p className="text-[9px] text-slate-450 font-bold mt-1 uppercase tracking-tight">{user.island}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => { alert(`Seguiu: ${user.name}`); addCredits(10); }} className="px-3.5 py-1 bg-slate-50 hover:bg-slate-100 text-[#00B857] border border-slate-100 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all">
+                        Seguir
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Eventos em Destaque */}
+              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Eventos em destaque</h4>
+                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todos</button>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { title: 'Festas do Senhor Santo Cristo', date: '02 - 05 Jun • Ponta Delgada', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800' },
+                    { title: 'Festival Maré de Agosto', date: '15 - 18 Ago • Horta', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800' }
+                  ].map((evt, i) => (
+                    <div key={i} className="flex gap-3 items-center border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                      <img src={evt.img} alt={evt.title} className="w-14 h-14 rounded-xl object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <h5 className="text-xs font-black text-[#071A3D] truncate">{evt.title}</h5>
+                        <p className="text-[9px] text-slate-400 font-bold mt-1">{evt.date}</p>
+                      </div>
+                      <button onClick={() => { alert(`Ir ao evento: ${evt.title}`); addCredits(15); }} className="px-3 py-1.5 bg-[#00B857] text-white text-[9px] font-black uppercase tracking-wider rounded-lg">
+                        Participar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ================= TABS: FAVORITOS TAB ================= */}
+          {activeMobileTab === 'favorites' && (
+            <div className="space-y-4 py-4 px-3">
+              <h2 className="text-sm font-black uppercase tracking-wider text-[#071A3D]">Favoritos e Guardados</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {posts.filter(p => p.isSaved).map(post => (
+                  <div key={post.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden cursor-pointer shadow-sm" onClick={() => setActivePostDetail(post)}>
+                    <img src={post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'} alt="Saved" className="w-full aspect-square object-cover" />
+                    <div className="p-2">
+                      <p className="text-[10px] font-black text-[#071A3D] truncate">{post.author}</p>
+                      <p className="text-[9px] text-slate-400 font-bold mt-0.5 truncate">{post.location}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ================= TABS: PERFIL TAB ================= */}
+          {activeMobileTab === 'profile' && (
+            <div className="space-y-6 py-4 px-3">
+              {/* Profile Card Header */}
+              <div className="flex items-center gap-4">
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Profile" className="w-16 h-16 rounded-full border-2 border-slate-200" />
+                <div className="space-y-1">
+                  <h3 className="text-base font-black text-[#071A3D]">{userName}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">@braga.azt</p>
+                  <span className="bg-[#00B857]/15 text-[#00B857] text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded inline-block">
+                    {userCredits} CRÉDITOS
+                  </span>
+                </div>
+              </div>
+
+              {/* Bio details */}
+              <div className="bg-slate-50 p-4 rounded-2xl space-y-1 text-xs">
+                <p className="font-bold text-[#071A3D]">📍 São Miguel, Açores</p>
+                <p className="text-slate-500 font-semibold leading-relaxed mt-1">Explorador profissional de lagoas, caminhadas e da autêntica gastronomia açoriana. 🥾🌊</p>
+              </div>
+
+              {/* Statistics rows */}
+              <div className="grid grid-cols-3 gap-2 text-center py-2 border-y border-slate-100">
+                <div>
+                  <h4 className="text-xs font-black text-[#071A3D]">23</h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Posts</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-[#071A3D]">128</h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Seguidores</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-[#071A3D]">94</h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">A seguir</p>
+                </div>
+              </div>
+
+              {/* Profile sub-tabs grid preview */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Minhas publicações</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {posts.filter(p => p.author === userName).map(post => (
+                    <div key={post.id} className="aspect-square rounded-lg overflow-hidden border border-slate-100 cursor-pointer" onClick={() => setActivePostDetail(post)}>
+                      <img src={post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'} alt="My post" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </main>
+
+        {/* ================= FIXED BOTTOM NAVIGATION ================= */}
+        <footer className="sticky bottom-0 z-[100] bg-white border-t border-slate-100 h-16 flex items-center justify-around px-4">
+          <button onClick={() => setActiveMobileTab('feed')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'feed' ? 'text-[#00B857]' : 'text-slate-400'}`}>
+            <span className="text-lg">🏠</span>
+            <span className="text-[8px] font-black uppercase">Feed</span>
+          </button>
+          
+          <button onClick={() => setActiveMobileTab('explore')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'explore' ? 'text-[#00B857]' : 'text-slate-400'}`}>
+            <span className="text-lg">🔍</span>
+            <span className="text-[8px] font-black uppercase">Explorar</span>
+          </button>
+
+          <button onClick={() => setShowCreateModal(true)} className="w-11 h-11 bg-[#00B857] hover:bg-[#00a34b] text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-100 select-none">
+            <Plus size={22} className="font-black" />
+          </button>
+
+          <button onClick={() => setActiveMobileTab('favorites')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'favorites' ? 'text-[#00B857]' : 'text-slate-400'}`}>
+            <span className="text-lg">❤️</span>
+            <span className="text-[8px] font-black uppercase">Favoritos</span>
+          </button>
+
+          <button onClick={() => setActiveMobileTab('profile')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'profile' ? 'text-[#00B857]' : 'text-slate-400'}`}>
+            <span className="text-lg">👤</span>
+            <span className="text-[8px] font-black uppercase">Perfil</span>
+          </button>
+        </footer>
+
+        {/* ================= HAMBURGER MENU SLIDE DRAWER ================= */}
+        <AnimatePresence>
+          {showHamburgerDrawer && (
+            <div className="absolute inset-0 z-[200] overflow-hidden flex">
+              {/* Dark overlay backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowHamburgerDrawer(false)}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              />
+              
+              {/* Drawer Container Panel */}
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                className="relative bg-white w-4/5 h-full shadow-2xl z-10 flex flex-col p-6 space-y-6"
+              >
+                {/* Header title close */}
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <span className="text-sm font-black uppercase tracking-wider text-[#071A3D]">Menu</span>
+                  <button onClick={() => setShowHamburgerDrawer(false)} className="p-1.5 bg-slate-55 hover:bg-slate-100 rounded-full">
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* User Info details */}
+                <div className="flex items-center gap-3">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-11 h-11 rounded-full border border-slate-150" />
+                  <div>
+                    <h4 className="text-xs font-black text-[#071A3D]">{userName}</h4>
+                    <p className="text-[9px] text-slate-400 font-bold">@braga.azt</p>
+                  </div>
+                  <span className="ml-auto bg-amber-50 text-amber-600 text-[8px] px-2 py-0.5 rounded font-black border border-amber-100">
+                    {userCredits} CRÉDITOS
+                  </span>
+                </div>
+
+                {/* Navigation links grid list */}
+                <nav className="flex-1 space-y-1.5 overflow-y-auto">
+                  {[
+                    { label: 'Perfil', icon: '👤', tab: 'profile' },
+                    { label: 'Minhas Reservas', icon: '📅', modal: 'reservations' },
+                    { label: 'Mensagens', icon: '💬', chat: true },
+                    { label: 'Favoritos', icon: '❤️', tab: 'favorites' },
+                    { label: 'Conquistas', icon: '🏆', gamification: true },
+                    { label: 'Definições', icon: '⚙', settings: true }
+                  ].map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setShowHamburgerDrawer(false);
+                        if (item.tab) setActiveMobileTab(item.tab as any);
+                        if (item.chat) setActiveChatUser('Mariana Silva');
+                        if (item.gamification) alert('Conquistas do utilizador!');
+                      }}
+                      className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-left text-xs font-bold text-[#071A3D]"
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className="text-sm">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </span>
+                      <ChevronRight size={14} className="text-slate-400" />
+                    </button>
+                  ))}
+                </nav>
+
+                <button onClick={onClose} className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 border border-rose-100">
+                  <span>Sair da aplicação</span>
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ================= STORY FULLSCREEN VIEWER ================= */}
+        <AnimatePresence>
+          {activeStoryView && (
+            <div className="absolute inset-0 z-[300] bg-black flex flex-col justify-between">
+              
+              {/* Top progress timer bars */}
+              <div className="p-4 bg-gradient-to-b from-black/60 to-transparent absolute top-0 inset-x-0 z-10 space-y-3">
+                <div className="w-full h-[3px] bg-white/20 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 5 }}
+                    onAnimationComplete={() => setActiveStoryView(null)}
+                    className="h-full bg-white rounded-full"
+                  />
+                </div>
+                
+                {/* Header author details */}
+                <div className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-2.5">
+                    <img src={activeStoryView.avatar} alt="Avatar" className="w-7 h-7 rounded-full border border-white/20" />
+                    <span className="text-xs font-black">{activeStoryView.userName}</span>
+                    <span className="text-[10px] text-white/50">2h</span>
+                  </div>
+                  <button onClick={() => setActiveStoryView(null)} className="text-white hover:opacity-75">
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Background media image */}
+              <div className="flex-1 flex items-center justify-center">
+                <img src={activeStoryView.mediaUrl} alt="Story" className="w-full max-h-screen object-contain" />
+              </div>
+
+              {/* Bottom message overlay */}
+              <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center gap-3 z-10">
+                <input
+                  type="text"
+                  placeholder="Enviar mensagem..."
+                  className="flex-1 bg-white/20 border-none rounded-xl px-4 py-2 text-xs text-white placeholder-white/50 focus:ring-1 focus:ring-white"
+                />
+                <button onClick={() => { alert('Gosto enviado!'); setActiveStoryView(null); }} className="text-white hover:scale-110">
+                  <Heart size={20} />
+                </button>
+              </div>
+
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* ================= NOVA PUBLICAÇÃO OVERLAY MODAL ================= */}
+        <AnimatePresence>
+          {showCreateModal && (
+            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
+              
+              {/* Header */}
+              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Nova Publicação</span>
+                <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-slate-50 rounded-full">
+                  <X size={18} />
+                </button>
+              </header>
+
+              {/* Form text input composer */}
+              <div className="flex-1 p-5 space-y-4 overflow-y-auto">
+                <div className="flex gap-3">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-9 h-9 rounded-full border" />
+                  <textarea
                     value={postText}
                     onChange={(e) => setPostText(e.target.value)}
                     placeholder={`No que estás a pensar, ${userName}?`}
-                    className="w-full bg-slate-100 hover:bg-slate-200 rounded-2xl px-4 py-3 text-slate-700 text-sm font-medium transition-colors border-none focus:ring-2 focus:ring-blue-500/20 resize-none h-20"
+                    className="flex-1 border-none focus:ring-0 text-xs p-1 resize-none h-24 text-[#071A3D]"
                   />
-                  {postText && (
-                    <motion.button 
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      onClick={handlePublish}
-                      className="absolute bottom-3 right-3 bg-blue-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-200"
-                    >
-                       Publicar
-                    </motion.button>
-                  )}
-               </div>
-            </div>
-            <div className="flex border-t border-slate-100 pt-3 relative">
-               <motion.button 
-                 whileTap={{ scale: 0.9 }} 
-                 onClick={() => videoInputRef.current?.click()}
-                 className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-600"
-               >
-                  <Video className="w-4 h-4 text-rose-500" />
-                  <span className="text-[10px] font-bold uppercase">Vídeo</span>
-               </motion.button>
-               <motion.button 
-                 whileTap={{ scale: 0.9 }} 
-                 onClick={() => photoInputRef.current?.click()}
-                 className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-600"
-               >
-                  <ImageIcon className="w-4 h-4 text-green-500" />
-                  <span className="text-[10px] font-bold uppercase">Foto</span>
-               </motion.button>
-               <motion.button 
-                 whileTap={{ scale: 0.9 }} 
-                 onClick={() => setShowLiveStream(true)}
-                 className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-600 border-x border-slate-50"
-               >
-                  <Radio className="w-4 h-4 text-purple-500 animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase">Direto</span>
-               </motion.button>
-               <motion.button 
-                 whileTap={{ scale: 0.9 }} 
-                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                 className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-slate-50 rounded-lg transition-colors text-slate-600 relative"
-               >
-                  <Smile className="w-4 h-4 text-yellow-500" />
-                  <span className="text-[10px] font-bold uppercase">Sentimento</span>
-               </motion.button>
-
-               <AnimatePresence>
-                 {showEmojiPicker && (
-                   <motion.div 
-                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                     className="absolute bottom-full right-0 mb-4 p-3 bg-white rounded-2xl shadow-2xl border border-slate-100 grid grid-cols-4 gap-2 z-50"
-                   >
-                      {emojis.map(emoji => (
-                        <motion.button 
-                          key={emoji}
-                          whileHover={{ scale: 1.2 }}
-                          whileTap={{ scale: 0.8 }}
-                          onClick={() => { setPostText(prev => prev + emoji); setShowEmojiPicker(false); }}
-                          className="text-2xl p-1"
-                        >
-                          {emoji}
-                        </motion.button>
-                      ))}
-                   </motion.div>
-                 )}
-               </AnimatePresence>
-            </div>
-         </div>
-
-         {/* Feed Posts */}
-         {posts.map((post) => (
-           <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-4 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-100 shadow-sm">
-                       <img src={post.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                       <h3 className="text-sm font-black text-slate-900 leading-none">{post.author}</h3>
-                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">{post.location} • {post.time}</p>
-                    </div>
-                 </div>
-                 <motion.button whileTap={{ scale: 0.8 }} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full">
-                    <MoreHorizontal className="w-5 h-5" />
-                 </motion.button>
-              </div>
-              
-              <div className="px-4 pb-3">
-                 <p className="text-sm text-slate-800 leading-relaxed font-medium">{post.content}</p>
-              </div>
-
-              {post.image && (
-                <div className="aspect-square bg-slate-100 relative group overflow-hidden">
-                   <img 
-                     src={post.image} 
-                     alt="Post" 
-                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                   />
                 </div>
-              )}
 
-              {post.video && (
-                <div className="aspect-square bg-black relative group">
-                   <video 
-                     src={post.video} 
-                     controls 
-                     className="w-full h-full object-contain"
-                   />
+                {checkInPlace && (
+                  <div className="bg-emerald-50 text-[#00B857] text-[10px] px-3 py-1 rounded-full font-black flex items-center gap-1.5 border border-emerald-100 w-max">
+                    <MapPin size={10} />
+                    <span>em {checkInPlace}</span>
+                  </div>
+                )}
+
+                {/* Grid selection buttons */}
+                <div className="grid grid-cols-2 gap-3 pt-4">
+                  <label className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all border border-slate-100">
+                    <ImageIcon size={20} className="text-[#00C853]" />
+                    <span className="text-[10px] font-black uppercase text-[#071A3D]">Foto</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => e.target.files && setSelectedPhotos(Array.from(e.target.files))}
+                    />
+                  </label>
+                  
+                  <label className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all border border-slate-100">
+                    <Video size={20} className="text-[#0066FF]" />
+                    <span className="text-[10px] font-black uppercase text-[#071A3D]">Vídeo</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) => e.target.files?.[0] && setSelectedVideo(e.target.files[0])}
+                    />
+                  </label>
                 </div>
-              )}
 
-              <div className="p-4 space-y-4">
-                 <div className="flex items-center justify-between text-slate-600">
-                    <div className="flex items-center gap-6">
-                       <motion.button 
-                         whileHover={{ scale: 1.2 }}
-                         whileTap={{ scale: 0.8 }}
-                         onClick={() => toggleLike(post.id)}
-                         className={`transition-all ${post.isLiked ? 'text-rose-500' : 'text-slate-800'}`}
-                       >
-                          <Heart className={`w-7 h-7 ${post.isLiked ? 'fill-current' : ''}`} />
-                       </motion.button>
-                       <motion.button 
-                         whileHover={{ scale: 1.2 }}
-                         whileTap={{ scale: 0.8 }}
-                         onClick={() => setShowCommentModal(post.id)}
-                         className="text-slate-800"
-                       >
-                          <MessageCircle className="w-7 h-7" />
-                       </motion.button>
-                       <motion.button whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.8 }} className="text-slate-800">
-                          <Send className="w-7 h-7" />
-                       </motion.button>
-                    </div>
-                    <motion.button 
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.8 }}
-                      onClick={() => { setActivePostId(post.id); setShowShareModal(true); }}
-                      className="text-slate-800"
-                    >
-                       <Share2 className="w-7 h-7" />
-                    </motion.button>
-                 </div>
-                 
-                 <div className="space-y-1">
-                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{post.likes} Gostos</p>
-                    {post.comments.length > 0 && (
-                      <button 
-                        onClick={() => setShowCommentModal(post.id)}
-                        className="text-xs text-slate-500 font-medium hover:underline"
-                      >
-                        Ver todos os {post.comments.length} comentários
-                      </button>
+                {/* Previews */}
+                {(selectedPhotos.length > 0 || selectedVideo) && (
+                  <div className="p-3 bg-slate-50 rounded-xl flex gap-2 border">
+                    {selectedPhotos.map((p, i) => (
+                      <img key={i} src={URL.createObjectURL(p)} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
+                    ))}
+                    {selectedVideo && (
+                      <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg text-white text-xs">V</div>
                     )}
-                 </div>
+                  </div>
+                )}
+
+                {/* Additional option rows */}
+                <div className="space-y-1 pt-2">
+                  <button onClick={() => setCheckInPlace('Lagoa do Fogo')} className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 border-b border-slate-50 text-left text-xs font-semibold">
+                    <span className="flex items-center gap-2.5">📍 <span>Localização</span></span>
+                    <span className="text-[10px] text-slate-400 font-bold">Lagoa do Fogo</span>
+                  </button>
+                  <button className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 border-b border-slate-50 text-left text-xs font-semibold">
+                    <span className="flex items-center gap-2.5">🥾 <span>Trilho</span></span>
+                    <ChevronRight size={14} className="text-slate-450" />
+                  </button>
+                </div>
               </div>
-           </div>
-         ))}
-      </div>
 
-      {/* Media Editor Modal */}
-      <AnimatePresence>
-        {showMediaEditor && selectedMedia && (
-          <div className="fixed inset-0 z-[300] bg-slate-900 flex flex-col">
-             <header className="p-6 flex items-center justify-between text-white border-b border-white/10 bg-slate-900/80 backdrop-blur-md">
-                <button onClick={() => setShowMediaEditor(null)} className="p-2 bg-white/10 rounded-full">
-                   <X className="w-6 h-6" />
-                </button>
-                <h2 className="text-sm font-black uppercase tracking-widest">Editar {showMediaEditor === 'photo' ? 'Foto' : 'Vídeo'}</h2>
-                <button 
+              {/* Publish button */}
+              <div className="p-4 border-t border-slate-100">
+                <button
                   onClick={handlePublish}
-                  className="px-6 py-2 bg-white text-slate-900 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl"
+                  disabled={isUploadingMedia || (!postText.trim() && selectedPhotos.length === 0 && !selectedVideo)}
+                  className="w-full py-3.5 bg-[#00B857] hover:bg-[#00a14b] disabled:bg-slate-100 text-white font-black rounded-xl text-xs uppercase tracking-widest transition-all text-center shadow-lg"
                 >
-                   Seguinte
+                  {isUploadingMedia ? 'A enviar...' : 'Publicar'}
                 </button>
-             </header>
+              </div>
 
-             <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-                <div className={`relative max-w-full max-h-full ${editorFilter !== 'none' ? `filter ${editorFilter}` : ''}`}>
-                   {showMediaEditor === 'photo' ? (
-                     <img src={selectedMedia} alt="Preview" className="max-h-[70vh] object-contain rounded-2xl shadow-2xl border-4 border-white/10" />
-                   ) : (
-                     <video src={selectedMedia} controls className="max-h-[70vh] rounded-2xl shadow-2xl border-4 border-white/10" />
-                   )}
-                   
-                   {/* Draggable Text Overlay */}
-                   <motion.div 
-                     drag 
-                     dragConstraints={{ left: -100, right: 100, top: -200, bottom: 200 }}
-                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                   >
-                      <span 
-                        className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl text-xl font-bold pointer-events-auto cursor-move shadow-2xl"
-                        style={{ color: editorColor }}
-                      >
-                         {editorText || 'Escreve algo...'}
-                      </span>
-                   </motion.div>
-                </div>
-             </div>
+            </div>
+          )}
+        </AnimatePresence>
 
-             <footer className="p-8 bg-slate-900 border-t border-white/10">
-                <div className="max-w-md mx-auto space-y-8">
-                   {/* Editor Controls */}
-                   <div className="flex justify-around items-center">
-                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                         <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-blue-600 transition-colors">
-                            <Type className="w-6 h-6 text-white" />
-                         </div>
-                         <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Texto</span>
-                         <input 
-                           type="text" 
-                           value={editorText} 
-                           onChange={(e) => setEditorText(e.target.value)}
-                           className="bg-white/10 border-none rounded-lg text-white text-xs mt-2 text-center"
-                         />
-                      </div>
-                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                         <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-green-600 transition-colors">
-                            <Palette className="w-6 h-6 text-white" />
-                         </div>
-                         <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Cor</span>
-                         <input 
-                           type="color" 
-                           value={editorColor} 
-                           onChange={(e) => setEditorColor(e.target.value)}
-                           className="w-10 h-10 rounded-full border-none p-0 bg-transparent mt-2 cursor-pointer"
-                         />
-                      </div>
-                      <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                         <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-purple-600 transition-colors">
-                            <Filter className="w-6 h-6 text-white" />
-                         </div>
-                         <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Filtros</span>
-                         <select 
-                           onChange={(e) => setEditorFilter(e.target.value)}
-                           className="bg-white/10 border-none rounded-lg text-white text-[10px] mt-2"
-                         >
-                            <option value="none">Original</option>
-                            <option value="grayscale(1)">P&B</option>
-                            <option value="sepia(1)">Sépia</option>
-                            <option value="brightness(1.5)">Brilho</option>
-                            <option value="contrast(1.5)">Contraste</option>
-                         </select>
-                      </div>
-                   </div>
-                </div>
-             </footer>
-          </div>
-        )}
-      </AnimatePresence>
+        {/* ================= POST DETAILS OVERLAY ================= */}
+        <AnimatePresence>
+          {activePostDetail && (
+            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
+              
+              {/* Header */}
+              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
+                <button onClick={() => setActivePostDetail(null)} className="p-2 hover:bg-slate-50 rounded-full">
+                  <ArrowLeft size={18} />
+                </button>
+                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Publicação</span>
+                <button className="p-2 hover:bg-slate-50 rounded-full">
+                  <MoreHorizontal size={18} />
+                </button>
+              </header>
 
-      {/* Live Stream Simulation Modal */}
-      <AnimatePresence>
-        {showLiveStream && (
-          <div className="fixed inset-0 z-[400] bg-black flex flex-col">
-             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 z-10" />
-             
-             {/* Live Header */}
-             <div className="p-6 flex items-center justify-between relative z-20">
+              {/* Scrollable details contents */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <div className="flex items-center gap-3">
-                   <div className="bg-rose-600 px-3 py-1 rounded-md flex items-center gap-2 animate-pulse shadow-lg">
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Em Direto</span>
-                   </div>
-                   <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-md text-white text-[10px] font-bold flex items-center gap-2 border border-white/10">
-                      <UserIcon className="w-3 h-3" /> 1.4k
-                   </div>
+                  <img src={activePostDetail.avatar} alt="Avatar" className="w-9 h-9 rounded-full" />
+                  <div>
+                    <h4 className="text-xs font-black text-[#071A3D] leading-none">{activePostDetail.author}</h4>
+                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{activePostDetail.location}</p>
+                  </div>
                 </div>
-                <button onClick={() => setShowLiveStream(false)} className="p-2 bg-white/20 rounded-full text-white backdrop-blur-md">
-                   <X className="w-6 h-6" />
-                </button>
-             </div>
 
-             <video 
-               ref={videoRef} 
-               autoPlay 
-               muted 
-               className="flex-1 w-full h-full object-cover"
-             />
+                <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">{activePostDetail.content}</p>
 
-             {/* Live Comments Simulation */}
-             <div className="absolute bottom-24 left-6 right-6 z-20 space-y-3 pointer-events-none">
-                <div className="flex items-center gap-2 animate-in slide-in-from-left-4 duration-500">
-                   <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white/50" />
-                   <p className="text-white text-xs font-bold shadow-text">Ricardo: Os Açores são lindos! 🔥</p>
+                {/* Media */}
+                {activePostDetail.image && (
+                  <img src={activePostDetail.image} alt="Media" className="w-full rounded-2xl object-cover" />
+                )}
+
+                {/* Stats indicators */}
+                <div className="flex items-center justify-between border-y border-slate-100 py-3 text-[#071A3D]">
+                  <div className="flex gap-5 text-xs font-black">
+                    <button onClick={() => handlePostLike(activePostDetail)} className="flex items-center gap-1">
+                      <Heart size={18} className={activePostDetail.isLiked ? 'text-rose-500 fill-current' : ''} />
+                      <span>{activePostDetail.likes}</span>
+                    </button>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle size={18} />
+                      <span>{activePostDetail.comments.length}</span>
+                    </span>
+                  </div>
+                  <button onClick={() => handlePostSave(activePostDetail)} className={activePostDetail.isSaved ? 'text-[#00B857]' : ''}>
+                    <Bookmark size={18} className={activePostDetail.isSaved ? 'fill-current' : ''} />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 animate-in slide-in-from-left-4 duration-700">
-                   <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-white/50" />
-                   <p className="text-white text-xs font-bold shadow-text">Carla: Que inveja dessa vista! 😍🌊</p>
-                </div>
-             </div>
 
-             <div className="p-6 flex items-center gap-3 relative z-20 bg-gradient-to-t from-black/80 to-transparent">
-                <input 
-                  type="text" 
-                  placeholder="Diz algo em direto..." 
-                  className="flex-1 bg-white/20 backdrop-blur-md border border-white/20 rounded-full py-3 px-6 text-white placeholder-white/60 text-sm focus:ring-2 focus:ring-white/30"
+                {/* Comments List */}
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Comentários</h5>
+                  {activePostDetail.comments.map(c => (
+                    <div key={c.id} className="flex gap-3 text-xs">
+                      <img src={c.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`} alt="Avatar" className="w-7 h-7 rounded-full border" />
+                      <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
+                        <p className="text-[10px] font-black text-[#071A3D]">{c.author}</p>
+                        <p className="text-slate-650 font-semibold mt-1 leading-relaxed">{c.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer comment compose input */}
+              <div className="p-3 border-t border-slate-100 bg-white flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Escreve um comentário..."
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
+                  className="flex-1 bg-slate-55 border-none rounded-xl px-4 py-2 text-xs text-[#071A3D] focus:ring-1 focus:ring-[#00B857]"
                 />
-                <button className="p-4 bg-rose-600 rounded-full text-white shadow-xl">
-                   <Heart className="w-6 h-6 fill-current" />
+                <button onClick={handleCommentSubmit} className="p-2.5 bg-[#00B857] text-white rounded-xl shadow-lg">
+                  <Send size={16} />
                 </button>
-             </div>
-          </div>
-        )}
-      </AnimatePresence>
+              </div>
 
-      {/* Comment Modal */}
-      <AnimatePresence>
-        {showCommentModal && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCommentModal(null)} />
-             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="relative bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl z-10 flex flex-col max-h-[80vh]">
-                <div className="flex justify-between items-center mb-8 border-b border-slate-50 pb-4">
-                   <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Comentários</h2>
-                   <button onClick={() => setShowCommentModal(null)} className="p-2 bg-slate-50 rounded-full text-slate-400">
-                      <X className="w-5 h-5" />
-                   </button>
-                </div>
+            </div>
+          )}
+        </AnimatePresence>
 
-                <div className="flex-1 overflow-y-auto space-y-6 mb-8 pr-2">
-                   {posts.find(p => p.id === showCommentModal)?.comments.map(c => (
-                     <div key={c.id} className="flex gap-4 group">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
-                           <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`} alt="Avatar" />
-                        </div>
-                        <div className="flex-1">
-                           <div className="bg-slate-50 rounded-2xl p-4 group-hover:bg-slate-100 transition-colors">
-                              <p className="text-xs font-black text-slate-900 mb-1">{c.author}</p>
-                              <p className="text-sm text-slate-600 leading-relaxed">{c.text}</p>
-                           </div>
-                           <div className="flex items-center gap-4 mt-2 px-2">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase">{c.time}</span>
-                              <button className="text-[10px] text-slate-600 font-black uppercase hover:text-blue-600 transition-colors">Gostar</button>
-                              <button className="text-[10px] text-slate-600 font-black uppercase hover:text-blue-600 transition-colors">Responder</button>
-                           </div>
-                        </div>
-                     </div>
-                   ))}
-                </div>
+        {/* ================= PRIVATE CHAT WINDOW OVERLAY ================= */}
+        <AnimatePresence>
+          {activeChatUser && (
+            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
+              
+              {/* Header */}
+              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
+                <button onClick={() => setActiveChatUser(null)} className="p-2 hover:bg-slate-50 rounded-full">
+                  <ArrowLeft size={18} />
+                </button>
+                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">{activeChatUser}</span>
+                <span className="w-8 h-8 rounded-full border bg-slate-50" />
+              </header>
 
-                <div className="flex items-center gap-3 bg-slate-100 rounded-2xl p-2 border border-slate-200">
-                   <input 
-                     type="text" 
-                     value={newComment}
-                     onChange={(e) => setNewComment(e.target.value)}
-                     placeholder="Escreve um comentário..." 
-                     className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-4"
-                   />
-                   <button 
-                     onClick={() => handleAddComment(showCommentModal)}
-                     className="bg-slate-900 text-white p-3 rounded-xl hover:bg-blue-600 transition-colors shadow-lg"
-                   >
-                      <Send className="w-5 h-5" />
-                   </button>
-                </div>
-             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              {/* History */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                {(dmHistory[activeChatUser] || []).map((msg, i) => {
+                  const isMe = msg.sender === userName;
+                  return (
+                    <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[75%] p-3.5 rounded-2xl shadow-sm text-xs ${
+                        isMe ? 'bg-[#00B857] text-white rounded-tr-none' : 'bg-white text-[#071A3D] rounded-tl-none'
+                      }`}>
+                        <p className="font-semibold leading-relaxed">{msg.text}</p>
+                        <span className="block text-[8px] text-right mt-1 opacity-70">{msg.timestamp}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-      {/* Share Modal (Existing) */}
-      <AnimatePresence>
-        {showShareModal && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowShareModal(false)} />
-             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="relative bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl z-10">
-                <div className="flex justify-between items-center mb-8">
-                   <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Partilhar</h2>
-                   <button onClick={() => setShowShareModal(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
-                </div>
-                <div className="grid grid-cols-4 gap-4 mb-8">
-                   {['WhatsApp', 'Gmail', 'Messenger', 'Copiar'].map(name => (
-                     <button key={name} className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100">
-                           {name === 'WhatsApp' ? <MessageCircle className="text-green-500" /> : name === 'Gmail' ? <Mail className="text-red-500" /> : <Link className="text-blue-500" />}
-                        </div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{name}</span>
-                     </button>
-                   ))}
-                </div>
-             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+              {/* Chat composer input */}
+              <div className="p-3 border-t border-slate-100 bg-white flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Escreve uma mensagem..."
+                  value={chatTextInput}
+                  onChange={(e) => setChatTextInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+                  className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-[#00B857] text-[#071A3D]"
+                />
+                <button onClick={sendChatMessage} className="p-2.5 bg-[#00B857] text-white rounded-xl shadow-lg">
+                  <Send size={16} />
+                </button>
+              </div>
+
+            </div>
+          )}
+        </AnimatePresence>
+
+      </div>
+    </div>
   );
 };
 

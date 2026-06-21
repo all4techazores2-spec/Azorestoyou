@@ -649,13 +649,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         console.log(`📸 Initiating Cloudinary upload for: ${req.file.originalname} (${req.file.size} bytes)...`);
         
-        // Upload buffer directly to Cloudinary and convert automatically to optimized WebP
+        const targetFolder = req.query.folder || 'azores4you';
+        const isVideo = req.file.mimetype.startsWith('video/');
+        
+        // Upload buffer directly to Cloudinary and convert automatically to optimized WebP (or original for videos)
         const uploadResult = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
-                    folder: 'azores4you',
-                    format: 'webp',
-                    transformation: [{ quality: 'auto' }]
+                    folder: targetFolder,
+                    resource_type: isVideo ? 'video' : 'image',
+                    format: isVideo ? undefined : 'webp',
+                    transformation: isVideo ? undefined : [{ quality: 'auto' }]
                 },
                 (error, result) => {
                     if (error) return reject(error);

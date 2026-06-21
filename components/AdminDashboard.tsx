@@ -1669,7 +1669,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className="w-full border p-2 rounded-lg"
             value={editingItem[field]}
             onChange={e => setEditingItem({...editingItem, [field]: type === 'number' ? parseFloat(e.target.value) : e.target.value})}
-            required={!['description', 'mapUrl', 'adminEmail', 'adminPassword'].includes(field)}
+            required={false}
           />
         </div>
       );
@@ -1736,7 +1736,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="w-full border p-2 rounded-lg" 
                 value={editingItem.label || ''} 
                 onChange={e => setEditingItem({...editingItem, label: e.target.value})} 
-                required 
+                required={false} 
               />
             </div>
             <div>
