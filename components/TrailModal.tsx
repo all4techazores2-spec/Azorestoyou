@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Language, TourGuide } from '../types';
 import { getTranslation } from '../translations';
 import { TOUR_GUIDES } from '../constants';
-import { X, MapPin, Clock, Ruler, BarChart3, Info, Navigation, AlertTriangle, Star, Languages, Check, Users, Calendar, CreditCard, Smartphone, ChevronLeft, ChevronRight, User, Mail, Phone, Wallet, ArrowRight } from 'lucide-react';
+import { X, MapPin, Clock, Ruler, BarChart3, Info, Navigation, AlertTriangle, Star, Languages, Check, Users, Calendar, CreditCard, Smartphone, ChevronLeft, ChevronRight, User, Mail, Phone, Wallet, ArrowRight, Download, Compass, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import TrailMap, { parseGpxToCoordinates } from './TrailMap';
 
 interface TrailModalProps {
   trail: Activity;
@@ -22,6 +23,7 @@ interface TrailModalProps {
 
 const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAuthenticated, onShowAuth, userProfile, userCredits = 0, setUserCredits, onReserveSuccess, onShowMap, onShowInteractiveMap }) => {
   const [bookingStep, setBookingStep] = useState<'main' | 'datetime' | 'details' | 'payment' | 'success'>('main');
+  const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [customerName, setCustomerName] = useState(userProfile?.name || '');
@@ -396,6 +398,116 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                          )}
                       </div>
                     </div>
+
+                    {/* Interactive GPX Trail Map Section */}
+                    {trail.type === 'trail' && (() => {
+                      const parsedGpx = trail.gpxXml ? parseGpxToCoordinates(trail.gpxXml) : null;
+                      const startPoint = parsedGpx?.startPoint || null;
+                      const startLat = startPoint ? startPoint[0] : undefined;
+                      const startLng = startPoint ? startPoint[1] : undefined;
+
+                      const handleDownloadGpx = () => {
+                        if (!trail.gpxXml) return;
+                        try {
+                          const blob = new Blob([trail.gpxXml], { type: 'application/gpx+xml' });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          const cleanFileName = trail.title.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.gpx';
+                          link.download = cleanFileName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                        } catch (err) {
+                          alert("Não foi possível transferir o ficheiro GPX.");
+                        }
+                      };
+
+                      const handleOpenGoogleMaps = (lat: number, lng: number) => {
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                        window.open(url, '_blank');
+                      };
+
+                      return (
+                        <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Mapa do Percurso</h3>
+                          </div>
+
+                          {trail.gpxXml ? (
+                            <div className="space-y-4">
+                              {/* Interactive Leaflet Map */}
+                              <TrailMap
+                                gpxXml={trail.gpxXml}
+                                name={trail.title}
+                                startLat={startLat}
+                                startLng={startLng}
+                                isTrackingActive={isLiveTracking}
+                              />
+
+                              {/* Trail Stats Bar (Premium) */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                                <div>
+                                  <span className="block text-[8px] font-black uppercase text-slate-400">Pontos GPS</span>
+                                  <span className="font-bold text-slate-700 text-xs">{parsedGpx?.totalPoints || 0}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[8px] font-black uppercase text-slate-400">Distância</span>
+                                  <span className="font-bold text-slate-700 text-xs">{trail.distance || '--'}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[8px] font-black uppercase text-slate-400">Duração</span>
+                                  <span className="font-bold text-slate-700 text-xs">{trail.duration || '--'}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[8px] font-black uppercase text-slate-400">Dificuldade</span>
+                                  <span className="font-bold text-slate-700 text-xs">{trail.difficulty || '--'}</span>
+                                </div>
+                              </div>
+
+                              {/* Geolocation & Action Buttons */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <button
+                                  onClick={() => setIsLiveTracking(!isLiveTracking)}
+                                  className={`w-full py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                                    isLiveTracking
+                                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+                                      : 'bg-slate-900 hover:bg-black text-white'
+                                  }`}
+                                >
+                                  <Navigation className={`w-4 h-4 ${isLiveTracking ? 'animate-bounce' : ''}`} />
+                                  {isLiveTracking ? 'Parar Trilho' : 'Iniciar Trilho'}
+                                </button>
+
+                                <button
+                                  onClick={handleDownloadGpx}
+                                  className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                >
+                                  <Download className="w-4 h-4" /> Download GPX
+                                </button>
+
+                                {startLat !== undefined && startLng !== undefined && (
+                                  <button
+                                    onClick={() => handleOpenGoogleMaps(startLat, startLng)}
+                                    className="w-full py-3.5 px-4 bg-white hover:bg-blue-50 text-blue-600 border-2 border-blue-200 rounded-xl text-xs font-black uppercase tracking-widest active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                  >
+                                    <Map className="w-4 h-4" /> Google Maps
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-48 bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center text-slate-400">
+                              <Info size={32} className="mb-2 text-slate-350" />
+                              <span className="text-xs font-bold uppercase tracking-wider">Percurso ainda não disponível</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     <div className="mt-8 flex flex-col gap-3">
                       {trail.type !== 'trail' && trail.isPaid && trail.isConfirmed !== false && (
                         <button onClick={handleStartBooking} className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-100 transition-all">
