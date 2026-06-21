@@ -140,6 +140,270 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showSyncSelector, setShowSyncSelector] = useState(false);
   const [showSyncSuccess, setShowSyncSuccess] = useState(false);
   const [syncSelection, setSyncSelection] = useState<string[]>([]);
+
+  // States for "Importar com IA"
+  const [showAiImportModal, setShowAiImportModal] = useState(false);
+  const [aiStep, setAiStep] = useState<1 | 2 | 3 | 'preview'>(1);
+  const [aiMessages, setAiMessages] = useState<Array<{ sender: 'ia' | 'user', text: string, options?: string[] }>>([
+    { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
+  ]);
+  const [aiInputValue, setAiInputValue] = useState('');
+  const [aiSelectedCategory, setAiSelectedCategory] = useState('');
+  const [aiSelectedIsland, setAiSelectedIsland] = useState('');
+  const [aiQuantity, setAiQuantity] = useState<number | 'all'>(10);
+  const [aiGeneratedItems, setAiGeneratedItems] = useState<any[]>([]);
+  const [aiSelectedDraftIds, setAiSelectedDraftIds] = useState<string[]>([]);
+  const [aiEditingItemIndex, setAiEditingItemIndex] = useState<number | null>(null);
+
+  const parseQuantity = (text: string): number | 'all' => {
+    const normalized = text.toLowerCase().trim();
+    if (normalized.includes('todo') || normalized.includes('todos') || normalized === 'all') {
+      return 'all';
+    }
+    const match = normalized.match(/\b\d+\b/);
+    if (match) {
+      return parseInt(match[0], 10);
+    }
+    return 10; // Default if not found
+  };
+
+  const generateAiMockData = (category: string, island: string, qty: number | 'all'): any[] => {
+    const targetQty = qty === 'all' ? 12 : qty;
+    const list: any[] = [];
+    const islandCode = islandMapping[island] || island || 'PDL';
+    const islandName = island;
+
+    const getLocality = (isl: string) => {
+      switch(isl) {
+        case 'São Miguel': return { concelho: 'Ponta Delgada', freguesia: 'Sete Cidades', morada: 'Rua do Selado, Sete Cidades' };
+        case 'Terceira': return { concelho: 'Angra do Heroísmo', freguesia: 'Sé', morada: 'Rua da Sé, Angra do Heroísmo' };
+        case 'Faial': return { concelho: 'Horta', freguesia: 'Angústias', morada: 'Rua do Porto, Horta' };
+        case 'Pico': return { concelho: 'Madalena', freguesia: 'Madalena', morada: 'Avenida Machado Serpa, Madalena' };
+        case 'São Jorge': return { concelho: 'Velas', freguesia: 'Velas', morada: 'Rua de Santa Catarina, Velas' };
+        case 'Flores': return { concelho: 'Santa Cruz das Flores', freguesia: 'Santa Cruz', morada: 'Rua da Barra, Santa Cruz' };
+        case 'Corvo': return { concelho: 'Vila do Corvo', freguesia: 'Vila do Corvo', morada: 'Caminho do Curral, Corvo' };
+        case 'Graciosa': return { concelho: 'Santa Cruz da Graciosa', freguesia: 'Santa Cruz', morada: 'Largo da Matriz, Graciosa' };
+        case 'Santa Maria': return { concelho: 'Vila do Porto', freguesia: 'Vila do Porto', morada: 'Rua de Frei Gonçalo Velho, Vila do Porto' };
+        default: return { concelho: 'Ponta Delgada', freguesia: 'São Sebastião', morada: 'Avenida Marginal, Ponta Delgada' };
+      }
+    };
+
+    const loc = getLocality(islandName);
+
+    for (let i = 1; i <= targetQty; i++) {
+      const id = `${category.substring(0,3).toUpperCase()}_AI_${Date.now()}_${i}`;
+      let item: any = {
+        id,
+        island: islandCode,
+        status: 'draft',
+        isDraft: true,
+      };
+
+      if (category === 'Restaurantes') {
+        item.name = `Restaurante ${islandName} Sabor ${i}`;
+        item.cuisine = 'Regional Açoriana';
+        item.rating = 4.5;
+        item.reviews = 12 + i * 5;
+        item.image = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&auto=format&fit=crop';
+        item.description = `Um excelente restaurante em ${islandName} com o melhor da cozinha regional e ingredientes frescos.`;
+        item.phone = `+351 296 000 ${100 + i}`;
+        item.address = `${loc.morada}, ${i}`;
+        item.publicEmail = `sabor_${i}@azorestoyou.pt`;
+        item.mapsUrl = `https://maps.google.com/?q=${item.name}`;
+        item.adminEmail = `admin_rest_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.latitude = '37.7412';
+        item.longitude = '-25.6756';
+      } else if (category === 'Alojamentos') {
+        item.name = `Alojamento ${islandName} Vista ${i}`;
+        item.stars = (i % 2 === 0) ? 4 : 3;
+        item.pricePerNight = 65 + i * 10;
+        item.image = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&auto=format&fit=crop';
+        item.description = `Estadia premium ideal para as suas férias em ${islandName}. Conforto e natureza ao seu alcance.`;
+        item.type = (i % 2 === 0) ? 'hotel' : 'al';
+        item.email = `alojamento_${i}@azorestoyou.pt`;
+        item.phone = `+351 296 111 ${200 + i}`;
+        item.address = `${loc.morada}, Bairro ${i}`;
+        item.mapsUrl = `https://maps.google.com/?q=${item.name}`;
+        item.adminEmail = `admin_hotel_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+      } else if (category === 'Trilhos') {
+        item.title = `Trilho de ${islandName} - Rota ${i}`;
+        item.type = 'trail';
+        item.image = 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=500&auto=format&fit=crop';
+        item.description = `Percurso pedestre homologado em ${islandName}. Explore paisagens vulcânicas intocadas.`;
+        item.distance = `${4 + i} km`;
+        item.duration = `${1 + i}h 30m`;
+        item.difficulty = (i % 3 === 0) ? 'Difícil' : (i % 2 === 0) ? 'Moderado' : 'Fácil';
+        item.bookingPolicy = 'recommended';
+        item.email = `trilhos_${i}@azorestoyou.pt`;
+        item.phone = `+351 296 222 ${300 + i}`;
+        item.address = `Ponto de Partida, ${loc.concelho}`;
+      } else if (category === 'Lojas Locais') {
+        item.name = `Bazar Tradicional ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&auto=format&fit=crop';
+        item.description = `Produtos regionais, artesanato, queijos e vinhos da ilha de ${islandName}.`;
+        item.phone = `+351 296 333 ${400 + i}`;
+        item.address = `Rua Comercial, ${loc.concelho}`;
+        item.adminEmail = `loja_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'shop';
+      } else if (category === 'Cabeleireiros') {
+        item.name = `Salão Hair & Beauty ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&auto=format&fit=crop';
+        item.description = `Serviços profissionais de cabeleireiro e estética na ilha de ${islandName}.`;
+        item.phone = `+351 296 444 ${500 + i}`;
+        item.address = `Avenida Central, ${loc.concelho}`;
+        item.adminEmail = `cabeleireiro_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'beauty';
+        item.subcategory = 'hairdresser';
+      } else if (category === 'Barbeiros') {
+        item.name = `Barbearia Antiga de ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500&auto=format&fit=crop';
+        item.description = `Corte clássico, barba à navalha e ambiente acolhedor.`;
+        item.phone = `+351 296 555 ${600 + i}`;
+        item.address = `Rua Direita, ${loc.concelho}`;
+        item.adminEmail = `barbeiro_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'beauty';
+        item.subcategory = 'barber';
+      } else if (category === 'Lojas de Animais') {
+        item.name = `Mundo Animal ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=500&auto=format&fit=crop';
+        item.description = `Rações, acessórios, banhos, tosquias e cuidados especializados para o seu pet.`;
+        item.phone = `+351 296 666 ${700 + i}`;
+        item.address = `Zona Industrial, ${loc.concelho}`;
+        item.adminEmail = `animal_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'animals';
+      } else if (category === 'Eventos') {
+        item.name = `Festival Cultural ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop';
+        item.description = `Celebrações, concertos e atividades recreativas abertas ao público em ${islandName}.`;
+        item.phone = `+351 296 777 ${800 + i}`;
+        item.address = `Praça Municipal, ${loc.concelho}`;
+        item.adminEmail = `evento_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'events';
+      } else if (category === 'Táxis') {
+        item.name = `Táxi Privado ${islandName} - Condutor ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1492664738988-2be3d18e7e00?w=500&auto=format&fit=crop';
+        item.description = `Transferes de aeroporto e visitas guiadas personalizadas por toda a ilha.`;
+        item.phone = `+351 911 000 ${300 + i}`;
+        item.address = `Ponto de Táxis Central, ${loc.concelho}`;
+        item.adminEmail = `taxi_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'services';
+        item.subcategory = 'taxi';
+      } else if (category === 'Autocarros') {
+        item.company = `Autocarro Expresso ${islandName} Linha ${i}`;
+        item.origin = loc.concelho;
+        item.destination = `Vila das Furnas ${i}`;
+        item.times = [`08:0${i}`, `12:3${i}`, `17:4${i}`];
+        item.price = 2.5 + i * 0.5;
+        item.duration = `4${i}m`;
+        item.island = islandCode;
+      } else if (category === 'Farmácias') {
+        item.name = `Farmácia da Vila ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=500&auto=format&fit=crop';
+        item.description = `Serviço de saúde e medicamentos com atendimento personalizado 24 horas.`;
+        item.phone = `+351 296 888 ${900 + i}`;
+        item.address = `Rua da Saúde, ${loc.concelho}`;
+        item.adminEmail = `farmacia_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'services';
+        item.subcategory = 'pharmacy';
+      } else if (category === 'Municípios') {
+        item.name = `Câmara Municipal de ${islandName} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&auto=format&fit=crop';
+        item.description = `Serviços públicos e administrativos oficiais do concelho de ${loc.concelho}.`;
+        item.phone = `+351 296 999 ${100 + i}`;
+        item.address = `Largo do Município, ${loc.concelho}`;
+        item.adminEmail = `municipio_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'municipal';
+      } else if (category === 'Juntas de Freguesia') {
+        item.name = `Junta de Freguesia de ${loc.freguesia} ${i}`;
+        item.image = 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=500&auto=format&fit=crop';
+        item.description = `Apoio local e serviços à comunidade na freguesia de ${loc.freguesia}.`;
+        item.phone = `+351 296 999 ${200 + i}`;
+        item.address = `Rua da Freguesia, ${loc.freguesia}`;
+        item.adminEmail = `junta_${i}@azorestoyou.pt`;
+        item.adminPassword = `SenhaAI${i}!`;
+        item.businessType = 'municipal';
+        item.subcategory = 'junta';
+      }
+
+      list.push(item);
+    }
+    return list;
+  };
+
+  const handleSendAiMessage = (userText: string) => {
+    if (!userText.trim()) return;
+
+    const newMessages = [...aiMessages, { sender: 'user' as const, text: userText }];
+    setAiMessages(newMessages);
+    setAiInputValue('');
+
+    setTimeout(() => {
+      if (aiStep === 1) {
+        // We selected a category
+        setAiSelectedCategory(userText);
+        setAiStep(2);
+        setAiMessages(prev => [
+          ...prev,
+          {
+            sender: 'ia' as const,
+            text: `Pretende pesquisar em todas as ilhas ou numa ilha específica?`,
+            options: ['Todas as ilhas', 'São Miguel', 'Terceira', 'Faial', 'Pico', 'São Jorge', 'Flores', 'Corvo', 'Graciosa', 'Santa Maria']
+          }
+        ]);
+      } else if (aiStep === 2) {
+        // We selected an island
+        setAiSelectedIsland(userText);
+        setAiStep(3);
+        setAiMessages(prev => [
+          ...prev,
+          {
+            sender: 'ia' as const,
+            text: `Quantos resultados pretende gerar/importar?`,
+            options: ['5 resultados', '10 resultados', '20 resultados', 'Todos os disponíveis', 'Quantidade personalizada']
+          }
+        ]);
+      } else if (aiStep === 3) {
+        // We chose a quantity / typed free text
+        let qty: number | 'all' = 10;
+        if (userText.includes('5')) qty = 5;
+        else if (userText.includes('10')) qty = 10;
+        else if (userText.includes('20')) qty = 20;
+        else if (userText.toLowerCase().includes('todo') || userText.toLowerCase().includes('todos')) qty = 'all';
+        else {
+          qty = parseQuantity(userText);
+        }
+
+        setAiQuantity(qty);
+
+        // Generate data
+        const currentCategory = aiSelectedCategory || 'Restaurantes';
+        const currentIsland = aiSelectedIsland || 'São Miguel';
+        const generated = generateAiMockData(currentCategory, currentIsland, qty);
+
+        setAiGeneratedItems(generated);
+        setAiSelectedDraftIds(generated.map(g => g.id));
+        setAiStep('preview');
+
+        setAiMessages(prev => [
+          ...prev,
+          {
+            sender: 'ia' as const,
+            text: `Gerados com sucesso ${generated.length} rascunhos para "${currentCategory}" na ilha "${currentIsland}". Por favor, reveja e edite os resultados abaixo antes de os importar.`
+          }
+        ]);
+      }
+    }, 600);
+  };
   const [modifiedCategories, setModifiedCategories] = useState<Set<string>>(new Set());
 
   const [showAppSliderSettings, setShowAppSliderSettings] = useState(false);
@@ -4246,6 +4510,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                          <Trash2 size={16} /> Apagar Selecionados ({selectedIds.length})
                        </motion.button>
                      )}
+                     <button 
+                       onClick={() => {
+                         setAiStep(1);
+                         setAiMessages([
+                           { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
+                         ]);
+                         setShowAiImportModal(true);
+                       }}
+                       className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-2"
+                     >
+                       <Sparkles size={16} /> Importar com IA
+                     </button>
                     <button 
                       onClick={() => setShowBulkAdd(!showBulkAdd)} 
                       className={`px-8 py-4 ${showBulkAdd ? 'bg-amber-500' : 'bg-slate-800'} text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg transition-all flex items-center gap-2`}
@@ -4507,8 +4783,9 @@ Av. do Mar, Madalena, Pico
 
                    {/* Badges */}
                    <div className="absolute bottom-2 left-2 flex gap-1">
+                      {(item.isDraft || item.status === 'draft') && <span className="bg-amber-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">Rascunho</span>}
                       {(item.island || (item.location && islandMapping[item.location])) && <span className="bg-black/60 text-white px-2 py-1 rounded text-xs font-bold">{item.island || islandMapping[item.location]}</span>}
-                      {item.status && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
+                      {item.status && item.status !== 'draft' && <span className="bg-white/90 text-slate-800 px-2 py-1 rounded text-xs font-bold">{item.status}</span>}
                       {(item.price > 0 || item.isPaid) && <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">€{item.price}</span>}
                       {activeTab === 'activities' && !item.isPaid && item.type !== 'trail' && <span className="bg-emerald-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-widest text-[8px]">Grátis</span>}
                    </div>
@@ -4590,6 +4867,61 @@ Av. do Mar, Madalena, Pico
                           </button>
                         </div>
                       )}
+                    </div>
+                  )}
+                  {/* Draft Item Actions (Publish / Reject / Edit) */}
+                  {(item.isDraft || item.status === 'draft') && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-2">
+                      <div className="flex gap-2 mt-1">
+                        <button
+                          onClick={async () => {
+                            const publishItem = (list: any[]) => list.map(i => i.id === item.id ? { ...i, status: 'published', isDraft: false } : i);
+                            switch (activeTab) {
+                              case 'restaurants': onUpdateRestaurants(publishItem(restaurants)); break;
+                              case 'shops': onUpdateShops(publishItem(shops)); break;
+                              case 'beauty': onUpdateBeauty(publishItem(beauty)); break;
+                              case 'services': onUpdateServices(publishItem(services)); break;
+                              case 'auto_repairs': onUpdateAutoRepairs(publishItem(autoRepairs)); break;
+                              case 'auto_electronics': onUpdateAutoElectronics(publishItem(autoElectronics)); break;
+                              case 'used_market': onUpdateUsedMarket(publishItem(usedMarket)); break;
+                              case 'animals': onUpdateAnimals(publishItem(animals)); break;
+                              case 'real_estate': onUpdateRealEstate(publishItem(realEstate)); break;
+                              case 'gyms': onUpdateGyms(publishItem(gyms)); break;
+                              case 'stands': onUpdateStands(publishItem(stands)); break;
+                              case 'offices': onUpdateOffices(publishItem(offices)); break;
+                              case 'it_services': onUpdateITServices(publishItem(itServices)); break;
+                              case 'perfumes': onUpdatePerfumes(publishItem(perfumes)); break;
+                              case 'bars': onUpdateBars(publishItem(bars)); break;
+                              case 'events': onUpdateEvents(publishItem(events)); break;
+                              case 'municipal': onUpdateMunicipal(publishItem(municipal)); break;
+                              case 'activities': 
+                              case 'trails':
+                              case 'poi': onUpdateActivities(publishItem(activities)); break;
+                              case 'flights': onUpdateFlights(publishItem(flights)); break;
+                              case 'hotels': onUpdateHotels(publishItem(hotels)); break;
+                              case 'cars': onUpdateCars(publishItem(cars)); break;
+                              case 'buses': onUpdateBusSchedules(publishItem(busSchedules)); break;
+                            }
+                            setModifiedCategories(prev => new Set(prev).add(activeTab));
+                            alert("✅ Item publicado com sucesso!");
+                          }}
+                          className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 transition-all text-center flex items-center justify-center gap-1"
+                        >
+                          Publicar
+                        </button>
+                        <button
+                          onClick={() => startEdit(item)}
+                          className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-[10px] font-black uppercase transition-all text-center"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-500/20 transition-all text-center flex items-center justify-center gap-1"
+                        >
+                          Rejeitar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -4962,6 +5294,336 @@ Av. do Mar, Madalena, Pico
              <button onClick={() => setShowSyncSuccess(false)} className="p-2 hover:bg-white/10 rounded-full">
                 <X size={20} />
              </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* IMPORTAR COM IA MODAL */}
+      <AnimatePresence>
+        {showAiImportModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] bg-slate-955/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+              className="bg-white/80 backdrop-blur-2xl w-full max-w-5xl rounded-[3rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col my-8"
+              style={{ maxHeight: '90vh' }}
+            >
+              {/* Header */}
+              <div className="p-6 bg-gradient-to-r from-purple-800 to-indigo-900 text-white flex justify-between items-center relative">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                    <Sparkles className="text-purple-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black uppercase tracking-tighter">Importar com Inteligência Artificial</h3>
+                    <p className="text-[10px] text-purple-200 uppercase tracking-widest font-bold opacity-80">Assistente autónomo de preenchimento de conteúdos</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowAiImportModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Chat View (Steps 1, 2, 3) */}
+              {aiStep !== 'preview' && (
+                <div className="flex-1 flex flex-col p-6 space-y-4 overflow-y-auto min-h-[400px] max-h-[60vh] bg-slate-50/50">
+                  <div className="flex-1 space-y-4">
+                    {aiMessages.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-md p-4 rounded-2xl ${msg.sender === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white border border-slate-100 text-slate-800 rounded-bl-none shadow-sm'} space-y-3`}>
+                          <p className="text-sm font-medium">{msg.text}</p>
+                          {msg.options && (
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              {msg.options.map((opt, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleSendAiMessage(opt)}
+                                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-all"
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Input form */}
+                  <div className="border-t border-slate-100 pt-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={aiInputValue}
+                      onChange={(e) => setAiInputValue(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendAiMessage(aiInputValue)}
+                      placeholder="Escreva livremente (ex: 'quero 5', 'todos', 'lojas de animais em São Miguel, 10 resultados')"
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none font-medium"
+                    />
+                    <button
+                      onClick={() => handleSendAiMessage(aiInputValue)}
+                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-all"
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview Grid */}
+              {aiStep === 'preview' && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                      <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">Pré-visualização dos Resultados da IA</h4>
+                      <p className="text-xs text-slate-400 mt-0.5">Selecione, remova ou edite inline os rascunhos gerados.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setAiStep(1);
+                          setAiMessages([
+                            { sender: 'ia', text: 'Olá! Sou o seu assistente de Inteligência Artificial para importação de dados. Que categoria pretende preencher?', options: ['Restaurantes', 'Alojamentos', 'Lojas de Animais', 'Cabeleireiros', 'Barbeiros', 'Lojas Locais', 'Trilhos', 'Eventos', 'Táxis', 'Autocarros', 'Farmácias', 'Municípios', 'Juntas de Freguesia'] }
+                          ]);
+                        }}
+                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all"
+                      >
+                        Recomeçar Assistente
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline Editor Form if an item is selected for editing */}
+                  {aiEditingItemIndex !== null && aiGeneratedItems[aiEditingItemIndex] && (
+                    <div className="p-6 bg-amber-50/50 border-b border-amber-100 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in">
+                      <div className="col-span-1 md:col-span-3 flex justify-between items-center mb-1">
+                        <span className="text-xs font-black text-amber-700 uppercase tracking-wider">Edição Rápida de Item</span>
+                        <button 
+                          onClick={() => setAiEditingItemIndex(null)}
+                          className="text-xs text-amber-700 hover:underline font-bold"
+                        >
+                          Concluir Edição
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-500 mb-1">Nome / Título</label>
+                        <input
+                          type="text"
+                          value={aiGeneratedItems[aiEditingItemIndex].name || aiGeneratedItems[aiEditingItemIndex].title || aiGeneratedItems[aiEditingItemIndex].company || ''}
+                          onChange={(e) => {
+                            const newItems = [...aiGeneratedItems];
+                            const item = newItems[aiEditingItemIndex];
+                            if (item.name !== undefined) item.name = e.target.value;
+                            else if (item.title !== undefined) item.title = e.target.value;
+                            else if (item.company !== undefined) item.company = e.target.value;
+                            setAiGeneratedItems(newItems);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-500 mb-1">Contacto / Telefone</label>
+                        <input
+                          type="text"
+                          value={aiGeneratedItems[aiEditingItemIndex].phone || ''}
+                          onChange={(e) => {
+                            const newItems = [...aiGeneratedItems];
+                            newItems[aiEditingItemIndex].phone = e.target.value;
+                            setAiGeneratedItems(newItems);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-500 mb-1">Morada / Endereço</label>
+                        <input
+                          type="text"
+                          value={aiGeneratedItems[aiEditingItemIndex].address || ''}
+                          onChange={(e) => {
+                            const newItems = [...aiGeneratedItems];
+                            newItems[aiEditingItemIndex].address = e.target.value;
+                            setAiGeneratedItems(newItems);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Table Grid */}
+                  <div className="flex-1 overflow-auto max-h-[50vh]">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-200">
+                          <th className="px-6 py-4 w-12">
+                            <input
+                              type="checkbox"
+                              checked={aiGeneratedItems.length > 0 && aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))}
+                              onChange={() => {
+                                if (aiGeneratedItems.every(i => aiSelectedDraftIds.includes(i.id))) {
+                                  setAiSelectedDraftIds([]);
+                                } else {
+                                  setAiSelectedDraftIds(aiGeneratedItems.map(i => i.id));
+                                }
+                              }}
+                              className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                            />
+                          </th>
+                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Nome / Título</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Categoria / Ilha</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Contacto</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase text-slate-500 tracking-wider">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {aiGeneratedItems.map((item, idx) => (
+                          <tr key={item.id} className="hover:bg-slate-50/50">
+                            <td className="px-6 py-4">
+                              <input
+                                type="checkbox"
+                                checked={aiSelectedDraftIds.includes(item.id)}
+                                onChange={() => {
+                                  if (aiSelectedDraftIds.includes(item.id)) {
+                                    setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
+                                  } else {
+                                    setAiSelectedDraftIds(prev => [...prev, item.id]);
+                                  }
+                                }}
+                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-bold text-slate-800 text-sm">
+                                {item.name || item.title || item.company}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-2">
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                                  {aiSelectedCategory}
+                                </span>
+                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
+                                  {item.island}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-xs font-mono text-slate-600">
+                              {item.phone || item.email || 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 flex gap-2">
+                              <button
+                                onClick={() => setAiEditingItemIndex(idx)}
+                                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-bold transition-all"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setAiGeneratedItems(prev => prev.filter(i => i.id !== item.id));
+                                  setAiSelectedDraftIds(prev => prev.filter(id => id !== item.id));
+                                }}
+                                className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-all"
+                              >
+                                Remover
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="p-6 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                    <p className="text-xs font-bold text-slate-400">
+                      Selecionados {aiSelectedDraftIds.length} de {aiGeneratedItems.length} rascunhos para importação.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowAiImportModal(false)}
+                        className="px-6 py-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-2xl text-xs font-black uppercase tracking-wider text-slate-700 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        disabled={aiSelectedDraftIds.length === 0}
+                        onClick={async () => {
+                          const toImport = aiGeneratedItems.filter(item => aiSelectedDraftIds.includes(item.id));
+                          
+                          // Map Category name to actual state tab and call the respective setter
+                          const catMap: Record<string, string> = {
+                            'Restaurantes': 'restaurants',
+                            'Alojamentos': 'hotels',
+                            'Lojas de Animais': 'animals',
+                            'Cabeleireiros': 'beauty',
+                            'Barbeiros': 'beauty',
+                            'Lojas Locais': 'shops',
+                            'Trilhos': 'activities',
+                            'Eventos': 'events',
+                            'Táxis': 'services',
+                            'Autocarros': 'buses',
+                            'Farmácias': 'services',
+                            'Municípios': 'municipal',
+                            'Juntas de Freguesia': 'municipal'
+                          };
+
+                          const targetTab = catMap[aiSelectedCategory] || 'restaurants';
+                          
+                          // Helper update function
+                          const importToLocal = (list: any[], setter: (l: any[]) => void) => {
+                            setter([...list, ...toImport]);
+                          };
+
+                          switch (targetTab) {
+                            case 'restaurants': importToLocal(restaurants, onUpdateRestaurants); break;
+                            case 'shops': importToLocal(shops, onUpdateShops); break;
+                            case 'beauty': importToLocal(beauty, onUpdateBeauty); break;
+                            case 'services': importToLocal(services, onUpdateServices); break;
+                            case 'auto_repairs': importToLocal(autoRepairs, onUpdateAutoRepairs); break;
+                            case 'auto_electronics': importToLocal(autoElectronics, onUpdateAutoElectronics); break;
+                            case 'used_market': importToLocal(usedMarket, onUpdateUsedMarket); break;
+                            case 'animals': importToLocal(animals, onUpdateAnimals); break;
+                            case 'real_estate': importToLocal(realEstate, onUpdateRealEstate); break;
+                            case 'gyms': importToLocal(gyms, onUpdateGyms); break;
+                            case 'stands': importToLocal(stands, onUpdateStands); break;
+                            case 'offices': importToLocal(offices, onUpdateOffices); break;
+                            case 'it_services': importToLocal(itServices, onUpdateITServices); break;
+                            case 'perfumes': importToLocal(perfumes, onUpdatePerfumes); break;
+                            case 'bars': importToLocal(bars, onUpdateBars); break;
+                            case 'events': importToLocal(events, onUpdateEvents); break;
+                            case 'municipal': importToLocal(municipal, onUpdateMunicipal); break;
+                            case 'activities': importToLocal(activities, onUpdateActivities); break;
+                            case 'flights': importToLocal(flights, onUpdateFlights); break;
+                            case 'hotels': importToLocal(hotels, onUpdateHotels); break;
+                            case 'cars': importToLocal(cars, onUpdateCars); break;
+                            case 'buses': importToLocal(busSchedules, onUpdateBusSchedules); break;
+                          }
+
+                          // Switch tab so user sees their imported drafts immediately
+                          if (targetTab === 'activities' && aiSelectedCategory === 'Trilhos') {
+                            setActiveTab('trails');
+                          } else {
+                            setActiveTab(targetTab as Tab);
+                          }
+
+                          setModifiedCategories(prev => new Set(prev).add(targetTab));
+                          setShowAiImportModal(false);
+                          alert(`Importação concluída! ${toImport.length} rascunhos adicionados localmente. Clique no botão de Publicar/Sincronizar para enviar para o servidor.`);
+                        }}
+                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all"
+                      >
+                        Importar selecionados como rascunho
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

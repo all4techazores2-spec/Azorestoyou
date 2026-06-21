@@ -30,6 +30,8 @@ export interface Flight {
   stops: number;         // 0 for direct
   duration: string;      // e.g., "2h 30m"
   layover?: string;      // e.g., "Escala em LIS (1h 20m)"
+  status?: 'A Horas' | 'Atrasado' | 'Embarque' | 'Cancelado' | 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export interface Room {
@@ -59,6 +61,8 @@ export interface Hotel {
   mapsUrl?: string;
   gallery?: string[];
   rooms?: Room[];
+  status?: 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export interface Car {
@@ -74,6 +78,8 @@ export interface Car {
   description: string;
   features: string[];
   gallery?: string[];
+  status?: 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export interface CarRentalCompany {
@@ -290,6 +296,8 @@ export interface Restaurant {
   bookingPolicy?: 'required' | 'recommended';
   vehicles?: Car[];
   featuredVehicles?: Car[];
+  status?: 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export interface Activity {
@@ -311,6 +319,8 @@ export interface Activity {
   address?: string;
   gallery?: string[];
   gpxXml?: string;
+  status?: 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export interface TourGuide {
@@ -343,6 +353,8 @@ export interface BusSchedule {
   };
   price: number;
   duration: string;
+  status?: 'draft' | 'published';
+  isDraft?: boolean;
 }
 
 export type BookingStep = 'flights' | 'accommodation' | 'car' | 'summary';
