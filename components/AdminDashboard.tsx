@@ -580,6 +580,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       
       switch (activeTab) {
         case 'activities':
+        case 'trails':
+        case 'poi':
           const defaultType = activeTab === 'trails' ? 'trail' : activeTab === 'poi' ? 'poi' : 'activity';
           const isPaidDefault = defaultType === 'activity';
           return { 
@@ -623,7 +625,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         case 'bars': await onUpdateBars([...bars, ...newItems]); break;
         case 'events': await onUpdateEvents([...events, ...newItems]); break;
         case 'municipal': await onUpdateMunicipal([...municipal, ...newItems]); break;
-        case 'activities': await onUpdateActivities([...activities, ...newItems]); break;
+        case 'activities':
+        case 'trails':
+        case 'poi':
+          await onUpdateActivities([...activities, ...newItems]); break;
         case 'flights': await onUpdateFlights([...flights, ...newItems]); break;
         case 'hotels': await onUpdateHotels([...hotels, ...newItems]); break;
         case 'cars': await onUpdateCars([...cars, ...newItems]); break;
