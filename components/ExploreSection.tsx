@@ -7,6 +7,7 @@ import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
 import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
+import MostRequestedSlider from './MostRequestedSlider';
 import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users, ChevronDown, ChevronUp, Search, ArrowLeft } from 'lucide-react';
 import { getTranslation } from '../translations';
 import { crpBuses } from '../data/crp_buses';
@@ -52,6 +53,7 @@ interface ExploreSectionProps {
   selectedItemId?: string | null;
   onSelectedItemIdHandled?: () => void;
   onShowInteractiveMap?: (trailId: string) => void;
+  featuredItems?: any[];
 }
 
 const ExploreSection: React.FC<ExploreSectionProps> = ({ 
@@ -90,7 +92,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onShowMap,
   selectedItemId,
   onSelectedItemIdHandled,
-  onShowInteractiveMap
+  onShowInteractiveMap,
+  featuredItems = []
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
@@ -271,11 +274,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const filteredRestaurants = sortItems(allRestaurants.filter(r => {
     const matchesIsland = restaurantIslandFilter === 'all' ? (isAllIslands || r.island === targetIsland) : r.island === restaurantIslandFilter;
-    const matchesCuisine = restaurantCuisineFilter === 'all' || r.cuisine.toLowerCase().includes(restaurantCuisineFilter.toLowerCase());
+    const matchesCuisine = restaurantCuisineFilter === 'all' || (r.cuisine || '').toLowerCase().includes(restaurantCuisineFilter.toLowerCase());
     const matchesSearch = !restaurantSearch || 
-      r.name.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
-      r.cuisine.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-      r.island.toLowerCase().includes(restaurantSearch.toLowerCase());
+      (r.name || '').toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+      (r.cuisine || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+      (r.island || '').toLowerCase().includes(restaurantSearch.toLowerCase());
     return matchesIsland && matchesCuisine && matchesSearch;
   }));
 
@@ -287,9 +290,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       const matchesIsland = isAllIslands || a.island === targetIsland;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' ? !a.isPaid : a.isPaid);
       const matchesQuery = !restaurantSearch || 
-        a.title.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
-        a.description.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-        a.island.toLowerCase().includes(restaurantSearch.toLowerCase());
+        (a.title || '').toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+        (a.description || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        (a.island || '').toLowerCase().includes(restaurantSearch.toLowerCase());
       return matchesType && matchesIsland && matchesPrice && matchesQuery;
     });
     return sortItems(filtered);
@@ -370,7 +373,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     // Grouping schedules into routes in the exact requested structure
     const getRoutesForCompany = (companyId: string, schedules: BusSchedule[]) => {
       const matchingSchedules = schedules.filter(s => {
-        const coName = s.company.toLowerCase();
+        const coName = (s.company || '').toLowerCase();
         if (companyId === 'crp') return coName.includes('crp');
         if (companyId === 'varela') return coName.includes('varela');
         if (companyId === 'avm') return coName.includes('micaelense') || coName === 'avm';
@@ -385,7 +388,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
         if (!routesMap[routeKey]) {
           routesMap[routeKey] = {
-            id: `${companyId}-${s.id.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            id: `${companyId}-${(s.id || '').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
             from: towns[0] === 'Ponta Delgada' ? towns[0] : towns[1],
             to: towns[0] === 'Ponta Delgada' ? towns[1] : towns[0],
             outbound: { weekdays: [], saturday: [], sunday: [] },
@@ -442,8 +445,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       // Filter routes by search query (origin or destination)
       const filteredRoutes = allRoutes.filter(r => 
-        r.from.toLowerCase().includes(routeSearchQuery.toLowerCase()) ||
-        r.to.toLowerCase().includes(routeSearchQuery.toLowerCase())
+        (r.from || '').toLowerCase().includes(routeSearchQuery.toLowerCase()) ||
+        (r.to || '').toLowerCase().includes(routeSearchQuery.toLowerCase())
       );
 
       return (
@@ -633,8 +636,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     const matchingSchedules = activeBusSchedules.filter(s => {
       if (s.island !== currentIsland) return false;
       if (!busOrigin || !busDestination) return false;
-      const sOrigin = s.origin.toLowerCase();
-      const sDest = s.destination.toLowerCase();
+      const sOrigin = (s.origin || '').toLowerCase();
+      const sDest = (s.destination || '').toLowerCase();
       const bOrigin = busOrigin.toLowerCase();
       const bDest = busDestination.toLowerCase();
       return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && 
@@ -804,98 +807,62 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 ;
 
   const renderRestaurants = () => {
-    const cuisines = Array.from(new Set(allRestaurants.map(r => r.cuisine))).sort();
-    const islands = ["Santa Maria", "São Miguel", "Terceira", "Graciosa", "São Jorge", "Pico", "Faial", "Flores", "Corvo"];
-
     return (
       <div className="space-y-8">
-        {/* Elegant Filter Bar */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
-                type="text"
-                placeholder="Procurar restaurante, cozinha ou local..."
-                value={restaurantSearch}
-                onChange={(e) => setRestaurantSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-700"
-              />
-            </div>
-            <div className="flex gap-4">
-              <select 
-                value={restaurantIslandFilter}
-                onChange={(e) => setRestaurantIslandFilter(e.target.value)}
-                className="px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
-              >
-                <option value="all">Todas as Ilhas</option>
-                {islands.map(i => <option key={i} value={i}>{i}</option>)}
-              </select>
-              <select 
-                value={restaurantCuisineFilter}
-                onChange={(e) => setRestaurantCuisineFilter(e.target.value)}
-                className="px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
-              >
-                <option value="all">Todas as Cozinhas</option>
-                {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex gap-2">
-              <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                {filteredRestaurants.length} Restaurantes
-              </span>
-              {restaurantSearch && (
-                <button 
-                  onClick={() => setRestaurantSearch('')}
-                  className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-1"
-                >
-                  <X size={10} /> Limpar Pesquisa
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
         {filteredRestaurants.length === 0 ? renderEmptyState() : (
-          <div className="space-y-4">
+          <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
             {filteredRestaurants.map(r => (
               <div 
                 key={r.id} 
-                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
+                className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
                 onClick={() => setSelectedRestaurant(r)}
               >
-                <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
+                <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
                   <img 
                     src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image} 
                     alt={r.name} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                   />
-                  <div className="absolute top-1 right-1">
-                    <div className="bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-lg text-[8px] font-black flex items-center gap-0.5 shadow-sm">
-                      <Star size={8} className="text-yellow-500 fill-current" /> {r.rating}
+                  <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
+                    <div className="bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-lg text-[9px] lg:text-[10px] font-black flex items-center gap-0.5 shadow-sm">
+                      <Star size={9} className="text-yellow-500 fill-current" /> {r.rating}
                     </div>
                   </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{r.name}</h3>
-                  <div className="flex items-center gap-3 mb-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-blue-500" /> {r.concelho ? `${r.concelho}, ` : ''}{r.island}
-                    </p>
-                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{r.cuisine}</p>
+                  <div className="hidden lg:block absolute bottom-3 left-3 bg-blue-600/90 backdrop-blur text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                    {r.cuisine}
                   </div>
-                  <p className="text-xs text-slate-500 line-clamp-1 font-medium leading-relaxed">{r.description || 'Restaurante típico com sabores regionais.'}</p>
                 </div>
-                <div className="flex flex-col items-end gap-2 shrink-0 pr-2">
-                  <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                    {r.reviews} Avaliações
-                  </span>
-                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                    <ArrowRight size={20} />
+                <div className="flex-1 min-w-0 lg:p-5 lg:flex lg:flex-col lg:justify-between lg:h-full">
+                  <div>
+                    <h3 className="text-sm lg:text-base font-black text-slate-800 uppercase tracking-tight truncate mb-1 lg:mb-1.5">{r.name}</h3>
+                    <div className="flex items-center gap-2 mb-2 lg:mb-2.5">
+                      <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-blue-500" /> {r.concelho ? `${r.concelho}, ` : ''}{r.island}
+                      </p>
+                      <span className="w-1 h-1 bg-slate-200 rounded-full lg:hidden"></span>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest lg:hidden">{r.cuisine}</p>
+                    </div>
+                    <p className="text-xs lg:text-sm text-slate-500 line-clamp-2 lg:line-clamp-3 font-medium leading-relaxed mb-0 lg:mb-4">{r.description || 'Restaurante típico com sabores regionais.'}</p>
+                  </div>
+                  
+                  {/* Desktop Reviews footer */}
+                  <div className="hidden lg:flex items-center justify-between pt-3 border-t border-slate-50 mt-auto">
+                    <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">
+                      {r.reviews} Avaliações
+                    </span>
+                    <div className="w-7 h-7 lg:w-7 lg:h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+
+                  {/* Mobile Reviews footer */}
+                  <div className="lg:hidden flex items-center justify-between mt-2">
+                    <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">
+                      {r.reviews} Avaliações
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-350 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                      <ArrowRight size={16} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -958,25 +925,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     
     return (
       <div className="space-y-6">
-        {isTrail ? (
-          <div className="space-y-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {['Todos', 'Oeste', 'Centro', 'Leste'].map((zona) => (
-                <button
-                  key={zona}
-                  onClick={() => setTrailZoneFilter(zona as any)}
-                  className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
-                    ${trailZoneFilter === zona ? 'bg-emerald-600 text-white border-transparent' : 'bg-white text-slate-500 border-slate-100 hover:border-emerald-200'}`}
-                >
-                  {zona === 'Todos' ? '🌍 Todos' : zona}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">
-              Explora a natureza açoriana de forma guiada
-            </p>
-          </div>
-        ) : (
+        {isTrail ? null : (
           <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             <button 
               onClick={() => setPriceFilter('all')}
@@ -1005,62 +954,68 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         )}
 
         {data.length === 0 ? renderEmptyState() : (
-          <div className="space-y-4">
+          <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
             {data.map(a => {
               const trail = a as any;
               
               return (
                 <div 
                   key={a.id} 
-                  className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
+                  className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
                   onClick={() => {
                     if (a.type === 'trail' || a.type === 'landscape' || a.type === 'culture' || a.type === 'poi' || a.type === 'activity') {
                       setSelectedTrail(a);
                     }
                   }}
                 >
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
+                  <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
                      <img 
                        src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
                        alt={a.title} 
                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                      />
-                     <div className="absolute top-1 right-1">
+                     <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
                         {isTrail ? (
-                          <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                          <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
                             {trail.trailCode || 'PR'}
                           </span>
                         ) : (
                           a.isPaid ? (
-                            <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                            <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
                               {a.price}€
                             </span>
                           ) : (
-                            <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md">
+                            <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
                               Grátis
                             </span>
                           )
                         )}
                      </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{a.title}</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-blue-500" /> {a.island}
+                  <div className="flex-1 min-w-0 lg:p-5 lg:flex lg:flex-col lg:justify-between lg:h-full">
+                    <div>
+                      <h3 className="text-sm lg:text-base font-black text-slate-800 uppercase tracking-tight truncate mb-1 lg:mb-1.5">{a.title}</h3>
+                      <div className="flex items-center gap-2 mb-2 lg:mb-2.5">
+                        <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-blue-500" /> {a.island}
+                        </p>
+                        {trail.trailZone && (
+                          <>
+                            <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                            <span className="text-[9px] lg:text-[10px] font-black text-emerald-600 uppercase tracking-widest">{trail.trailZone}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-xs lg:text-sm text-slate-500 line-clamp-2 lg:line-clamp-3 font-medium leading-relaxed mb-0 lg:mb-4">
+                        {isTrail && trail.duration ? `⏱ ${trail.duration} | 🏁 ${trail.distance}` : a.description}
                       </p>
-                      {trail.trailZone && (
-                        <>
-                          <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{trail.trailZone}</span>
-                        </>
-                      )}
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">
-                      {isTrail && trail.duration ? `⏱ ${trail.duration} | 🏁 ${trail.distance}` : a.description}
-                    </p>
+                    <div className="flex items-center justify-end pt-3 border-t border-slate-50 mt-auto">
+                      <div className="w-7 h-7 lg:w-7 lg:h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                        <ArrowRight size={14} />
+                      </div>
+                    </div>
                   </div>
-                  <ArrowRight size={20} className="text-slate-200 group-hover:text-emerald-600 transition-colors mr-2" />
                 </div>
               );
             })}
@@ -1076,11 +1031,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     if (filtered.length === 0) return renderEmptyState();
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
         {filtered.map(b => (
           <div 
             key={b.id} 
-            className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group flex items-center gap-4 p-4 border border-slate-100"
+            className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
             onClick={() => {
               if (b.businessType === 'shop' || category === 'shops') {
                 setSelectedShop(b);
@@ -1089,26 +1044,32 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               }
             }} 
           >
-            <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 relative">
+            <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
               <img 
                 src={b.image.startsWith('/') ? `${API_BASE_URL}${b.image}` : b.image} 
                 alt={b.name} 
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
               />
-              <div className="absolute top-2 right-2">
-                 <div className="w-6 h-6 rounded-lg bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
-                   <MapPin className="w-3 h-3 text-red-500" />
+              <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
+                 <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
+                   <MapPin className="w-3.5 h-3.5 text-red-500" />
                  </div>
               </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight truncate mb-1">{b.name}</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                {b.concelho ? `${b.concelho}, ` : ''}{b.island} {b.cuisine ? `• ${b.cuisine}` : ''}
-              </p>
-              <p className="text-xs text-slate-500 line-clamp-2 font-medium leading-relaxed">{b.description}</p>
+            <div className="flex-1 min-w-0 lg:p-5 lg:flex lg:flex-col lg:justify-between lg:h-full">
+              <div>
+                <h3 className="text-sm lg:text-base font-black text-slate-800 uppercase tracking-tight truncate mb-1 lg:mb-1.5">{b.name}</h3>
+                <p className="text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 lg:mb-2.5">
+                  {b.concelho ? `${b.concelho}, ` : ''}{b.island} {b.cuisine ? `• ${b.cuisine}` : ''}
+                </p>
+                <p className="text-xs lg:text-sm text-slate-500 line-clamp-2 lg:line-clamp-3 font-medium leading-relaxed mb-0 lg:mb-4">{b.description}</p>
+              </div>
+              <div className="flex items-center justify-end pt-3 border-t border-slate-50 mt-auto">
+                <div className="w-7 h-7 lg:w-7 lg:h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                  <ArrowRight size={14} />
+                </div>
+              </div>
             </div>
-            <ArrowRight size={20} className="text-slate-200 group-hover:text-blue-600 transition-colors mr-2" />
           </div>
         ))}
       </div>
@@ -1966,42 +1927,180 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     );
   };
 
+  const renderCategoryFilterBar = () => {
+    if (category === 'restaurants') {
+      const cuisines = Array.from(new Set(allRestaurants.map(r => r.cuisine))).sort();
+      const islands = ["Santa Maria", "São Miguel", "Terceira", "Graciosa", "São Jorge", "Pico", "Faial", "Flores", "Corvo"];
+      return (
+        <div className="bg-white p-6 lg:p-4 rounded-[2rem] lg:rounded-2xl shadow-sm border border-slate-100 space-y-6 lg:space-y-4 lg:max-w-2xl xl:max-w-3xl lg:mx-auto lg:mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input 
+                type="text"
+                placeholder="Procurar restaurante, cozinha ou local..."
+                value={restaurantSearch}
+                onChange={(e) => setRestaurantSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 lg:py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-700 text-sm"
+              />
+            </div>
+            <div className="flex gap-4">
+              <select 
+                value={restaurantIslandFilter}
+                onChange={(e) => setRestaurantIslandFilter(e.target.value)}
+                className="px-4 py-4 lg:py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
+              >
+                <option value="all">Todas as Ilhas</option>
+                {islands.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+              <select 
+                value={restaurantCuisineFilter}
+                onChange={(e) => setRestaurantCuisineFilter(e.target.value)}
+                className="px-4 py-4 lg:py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
+              >
+                <option value="all">Todas as Cozinhas</option>
+                {cuisines.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex gap-2">
+              <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                {filteredRestaurants.length} Restaurantes
+              </span>
+              {restaurantSearch && (
+                <button 
+                  onClick={() => setRestaurantSearch('')}
+                  className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-1"
+                >
+                  <X size={10} /> Limpar Pesquisa
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (category === 'trails') {
+      return (
+        <div className="flex flex-col items-center gap-3 lg:max-w-2xl xl:max-w-3xl lg:mx-auto lg:mb-8">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
+            {['Todos', 'Oeste', 'Centro', 'Leste'].map((zona) => (
+              <button
+                key={zona}
+                onClick={() => setTrailZoneFilter(zona as any)}
+                className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
+                  ${trailZoneFilter === zona ? 'bg-emerald-600 text-white border-transparent' : 'bg-white text-slate-500 border-slate-100 hover:border-emerald-200'}`}
+              >
+                {zona === 'Todos' ? '🌍 Todos' : zona}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 text-center">
+            Explora a natureza açoriana de forma guiada
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="px-6 md:px-10 pb-32 pt-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Category Header */}
-      <div className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-5">
-           <div 
-             className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105"
-             style={{ backgroundColor: COLORS[category] || '#1A75BB' }}
-           >
-             {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-           </div>
-           <div>
-             <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
-             <div className="flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                 {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-               </p>
-             </div>
-             {renderFollowLikeButtons(`cat_${category}`)}
-           </div>
+      {/* Breadcrumb & Back Button */}
+      <div className="flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="hover:text-slate-650 cursor-pointer transition-colors" onClick={onClose}>Início</span>
+          <span>/</span>
+          <span className="text-slate-500">{getCategoryTitle(category)}</span>
         </div>
         <button 
           onClick={onClose}
-          className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all active:scale-90"
+          className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-4 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95 transition-all"
         >
-          <X size={24} />
+          <ArrowLeft size={14} /> Voltar
         </button>
       </div>
 
+      {/* Featured Slider & Search Bar Overlay */}
+      {featuredItems && featuredItems.length > 0 ? (
+        <div className="relative my-8 rounded-[2rem] overflow-hidden shadow-xl">
+          {/* Slider */}
+          <MostRequestedSlider 
+            items={featuredItems} 
+            onAction={(item) => {
+              const res = restaurants.find(r => r.id === item.id) || 
+                          beauty.find(b => b.id === item.id) ||
+                          shops.find(s => s.id === item.id) ||
+                          activities.find(a => a.id === item.id);
+              if (res) {
+                if (category === 'restaurants') setSelectedRestaurant(res as any);
+                else if (category === 'beauty') setSelectedRestaurant(res as any);
+                else if (category === 'shops') setSelectedShop(res as any);
+                else if (category === 'trails' || category === 'activities') setSelectedTrail(res as any);
+              }
+            }}
+          />
 
+          {/* Overlay Content (Print 1: Header + Search Bar) */}
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/45 p-6 pointer-events-none">
+            {/* Centered Category Header inside Slider */}
+            <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
+               <div 
+                 className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
+                 style={{ color: COLORS[category] || '#1A75BB' }}
+               >
+                 {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+               </div>
+               <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
+               <div className="flex items-center gap-2 justify-center">
+                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
+                   {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+                 </p>
+               </div>
+            </div>
+
+            {/* Centered Search Card inside Slider */}
+            <div className="w-full lg:max-w-2xl xl:max-w-3xl pointer-events-auto">
+              {renderCategoryFilterBar()}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="my-8">
+          {/* Category Header (Only when no featured slider is present) */}
+          <div className="flex items-center gap-5 lg:flex-col lg:items-center lg:mx-auto text-left lg:text-center mb-8">
+             <div 
+               className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105"
+               style={{ backgroundColor: COLORS[category] || '#1A75BB' }}
+             >
+               {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+             </div>
+             <div className="lg:flex lg:flex-col lg:items-center">
+               <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
+               <div className="flex items-center gap-2 lg:justify-center">
+                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                   {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+                 </p>
+               </div>
+               <div className="lg:hidden">
+                 {renderFollowLikeButtons(`cat_${category}`)}
+               </div>
+             </div>
+          </div>
+
+          {renderCategoryFilterBar()}
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 bg-slate-50/50 border-t border-slate-100">
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex lg:hidden items-center justify-between mb-10">
            <div className="flex items-center gap-3">
               <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
               <div>
@@ -2013,6 +2112,17 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organizado por Relevância</span>
            </div>
         </div>
+
+        {/* Desktop Popular Title */}
+        <div className="hidden lg:flex items-center gap-3 mb-8">
+          <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+            {category === 'restaurants' ? 'Restaurantes Populares' : 
+             category === 'trails' ? 'Trilhos Populares' :
+             category === 'activities' ? 'Experiências Populares' : 'Mais Reservados'}
+          </h3>
+          <span className="text-amber-500 font-black text-sm tracking-wide">⭐⭐⭐⭐⭐</span>
+        </div>
+
         {getContent()}
       </div>
 

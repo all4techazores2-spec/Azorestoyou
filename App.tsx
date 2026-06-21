@@ -157,6 +157,7 @@ const GuestExitPromoPopup: React.FC<{ onYes: () => void; onNo: () => void }> = (
 
 
 const App: React.FC = () => {
+  let categoryFeaturedItems: any[] = [];
   // App Settings
   const [language, setLanguage] = useState<Language>('pt');
 
@@ -682,7 +683,7 @@ const App: React.FC = () => {
     return items.filter(item => 
       item.island?.toLowerCase() === publicIslandFilter.toLowerCase() || 
       item.island === publicIslandFilter ||
-      (item as any).location?.toLowerCase().includes(publicIslandFilter.toLowerCase())
+      (item as any).location?.toLowerCase()?.includes(publicIslandFilter.toLowerCase())
     );
   };
 
@@ -2742,15 +2743,8 @@ const App: React.FC = () => {
                     featuredItems = [];
                 }
 
-                if (featuredItems.length === 0) return null;
-                return <MostRequestedSlider 
-                  items={featuredItems} 
-                  onAction={(item) => {
-                    if (exploreCategory === 'trails' || exploreCategory === 'restaurants') {
-                      setSelectedTrailId(item.id);
-                    }
-                  }}
-                />;
+                categoryFeaturedItems = featuredItems;
+                return null;
               })()}
 
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
@@ -2874,6 +2868,7 @@ const App: React.FC = () => {
                     initialSearchQuery={globalSearchQuery}
                     selectedItemId={selectedTrailId}
                     onSelectedItemIdHandled={() => setSelectedTrailId(null)}
+                    featuredItems={categoryFeaturedItems}
                     // PASSING DYNAMIC DATA (Filtered)
                     restaurants={filterByIsland(restaurants)}
                     activities={filterByIsland(activities)}

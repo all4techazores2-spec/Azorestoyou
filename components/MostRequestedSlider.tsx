@@ -46,11 +46,11 @@ const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onActi
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10" />
+            <div className="absolute inset-0 bg-black/45 z-10" />
             <img 
               src={items[currentIndex].image} 
               alt={items[currentIndex].title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover blur-[2px] scale-105"
             />
             
             <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-20 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -75,14 +75,14 @@ const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onActi
               {items[currentIndex].phone ? (
                 <a 
                   href={`tel:${items[currentIndex].phone}`}
-                  className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-2"
+                  className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-emerald-500 hover:text-white hover:border-transparent hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-2"
                 >
                   <Phone size={16} /> {items[currentIndex].buttonLabel || 'Ligue Já'}
                 </a>
               ) : (
                 <button 
                   onClick={() => onAction && onAction(items[currentIndex])}
-                  className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl"
+                  className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-emerald-500 hover:text-white hover:border-transparent hover:scale-105 active:scale-95 transition-all shadow-xl"
                 >
                   {items[currentIndex].buttonLabel || 'Reservar Agora'}
                 </button>
