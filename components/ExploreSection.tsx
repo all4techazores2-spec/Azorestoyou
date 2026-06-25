@@ -196,26 +196,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   const renderFollowLikeButtons = (catKey: string) => {
-    return (
-      <div className="flex items-center gap-2 mt-2 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full border border-slate-100/80 shadow-sm w-fit z-10">
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleFollowCategory(catKey); }}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95
-            ${followedCats[catKey] ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200/50'}`}
-        >
-          <Users size={11} />
-          <span>Seguir ({getCategoryFollowers(catKey)})</span>
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleLikeCategory(catKey); }}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95
-            ${likedCats[catKey] ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200/50'}`}
-        >
-          <ThumbsUp size={11} className={likedCats[catKey] ? 'fill-current' : ''} />
-          <span>{likedCats[catKey] ? 'Gostei' : 'Gostar'}</span>
-        </button>
-      </div>
-    );
+    return null;
   };
   
   // Handle external item selection (e.g. from slider)
@@ -1133,17 +1114,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   {subcats.find(c => c.id === beautyFilter)?.label}
                 </h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} resultados encontrados
+                  {filtered.length} resultados
                 </p>
-                {renderFollowLikeButtons(`beauty_${beautyFilter}`)}
               </div>
            </div>
-           <button 
-             onClick={() => setBeautyFilter(null)}
-             className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2"
-           >
-             <X size={14} /> Voltar às Categorias
-           </button>
+
         </div>
 
         {renderBusiness(filtered)}
@@ -1225,17 +1200,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   {subcats.find(c => c.id === servicesFilter)?.label}
                 </h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} serviços especializados
+                  {filtered.length} serviços
                 </p>
-                {renderFollowLikeButtons(`services_${servicesFilter}`)}
               </div>
            </div>
-           <button 
-             onClick={() => setServicesFilter(null)}
-             className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
-           >
-             <ArrowRight size={14} className="rotate-180" /> Voltar
-           </button>
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1326,7 +1295,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white"><Zap size={24}/></div>
                       <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_auto_electronics')}</h3>
                    </div>
-                   <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
+
                 </div>
                 {renderAutoElectronics()}
              </div>
@@ -1341,7 +1310,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white"><ShoppingCart size={24}/></div>
                       <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_used_market')}</h3>
                    </div>
-                   <button onClick={() => setAutoRepairFilter(null)} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all">Voltar</button>
+
                 </div>
                 {renderUsedMarket()}
              </div>
@@ -1400,12 +1369,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     {renderFollowLikeButtons(`auto_${autoRepairFilter}`)}
                   </div>
                </div>
-               <button 
-                 onClick={() => setAutoRepairFilter(null)}
-                 className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
-               >
-                 <ArrowRight size={14} className="rotate-180" /> Voltar
-               </button>
+
             </div>
     
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2025,9 +1989,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </button>
       </div>
 
-      {/* Featured Slider & Search Bar Overlay */}
-      {featuredItems && featuredItems.length > 0 ? (
-        <div className="relative my-8 rounded-[2rem] overflow-hidden shadow-xl">
+      {/* Featured Slider & Search Bar Overlay (Directly under the header, full width on mobile) */}
+      {featuredItems && featuredItems.length > 0 && (
+        <div className="relative mb-8 md:my-8 -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl">
           {/* Slider */}
           <MostRequestedSlider 
             items={featuredItems} 
@@ -2045,7 +2009,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             }}
           />
 
-          {/* Overlay Content (Print 1: Header + Search Bar) */}
+          {/* Overlay Content */}
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/45 p-6 pointer-events-none">
             {/* Centered Category Header inside Slider */}
             <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
@@ -2070,7 +2034,24 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Breadcrumb & Back Button */}
+      <div className="flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="hover:text-slate-650 cursor-pointer transition-colors" onClick={onClose}>Início</span>
+          <span>/</span>
+          <span className="text-slate-500">{getCategoryTitle(category)}</span>
+        </div>
+        <button 
+          onClick={onClose}
+          className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-4 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95 transition-all"
+        >
+          <ArrowLeft size={14} /> Voltar
+        </button>
+      </div>
+
+      {(!featuredItems || featuredItems.length === 0) && (
         <div className="my-8">
           {/* Category Header (Only when no featured slider is present) */}
           <div className="flex items-center gap-5 lg:flex-col lg:items-center lg:mx-auto text-left lg:text-center mb-8">
@@ -2100,18 +2081,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {/* Main Content Area */}
       <div className="relative mt-12 -mx-6 md:-mx-10 px-6 md:px-10 py-12 bg-slate-50/50 border-t border-slate-100">
-        <div className="flex lg:hidden items-center justify-between mb-10">
-           <div className="flex items-center gap-3">
-              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-              <div>
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Catálogo Completo</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Explorar todos os itens disponíveis</p>
-              </div>
-           </div>
-           <div className="px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Organizado por Relevância</span>
-           </div>
-        </div>
+
 
         {/* Desktop Popular Title */}
         <div className="hidden lg:flex items-center gap-3 mb-8">
