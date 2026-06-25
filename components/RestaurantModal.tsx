@@ -442,6 +442,27 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     
     // Filter slots by existing reservation times and duration chosen
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+    if (isBeauty) {
+      return slots.filter(slot => {
+        // 1. Check if slot is blocked in blockedSlots
+        const isBlocked = (restaurant.blockedSlots || []).some(
+          (b: any) => b.date === selectedDateStr && b.time === slot
+        );
+        if (isBlocked) return false;
+
+        // 2. Check if slot has a confirmed accepted reservation
+        const isReserved = (restaurant.reservations || []).some(
+          (r: any) => r.status === 'accepted' && 
+                      (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr)) && 
+                      r.time === slot
+        );
+        if (isReserved) return false;
+
+        return true;
+      });
+    }
+
     const activeReservations = restaurant.reservations.filter((r: any) => 
       (r.status === 'accepted' || r.status === 'pending') &&
       (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
@@ -450,46 +471,6 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     const totalDuration = selectedServices.length > 0 
       ? selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0)
       : 30;
-
-    if (isBeauty) {
-      const activeChairs = chairs.filter(c => c.isActive !== false);
-      if (activeChairs.length > 0) {
-        return slots.filter(slot => {
-          const slotStart = timeToMinutes(slot);
-          const slotEnd = slotStart + totalDuration;
-          
-          // Check opening hours
-          const fallsWithinHours = ranges.some(range => {
-            const parts = range.split('-');
-            if (parts.length === 2) {
-              const startMin = timeToMinutes(parts[0]);
-              const endMin = timeToMinutes(parts[1]);
-              return slotStart >= startMin && slotEnd <= endMin;
-            }
-            return false;
-          });
-          if (!fallsWithinHours) return false;
-          
-          // Check if at least one chair is available
-          const hasAvailableChair = activeChairs.some(chair => {
-            const blocks = chairBlocks.filter(b => 
-              (b.chairId === chair.id || b.chairId === chair.chairId) &&
-              b.date === selectedDateStr &&
-              b.status !== 'cancelled' &&
-              b.status !== 'completed'
-            );
-            const hasOverlap = blocks.some(b => {
-              const bStart = timeToMinutes(b.startTime);
-              const bEnd = timeToMinutes(b.endTime);
-              return slotStart < bEnd && slotEnd > bStart;
-            });
-            return !hasOverlap;
-          });
-          
-          return hasAvailableChair;
-        });
-      }
-    }
 
     return slots.filter(slot => {
       const slotStart = timeToMinutes(slot);
@@ -1036,41 +1017,27 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                 required
                               />
                             </div>
-
-                            {/* Alguma nota ou restrição directly on first step for restaurants */}
-                            {!isBeauty && (
-                              <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
-                                <textarea 
-                                  value={bookingNote}
-                                  onChange={(e) => setBookingNote(e.target.value)}
-                                  placeholder="Ex: Algum pedido especial para o agendamento..."
-                                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
-                                />
-                              </div>
-                            )}
+                            <div>
+                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                              <textarea 
+                                value={bookingNote}
+                                onChange={(e) => setBookingNote(e.target.value)}
+                                placeholder="Ex: Algum pedido especial para o agendamento..."
+                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
+                              />
+                            </div>
                             
-                            {!isBeauty ? (
-                              <button 
-                                disabled={isProcessing}
-                                onClick={handleFinalize}
-                                className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6
-                                  ${isProcessing 
-                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                                    : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
-                              >
-                                {isProcessing ? 'A processar...' : 'Confirmar Reserva'}
-                                <ArrowRight className="w-5 h-5" />
-                              </button>
-                            ) : (
-                              <button 
-                                onClick={handleDetailsConfirm}
-                                className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6"
-                              >
-                                Seguinte
-                                <ArrowRight className="w-5 h-5" />
-                              </button>
-                            )}
+                            <button 
+                              disabled={isProcessing}
+                              onClick={handleFinalize}
+                              className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6
+                                ${isProcessing 
+                                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                                  : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                            >
+                              {isProcessing ? 'A processar...' : (isBeauty ? 'Agendar Serviço' : 'Confirmar Reserva')}
+                              <ArrowRight className="w-5 h-5" />
+                            </button>
                           </div>
                         ) : (
                           <div className="space-y-4">
@@ -1523,10 +1490,17 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   <CheckCircle size={40} strokeWidth={2.5} />
                 </div>
                 
-                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Marcação Efetuada!</h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">
+                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">
+                  {isBeauty ? 'Agendamento Confirmado!' : 'Marcação Efetuada!'}
+                </h3>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">
                   {restaurant.name} • {selectedDate?.toLocaleDateString()} às {selectedTime}
                 </p>
+                {isBeauty && (
+                  <p className="text-slate-300 text-[11px] font-semibold max-w-sm mb-6 leading-relaxed">
+                    O seu horário foi reservado com sucesso e ficou agendado automaticamente.
+                  </p>
+                )}
 
                 {/* ADVERTISING / FISHING BANNER */}
                 <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-8 text-left space-y-4 shadow-xl backdrop-blur-md">

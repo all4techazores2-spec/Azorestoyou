@@ -1154,52 +1154,28 @@ app.post('/api/reservations', async (req, res) => {
                 const requestedDate = req.body.date;
                 const requestedTime = req.body.time;
 
-                let chairsForBiz = (db.chairs || []).filter(c => c.businessId === businessId && c.isActive !== false);
-                if (chairsForBiz.length === 0) {
-                    const defaultChair = {
-                        id: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-                        chairId: `CHAIR_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-                        barberId: businessId,
-                        businessId: businessId,
-                        chairName: 'Cadeira 1',
-                        chairNumber: 1,
-                        status: 'available',
-                        isActive: true,
-                        createdAt: new Date().toISOString()
-                    };
-                    if (!db.chairs) db.chairs = [];
-                    db.chairs.push(defaultChair);
-                    chairsForBiz = [defaultChair];
+                // 1. Check if the slot is blocked in business.blockedSlots
+                const isBlocked = (business.blockedSlots || []).some(
+                    slot => slot.date === requestedDate && slot.time === requestedTime
+                );
+
+                if (isBlocked) {
+                    console.warn(`⚠️ Reservation blocked: Beauty [${businessId}], Date [${requestedDate}], Time [${requestedTime}] - Slot is blocked by staff`);
+                    return res.status(400).send("Este horário está bloqueado pelo estabelecimento.");
                 }
 
-                let duration = 30;
-                const items = req.body.preOrder || req.body.preorder || [];
-                if (items.length > 0) {
-                    duration = items.reduce((sum, item) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+                // 2. Check if the slot already has a confirmed/accepted reservation
+                const hasOverlap = (business.reservations || []).some(
+                    r => (r.status === 'accepted') && r.date === requestedDate && r.time === requestedTime
+                );
+
+                if (hasOverlap) {
+                    console.warn(`⚠️ Reservation blocked: Beauty [${businessId}], Date [${requestedDate}], Time [${requestedTime}] - Already booked`);
+                    return res.status(400).send("Este horário já está reservado.");
                 }
 
-                const tStartMin = timeToMinutes(requestedTime);
-                const tEndMin = tStartMin + duration;
-
-                const availableChairs = chairsForBiz.filter(chair => {
-                    const blocks = (db.chairBlocks || []).filter(b => 
-                        (b.chairId === chair.id || b.chairId === chair.chairId) &&
-                        b.date === requestedDate &&
-                        b.status !== 'cancelled' &&
-                        b.status !== 'completed'
-                    );
-                    const hasOverlap = blocks.some(b => {
-                        const bStart = timeToMinutes(b.startTime);
-                        const bEnd = timeToMinutes(b.endTime);
-                        return tStartMin < bEnd && tEndMin > bStart;
-                    });
-                    return !hasOverlap;
-                });
-
-                if (availableChairs.length === 0) {
-                    console.warn(`⚠️ Overlap reservation blocked: Barber [${businessId}], Date [${requestedDate}], Time [${requestedTime}] - No free chairs`);
-                    return res.status(400).send("Nenhuma cadeira disponível para este horário.");
-                }
+                // 3. Otherwise, set status to accepted automatically!
+                reservation.status = 'accepted';
             }
 
             console.log(`✅ Business found: [${business.name}]. Adding reservation...`);

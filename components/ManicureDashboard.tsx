@@ -50,6 +50,34 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
     ];
   });
 
+  const [selectedAgendaDate, setSelectedAgendaDate] = useState<string>('2026-06-25');
+
+  // Synchronize appointmentsList when business.reservations updates from parent
+  useEffect(() => {
+    if (business.reservations) {
+      setAppointmentsList(business.reservations);
+    }
+  }, [business.reservations]);
+
+  // Live polling for booking requests
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/beauty/${business.id}`);
+        if (res.ok) {
+          const updatedBiz = await res.json();
+          if (updatedBiz.reservations) {
+            setAppointmentsList(updatedBiz.reservations);
+          }
+        }
+      } catch (err) {
+        console.error("Erro no polling de marcações:", err);
+      }
+    }, 8000);
+
+    return () => clearInterval(pollInterval);
+  }, [business.id]);
+
   // Services States
   const defaultServices: Service[] = [
     { id: 's1', name: 'Manicure Simples', description: 'Corte, lima e hidratação básica.', price: 10.00, duration: 25, image: '' },
@@ -943,27 +971,89 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                   
                   {/* Calendar Widget left */}
-                  <div className="lg:col-span-4 bg-white border border-slate-100 p-6 rounded-[24px] shadow-sm space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Calendário de Trabalho</h3>
-                    
-                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50 text-center text-xs">
-                      <p className="font-extrabold text-slate-800 mb-2 uppercase tracking-wider">Junho 2026</p>
-                      <div className="grid grid-cols-7 gap-1 font-bold text-slate-400 text-[10px] mb-2">
-                        <span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span>
+                  <div className="lg:col-span-4 bg-white border border-slate-100 p-6 rounded-[24px] shadow-sm space-y-6">
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Calendário de Trabalho</h3>
+                      
+                      <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50 text-center text-xs">
+                        <p className="font-extrabold text-slate-800 mb-2 uppercase tracking-wider">Junho 2026</p>
+                        <div className="grid grid-cols-7 gap-1 font-bold text-slate-400 text-[10px] mb-2">
+                          <span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: 30 }).map((_, i) => {
+                            const dayNum = i + 1;
+                            const dateStr = `2026-06-${String(dayNum).padStart(2, '0')}`;
+                            const isSelected = selectedAgendaDate === dateStr;
+                            return (
+                              <span 
+                                key={i} 
+                                onClick={() => setSelectedAgendaDate(dateStr)}
+                                className={`p-1.5 rounded-lg text-center cursor-pointer select-none font-bold text-[11px] transition-all ${
+                                  isSelected 
+                                    ? 'bg-pink-500 text-white font-black shadow-sm shadow-pink-500/30' 
+                                    : 'hover:bg-slate-200 text-slate-700'
+                                }`}
+                              >
+                                {dayNum}
+                              </span>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-7 gap-1">
-                        {Array.from({ length: 30 }).map((_, i) => {
-                          const dayNum = i + 1;
-                          const isToday = dayNum === 25;
+                    </div>
+
+                    {/* Mapa de Disponibilidade */}
+                    <div className="border-t border-slate-100 pt-6 space-y-4">
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Mapa de Disponibilidade</h4>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Dia: {selectedAgendaDate.split('-').reverse().join('/')}</p>
+                      </div>
+                      
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                        {[
+                          '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+                          '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'
+                        ].map(slot => {
+                          const isBlocked = (business.blockedSlots || []).some(
+                            (b: any) => b.date === selectedAgendaDate && b.time === slot
+                          );
+                          const isReserved = appointmentsList.some(
+                            (app: any) => app.status === 'accepted' && 
+                                           (app.date === selectedAgendaDate || (app.date === 'Hoje' && selectedAgendaDate === '2026-06-25') || (app.date === 'Amanhã' && selectedAgendaDate === '2026-06-26') || (app.date.includes('/') && app.date.split('/').reverse().join('-') === selectedAgendaDate)) &&
+                                           app.time === slot
+                          );
+                          
+                          const toggleSlot = () => {
+                            let newBlocked = [...(business.blockedSlots || [])];
+                            if (isBlocked) {
+                              newBlocked = newBlocked.filter((b: any) => !(b.date === selectedAgendaDate && b.time === slot));
+                            } else {
+                              newBlocked.push({ date: selectedAgendaDate, time: slot });
+                            }
+                            onUpdateBusiness({ ...business, blockedSlots: newBlocked });
+                          };
+
                           return (
-                            <span 
-                              key={i} 
-                              className={`p-1.5 rounded-lg text-center cursor-pointer select-none font-bold text-[11px] ${
-                                isToday ? 'bg-pink-500 text-white font-black shadow-sm shadow-pink-500/30' : 'hover:bg-slate-200 text-slate-700'
-                              }`}
-                            >
-                              {dayNum}
-                            </span>
+                            <div key={slot} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                              <span className="font-mono font-bold text-slate-700">{slot}</span>
+                              {isReserved ? (
+                                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                  Reservado
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={toggleSlot}
+                                  className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all active:scale-95 ${
+                                    isBlocked 
+                                      ? 'bg-red-500 text-white hover:bg-red-650' 
+                                      : 'bg-slate-200 text-slate-700 hover:bg-slate-350'
+                                  }`}
+                                >
+                                  {isBlocked ? 'Bloqueado' : 'Disponível'}
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -974,53 +1064,70 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                   <div className="lg:col-span-8 space-y-4">
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Lista de Marcações</h3>
                     <div className="space-y-3">
-                      {appointmentsList.map((app) => (
-                        <div key={app.id} className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <img src={app.avatar} alt={app.customerName} className="w-10 h-10 rounded-full object-cover border border-pink-500 shrink-0" />
-                            <div>
-                              <div className="flex items-center gap-2.5">
-                                <h4 className="font-extrabold text-sm text-slate-800">{app.customerName}</h4>
-                                <span className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded">
-                                  {app.date}
-                                </span>
+                      {appointmentsList.filter(app => {
+                        const appDateStr = app.date === 'Hoje' ? '2026-06-25' : (app.date === 'Amanhã' ? '2026-06-26' : (app.date.includes('/') ? app.date.split('/').reverse().join('-') : app.date));
+                        return appDateStr === selectedAgendaDate;
+                      }).length === 0 ? (
+                        <div className="bg-white border border-slate-100 p-8 rounded-[24px] text-center text-slate-400 italic text-xs">
+                          Nenhum agendamento registado para este dia.
+                        </div>
+                      ) : (
+                        appointmentsList.filter(app => {
+                          const appDateStr = app.date === 'Hoje' ? '2026-06-25' : (app.date === 'Amanhã' ? '2026-06-26' : (app.date.includes('/') ? app.date.split('/').reverse().join('-') : app.date));
+                          return appDateStr === selectedAgendaDate;
+                        }).map((app) => (
+                          <div key={app.id} className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <img src={app.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(app.customerName)}`} alt={app.customerName} className="w-10 h-10 rounded-full object-cover border border-pink-500 shrink-0" />
+                              <div>
+                                <div className="flex items-center gap-2.5">
+                                  <h4 className="font-extrabold text-sm text-slate-800">{app.customerName}</h4>
+                                  <span className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded">
+                                    {app.date}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">💅 {app.serviceName || 'Agendamento Direto'}</p>
+                                <p className="text-[10px] text-slate-400 font-bold mt-0.5">⏱️ Hora: {app.time} • Tel: {app.customerPhone}</p>
+                                {app.notes && <p className="text-[9px] text-slate-400 bg-slate-50 p-2 rounded-lg mt-1.5 font-medium border border-slate-100">📝 Nota: {app.notes}</p>}
                               </div>
-                              <p className="text-xs text-slate-500 mt-1">💅 {app.serviceName}</p>
-                              <p className="text-[10px] text-slate-400 font-bold mt-0.5">⏱️ Hora: {app.time} • Tel: {app.customerPhone}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                              {app.status === 'pending' ? (
+                                <>
+                                  <button 
+                                    onClick={() => {
+                                      const updatedList = appointmentsList.map(a => a.id === app.id ? { ...a, status: 'accepted' } : a);
+                                      setAppointmentsList(updatedList);
+                                      onUpdateBusiness({ ...business, reservations: updatedList });
+                                      alert('✅ Marcação aceite com sucesso!');
+                                    }}
+                                    className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-colors shadow-sm"
+                                  >
+                                    Aceitar
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      const updatedList = appointmentsList.filter(a => a.id !== app.id);
+                                      setAppointmentsList(updatedList);
+                                      onUpdateBusiness({ ...business, reservations: updatedList });
+                                      alert('❌ Marcação rejeitada.');
+                                    }}
+                                    className="px-3 py-1.5 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-200 transition-colors"
+                                  >
+                                    Rejeitar
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl">
+                                  <CheckCircle size={13} />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">Confirmada</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                            {app.status === 'pending' ? (
-                              <>
-                                <button 
-                                  onClick={() => {
-                                    setAppointmentsList(prev => prev.map(a => a.id === app.id ? { ...a, status: 'accepted' } : a));
-                                    alert('✅ Marcação aceite com sucesso!');
-                                  }}
-                                  className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-600 transition-colors shadow-sm"
-                                >
-                                  Aceitar
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    setAppointmentsList(prev => prev.filter(a => a.id !== app.id));
-                                    alert('❌ Marcação rejeitada.');
-                                  }}
-                                  className="px-3 py-1.5 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-200 transition-colors"
-                                >
-                                  Rejeitar
-                                </button>
-                              </>
-                            ) : (
-                              <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl">
-                                <CheckCircle size={13} />
-                                <span className="text-[9px] font-black uppercase tracking-wider">Confirmada</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
 
