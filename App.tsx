@@ -935,7 +935,7 @@ const App: React.FC = () => {
 
     if (finalBusinessId) {
       const biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars].find(b => b.id === finalBusinessId);
-      const isBarber = biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia' || finalBusinessId.startsWith('BEA');
+      const isBarber = (biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia' || (finalBusinessId.startsWith('BEA') && biz?.subcategory !== 'manicure' && email?.toLowerCase() !== 'aasnailsstudio@gmail.com'));
       if (isBarber) {
         setIsAuthenticated(false);
         setIsBusiness(false);
