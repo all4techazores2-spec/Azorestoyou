@@ -453,25 +453,25 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                   {/* Left Column (Cards) */}
                   <div className="w-full lg:w-1/3 flex flex-col gap-5">
                     {[
-                      { id: 'appointments', title: 'Agendamentos', desc: 'Ver e gerir agendamentos', icon: '📅', color: 'text-purple-600 bg-purple-50 border-purple-100' },
-                      { id: 'clientes', title: 'Clientes', desc: 'Ver todos os clientes', icon: '👥', color: 'text-blue-600 bg-blue-50 border-blue-100' },
-                      { id: 'services', title: 'Serviços', desc: 'Gerir serviços do salão', icon: '✂️', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' }
+                      { id: 'appointments', title: 'Agendamentos', desc: 'Ver e gerir agendamentos', icon: <Calendar size={20} />, color: 'text-purple-600 bg-purple-50/60 border-purple-100/40' },
+                      { id: 'clientes', title: 'Clientes', desc: 'Ver todos os clientes', icon: <Users size={20} />, color: 'text-blue-600 bg-blue-50/60 border-blue-100/40' },
+                      { id: 'services', title: 'Serviços', desc: 'Gerir serviços do salão', icon: <Scissors size={20} />, color: 'text-emerald-600 bg-emerald-50/60 border-emerald-100/40' }
                     ].map((card) => (
                       <button
                         key={card.id}
                         onClick={() => setActiveTab(card.id as any)}
-                        className="bg-white/80 backdrop-blur-xl border border-slate-100 p-6 rounded-[24px] shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-pink-200 transition-all duration-300 flex items-center justify-between text-left group"
+                        className="bg-white/95 backdrop-blur-xl border border-slate-100/80 p-5 rounded-[22px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_15px_40px_rgba(236,72,153,0.06)] hover:-translate-y-0.5 hover:border-pink-200/50 transition-all duration-300 flex items-center justify-between text-left group cursor-pointer"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center text-xl shrink-0 border ${card.color}`}>
+                          <div className={`w-11 h-11 rounded-[16px] flex items-center justify-center shrink-0 border ${card.color} shadow-sm`}>
                             {card.icon}
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider">{card.title}</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">{card.desc}</p>
+                            <h3 className="font-extrabold text-[13px] text-slate-800 tracking-wide">{card.title}</h3>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{card.desc}</p>
                           </div>
                         </div>
-                        <ArrowRight size={16} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight size={15} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
                       </button>
                     ))}
                   </div>
@@ -481,42 +481,42 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                     <motion.button
                       onClick={() => setActiveTab('pos')}
                       whileHover={{ scale: 1.05 }}
-                      className="w-56 h-56 rounded-full bg-gradient-to-tr from-pink-500 to-rose-600 text-white flex flex-col items-center justify-center shadow-[0_20px_50px_rgba(244,63,94,0.4)] relative cursor-pointer group focus:outline-none border-4 border-white"
+                      className="w-52 h-52 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 text-white flex flex-col items-center justify-center shadow-[0_20px_50px_rgba(244,63,94,0.35)] relative cursor-pointer group focus:outline-none border-4 border-white"
                     >
                       {/* Ripple waves */}
                       <span className="absolute inset-0 rounded-full bg-pink-500/20 animate-ping pointer-events-none" />
                       <span className="absolute inset-2 rounded-full border border-white/20 animate-pulse pointer-events-none" />
 
-                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-3 group-hover:rotate-12 transition-transform duration-300">
-                        <CreditCard size={28} className="text-white" />
+                      <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-2.5 group-hover:rotate-12 transition-transform duration-300 shadow-inner">
+                        <CreditCard size={24} className="text-white" />
                       </div>
-                      <span className="text-lg font-black tracking-widest uppercase">POS Vendas</span>
-                      <span className="text-[10px] text-white/80 font-bold uppercase tracking-wider mt-1">Abrir Ponto de Venda</span>
+                      <span className="text-base font-black tracking-wider uppercase">POS Vendas</span>
+                      <span className="text-[9px] text-white/90 font-bold uppercase tracking-widest mt-1">Abrir Ponto de Venda</span>
                     </motion.button>
                   </div>
 
                   {/* Right Column (Cards) */}
                   <div className="w-full lg:w-1/3 flex flex-col gap-5">
                     {[
-                      { id: 'products', title: 'Produtos', desc: 'Gerir produtos e stock', icon: '💅', color: 'text-amber-600 bg-amber-50 border-amber-100' },
-                      { id: 'staff', title: 'Funcionárias', desc: 'Gerir equipa e comissões', icon: '👩‍💼', color: 'text-cyan-600 bg-cyan-50 border-cyan-100' },
-                      { id: 'reports', title: 'Relatórios', desc: 'Ver relatórios e estatísticas', icon: '📊', color: 'text-rose-600 bg-rose-50 border-rose-100' }
+                      { id: 'products', title: 'Produtos', desc: 'Gerir produtos e stock', icon: <ShoppingBag size={20} />, color: 'text-amber-600 bg-amber-50/60 border-amber-100/40' },
+                      { id: 'staff', title: 'Funcionárias', desc: 'Gerir equipa e comissões', icon: <User size={20} />, color: 'text-cyan-600 bg-cyan-50/60 border-cyan-100/40' },
+                      { id: 'reports', title: 'Relatórios', desc: 'Ver relatórios e estatísticas', icon: <TrendingUp size={20} />, color: 'text-rose-600 bg-rose-50/60 border-rose-100/40' }
                     ].map((card) => (
                       <button
                         key={card.id}
                         onClick={() => setActiveTab(card.id as any)}
-                        className="bg-white/80 backdrop-blur-xl border border-slate-100 p-6 rounded-[24px] shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-pink-200 transition-all duration-300 flex items-center justify-between text-left group"
+                        className="bg-white/95 backdrop-blur-xl border border-slate-100/80 p-5 rounded-[22px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_15px_40px_rgba(236,72,153,0.06)] hover:-translate-y-0.5 hover:border-pink-200/50 transition-all duration-300 flex items-center justify-between text-left group cursor-pointer"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center text-xl shrink-0 border ${card.color}`}>
+                          <div className={`w-11 h-11 rounded-[16px] flex items-center justify-center shrink-0 border ${card.color} shadow-sm`}>
                             {card.icon}
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider">{card.title}</h3>
-                            <p className="text-xs text-slate-500 mt-0.5">{card.desc}</p>
+                            <h3 className="font-extrabold text-[13px] text-slate-800 tracking-wide">{card.title}</h3>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{card.desc}</p>
                           </div>
                         </div>
-                        <ArrowRight size={16} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight size={15} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
                       </button>
                     ))}
                   </div>
@@ -525,21 +525,21 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
 
                 {/* Bottom Center Row for remaining Azores toYou integration cards */}
                 <div className="flex justify-center">
-                  <div className="w-full md:w-2/3 lg:w-1/2">
+                  <div className="w-full md:w-2/3 lg:w-1/3">
                     <button
                       onClick={() => setActiveTab('commissions')}
-                      className="w-full bg-white/80 backdrop-blur-xl border border-slate-100 p-6 rounded-[24px] shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-pink-200 transition-all duration-300 flex items-center justify-between text-left group"
+                      className="w-full bg-white/95 backdrop-blur-xl border border-slate-100/80 p-5 rounded-[22px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_15px_40px_rgba(236,72,153,0.06)] hover:-translate-y-0.5 hover:border-pink-200/50 transition-all duration-300 flex items-center justify-between text-left group cursor-pointer"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-[18px] flex items-center justify-center text-xl shrink-0 border text-pink-600 bg-pink-50 border-pink-100">
-                          💶
+                        <div className="w-11 h-11 rounded-[16px] flex items-center justify-center shrink-0 border text-pink-600 bg-pink-50/60 border-pink-100/40 shadow-sm">
+                          <Award size={20} />
                         </div>
                         <div>
-                          <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider">Comissão Parceiro</h3>
-                          <p className="text-xs text-slate-500 mt-0.5">Ver comissões dos parceiros Azores toYou</p>
+                          <h3 className="font-extrabold text-[13px] text-slate-800 tracking-wide">Comissão Parceiro</h3>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Ver comissões dos parceiros Azores toYou</p>
                         </div>
                       </div>
-                      <ArrowRight size={16} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight size={15} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
                     </button>
                   </div>
                 </div>
