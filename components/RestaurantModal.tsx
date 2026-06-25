@@ -708,7 +708,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </button>
                 <div>
                   <h3 className="font-black text-slate-800 uppercase tracking-tight">
-                    {bookingStep === 'menu' ? (isBeauty ? 'Serviços do Salão' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
+                    {bookingStep === 'menu' ? (isBeauty ? 'Serviços e Produtos do Salão' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
                   </h3>
                   <div className="flex gap-1.5 mt-1.5">
                     {[1,2,3].map(i => (
@@ -855,7 +855,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
                     >
                       {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />} 
-                      {isBeauty ? 'Ver Serviços' : 'Ver Ementa'}
+                      {isBeauty ? 'Ver Serviços/Produtos' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
                     {restaurant.isConfirmed !== false && (
@@ -1226,7 +1226,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
               >
                 <div className="flex items-center justify-between mb-2">
                    <div>
-                      <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">Sugestões do Chef</h4>
+                      <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">
+                        {isBeauty ? 'Serviços e Produtos do Salão' : 'Sugestões do Chef'}
+                      </h4>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Conheça as nossas especialidades</p>
                    </div>
                    <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
@@ -1234,7 +1236,77 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                    </div>
                 </div>
 
-                {restaurant.dishes && restaurant.dishes.length > 0 ? (
+                {isBeauty ? (
+                  <div className="space-y-8">
+                    {/* Services Sub-section */}
+                    {restaurant.services && restaurant.services.filter((s: any) => s.showInApp === true).length > 0 ? (
+                      <div className="space-y-4">
+                        <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Nossos Serviços</h5>
+                        <div className="grid grid-cols-2 gap-6">
+                          {restaurant.services.filter((s: any) => s.showInApp === true).map((svc: any, idx: number) => (
+                            <div key={`client-svc-${svc.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
+                              <div className="relative aspect-square overflow-hidden bg-slate-50">
+                                <img src={getSafeImage(svc.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={svc.name} />
+                                <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                                  {svc.promoPrice ? (
+                                    <>
+                                      <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {svc.price}€</span>
+                                      <span className="text-emerald-600 leading-none mt-0.5">Agora: {svc.promoPrice}€</span>
+                                    </>
+                                  ) : (
+                                    <span>{svc.price}€</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="p-6 text-left">
+                                <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{svc.name}</h5>
+                                <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{svc.description || 'Serviço do Salão'}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Products Sub-section */}
+                    {restaurant.products && restaurant.products.filter((p: any) => p.showInApp === true).length > 0 ? (
+                      <div className="space-y-4">
+                        <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Produtos Disponíveis</h5>
+                        <div className="grid grid-cols-2 gap-6">
+                          {restaurant.products.filter((p: any) => p.showInApp === true).map((prod: any, idx: number) => (
+                            <div key={`client-prod-${prod.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
+                              <div className="relative aspect-square overflow-hidden bg-slate-50">
+                                <img src={getSafeImage(prod.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={prod.name} />
+                                <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                                  {prod.promoPrice ? (
+                                    <>
+                                      <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {prod.price}€</span>
+                                      <span className="text-emerald-600 leading-none mt-0.5">Agora: {prod.promoPrice}€</span>
+                                    </>
+                                  ) : (
+                                    <span>{prod.price}€</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="p-6 text-left">
+                                <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{prod.name}</h5>
+                                <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{prod.description || 'Produto Premium'}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {(!restaurant.services || restaurant.services.filter((s: any) => s.showInApp === true).length === 0) &&
+                     (!restaurant.products || restaurant.products.filter((p: any) => p.showInApp === true).length === 0) ? (
+                      <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                        <Sparkles size={48} className="mx-auto text-slate-300 mb-4" />
+                        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Sem serviços ou produtos na app...</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : restaurant.dishes && restaurant.dishes.length > 0 ? (
                   <div className="grid grid-cols-2 gap-6">
                     {restaurant.dishes.map((dish, idx) => (
                       <motion.div 

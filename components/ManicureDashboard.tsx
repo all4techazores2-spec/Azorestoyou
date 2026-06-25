@@ -8,6 +8,8 @@ import {
   TrendingUp, Award, RefreshCw, Smartphone, Search, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL } from '../config';
+
 
 interface ManicureDashboardProps {
   business: Restaurant;
@@ -59,19 +61,45 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
   const servicesList = business.services && business.services.length > 0 ? business.services : defaultServices;
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-  const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: '', duration: '40' });
+  const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: '', duration: '40', image: '', showInApp: true, promoPrice: '' });
 
   // Products States
   const defaultProducts: Product[] = [
     { id: 'p1', name: 'Óleo de Cutículas Flor de Cerejeira', description: 'Hidratação profunda para cutículas.', price: 6.50, category: 'Cuidados', image: '', stock: 15 },
     { id: 'p2', name: 'Creme de Mãos Rejuvenescedor', description: 'Creme rico com extratos naturais dos Açores.', price: 12.00, category: 'Hidratação', image: '', stock: 8 },
     { id: 'p3', name: 'Verniz Fortalecedor Cálcio', description: 'Base fortalecedora enriquecida com cálcio.', price: 8.90, category: 'Tratamentos', image: '', stock: 20 },
-    { id: 'p4', name: 'Lima Diamante Profissional', description: 'Lima de alta durabilidade e precisão.', price: 3.50, category: 'Acessórios', image: '', stock: 50 }
+    { id: 'p4', name: 'Lima Diamante Profissional', description: 'Lima de alta durabilidade and precisão.', price: 3.50, category: 'Acessórios', image: '', stock: 50 }
   ];
   const productsList = business.products && business.products.length > 0 ? business.products : defaultProducts;
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', category: 'Cuidados', stock: '10' });
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', category: 'Cuidados', stock: '10', image: '', showInApp: true, promoPrice: '' });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const handleImageUpload = async (file: File, type: 'service' | 'product') => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      if (type === 'service') {
+        setServiceForm(prev => ({ ...prev, image: data.url }));
+      } else {
+        setProductForm(prev => ({ ...prev, image: data.url }));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao carregar a imagem. Tente novamente.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
 
   // Staff States
   const [staffList, setStaffList] = useState<any[]>([
@@ -226,6 +254,14 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
     alert('✅ Perfil do salão Bella Nails atualizado com sucesso!');
   };
 
+  // Dynamic Azores toYou commissions calculation (0.05 microtax per sold service/product in completed sales)
+  const completedSalesItemsCount = salesHistory.reduce((totalItems, sale) => {
+    const saleItemsCount = (sale.items || []).reduce((sum: number, item: any) => sum + (item.qty || item.quantity || 1), 0);
+    return totalItems + saleItemsCount;
+  }, 0);
+
+  const totalCommissionAzoresToYou = completedSalesItemsCount * 0.05;
+
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-800 font-sans flex overflow-hidden">
       
@@ -274,7 +310,7 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
             { id: 'products', label: 'Produtos', icon: <ShoppingBag size={18} /> },
             { id: 'staff', label: 'Funcionárias', icon: <User size={18} /> },
             { id: 'pos', label: 'POS Vendas', icon: <CreditCard size={18} />, badge: 'LIVE' },
-            { id: 'commissions', label: 'Comissão Parceiro', icon: <TrendingUp size={18} /> },
+            { id: 'commissions', label: 'Comissão Azores toYou', icon: <TrendingUp size={18} /> },
             { id: 'reports', label: 'Relatórios', icon: <Award size={18} /> },
             { id: 'messages', label: 'Mensagens', icon: <MessageSquare size={18} />, count: 3 },
             { id: 'settings', label: 'Definições', icon: <Settings size={18} /> },
@@ -535,8 +571,8 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                           <Award size={20} />
                         </div>
                         <div>
-                          <h3 className="font-extrabold text-[13px] text-slate-800 tracking-wide">Comissão Parceiro</h3>
-                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Ver comissões dos parceiros Azores toYou</p>
+                          <h3 className="font-extrabold text-[13px] text-slate-800 tracking-wide">Comissão Azores toYou</h3>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Ver microtaxas Azores toYou geradas</p>
                         </div>
                       </div>
                       <ArrowRight size={15} className="text-slate-300 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
@@ -1007,7 +1043,7 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                     <p className="text-xs text-slate-500 font-medium">Configure os tratamentos de unhas e estética disponibilizados.</p>
                   </div>
                   <button 
-                    onClick={() => { setEditingService(null); setServiceForm({ name: '', description: '', price: '', duration: '40' }); setShowServiceForm(true); }}
+                    onClick={() => { setEditingService(null); setServiceForm({ name: '', description: '', price: '', duration: '40', image: '', showInApp: true, promoPrice: '' }); setShowServiceForm(true); }}
                     className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm"
                   >
                     <Plus size={16} /> Adicionar Serviço
@@ -1036,20 +1072,28 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                           e.preventDefault();
                           const priceNum = parseFloat(serviceForm.price) || 0;
                           const durationNum = parseInt(serviceForm.duration) || 30;
+                          const promoPriceNum = serviceForm.promoPrice ? parseFloat(serviceForm.promoPrice) : undefined;
+                          
+                          const newServiceData = {
+                            name: serviceForm.name,
+                            description: serviceForm.description,
+                            price: priceNum,
+                            duration: durationNum,
+                            image: serviceForm.image,
+                            showInApp: serviceForm.showInApp,
+                            promoPrice: promoPriceNum
+                          };
+
                           if (editingService) {
                             // Update
-                            const updatedList = servicesList.map(s => s.id === editingService.id ? { ...s, name: serviceForm.name, description: serviceForm.description, price: priceNum, duration: durationNum } : s);
+                            const updatedList = servicesList.map(s => s.id === editingService.id ? { ...s, ...newServiceData } : s);
                             onUpdateBusiness({ ...business, services: updatedList });
                           } else {
                             // Create
                             const newS: Service = {
                               id: `s_${Date.now()}`,
-                              name: serviceForm.name,
-                              description: serviceForm.description,
-                              price: priceNum,
-                              duration: durationNum,
-                              image: ''
-                            };
+                              ...newServiceData
+                            } as any;
                             onUpdateBusiness({ ...business, services: [...servicesList, newS] });
                           }
                           setShowServiceForm(false);
@@ -1068,6 +1112,54 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400"
                           />
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Foto do Serviço</label>
+                          {serviceForm.image ? (
+                            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-slate-200">
+                              <img src={serviceForm.image} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => setServiceForm(prev => ({ ...prev, image: '' }))}
+                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-650"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                              <Upload size={16} className="text-slate-400 mb-1" />
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                {isUploading ? 'A carregar...' : 'Carregar Foto'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={isUploading}
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleImageUpload(e.target.files[0], 'service');
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 py-1">
+                          <input
+                            type="checkbox"
+                            id="serviceShowInApp"
+                            checked={serviceForm.showInApp}
+                            onChange={(e) => setServiceForm(prev => ({ ...prev, showInApp: e.target.checked }))}
+                            className="rounded text-pink-500 focus:ring-pink-500"
+                          />
+                          <label htmlFor="serviceShowInApp" className="text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer select-none">
+                            Colocar na app
+                          </label>
+                        </div>
+
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Descrição curta</label>
                           <textarea 
@@ -1102,6 +1194,19 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                             />
                           </div>
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Preço Promocional (€) - Opcional</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ex: 12.00"
+                            value={serviceForm.promoPrice}
+                            onChange={(e) => setServiceForm(prev => ({ ...prev, promoPrice: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400"
+                          />
+                        </div>
+
                         <button
                           type="submit"
                           className="w-full py-3 bg-pink-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-pink-600 transition-colors"
@@ -1132,7 +1237,15 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                           <button 
                             onClick={() => {
                               setEditingService(s);
-                              setServiceForm({ name: s.name, description: s.description, price: String(s.price), duration: String(s.duration) });
+                              setServiceForm({ 
+                                name: s.name, 
+                                description: s.description || '', 
+                                price: String(s.price), 
+                                duration: String(s.duration),
+                                image: s.image || '',
+                                showInApp: s.showInApp !== false,
+                                promoPrice: s.promoPrice ? String(s.promoPrice) : ''
+                              });
                               setShowServiceForm(true);
                             }}
                             className="text-slate-500 hover:text-slate-800 px-2.5 py-1.5 bg-slate-100 rounded-lg"
@@ -1172,7 +1285,7 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                     <p className="text-xs text-slate-500 font-medium">Controle de vernizes, cremes e acessórios para venda ao público.</p>
                   </div>
                   <button 
-                    onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', category: 'Cuidados', stock: '10' }); setShowProductForm(true); }}
+                    onClick={() => { setEditingProduct(null); setProductForm({ name: '', description: '', price: '', category: 'Cuidados', stock: '10', image: '', showInApp: true, promoPrice: '' }); setShowProductForm(true); }}
                     className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm"
                   >
                     <Plus size={16} /> Adicionar Produto
@@ -1201,21 +1314,29 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                           e.preventDefault();
                           const priceNum = parseFloat(productForm.price) || 0;
                           const stockNum = parseInt(productForm.stock) || 0;
+                          const promoPriceNum = productForm.promoPrice ? parseFloat(productForm.promoPrice) : undefined;
+                          
+                          const newProductData = {
+                            name: productForm.name,
+                            description: productForm.description,
+                            price: priceNum,
+                            category: productForm.category,
+                            stock: stockNum,
+                            image: productForm.image,
+                            showInApp: productForm.showInApp,
+                            promoPrice: promoPriceNum
+                          };
+
                           if (editingProduct) {
                             // Update
-                            const updatedList = productsList.map(p => p.id === editingProduct.id ? { ...p, name: productForm.name, description: productForm.description, price: priceNum, stock: stockNum, category: productForm.category } : p);
+                            const updatedList = productsList.map(p => p.id === editingProduct.id ? { ...p, ...newProductData } : p);
                             onUpdateBusiness({ ...business, products: updatedList });
                           } else {
                             // Create
                             const newP: Product = {
                               id: `p_${Date.now()}`,
-                              name: productForm.name,
-                              description: productForm.description,
-                              price: priceNum,
-                              category: productForm.category,
-                              image: '',
-                              stock: stockNum
-                            };
+                              ...newProductData
+                            } as any;
                             onUpdateBusiness({ ...business, products: [...productsList, newP] });
                           }
                           setShowProductForm(false);
@@ -1234,6 +1355,54 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400"
                           />
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Foto do Produto</label>
+                          {productForm.image ? (
+                            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-slate-200">
+                              <img src={productForm.image} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => setProductForm(prev => ({ ...prev, image: '' }))}
+                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-650"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                              <Upload size={16} className="text-slate-400 mb-1" />
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                {isUploading ? 'A carregar...' : 'Carregar Foto'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                disabled={isUploading}
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleImageUpload(e.target.files[0], 'product');
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 py-1">
+                          <input
+                            type="checkbox"
+                            id="productShowInApp"
+                            checked={productForm.showInApp}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, showInApp: e.target.checked }))}
+                            className="rounded text-pink-500 focus:ring-pink-500"
+                          />
+                          <label htmlFor="productShowInApp" className="text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer select-none">
+                            Colocar na app
+                          </label>
+                        </div>
+
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Categoria</label>
                           <select
@@ -1281,6 +1450,18 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                             />
                           </div>
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Preço Promocional (€) - Opcional</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ex: 5.90"
+                            value={productForm.promoPrice}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, promoPrice: e.target.value }))}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-pink-400"
+                          />
+                        </div>
                         <button
                           type="submit"
                           className="w-full py-3 bg-pink-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-pink-600 transition-colors"
@@ -1327,7 +1508,16 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                               <button 
                                 onClick={() => {
                                   setEditingProduct(p);
-                                  setProductForm({ name: p.name, description: p.description || '', price: String(p.price), category: p.category || 'Cuidados', stock: String(p.stock || 10) });
+                                  setProductForm({ 
+                                    name: p.name, 
+                                    description: p.description || '', 
+                                    price: String(p.price), 
+                                    category: p.category || 'Cuidados', 
+                                    stock: String(p.stock || 10),
+                                    image: p.image || '',
+                                    showInApp: p.showInApp !== false,
+                                    promoPrice: p.promoPrice ? String(p.promoPrice) : ''
+                                  });
                                   setShowProductForm(true);
                                 }} 
                                 className="text-[10px] font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-2.5 py-1.5 rounded-lg"
@@ -1492,23 +1682,23 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                 className="space-y-6 text-left"
               >
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Comissão Parceiro (Azores toYou)</h2>
-                  <p className="text-xs text-slate-500 font-medium">Visualize e controle as comissões geradas por parceiros que recomendaram o salão.</p>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Comissão Azores toYou</h2>
+                  <p className="text-xs text-slate-500 font-medium">Visualize e controle a microtaxa de €0,05 cobrada pela Azores toYou por cada produto ou serviço vendido.</p>
                 </div>
 
                 {/* Overview boxes */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-white border border-slate-100 p-6 rounded-[24px] shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Pago a Parceiros</p>
-                    <p className="text-3xl font-black text-slate-800 mt-2">€5.00</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Acumulado Azores toYou</p>
+                    <p className="text-3xl font-black text-slate-800 mt-2">€{totalCommissionAzoresToYou.toFixed(2)}</p>
                   </div>
                   <div className="bg-white border border-slate-100 p-6 rounded-[24px] shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Valor Acumulado Pendente</p>
-                    <p className="text-3xl font-black text-pink-600 mt-2">€2.20</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Taxa de Serviço Azores toYou</p>
+                    <p className="text-3xl font-black text-pink-600 mt-2">€0.05</p>
                   </div>
                   <div className="bg-white border border-slate-100 p-6 rounded-[24px] shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Parceiros Ativos</p>
-                    <p className="text-3xl font-black text-emerald-600 mt-2">3</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Parceiro</p>
+                    <p className="text-3xl font-black text-emerald-600 mt-2">Azores toYou</p>
                   </div>
                 </div>
 
@@ -1518,29 +1708,33 @@ const ManicureDashboard: React.FC<ManicureDashboardProps> = ({ business, onUpdat
                     <table className="w-full border-collapse text-left">
                       <thead>
                         <tr className="bg-slate-50/70 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          <th className="p-4 pl-6">Parceiro Recomendador</th>
-                          <th className="p-4">Serviço Prestado</th>
+                          <th className="p-4 pl-6">Parceiro</th>
+                          <th className="p-4">Itens Vendidos</th>
                           <th className="p-4">Comissão Azores toYou</th>
-                          <th className="p-4">Data</th>
+                          <th className="p-4">Data da Venda</th>
                           <th className="p-4 text-right pr-6">Estado</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 text-xs">
-                        {commissionsHistory.map(ch => (
-                          <tr key={ch.id} className="hover:bg-slate-50/30">
-                            <td className="p-4 pl-6 font-bold text-slate-800">{ch.partnerName}</td>
-                            <td className="p-4 text-slate-500">{ch.serviceSold}</td>
-                            <td className="p-4 font-black text-slate-800">€{ch.commission.toFixed(2)}</td>
-                            <td className="p-4 text-slate-500">{ch.date}</td>
-                            <td className="p-4 text-right pr-6">
-                              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                                ch.status === 'paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
-                              }`}>
-                                {ch.status === 'paid' ? 'Pago' : 'Pendente'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {salesHistory.map((sh, idx) => {
+                          const qtySold = (sh.items || []).reduce((sum: number, item: any) => sum + (item.qty || item.quantity || 1), 0);
+                          const commVal = qtySold * 0.05;
+                          return (
+                            <tr key={sh.id || idx} className="hover:bg-slate-50/30">
+                              <td className="p-4 pl-6 font-bold text-slate-800">Azores toYou</td>
+                              <td className="p-4 text-slate-500">
+                                {sh.items.map((i: any) => `${i.name} (x${i.qty || i.quantity || 1})`).join(', ')}
+                              </td>
+                              <td className="p-4 font-black text-slate-800">€{commVal.toFixed(2)}</td>
+                              <td className="p-4 text-slate-500">{sh.timestamp ? new Date(sh.timestamp).toLocaleDateString() : 'Hoje'}</td>
+                              <td className="p-4 text-right pr-6">
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                  Pago
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
