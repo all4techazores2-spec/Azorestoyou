@@ -28,6 +28,7 @@ import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
 import BarberNormalDashboard from './components/BarberNormalDashboard';
 import BarberProDashboard from './components/BarberProDashboard';
+import ManicureDashboard from './components/ManicureDashboard';
 import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
@@ -2091,6 +2092,29 @@ const App: React.FC = () => {
       const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car' || targetId.startsWith('RC') || targetId.startsWith('CAR');
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
+
+      if (isBeauty && biz.subcategory === 'manicure') {
+        return (
+          <ErrorBoundary>
+            <ManicureDashboard 
+              business={biz}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                setBeauty(prev => prev.map(item => item.id === updated.id ? updated : item));
+                try {
+                  await fetch(`${API_BASE_URL}/api/beauty/${updated.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                } catch (err) {
+                  console.error("Erro ao atualizar manicure no servidor:", err);
+                }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
 
       if (isBeauty && biz.subcategory === 'barber') {
         if (biz.softwareVersion === 'pro') {
