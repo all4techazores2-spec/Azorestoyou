@@ -2087,6 +2087,10 @@ const App: React.FC = () => {
       if (isBeautyBiz) {
         biz.businessType = 'beauty';
       }
+      const isShopBiz = shops.some(s => s.id === targetId) || targetId.startsWith('SHO') || targetId.startsWith('SH') || (biz.businessType && ['shop', 'shops'].includes(biz.businessType.toLowerCase()));
+      if (isShopBiz) {
+        biz.businessType = 'shop';
+      }
       const bType = (biz.businessType || (biz as any).type || (biz.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
       const isBeauty = isBeautyBiz || bType === 'beauty' || bType === 'beauties';
       const isShop = bType === 'shop' || bType === 'shops';
@@ -2317,6 +2321,10 @@ const App: React.FC = () => {
               const isBeautyBiz = updated.id.startsWith('BEA') || (updated.email && updated.email.toLowerCase().includes('marcom')) || beauty.some(b => b.id === updated.id);
               if (isBeautyBiz) {
                 updated.businessType = 'beauty';
+              }
+              const isShopBiz = updated.id.startsWith('SHO') || updated.id.startsWith('SH') || shops.some(s => s.id === updated.id);
+              if (isShopBiz) {
+                updated.businessType = 'shop';
               }
               const bType = (updated.businessType || (updated as any).type || (updated.id.startsWith('BEA') ? 'beauty' : 'restaurant')).toLowerCase();
               const endpoint = BUSINESS_TYPE_TO_ENDPOINT[bType] || 'restaurants';
