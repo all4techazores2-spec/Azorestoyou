@@ -3241,7 +3241,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="overflow-hidden space-y-1 mt-2 pl-4"
               >
                 <button onClick={() => { setActiveTab('shops'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'shops' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
-                  <ShoppingBag size={14} /> Lojas Regionais
+                  <ShoppingBag size={14} /> Lojas Locais
                 </button>
                 <button onClick={() => { setActiveTab('beauty'); setEditingItem(null); }} className={`w-full text-left p-2 rounded-lg flex items-center gap-3 text-xs ${activeTab === 'beauty' ? 'text-white' : 'text-slate-400 hover:text-white'}`}>
                   <Sparkles size={14} /> Beleza

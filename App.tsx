@@ -24,6 +24,7 @@ import IslandSearch from './components/IslandSearch';
 import AdminDashboard from './components/AdminDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
 import { ServiceDashboard } from './components/ServiceDashboard';
+import { CommerceDashboard } from './components/CommerceDashboard';
 import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
@@ -2235,6 +2236,30 @@ const App: React.FC = () => {
                   });
                 } catch (err) {
                   console.error("Erro ao atualizar serviço no servidor:", err);
+                }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
+
+      if (isShop) {
+        return (
+          <ErrorBoundary>
+            <CommerceDashboard 
+              business={biz}
+              language={language}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                setShops(prev => prev.map(item => item.id === updated.id ? updated : item));
+                try {
+                  await fetch(`${API_BASE_URL}/api/shops/${updated.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                } catch (err) {
+                  console.error("Erro ao atualizar loja no servidor:", err);
                 }
               }}
             />
