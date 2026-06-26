@@ -1378,7 +1378,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           description: '', 
           adminEmail: '',
           adminPassword: '',
-          subcategory: '',
+          subcategory: activeTab === 'services' ? 'electrician' : (activeTab === 'auto_repairs' ? 'parts' : (activeTab === 'auto_electronics' ? 'audio' : (activeTab === 'beauty' ? 'beauty_salon' : (activeTab === 'used_market' ? 'clothing' : (activeTab === 'animals' ? 'vet' : (activeTab === 'real_estate' ? 'rent' : (activeTab === 'gyms' ? 'fitness' : ''))))))),
           dishes: [],
           services: [],
           mapUrl: '',
@@ -1894,7 +1894,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
                 <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
                   <option value="electrician">Eletricista</option>
-                  <option value="mason">Pedreiro</option>
+                  <option value="bricklayer">Pedreiro</option>
                   <option value="carpenter">Carpinteiro</option>
                   <option value="plumber">Canalizador</option>
                   <option value="painter">Pintor</option>
@@ -4830,7 +4830,7 @@ Av. do Mar, Madalena, Pico
                   {[
                     { id: 'all', label: 'Todos', icon: <LayoutDashboard size={18} />, color: '#1A75BB' },
                     { id: 'electrician', label: 'Eletricista', icon: <Zap size={18} />, color: '#F59E0B' },
-                    { id: 'mason', label: 'Pedreiro', icon: <HardHat size={18} />, color: '#D97706' },
+                    { id: 'bricklayer', label: 'Pedreiro', icon: <HardHat size={18} />, color: '#D97706' },
                     { id: 'carpenter', label: 'Carpinteiro', icon: <Hammer size={18} />, color: '#8B4513' },
                     { id: 'plumber', label: 'Canalizador', icon: <Droplets size={18} />, color: '#3B82F6' },
                     { id: 'painter', label: 'Pintor', icon: <Paintbrush size={18} />, color: '#EC4899' },
