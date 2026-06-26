@@ -26,11 +26,10 @@ export interface Flight {
   departureTime: string; // HH:mm
   arrivalTime: string;   // HH:mm
   price: number;
-  status: 'A Horas' | 'Atrasado' | 'Embarque' | 'Cancelado';
+  status?: 'A Horas' | 'Atrasado' | 'Embarque' | 'Cancelado' | 'draft' | 'published';
   stops: number;         // 0 for direct
   duration: string;      // e.g., "2h 30m"
   layover?: string;      // e.g., "Escala em LIS (1h 20m)"
-  status?: 'A Horas' | 'Atrasado' | 'Embarque' | 'Cancelado' | 'draft' | 'published';
   isDraft?: boolean;
 }
 

@@ -23,6 +23,7 @@ import CategoryBar, { getNavigationCategories } from './components/CategoryBar';
 import IslandSearch from './components/IslandSearch';
 import AdminDashboard from './components/AdminDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
+import { ServiceDashboard } from './components/ServiceDashboard';
 import RentCarDashboard from './components/RentCarDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
@@ -2210,6 +2211,31 @@ const App: React.FC = () => {
                  } catch (err) {
                    console.error("Erro ao atualizar Rent-a-car no servidor:", err);
                  }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
+
+      const isService = bType === 'service' || bType === 'services' || (targetId.startsWith('S') && !targetId.startsWith('SUP') && !targetId.startsWith('SH'));
+      if (isService) {
+        return (
+          <ErrorBoundary>
+            <ServiceDashboard 
+              business={biz}
+              language={language}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                setServices(prev => prev.map(item => item.id === updated.id ? updated : item));
+                try {
+                  await fetch(`${API_BASE_URL}/api/services/${updated.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                } catch (err) {
+                  console.error("Erro ao atualizar serviço no servidor:", err);
+                }
               }}
             />
           </ErrorBoundary>

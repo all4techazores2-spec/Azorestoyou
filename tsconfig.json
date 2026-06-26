@@ -25,5 +25,21 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "scratch",
+    "node_modules",
+    "dist",
+    "master_fix_buses.cjs",
+    "rewrite_varela.ts",
+    "rewrite_varela.cjs",
+    "apply_booking_rules.ts",
+    "apply_paid_rules.ts",
+    "fix_active_order.js",
+    "fix_activity_types.ts",
+    "fix_encoding.ts",
+    "fix_full.ts",
+    "sync_activities.ts",
+    "sync_buses.ts"
+  ]
 }
