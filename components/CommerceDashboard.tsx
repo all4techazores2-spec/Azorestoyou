@@ -5,7 +5,7 @@ import {
   MessageSquare, Settings, LogOut, Search, Bell, MapPin, Plus, Trash2, 
   Edit3, X, ChevronDown, CheckCircle, AlertTriangle, Calendar, ChevronRight, 
   Image as ImageIcon, ArrowRight, Star, Package, Clock, FileText, Check, 
-  FileSpreadsheet, TrendingUp, Sparkles, SlidersHorizontal
+  FileSpreadsheet, TrendingUp, Sparkles, SlidersHorizontal, Compass
 } from 'lucide-react';
 import { Business, Language } from '../types';
 
