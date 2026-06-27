@@ -1784,6 +1784,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {commonInput(t('item_name'), 'name')}
             {islandSelect()}
             {commonInput('Concelho / Localidade (Ex: Ponta Delgada, Furnas)', 'concelho')}
+            {commonInput('Telefone de Contacto Público', 'phone')}
+            {commonInput('Email de Contacto Público', 'publicEmail')}
+            {commonInput('Morada / Endereço Físico', 'address')}
             {activeTab === 'restaurants' && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Cozinha</label>

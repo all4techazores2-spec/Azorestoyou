@@ -5,9 +5,10 @@ import {
   MessageSquare, Settings, LogOut, Search, Bell, MapPin, Plus, Trash2, 
   Edit3, X, ChevronDown, CheckCircle, AlertTriangle, Calendar, ChevronRight, 
   Image as ImageIcon, ArrowRight, Star, Package, Clock, FileText, Check, 
-  FileSpreadsheet, TrendingUp, Sparkles, SlidersHorizontal, Compass
+  FileSpreadsheet, TrendingUp, Sparkles, SlidersHorizontal, Compass, RefreshCw
 } from 'lucide-react';
 import { Business, Language } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface CommerceDashboardProps {
   business: Business;
@@ -63,9 +64,10 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [globalSearch, setGlobalSearch] = useState<string>('');
 
-  // Mock Products Database
-  const [products, setProducts] = useState<Product[]>([
-    { 
+  // Mock Products Database or actual business products
+  const [products, setProducts] = useState<Product[]>(() => {
+    return (business.products && business.products.length > 0) ? business.products : [
+      { 
       id: 'PROD001', 
       name: 'Queijo de São Jorge DOP (Cura 12 Meses)', 
       category: 'Gastronomia', 
@@ -171,7 +173,8 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
       promoEnd: '2026-06-30',
       salesCount: 2
     }
-  ]);
+  ];
+});
 
   // Mock Orders and Reservations
   const [orders, setOrders] = useState<OrderOrReservation[]>([
@@ -238,6 +241,26 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
   const [productForm, setProductForm] = useState<Partial<Product>>({
     id: '', name: '', category: 'Gastronomia', description: '', image: '', price: 0, promoPrice: undefined, vat: 18, sku: '', barcode: '', brand: '', supplier: '', stock: 10, status: 'active', showInApp: true, allowReservation: true, allowPurchase: true, allowStorePickup: true, promoStart: '', promoEnd: '', salesCount: 0
   });
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleProductImageUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) throw new Error('Falha no upload');
+      const data = await response.json();
+      setProductForm(prev => ({ ...prev, image: data.url }));
+    } catch (err: any) {
+      alert("Erro ao carregar a imagem: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // New Promotion Modal Form State
   const [showPromoModal, setShowPromoModal] = useState(false);
@@ -301,8 +324,10 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
     e.preventDefault();
     if (!productForm.name || !productForm.price) return;
 
+    let updatedProducts: Product[] = [];
     if (isEditingProduct) {
-      setProducts(prev => prev.map(p => p.id === productForm.id ? (productForm as Product) : p));
+      updatedProducts = products.map(p => p.id === productForm.id ? (productForm as Product) : p);
+      setProducts(updatedProducts);
       alert('Produto atualizado com sucesso!');
     } else {
       const newProd: Product = {
@@ -311,9 +336,11 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
         image: productForm.image || 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=200',
         salesCount: 0
       };
-      setProducts(prev => [...prev, newProd]);
+      updatedProducts = [...products, newProd];
+      setProducts(updatedProducts);
       alert('Produto criado com sucesso!');
     }
+    onUpdateBusiness({ ...business, products: updatedProducts });
     setShowProductModal(false);
   };
 
@@ -321,7 +348,7 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
     e.preventDefault();
     if (!promoForm.productId || !promoForm.promoPrice) return;
 
-    setProducts(prev => prev.map(p => {
+    const updatedProducts = products.map(p => {
       if (p.id === promoForm.productId) {
         return {
           ...p,
@@ -331,8 +358,10 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
         };
       }
       return p;
-    }));
+    });
 
+    setProducts(updatedProducts);
+    onUpdateBusiness({ ...business, products: updatedProducts });
     alert('Promoção ativada com sucesso!');
     setShowPromoModal(false);
   };
@@ -829,7 +858,9 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
                             <button 
                               onClick={() => {
                                 if (confirm('Tem a certeza que deseja eliminar este produto?')) {
-                                  setProducts(prev => prev.filter(prod => prod.id !== p.id));
+                                  const updatedProducts = products.filter(prod => prod.id !== p.id);
+                                  setProducts(updatedProducts);
+                                  onUpdateBusiness({ ...business, products: updatedProducts });
                                 }
                               }}
                               className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg"
@@ -962,12 +993,14 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
                     </div>
                     <button 
                       onClick={() => {
-                        setProducts(prev => prev.map(prod => {
+                        const updatedProducts = products.map(prod => {
                           if (prod.id === p.id) {
                             return { ...prod, promoPrice: undefined, promoStart: undefined, promoEnd: undefined };
                           }
                           return prod;
-                        }));
+                        });
+                        setProducts(updatedProducts);
+                        onUpdateBusiness({ ...business, products: updatedProducts });
                       }}
                       className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-[10px] font-black uppercase"
                     >
@@ -1039,6 +1072,34 @@ export const CommerceDashboard: React.FC<CommerceDashboardProps> = ({
                     onChange={e => setProductForm({...productForm, description: e.target.value})}
                     className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase">Foto do Produto (URL ou Carregar Foto)</label>
+                  <div className="flex gap-3 items-center">
+                    {productForm.image && (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 flex-shrink-0 bg-slate-50">
+                        <img src={productForm.image} className="w-full h-full object-cover" alt="Preview" />
+                      </div>
+                    )}
+                    <input 
+                      type="text" 
+                      value={productForm.image || ''}
+                      onChange={e => setProductForm({...productForm, image: e.target.value})}
+                      placeholder="URL da imagem..."
+                      className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl focus:outline-none focus:border-blue-500" 
+                    />
+                    <label className={`cursor-pointer p-3 rounded-xl border flex items-center justify-center transition-all ${isUploading ? 'bg-slate-100 opacity-50' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
+                      {isUploading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*,.webp"
+                        disabled={isUploading}
+                        onChange={e => e.target.files?.[0] && handleProductImageUpload(e.target.files[0])}
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">

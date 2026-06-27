@@ -7,6 +7,7 @@ import TrailModal from './TrailModal';
 import OfficeBookingModal from './OfficeBookingModal';
 import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
+import ShopDetailModal from './ShopDetailModal';
 import MostRequestedSlider from './MostRequestedSlider';
 import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users, ChevronDown, ChevronUp, Search, ArrowLeft } from 'lucide-react';
 import { getTranslation } from '../translations';
@@ -126,6 +127,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [selectedOffice, setSelectedOffice] = useState<Business | null>(null);
   const [selectedStand, setSelectedStand] = useState<Business | null>(null);
   const [selectedShop, setSelectedShop] = useState<Business | null>(null);
+  const [selectedShopDetail, setSelectedShopDetail] = useState<Business | null>(null);
   const [selectedTrail, setSelectedTrail] = useState<Activity | null>(null);
   const [busOrigin, setBusOrigin] = useState<string>('');
   const [busDestination, setBusDestination] = useState<string>('');
@@ -1019,7 +1021,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
             onClick={() => {
               if (b.businessType === 'shop' || category === 'shops') {
-                setSelectedShop(b);
+                setSelectedShopDetail(b);
               } else {
                 setSelectedRestaurant(b);
               }
@@ -1488,7 +1490,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               onClick={() => {
                 if (s.businessType === 'offices' || category === 'offices') setSelectedRestaurant(s);
                 else if (s.businessType === 'stands' || category === 'stands') setSelectedStand(s);
-                else if (s.businessType === 'shop' || category === 'shops' || category === 'gyms' || category === 'real_estate' || s.businessType === 'real_estate') setSelectedShop(s);
+                else if (s.businessType === 'shop' || category === 'shops') setSelectedShopDetail(s);
+                else if (category === 'gyms' || category === 'real_estate' || s.businessType === 'real_estate') setSelectedShop(s);
                 else setSelectedRestaurant(s);
               }}
             >
@@ -1577,7 +1580,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     ))}
                    {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
                       <button 
-                        onClick={() => setSelectedShop(s)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (s.businessType === 'shop' || category === 'shops') {
+                            setSelectedShopDetail(s);
+                          } else {
+                            setSelectedShop(s);
+                          }
+                        }}
                         className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
                       >
                         {category === 'gyms' ? <Dumbbell size={16} /> : (category === 'real_estate' || s.businessType === 'real_estate') ? <Home size={16} /> : <ShoppingBag size={16} />}
@@ -2003,7 +2013,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               if (res) {
                 if (category === 'restaurants') setSelectedRestaurant(res as any);
                 else if (category === 'beauty') setSelectedRestaurant(res as any);
-                else if (category === 'shops') setSelectedShop(res as any);
+                else if (category === 'shops') setSelectedShopDetail(res as any);
                 else if (category === 'trails' || category === 'activities') setSelectedTrail(res as any);
               }
             }}
@@ -2153,6 +2163,20 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           onClose={() => setSelectedShop(null)}
           shop={selectedShop}
           language={lang}
+          onShowMap={onShowMap}
+        />
+      )}
+
+      {selectedShopDetail && (
+        <ShopDetailModal
+          isOpen={!!selectedShopDetail}
+          onClose={() => setSelectedShopDetail(null)}
+          shop={selectedShopDetail}
+          language={lang}
+          onViewCatalog={() => {
+            setSelectedShop(selectedShopDetail);
+            setSelectedShopDetail(null);
+          }}
           onShowMap={onShowMap}
         />
       )}
