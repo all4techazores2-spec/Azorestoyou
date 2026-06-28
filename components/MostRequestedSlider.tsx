@@ -47,11 +47,11 @@ const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onActi
             transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <div className="absolute inset-0 bg-black/45 z-10" />
+            <div className="absolute inset-0 bg-black/45 max-md:bg-transparent z-10" />
             <img 
               src={items[currentIndex].image} 
               alt={items[currentIndex].title}
-              className="w-full h-full object-cover blur-[2px] scale-105"
+              className="w-full h-full object-cover blur-[2px] max-md:blur-none scale-105"
             />
             
             <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-20 flex flex-col md:flex-row md:items-end justify-between gap-6">

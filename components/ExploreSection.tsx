@@ -2002,7 +2002,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
         <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${
-          category === 'bars' ? 'mb-4 md:mb-6 -mt-3 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
+          category === 'bars' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
         }`}>
           {/* Slider */}
           <MostRequestedSlider 
@@ -2025,12 +2025,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           {/* Overlay Content */}
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/45 p-6 pointer-events-none">
             {/* Mobile-only floating back button — top-left corner of slider */}
-            <button
-              onClick={onClose}
-              className="md:hidden absolute top-4 left-4 flex items-center gap-1.5 pointer-events-auto bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
-            >
-              <ArrowLeft size={13} /> Voltar
-            </button>
+            {category !== 'bars' && (
+              <button
+                onClick={onClose}
+                className="md:hidden absolute top-4 left-4 flex items-center gap-1.5 pointer-events-auto bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
+              >
+                <ArrowLeft size={13} /> Voltar
+              </button>
+            )}
 
             {/* Centered Category Header inside Slider */}
             {category !== 'bars' && (
