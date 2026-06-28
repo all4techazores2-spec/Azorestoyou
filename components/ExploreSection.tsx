@@ -1982,10 +1982,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   };
 
   return (
-    <div className="px-6 md:px-10 pb-32 pt-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="px-6 md:px-10 pb-32 pt-0 md:pt-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Breadcrumb & Back Button */}
-      <div className="flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+      {/* Breadcrumb & Back Button — hidden on mobile, visible on desktop */}
+      <div className="hidden md:flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
         <div className="flex items-center gap-2">
           <span className="hover:text-slate-650 cursor-pointer transition-colors" onClick={onClose}>Início</span>
           <span>/</span>
@@ -1999,9 +1999,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </button>
       </div>
 
-      {/* Featured Slider & Search Bar Overlay (Directly under the header, full width on mobile) */}
+      {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
-        <div className="relative mb-8 md:my-8 -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl">
+        <div className="relative mb-8 md:my-8 -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl -mt-0 md:mt-0">
           {/* Slider */}
           <MostRequestedSlider 
             items={featuredItems} 
@@ -2021,6 +2021,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
           {/* Overlay Content */}
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/45 p-6 pointer-events-none">
+            {/* Mobile-only floating back button — top-left corner of slider */}
+            <button
+              onClick={onClose}
+              className="md:hidden absolute top-4 left-4 flex items-center gap-1.5 pointer-events-auto bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
+            >
+              <ArrowLeft size={13} /> Voltar
+            </button>
+
             {/* Centered Category Header inside Slider */}
             <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
                <div 
@@ -2046,8 +2054,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </div>
       )}
 
-      {/* Breadcrumb & Back Button */}
-      <div className="flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+      {/* Second Breadcrumb & Back Button — hidden on mobile, visible on desktop */}
+      <div className="hidden md:flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
         <div className="flex items-center gap-2">
           <span className="hover:text-slate-650 cursor-pointer transition-colors" onClick={onClose}>Início</span>
           <span>/</span>
@@ -2062,7 +2070,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       </div>
 
       {(!featuredItems || featuredItems.length === 0) && (
-        <div className="my-8">
+        <div className="pt-20 md:pt-0 my-0 md:my-8">
+          {/* Mobile-only: compact back button */}
+          <div className="flex md:hidden items-center justify-between mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="hover:text-slate-650 cursor-pointer transition-colors" onClick={onClose}>Início</span>
+              <span>/</span>
+              <span className="text-slate-500">{getCategoryTitle(category)}</span>
+            </div>
+            <button 
+              onClick={onClose}
+              className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-3 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95"
+            >
+              <ArrowLeft size={13} /> Voltar
+            </button>
+          </div>
+
           {/* Category Header (Only when no featured slider is present) */}
           <div className="flex items-center gap-5 lg:flex-col lg:items-center lg:mx-auto text-left lg:text-center mb-8">
              <div 
