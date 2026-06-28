@@ -31,6 +31,7 @@ import HotelDashboard from './components/HotelDashboard';
 import BarberNormalDashboard from './components/BarberNormalDashboard';
 import BarberProDashboard from './components/BarberProDashboard';
 import ManicureDashboard from './components/ManicureDashboard';
+import { PublicServicesDashboard } from './components/PublicServicesDashboard';
 import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
@@ -2098,6 +2099,27 @@ const App: React.FC = () => {
       const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car' || targetId.startsWith('RC') || targetId.startsWith('CAR');
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
+
+      const isPublicServices = 
+        bType === 'public_services' || 
+        bType === 'municipality' || 
+        bType === 'parish_council' || 
+        bType === 'water_services' ||
+        biz.businessType === 'public_services' ||
+        biz.businessType === 'municipality' ||
+        biz.businessType === 'parish_council' ||
+        biz.businessType === 'water_services';
+
+      if (isPublicServices) {
+        return (
+          <ErrorBoundary>
+            <PublicServicesDashboard 
+              business={biz}
+              onLogout={handleLogout}
+            />
+          </ErrorBoundary>
+        );
+      }
 
       if (isBeauty && biz.subcategory === 'manicure') {
         return (

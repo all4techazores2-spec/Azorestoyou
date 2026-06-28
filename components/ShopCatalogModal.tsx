@@ -113,11 +113,11 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                  )}
                  <button 
                    onClick={() => {
-                     const url = (shop.latitude && shop.longitude) 
+                     const url = (shop as any).mapUrl || (shop as any).mapsUrl || ((shop.latitude && shop.longitude) 
                        ? `https://maps.google.com/?q=${shop.latitude},${shop.longitude}` 
-                       : '#';
+                       : '#');
                      if (url !== '#') {
-                       if (onShowMap) {
+                       if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
                          onShowMap(url);
                          onClose();
                        } else {

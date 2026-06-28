@@ -1255,16 +1255,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       </button>
                       <button 
                         onClick={() => {
-                          const url = (s.latitude && s.longitude) 
-                            ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
-                            : '#';
-                          if (url !== '#') {
-                            if (onShowMap) {
-                              onShowMap(url);
-                            } else {
-                              window.open(url, '_blank');
-                            }
+                          const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude) 
+                          ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                          : '#');
+                        if (url !== '#') {
+                          if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
+                            onShowMap(url);
+                          } else {
+                            window.open(url, '_blank');
                           }
+                        }
                         }}
                         className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
                       >
@@ -1411,16 +1411,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       )}
                       <button 
                         onClick={() => {
-                          const url = (s.latitude && s.longitude) 
-                            ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
-                            : '#';
-                          if (url !== '#') {
-                            if (onShowMap) {
-                              onShowMap(url);
-                            } else {
-                              window.open(url, '_blank');
-                            }
+                          const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude) 
+                          ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                          : '#');
+                        if (url !== '#') {
+                          if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
+                            onShowMap(url);
+                          } else {
+                            window.open(url, '_blank');
                           }
+                        }
                         }}
                         className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
                       >
