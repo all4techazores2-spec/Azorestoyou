@@ -17,9 +17,10 @@ interface SliderItem {
 interface MostRequestedSliderProps {
   items: SliderItem[];
   onAction?: (item: SliderItem) => void;
+  className?: string;
 }
 
-const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onAction }) => {
+const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onAction, className = "mb-12" }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ const MostRequestedSlider: React.FC<MostRequestedSliderProps> = ({ items, onActi
   if (items.length === 0) return null;
 
   return (
-    <div className="w-full mb-12 relative">
+    <div className={`w-full relative ${className}`}>
       <div className="relative h-[300px] md:h-[450px] w-full overflow-hidden shadow-2xl group">
         <AnimatePresence mode="wait">
           <motion.div

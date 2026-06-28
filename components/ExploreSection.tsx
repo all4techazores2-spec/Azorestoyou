@@ -2001,10 +2001,13 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
-        <div className="relative mb-8 md:my-8 -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl -mt-0 md:mt-0">
+        <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${
+          category === 'bars' ? 'mb-4 md:mb-6 -mt-3 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
+        }`}>
           {/* Slider */}
           <MostRequestedSlider 
             items={featuredItems} 
+            className={category === 'bars' ? 'mb-0' : 'mb-12'}
             onAction={(item) => {
               const res = restaurants.find(r => r.id === item.id) || 
                           beauty.find(b => b.id === item.id) ||
@@ -2030,27 +2033,52 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             </button>
 
             {/* Centered Category Header inside Slider */}
-            <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
-               <div 
-                 className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
-                 style={{ color: COLORS[category] || '#1A75BB' }}
-               >
-                 {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-               </div>
-               <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
-               <div className="flex items-center gap-2 justify-center">
-                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
-                   {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-                 </p>
-               </div>
-            </div>
+            {category !== 'bars' && (
+              <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
+                 <div 
+                   className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
+                   style={{ color: COLORS[category] || '#1A75BB' }}
+                 >
+                   {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+                 </div>
+                 <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
+                 <div className="flex items-center gap-2 justify-center">
+                   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
+                     {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+                   </p>
+                 </div>
+              </div>
+            )}
 
             {/* Centered Search Card inside Slider */}
-            <div className="w-full lg:max-w-2xl xl:max-w-3xl pointer-events-auto">
-              {renderCategoryFilterBar()}
-            </div>
+            {category !== 'bars' && (
+              <div className="w-full lg:max-w-2xl xl:max-w-3xl pointer-events-auto">
+                {renderCategoryFilterBar()}
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {featuredItems && featuredItems.length > 0 && category === 'bars' && (
+        <div className="flex flex-col items-center text-center mt-2 mb-6 px-6 md:px-0 animate-in fade-in duration-500 w-full">
+           <div 
+             className="w-12 h-12 rounded-[1.5rem] flex items-center justify-center shadow-md mb-2 bg-white border border-slate-100 transition-all hover:scale-105"
+             style={{ color: COLORS[category] || '#1A75BB' }}
+           >
+             {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 24 })}
+           </div>
+           <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
+           <div className="flex items-center gap-1.5 justify-center mb-4">
+             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+               {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+             </p>
+           </div>
+           <div className="w-full lg:max-w-2xl xl:max-w-3xl">
+             {renderCategoryFilterBar()}
+           </div>
         </div>
       )}
 
