@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Restaurant, Language, OrderItem, Dish, Business, Service } from '../types';
-import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info, ShoppingBag, Sparkles, Smartphone, Scissors, ThumbsUp } from 'lucide-react';
+import { X, Star, ChevronLeft, ChevronRight, CalendarCheck, Ear, StopCircle, Clock, Users, CreditCard, CheckCircle, ArrowRight, ArrowLeft, Calendar, Plus, Minus, UtensilsCrossed, Wallet, Ban, Phone, Mail, MapPin, Map, Info, ShoppingBag, Sparkles, Smartphone, Scissors, ThumbsUp, Wine, Music, Moon } from 'lucide-react';
 import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -39,6 +39,21 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const isShop = restaurant ? (restaurant.businessType === 'shop') : false;
   const isAutoRepair = restaurant ? (restaurant.businessType === 'auto_repair') : false;
   const isOffice = restaurant ? (restaurant.businessType === 'office') : false;
+  const isBarCategory = restaurant ? (restaurant.businessType === 'bars' || restaurant.id?.startsWith('BAR')) : false;
+
+  const getBarSubtypeInfo = (sub: string | undefined) => {
+    switch (sub) {
+      case 'restaurante':
+        return { label: 'Restaurante', icon: <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" /> };
+      case 'discoteca':
+        return { label: 'Discoteca', icon: <Music className="w-5 h-5 text-purple-600 mb-2" /> };
+      case 'outro':
+        return { label: 'Sítio Noturno', icon: <Moon className="w-5 h-5 text-indigo-650 mb-2" /> };
+      case 'bar':
+      default:
+        return { label: 'Bar', icon: <Wine className="w-5 h-5 text-amber-600 mb-2" /> };
+    }
+  };
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -720,9 +735,19 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
-                      {isBeauty ? <Scissors className="w-5 h-5 text-red-500 mb-2" /> : <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />}
-                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{isBeauty ? 'Categoria' : getTranslation(currentLang, 'cuisine')}</span>
-                      <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.cuisine}</span>
+                      {isBarCategory ? (
+                        <>
+                          {getBarSubtypeInfo(restaurant.subcategory).icon}
+                          <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Tipo</span>
+                          <span className="font-bold text-slate-700 text-xs mt-1">{getBarSubtypeInfo(restaurant.subcategory).label}</span>
+                        </>
+                      ) : (
+                        <>
+                          {isBeauty ? <Scissors className="w-5 h-5 text-red-500 mb-2" /> : <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />}
+                          <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{isBeauty ? 'Categoria' : getTranslation(currentLang, 'cuisine')}</span>
+                          <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.cuisine}</span>
+                        </>
+                      )}
                     </div>
                     <div className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex flex-col items-center text-center">
                       <Star className="w-5 h-5 text-yellow-500 mb-2" />
@@ -778,7 +803,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                        <Info className="w-5 h-5 text-red-500" /> {isBeauty ? 'Sobre o Salão' : 'Sobre o Restaurante'}
+                        <Info className="w-5 h-5 text-red-500" /> {
+                          isBeauty ? 'Sobre o Salão' :
+                          isBarCategory ? (
+                            restaurant.subcategory === 'restaurante' ? 'Sobre o Restaurante' :
+                            restaurant.subcategory === 'discoteca' ? 'Sobre a Discoteca' :
+                            restaurant.subcategory === 'outro' ? 'Sobre o Sítio Noturno' :
+                            'Sobre o Bar'
+                          ) : 'Sobre o Restaurante'
+                        }
                       </h3>
                       <button 
                         onClick={handleSpeak}
@@ -820,17 +853,6 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
                   {/* Main Action Button */}
                   <div className="flex flex-col gap-3 pb-8">
-                    {restaurant.isConfirmed === false && (
-                      <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left">
-                        <span className="text-xl">ℹ️</span>
-                        <div>
-                          <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
-                          <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
-                            Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
-                          </p>
-                        </div>
-                      </div>
-                    )}
                     <button 
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"

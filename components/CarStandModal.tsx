@@ -109,17 +109,6 @@ const CarStandModal: React.FC<CarStandModalProps> = ({
           )}
 
           <div className="p-8">
-            {stand.isConfirmed === false && (
-              <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[1.75rem] flex items-start gap-3 text-amber-800 text-left mb-6">
-                <span className="text-xl">ℹ️</span>
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-700">Apenas Informativo</h4>
-                  <p className="text-[11px] font-medium leading-relaxed mt-1 text-amber-600">
-                    Este negócio está configurado em modo de visualização. Pode consultar os contactos, ementa, morada e galeria, mas as reservas e agendamentos estão temporariamente indisponíveis.
-                  </p>
-                </div>
-              </div>
-            )}
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Viaturas em Exposição</h2>

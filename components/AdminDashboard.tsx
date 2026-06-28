@@ -1378,7 +1378,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           description: '', 
           adminEmail: '',
           adminPassword: '',
-          subcategory: activeTab === 'services' ? 'electrician' : (activeTab === 'auto_repairs' ? 'parts' : (activeTab === 'auto_electronics' ? 'audio' : (activeTab === 'beauty' ? 'beauty_salon' : (activeTab === 'used_market' ? 'clothing' : (activeTab === 'animals' ? 'vet' : (activeTab === 'real_estate' ? 'rent' : (activeTab === 'gyms' ? 'fitness' : ''))))))),
+          subcategory: activeTab === 'bars' ? 'bar' : activeTab === 'services' ? 'electrician' : (activeTab === 'auto_repairs' ? 'parts' : (activeTab === 'auto_electronics' ? 'audio' : (activeTab === 'beauty' ? 'beauty_salon' : (activeTab === 'used_market' ? 'clothing' : (activeTab === 'animals' ? 'vet' : (activeTab === 'real_estate' ? 'rent' : (activeTab === 'gyms' ? 'fitness' : ''))))))),
           dishes: [],
           services: [],
           mapUrl: '',
@@ -1985,13 +1985,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </select>
               </div>
             )}
-            {activeTab === 'perfumes' && (
+             {activeTab === 'perfumes' && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
                 <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
                   <option value="male">Masculino</option>
                   <option value="female">Feminino</option>
                   <option value="unisex">Unisexo</option>
+                </select>
+              </div>
+            )}
+            {activeTab === 'bars' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Subcategoria</label>
+                <select className="w-full border p-2 rounded-lg bg-white font-bold" value={editingItem.subcategory || 'bar'} onChange={e => setEditingItem({...editingItem, subcategory: e.target.value})}>
+                  <option value="bar">Bar</option>
+                  <option value="restaurante">Restaurante</option>
+                  <option value="discoteca">Discoteca</option>
+                  <option value="outro">Outro Sítio Noturno</option>
                 </select>
               </div>
             )}
