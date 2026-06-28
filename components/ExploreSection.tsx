@@ -2002,12 +2002,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
         <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${
-          category === 'bars' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
+          category === 'bars' || category === 'gyms' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
         }`}>
           {/* Slider */}
           <MostRequestedSlider 
             items={featuredItems} 
-            className={category === 'bars' ? 'mb-0' : 'mb-12'}
+            className={category === 'bars' || category === 'gyms' ? 'mb-0' : 'mb-12'}
             onAction={(item) => {
               const res = restaurants.find(r => r.id === item.id) || 
                           beauty.find(b => b.id === item.id) ||
@@ -2024,10 +2024,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
           {/* Overlay Content */}
           <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 pointer-events-none ${
-            category === 'bars' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
+            category === 'bars' || category === 'gyms' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
           }`}>
             {/* Mobile-only floating back button — top-left corner of slider */}
-            {category !== 'bars' && (
+            {category !== 'bars' && category !== 'gyms' && (
               <button
                 onClick={onClose}
                 className="md:hidden absolute top-4 left-4 flex items-center gap-1.5 pointer-events-auto bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
@@ -2037,7 +2037,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             )}
 
             {/* Centered Category Header inside Slider */}
-            {category !== 'bars' && (
+            {category !== 'bars' && category !== 'gyms' && (
               <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
                  <div 
                    className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
@@ -2056,7 +2056,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             )}
 
             {/* Centered Search Card inside Slider */}
-            {category !== 'bars' && (
+            {category !== 'bars' && category !== 'gyms' && (
               <div className="w-full lg:max-w-2xl xl:max-w-3xl pointer-events-auto">
                 {renderCategoryFilterBar()}
               </div>
@@ -2065,7 +2065,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </div>
       )}
 
-      {featuredItems && featuredItems.length > 0 && category === 'bars' && (
+      {featuredItems && featuredItems.length > 0 && (category === 'bars' || category === 'gyms') && (
         <div className="flex flex-col items-center text-center mt-2 mb-6 px-6 md:px-0 animate-in fade-in duration-500 w-full">
            <div 
              className="w-12 h-12 rounded-[1.5rem] flex items-center justify-center shadow-md mb-2 bg-white border border-slate-100 transition-all hover:scale-105"

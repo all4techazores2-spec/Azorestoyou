@@ -21,7 +21,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
   if (!shop) return null;
 
-  const products = shop.products || [];
+  const products = shop.products || (shop as any).dishes || (shop as any).services || [];
   const gallery = shop.gallery || (products.length > 0 ? products.map(p => p.image).slice(0, 5) : ['https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200']);
 
   // Background slider effect
