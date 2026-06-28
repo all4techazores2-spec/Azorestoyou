@@ -2023,7 +2023,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           />
 
           {/* Overlay Content */}
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/45 p-6 pointer-events-none">
+          <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 pointer-events-none ${
+            category === 'bars' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
+          }`}>
             {/* Mobile-only floating back button — top-left corner of slider */}
             {category !== 'bars' && (
               <button
