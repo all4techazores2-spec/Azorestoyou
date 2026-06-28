@@ -8,12 +8,14 @@ interface ShopCatalogModalProps {
   shop: Business | null;
   onClose: () => void;
   language?: Language;
+  category?: string;
 }
 
 const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
   shop,
   onClose,
-  language = 'pt'
+  language = 'pt',
+  category
 }) => {
   const [currentBgSlide, setCurrentBgSlide] = useState(0);
   const [selectedProductIdx, setSelectedProductIdx] = useState<number | null>(null);
@@ -21,6 +23,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
   if (!shop) return null;
 
+  const isGym = category === 'gyms' || shop.businessType === 'gyms';
   const products = shop.products || (shop as any).dishes || (shop as any).services || [];
   const gallery = shop.gallery || (products.length > 0 ? products.map(p => p.image).slice(0, 5) : ['https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200']);
 
@@ -237,7 +240,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                      className="flex-1 text-center md:text-left text-white space-y-6"
                    >
                       <div>
-                        {shop.businessType !== 'gyms' && (
+                        {!isGym && (
                           <span className="px-4 py-1 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-blue-900/40">
                             {shop.businessType === 'real_estate' ? 'Oportunidade Imobiliária' : 'Artigo Regional'}
                           </span>
@@ -247,13 +250,13 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                       </div>
                       
                       <div className="flex flex-col md:flex-row items-center gap-6 pt-6">
-                        {shop.businessType !== 'gyms' && products[selectedProductIdx].price > 0 && (
+                        {!isGym && products[selectedProductIdx].price > 0 && (
                           <>
                             <div className="text-5xl font-black text-amber-400 drop-shadow-2xl">{products[selectedProductIdx].price}€</div>
                             <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
                           </>
                         )}
-                        {shop.businessType !== 'gyms' && (
+                        {!isGym && (
                           <div className="flex flex-col items-center md:items-start opacity-50">
                              <span className="text-[10px] font-black uppercase tracking-widest">
                                {shop.businessType === 'real_estate' ? 'Disponível na Agência' : 'Disponível em Loja'}

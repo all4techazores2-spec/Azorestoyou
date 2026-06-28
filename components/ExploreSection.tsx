@@ -2218,6 +2218,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           onClose={() => setSelectedShop(null)}
           shop={selectedShop}
           language={lang}
+          category={category}
           onShowMap={onShowMap}
         />
       )}
