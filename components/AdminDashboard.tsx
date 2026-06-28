@@ -2120,10 +2120,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <div className="space-y-3">
                 {editingItem.dishes?.map((dish: Dish, idx: number) => (
-                  <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-                    <div className="flex gap-2">
-                      <input className="border p-2 rounded-lg w-1/3 font-bold" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
-                      <input className="border p-2 rounded-lg w-1/4" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
+                  <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      {/* Photo Thumbnail */}
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-200 relative group/dishphoto flex-shrink-0 border">
+                        {dish.image ? (
+                          <img src={dish.image} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                            <ImageIcon size={16} />
+                          </div>
+                        )}
+                        <label className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/dishphoto:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                           <input type="file" className="hidden" accept="image/*,.webp" onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'dish', idx)} disabled={isUploading} />
+                           {isUploading ? <RefreshCw size={12} className="animate-spin text-white" /> : <Plus size={12} className="text-white" />}
+                        </label>
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <input className="border p-2 rounded-lg w-2/3 font-bold text-xs" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
+                          <input className="border p-2 rounded-lg w-1/3 text-xs" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
+                        </div>
+                        <input className="border p-2 rounded-lg text-xs" placeholder="URL da imagem..." value={dish.image} onChange={e => updateDish(idx, 'image', e.target.value)} />
+                      </div>
+                      
                       <button type="button" onClick={() => removeDish(idx)} className="text-red-500 p-2"><Trash2 className="w-5 h-5" /></button>
                     </div>
                   </div>

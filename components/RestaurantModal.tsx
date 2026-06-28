@@ -704,7 +704,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </button>
                 <div>
                   <h3 className="font-black text-slate-800 uppercase tracking-tight">
-                    {bookingStep === 'menu' ? (isBeauty ? 'Serviços e Produtos do Salão' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
+                    {bookingStep === 'menu' ? (isBeauty ? 'Serviços e Produtos do Salão' : isBarCategory ? 'Cardapio de drinks' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
                   </h3>
                   <div className="flex gap-1.5 mt-1.5">
                     {[1,2,3].map(i => (
@@ -857,8 +857,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
                     >
-                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />} 
-                      {isBeauty ? 'Ver Serviços/Produtos' : 'Ver Ementa'}
+                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBarCategory ? <Wine className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />} 
+                      {isBeauty ? 'Ver Serviços/Produtos' : isBarCategory ? 'Ver Cocktails/Bebidas' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
                     {restaurant.isConfirmed !== false && (
@@ -1216,12 +1216,12 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 <div className="flex items-center justify-between mb-2">
                    <div>
                       <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">
-                        {isBeauty ? 'Serviços e Produtos do Salão' : 'Sugestões do Chef'}
+                        {isBeauty ? 'Serviços e Produtos do Salão' : isBarCategory ? 'Sugestoes da casa' : 'Sugestões do Chef'}
                       </h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Conheça as nossas especialidades</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{isBarCategory ? 'Os nossos melhores drinks' : 'Conheça as nossas especialidades'}</p>
                    </div>
-                   <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
-                      <Sparkles size={24} />
+                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${isBarCategory ? 'bg-amber-50 text-amber-500' : 'bg-red-50 text-red-500'}`}>
+                      {isBarCategory ? <Wine size={24} /> : <Sparkles size={24} />}
                    </div>
                 </div>
 
@@ -1381,115 +1381,88 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 z-[110] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 sm:p-12"
+                      className="fixed inset-0 z-[200] bg-slate-900/98 backdrop-blur-2xl flex flex-col items-center justify-start overflow-y-auto"
                     >
                       <button 
                         onClick={() => setSelectedDishIdx(null)}
-                        className="absolute top-8 right-8 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all border-none shadow-lg shadow-blue-500/40 z-[120] cursor-pointer"
+                        className="absolute top-6 right-6 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all border-none shadow-lg shadow-blue-500/40 z-[220] cursor-pointer"
                       >
-                        <X size={24} />
+                        <X size={22} />
                       </button>
                       
-                      <div className="flex flex-col md:flex-row items-center gap-12 w-full max-w-5xl">
-                         {/* Navigation Arrows (Desktop) */}
-                         <button 
-                           onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)}
-                           className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
-                         >
-                           <ChevronLeft size={32} />
-                         </button>
+                      {/* Mobile/Compact layout: image on top, text below */}
+                      <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-6 p-6 pt-4">
+                        <motion.div 
+                          key={`dish-img-${selectedDishIdx}`}
+                          initial={{ opacity: 0, scale: 0.92 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="w-full rounded-[2.5rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border-4 border-white/5"
+                        >
+                          <img 
+                            src={getSafeImage(restaurant.dishes[selectedDishIdx].image)} 
+                            className="w-full aspect-[4/3] object-cover" 
+                            alt={restaurant.dishes[selectedDishIdx].name} 
+                          />
+                        </motion.div>
 
-                         <div className="flex-1 flex flex-col md:flex-row items-center gap-12">
-                            <motion.div 
-                              key={`dish-img-${selectedDishIdx}`}
-                              initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
-                              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                              className="w-full md:w-[450px] aspect-square rounded-[3.5rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-8 border-white/5"
+                        <motion.div 
+                          key={`dish-text-${selectedDishIdx}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="w-full text-center text-white space-y-4"
+                        >
+                          <span className="px-4 py-1.5 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest inline-block shadow-lg shadow-red-900/40">
+                            {isBarCategory ? 'Sugestão da Casa' : 'Especialidade Sugerida'}
+                          </span>
+                          <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">{restaurant.dishes[selectedDishIdx].name}</h3>
+                          {restaurant.dishes[selectedDishIdx].description && (
+                            <p className="text-sm text-white/60 font-medium leading-relaxed px-2">{restaurant.dishes[selectedDishIdx].description}</p>
+                          )}
+
+                          <div className="flex items-center justify-center gap-4 pt-2">
+                            {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
+                              <div className="flex flex-col items-center">
+                                <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
+                                <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
+                              </div>
+                            ) : (
+                              <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
+                            )}
+                          </div>
+
+                          <div className="flex justify-center gap-3 pt-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">1 de {restaurant.dishes.length} {isBarCategory ? 'bebidas' : 'especialidades'}</span>
+                          </div>
+
+                          {restaurant.isConfirmed !== false && (
+                            <button 
+                              onClick={() => {
+                                setSelectedDishIdx(null);
+                                setBookingStep('datetime');
+                              }}
+                              className="w-full px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
-                              <img 
-                                src={getSafeImage(restaurant.dishes[selectedDishIdx].image)} 
-                                className="w-full h-full object-cover" 
-                                alt="Dish Immersive" 
-                              />
-                            </motion.div>
+                              <CalendarCheck size={18} />
+                              {isBarCategory ? 'Reservar Mesa no Bar' : 'Reservar Mesa Agora'}
+                            </button>
+                          )}
 
-                            <motion.div 
-                              key={`dish-text-${selectedDishIdx}`}
-                              initial={{ opacity: 0, x: 30 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="flex-1 text-center md:text-left text-white space-y-6"
+                          {/* Navigation buttons */}
+                          <div className="flex justify-center gap-4 pb-6">
+                            <button 
+                              onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)} 
+                              className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
                             >
-                               <div>
-                                 <span className="px-4 py-1 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-red-900/40">
-                                   Especialidade Sugerida
-                                 </span>
-                                 <h3 className="text-3xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{restaurant.dishes[selectedDishIdx].name}</h3>
-                                 <p className="text-lg md:text-xl text-white/60 font-bold leading-relaxed max-w-md mx-auto md:mx-0">{restaurant.dishes[selectedDishIdx].description}</p>
-                               </div>
-                               
-                               <div className="flex flex-col md:flex-row items-center gap-6 pt-4">
-                                  {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
-                                    <div className="flex flex-col items-center md:items-start">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black text-white uppercase tracking-wider ${(restaurant.dishes[selectedDishIdx] as any).promoType === 'week' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                                          {(restaurant.dishes[selectedDishIdx] as any).promoType === 'week' ? 'Promoção da Semana' : 'Promoção do Dia'}
-                                        </span>
-                                      </div>
-                                      <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl mt-1">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
-                                    </div>
-                                  ) : (
-                                    <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
-                                  )}
-                                  <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
-                                  <div className="flex flex-col items-center md:items-start opacity-50">
-                                     <span className="text-[10px] font-black uppercase tracking-widest">Disponível em</span>
-                                     <span className="text-xs font-bold">{restaurant.name}</span>
-                                  </div>
-                               </div>
-
-                               {restaurant.isConfirmed !== false && (
-                                 <button 
-                                   onClick={() => {
-                                     setSelectedDishIdx(null);
-                                     setBookingStep('datetime');
-                                   }}
-                                   className="w-full md:w-auto px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
-                                 >
-                                   <CalendarCheck size={18} className="group-hover:rotate-12 transition-transform" />
-                                   Reservar Mesa Agora
-                                 </button>
-                               )}
-
-                               {/* Mobile Navigation */}
-                               <div className="flex md:hidden justify-center gap-4 pt-4">
-                                  <button 
-                                    onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)} 
-                                    className="p-4 bg-white/10 rounded-2xl"
-                                  >
-                                    <ChevronLeft size={24} />
-                                  </button>
-                                  <button 
-                                    onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)} 
-                                    className="p-4 bg-white/10 rounded-2xl"
-                                  >
-                                    <ChevronRight size={24} />
-                                  </button>
-                               </div>
-                            </motion.div>
-                         </div>
-
-                         <button 
-                           onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)}
-                           className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
-                         >
-                           <ChevronRight size={32} />
-                         </button>
-                      </div>
-
-                      {/* Counter Indicator */}
-                      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
-                        {selectedDishIdx + 1} de {restaurant.dishes.length} especialidades
+                              <ChevronLeft size={24} />
+                            </button>
+                            <button 
+                              onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)} 
+                              className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
+                            >
+                              <ChevronRight size={24} />
+                            </button>
+                          </div>
+                        </motion.div>
                       </div>
                     </motion.div>
                   )}
