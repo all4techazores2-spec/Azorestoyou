@@ -2142,6 +2142,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <input className="border p-2 rounded-lg w-2/3 font-bold text-xs" placeholder="Nome" value={dish.name} onChange={e => updateDish(idx, 'name', e.target.value)} />
                           <input className="border p-2 rounded-lg w-1/3 text-xs" placeholder="Preço" type="number" value={dish.price} onChange={e => updateDish(idx, 'price', parseFloat(e.target.value))} />
                         </div>
+                        {activeTab === 'gyms' && (
+                          <textarea 
+                            className="border p-2 rounded-lg text-xs w-full font-medium" 
+                            placeholder="Descrição da máquina/instalação..." 
+                            value={dish.description || ''} 
+                            onChange={e => updateDish(idx, 'description', e.target.value)}
+                            rows={2}
+                          />
+                        )}
                         <input className="border p-2 rounded-lg text-xs" placeholder="URL da imagem..." value={dish.image} onChange={e => updateDish(idx, 'image', e.target.value)} />
                       </div>
                       

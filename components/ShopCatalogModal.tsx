@@ -237,11 +237,11 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                      className="flex-1 text-center md:text-left text-white space-y-6"
                    >
                       <div>
-                        <span className="px-4 py-1 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-blue-900/40">
-                          {shop.businessType === 'gyms' ? 'Equipamento Profissional' : 
-                           shop.businessType === 'real_estate' ? 'Oportunidade Imobiliária' :
-                           'Artigo Regional'}
-                        </span>
+                        {shop.businessType !== 'gyms' && (
+                          <span className="px-4 py-1 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-blue-900/40">
+                            {shop.businessType === 'real_estate' ? 'Oportunidade Imobiliária' : 'Artigo Regional'}
+                          </span>
+                        )}
                         <h3 className="text-2xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{products[selectedProductIdx].name}</h3>
                         <p className="text-lg md:text-xl text-white/60 font-bold leading-relaxed max-w-md mx-auto md:mx-0">{products[selectedProductIdx].description}</p>
                       </div>
@@ -253,14 +253,14 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                             <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
                           </>
                         )}
-                        <div className="flex flex-col items-center md:items-start opacity-50">
-                           <span className="text-[10px] font-black uppercase tracking-widest">
-                             {shop.businessType === 'gyms' ? 'Disponível no Ginásio' : 
-                              shop.businessType === 'real_estate' ? 'Disponível na Agência' :
-                              'Disponível em Loja'}
-                           </span>
-                           <span className="text-xs font-bold">{shop.name}</span>
-                        </div>
+                        {shop.businessType !== 'gyms' && (
+                          <div className="flex flex-col items-center md:items-start opacity-50">
+                             <span className="text-[10px] font-black uppercase tracking-widest">
+                               {shop.businessType === 'real_estate' ? 'Disponível na Agência' : 'Disponível em Loja'}
+                             </span>
+                             <span className="text-xs font-bold">{shop.name}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* 360 TOUR BUTTON */}
