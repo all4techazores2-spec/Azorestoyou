@@ -17,11 +17,12 @@ interface AuthModalProps {
   beauty?: Restaurant[];
   hotels?: any[];
   cars?: any[];
+  municipal?: any[];
 }
 
 type AuthMode = 'login' | 'register';
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [], shops = [], beauty = [], hotels = [], cars = [] }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGuest, language = 'pt', restaurants = [], shops = [], beauty = [], hotels = [], cars = [], municipal = [] }) => {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const currentLang = language as Language;
@@ -89,7 +90,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     }
 
     // 2.2 Verificação de Negócios e Staff (Dados do Servidor)
-    const allBusinesses = [...restaurants, ...shops, ...beauty, ...hotels, ...cars];
+    const allBusinesses = [...restaurants, ...shops, ...beauty, ...hotels, ...cars, ...municipal];
 
     // 2.3 Verificar se é Admin de algum negócio
     let business = allBusinesses.find(b => 
@@ -100,7 +101,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     // Se não encontrou no cache local, verificar em tempo real diretamente no servidor
     if (!business) {
       try {
-        const endpoints = ['cars', 'restaurants', 'shops', 'beauty', 'hotels'];
+        const endpoints = ['cars', 'restaurants', 'shops', 'beauty', 'hotels', 'municipal'];
         for (const ep of endpoints) {
           const res = await fetch(`${API_BASE_URL}/api/${ep}`);
           if (res.ok) {

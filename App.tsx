@@ -937,7 +937,7 @@ const App: React.FC = () => {
     }
 
     if (finalBusinessId) {
-      const biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars].find(b => b.id === finalBusinessId);
+      const biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal].find(b => b.id === finalBusinessId);
       const isBarber = (biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia' || (finalBusinessId.startsWith('BEA') && biz?.subcategory !== 'manicure' && email?.toLowerCase() !== 'aasnailsstudio@gmail.com'));
       if (isBarber) {
         setIsAuthenticated(false);
@@ -2075,7 +2075,7 @@ const App: React.FC = () => {
   if ((isBusiness || isStaff) && currentBusinessId) {
     // Procurar o negócio nos estados sincronizados com o servidor
     const targetId = currentBusinessId.trim();
-    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars].find(b => b.id === targetId);
+    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal].find(b => b.id === targetId);
     
     // Fallback: Se não encontrou no estado (sincronização pendente), apenas retornar erro amigável
     if (!biz) {
@@ -3222,7 +3222,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} hotels={hotels} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} hotels={hotels} municipal={municipal} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 

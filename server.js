@@ -451,9 +451,7 @@ app.post('/api/auth/login', async (req, res) => {
         let foundBusiness = null;
         let foundBusinessRole = null; // 'business' or 'manager' or 'supplier' or staff roles
 
-        const businessCollections = ['cars', 'restaurants', 'shops', 'beauty', 'hotels', 'services', 'offices'];
-        
-        for (const key of businessCollections) {
+        for (const key of ALL_BUSINESS_COLLECTIONS) {
             if (db[key]) {
                 // Verificar se é Admin do negócio
                 const biz = db[key].find(b => 
@@ -505,7 +503,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         // 3. Verificar se é email de negócio mas a senha está errada
-        for (const key of businessCollections) {
+        for (const key of ALL_BUSINESS_COLLECTIONS) {
             if (db[key]) {
                 const hasBizEmail = db[key].some(b => 
                     b.adminEmail && b.adminEmail.trim().toLowerCase() === normalizedEmail
