@@ -2081,6 +2081,10 @@ const App: React.FC = () => {
     if (!biz) {
       // O estado é sincronizado periodicamente, se não está aqui, o ID pode ser inválido
       biz = null;
+      // Se o ID começa com MUN, tentar carregar dados municipais do servidor
+      if (targetId.startsWith('MUN')) {
+        fetchData(1, ['municipal']);
+      }
     }
 
     if (biz) {
@@ -2100,11 +2104,19 @@ const App: React.FC = () => {
       
       const bEndpoint = isBeauty ? 'beauty' : (isShop ? 'shops' : (isHotel ? 'hotels' : (isRentCar ? 'cars' : 'restaurants')));
 
+      const isMunicipalBiz = municipal.some(m => m.id === targetId) || targetId.startsWith('MUN');
+      if (isMunicipalBiz && biz.businessType !== 'beauty' && biz.businessType !== 'shop') {
+        biz.businessType = 'municipal';
+      }
+
       const isPublicServices = 
+        isMunicipalBiz ||
+        bType === 'municipal' ||
         bType === 'public_services' || 
         bType === 'municipality' || 
         bType === 'parish_council' || 
         bType === 'water_services' ||
+        biz.businessType === 'municipal' ||
         biz.businessType === 'public_services' ||
         biz.businessType === 'municipality' ||
         biz.businessType === 'parish_council' ||
@@ -2120,6 +2132,7 @@ const App: React.FC = () => {
           </ErrorBoundary>
         );
       }
+
 
       if (isBeauty && biz.subcategory === 'manicure') {
         return (
@@ -2409,11 +2422,11 @@ const App: React.FC = () => {
         </ErrorBoundary>
       );
     } else {
-      if (!isDataLoaded) {
+      if (!isDataLoaded || (currentBusinessId?.startsWith('MUN') && isSyncing)) {
         return (
           <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-8 text-center text-white">
             <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-            <p className="text-emerald-400 font-medium animate-pulse tracking-wider">A carregar POS local...</p>
+            <p className="text-emerald-400 font-medium animate-pulse tracking-wider">A carregar dados do serviço...</p>
           </div>
         );
       }
