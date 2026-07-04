@@ -34,14 +34,14 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
 
   const handleSubmit = async () => {
     if (!hasLicense) {
-       alert(language === 'pt' ? 'Deve confirmar que possui carta de condução válida.' : 'You must confirm you have a valid driver license.');
-       return;
+      alert(language === 'pt' ? 'Deve confirmar que possui carta de condução válida.' : 'You must confirm you have a valid driver license.');
+      return;
     }
     setIsSubmitting(true);
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-1.onrender.com';
+        : 'https://azorestoyou-o5yx.onrender.com';
 
       const resData = {
         id: `TD-${Math.random().toString(36).substr(2, 9)}`,
@@ -85,7 +85,7 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl relative"
@@ -115,17 +115,16 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
                     <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-2 hover:bg-white rounded-xl transition-colors"><ChevronRight size={16} /></button>
                   </div>
                   <div className="grid grid-cols-7 gap-1">
-                    {['D','S','T','Q','Q','S','S'].map((d, i) => <div key={i} className="text-center text-[9px] font-black text-slate-300 py-1">{d}</div>)}
+                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-[9px] font-black text-slate-300 py-1">{d}</div>)}
                     {Array.from({ length: firstDay(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={i} />)}
                     {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
                       const day = i + 1;
                       const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
                       const isSelected = selectedDate.toDateString() === date.toDateString();
-                      const isPast = date < new Date(new Date().setHours(0,0,0,0));
+                      const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
                       return (
-                        <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-9 w-9 rounded-xl text-xs font-bold transition-all ${
-                          isSelected ? 'bg-blue-600 text-white shadow-lg' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
-                        }`}>{day}</button>
+                        <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-9 w-9 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-blue-600 text-white shadow-lg' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
+                          }`}>{day}</button>
                       );
                     })}
                   </div>
@@ -133,18 +132,16 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
 
                 <div className="grid grid-cols-4 gap-2">
                   {timeSlots.map(t => (
-                    <button key={t} onClick={() => setSelectedTime(t)} className={`py-2.5 rounded-xl text-xs font-black transition-all border ${
-                      selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
-                    }`}>{t}</button>
+                    <button key={t} onClick={() => setSelectedTime(t)} className={`py-2.5 rounded-xl text-xs font-black transition-all border ${selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
+                      }`}>{t}</button>
                   ))}
                 </div>
 
-                <button 
+                <button
                   disabled={!selectedTime}
                   onClick={() => setStep('details')}
-                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-                    selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                  }`}
+                  className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                    }`}
                 >
                   Continuar <ArrowRight size={16} />
                 </button>
@@ -159,11 +156,10 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
                   <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20" />
                 </div>
 
-                <button 
+                <button
                   onClick={() => setHasLicense(!hasLicense)}
-                  className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left ${
-                    hasLicense ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 bg-slate-50/50'
-                  }`}
+                  className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left ${hasLicense ? 'border-blue-600 bg-blue-50/50' : 'border-slate-100 bg-slate-50/50'
+                    }`}
                 >
                   <div className={`p-2 rounded-lg ${hasLicense ? 'bg-blue-600 text-white' : 'bg-white text-slate-300'}`}>
                     <ShieldCheck size={16} />
@@ -177,7 +173,7 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
 
                 <div className="flex gap-3 pt-2">
                   <button onClick={() => setStep('datetime')} className="px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[11px] uppercase tracking-widest">Voltar</button>
-                  <button 
+                  <button
                     disabled={isSubmitting || !name || !phone || !hasLicense}
                     onClick={handleSubmit}
                     className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl disabled:bg-slate-100 disabled:text-slate-300"

@@ -23,11 +23,11 @@ interface RestaurantModalProps {
 type BookingStep = 'info' | 'datetime' | 'menu' | 'success';
 type PopupStep = 'notes' | 'preorder_choice' | 'menu' | 'prep_time' | 'payment_methods';
 
-const RestaurantModal: React.FC<RestaurantModalProps> = ({ 
-  restaurant, 
-  onClose, 
-  language = 'pt', 
-  isAuthenticated, 
+const RestaurantModal: React.FC<RestaurantModalProps> = ({
+  restaurant,
+  onClose,
+  language = 'pt',
+  isAuthenticated,
   onShowAuth,
   userCredits = 0,
   setUserCredits,
@@ -75,7 +75,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [preorderSelected, setPreorderSelected] = useState<boolean | null>(null);
   const [selectedDishIdx, setSelectedDishIdx] = useState<number | null>(null);
   const [showFullMenuPopup, setShowFullMenuPopup] = useState(false);
-  
+
   const [guestStep, setGuestStep] = useState<'details' | 'minipos'>('details');
 
   // Follow and Like state for individual business
@@ -113,13 +113,13 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     const base = Math.abs(hash % 980) + 240; // 240 - 1220 followers base
     return isFollowed ? base + 1 : base;
   };
-  
+
   // Payment states for booking fee
   const [mbwayPhone, setMbwayPhone] = useState(userProfile?.phone || '');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-  
+
   const bookingFee = 5.00; // Default booking fee for Beauty services
   const [firstName, setFirstName] = useState(userProfile?.name ? userProfile.name.split(' ')[0] : '');
   const [lastName, setLastName] = useState(userProfile?.name ? userProfile.name.split(' ').slice(1).join(' ') : '');
@@ -133,7 +133,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         try {
           const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:3001'
-            : 'https://azorestoyou-1.onrender.com';
+            : 'https://azorestoyou-o5yx.onrender.com';
           const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${restaurant.id}`);
           if (resChairs.ok) {
             const dataChairs = await resChairs.json();
@@ -170,7 +170,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       setCustomerPhone(userProfile.phone);
     }
   }, [userProfile]);
-  
+
   const currentLang = language as Language;
 
   useEffect(() => {
@@ -221,7 +221,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       'pt': 'pt-PT', 'en': 'en-US', 'es': 'es-ES', 'it': 'it-IT', 'de': 'de-DE'
     };
     utterance.lang = langMap[language] || 'pt-PT';
-    utterance.rate = 0.7; 
+    utterance.rate = 0.7;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
     setIsSpeaking(true);
@@ -247,7 +247,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   const handleFinalize = async () => {
     if (isProcessing) return;
-    
+
     // Validar campos obrigatórios para pagamentos online
     if (paymentType === 'mbway' && !mbwayPhone) {
       alert(currentLang === 'pt' ? 'Por favor, insira o número MBWay.' : 'Please enter your MBWay number.');
@@ -268,8 +268,8 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       // Detetar automaticamente o endereço do backend
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-1.onrender.com';
-      
+        : 'https://azorestoyou-o5yx.onrender.com';
+
       // Determine if paying online
       const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';
 
@@ -285,7 +285,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         guests: (isBeauty || isAutoRepair || isOffice) ? 1 : guests,
         notes: isAutoRepair ? `[MATRÍCULA: ${licensePlate}] ${bookingNote}` : bookingNote,
         paymentType: paymentType,
-        preOrder: isBeauty 
+        preOrder: isBeauty
           ? selectedServices.map(s => ({ dish: { name: s.name, price: s.price, duration: s.duration || 30 }, quantity: 1 }))
           : (preorderSelected ? orderItems : []),
         prepRequested: isBeauty ? true : preorderSelected,
@@ -319,7 +319,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
       // 2. Notificar App Principal
       onReserveSuccess?.(data, restaurant.name, restaurant.id);
-      
+
       // 3. Se houver pré-pedido em restaurante, enviar para a cozinha
       if (restaurant.businessType === 'restaurant' && preorderSelected && orderItems.length > 0) {
         console.log('Enviando pedido para a cozinha...');
@@ -410,14 +410,14 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const getFilteredTimeSlots = () => {
     if (!selectedDate) return [];
     const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
+
     // Check if closed on Sunday (0)
     if (isBeauty && dayOfWeek === 0) {
       return []; // Encerrado ao Domingo
     }
-    
+
     let rawHours = restaurant.openingHours || (isBeauty ? '09:00-13:00, 14:00-19:00' : '12:00-15:00, 19:00-23:00');
-    
+
     if (isBeauty) {
       if (dayOfWeek === 6) { // Sábado: 09:00-17:00
         rawHours = '09:00-17:00';
@@ -427,10 +427,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         rawHours = '09:00-19:00';
       }
     }
-    
+
     const ranges = rawHours.split(',').map(r => r.trim());
     const slots: string[] = [];
-    
+
     ranges.forEach(range => {
       const parts = range.split('-');
       if (parts.length === 2) {
@@ -440,10 +440,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           for (let min = startMin; min < endMin; min += 30) {
             slots.push(minutesToTime(min));
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     });
-    
+
     // If not beauty or no reservations, return standard slots
     if (!isBeauty || !restaurant.reservations) {
       return slots.length > 0 ? slots : (isBeauty ? [
@@ -454,7 +454,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'
       ]);
     }
-    
+
     // Filter slots by existing reservation times and duration chosen
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
@@ -468,9 +468,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
         // 2. Check if slot has a confirmed accepted reservation
         const isReserved = (restaurant.reservations || []).some(
-          (r: any) => r.status === 'accepted' && 
-                      (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr)) && 
-                      r.time === slot
+          (r: any) => r.status === 'accepted' &&
+            (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr)) &&
+            r.time === slot
         );
         if (isReserved) return false;
 
@@ -478,19 +478,19 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       });
     }
 
-    const activeReservations = restaurant.reservations.filter((r: any) => 
+    const activeReservations = restaurant.reservations.filter((r: any) =>
       (r.status === 'accepted' || r.status === 'pending') &&
       (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
     );
-    
-    const totalDuration = selectedServices.length > 0 
+
+    const totalDuration = selectedServices.length > 0
       ? selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0)
       : 30;
 
     return slots.filter(slot => {
       const slotStart = timeToMinutes(slot);
       const slotEnd = slotStart + totalDuration;
-      
+
       // Check if slot falls outside opening hours
       const fallsWithinHours = ranges.some(range => {
         const parts = range.split('-');
@@ -502,11 +502,11 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         return false;
       });
       if (!fallsWithinHours) return false;
-      
+
       // Check overlap with existing active reservations
       const overlaps = activeReservations.some((r: any) => {
         const rStart = timeToMinutes(r.time);
-        
+
         let rDuration = 30;
         if (r.preOrder && r.preOrder.length > 0) {
           rDuration = r.preOrder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
@@ -514,10 +514,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           rDuration = r.preorder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
         }
         const rEnd = rStart + rDuration;
-        
+
         return slotStart < rEnd && slotEnd > rStart;
       });
-      
+
       return !overlaps;
     });
   };
@@ -526,21 +526,21 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   const getChairsAvailability = () => {
     if (!selectedDate || !selectedTime) return { total: 12, available: 12, isFull: false };
-    
+
     if (isBeauty) {
       return { total: 12, available: 12, isFull: false }; // Always free
     }
 
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
     const total = restaurant.tables ? restaurant.tables.length : 12;
-    
+
     // Count confirmed bookings at this exact date and time
-    const occupiedCount = (restaurant.reservations || []).filter((r: any) => 
-      (r.status === 'accepted' || r.status === 'occupied') && 
-      r.time === selectedTime && 
+    const occupiedCount = (restaurant.reservations || []).filter((r: any) =>
+      (r.status === 'accepted' || r.status === 'occupied') &&
+      r.time === selectedTime &&
       (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
     ).length;
-    
+
     const available = Math.max(0, total - occupiedCount);
     return {
       total,
@@ -555,7 +555,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
-  
+
   const monthNames = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
@@ -567,7 +567,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     const days = daysInMonth(year, month);
     const firstDay = firstDayOfMonth(year, month);
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     return (
       <div className="bg-slate-50/50 p-3 rounded-[24px] border border-slate-100">
@@ -597,7 +597,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 key={day}
                 disabled={isPast}
                 onClick={() => setSelectedDate(date)}
-                style={{ 
+                style={{
                   backgroundColor: isSelected ? COLORS.primary : undefined,
                   boxShadow: isSelected ? `0 10px 15px -3px ${COLORS.primary}33` : undefined
                 }}
@@ -625,15 +625,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
           className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
         />
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -656,9 +656,9 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                 </AnimatePresence>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               </div>
-              
-              <button 
-                onClick={onClose} 
+
+              <button
+                onClick={onClose}
                 className="absolute top-6 right-6 z-50 p-3 bg-white/90 backdrop-blur text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-lg border border-white/20 group"
               >
                 <X size={20} className="group-active:scale-90 transition-transform" />
@@ -689,11 +689,11 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
             </div>
           )}
 
-          
+
           {bookingStep !== 'info' && bookingStep !== 'success' && (
             <div className="p-6 border-b border-slate-100 shrink-0 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <button 
+                <button
                   onClick={() => {
                     if (bookingStep === 'datetime') setBookingStep('info');
                     if (bookingStep === 'menu') setBookingStep('info');
@@ -707,7 +707,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                     {bookingStep === 'menu' ? (isBeauty ? 'Serviços e Produtos do Salão' : isBarCategory ? 'Cardapio de drinks' : 'Ementa do Restaurante') : 'Confirmar Reserva'}
                   </h3>
                   <div className="flex gap-1.5 mt-1.5">
-                    {[1,2,3].map(i => (
+                    {[1, 2, 3].map(i => (
                       <div key={i} className={`h-1.5 w-10 rounded-full transition-all duration-500 ${((bookingStep === 'datetime' && i >= 1) || (bookingStep === 'success' && i >= 3)) ? 'bg-red-500 shadow-sm shadow-red-100' : 'bg-slate-200'}`} />
                     ))}
                   </div>
@@ -719,17 +719,17 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
 
 
-        {/* Right/Bottom: Info */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
-          <AnimatePresence mode="wait">
-            {bookingStep === 'info' && (
-              <motion.div 
-                key="info"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-8 space-y-8"
-              >
+          {/* Right/Bottom: Info */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
+            <AnimatePresence mode="wait">
+              {bookingStep === 'info' && (
+                <motion.div
+                  key="info"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-8 space-y-8"
+                >
 
 
                   {/* Stats Grid */}
@@ -765,7 +765,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       <span className="font-bold text-emerald-600 text-[10px] mt-1 uppercase tracking-tighter">Aberto Agora</span>
                     </div>
                   </div>
-                  
+
                   {/* Follow & Like Section */}
                   <div className="flex items-center justify-between bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-3">
@@ -779,7 +779,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={toggleFollow}
@@ -805,15 +805,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
                         <Info className="w-5 h-5 text-red-500" /> {
                           isBeauty ? 'Sobre o Salão' :
-                          isBarCategory ? (
-                            restaurant.subcategory === 'restaurante' ? 'Sobre o Restaurante' :
-                            restaurant.subcategory === 'discoteca' ? 'Sobre a Discoteca' :
-                            restaurant.subcategory === 'outro' ? 'Sobre o Sítio Noturno' :
-                            'Sobre o Bar'
-                          ) : 'Sobre o Restaurante'
+                            isBarCategory ? (
+                              restaurant.subcategory === 'restaurante' ? 'Sobre o Restaurante' :
+                                restaurant.subcategory === 'discoteca' ? 'Sobre a Discoteca' :
+                                  restaurant.subcategory === 'outro' ? 'Sobre o Sítio Noturno' :
+                                    'Sobre o Bar'
+                            ) : 'Sobre o Restaurante'
                         }
                       </h3>
-                      <button 
+                      <button
                         onClick={handleSpeak}
                         className={`p-2 rounded-xl transition-all ${isSpeaking ? 'bg-red-100 text-red-600 scale-110' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                       >
@@ -825,53 +825,53 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
                   {/* Contacts Section */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                     {restaurant.phone && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
-                          <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-red-50 group-hover:border-red-100 transition-all">
-                            <Phone className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
-                          </div>
-                          <span className="text-xs font-black text-slate-700 tracking-tight">{restaurant.phone}</span>
+                    {restaurant.phone && (
+                      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                        <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-red-50 group-hover:border-red-100 transition-all">
+                          <Phone className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
                         </div>
-                     )}
-                     {restaurant.publicEmail && (
-                        <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
-                          <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-all">
-                            <Mail className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
-                          </div>
-                          <span className="text-xs font-black text-slate-700 truncate tracking-tight">{restaurant.publicEmail}</span>
-                        </div>
-                     )}
-                      <div className="md:col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
-                        <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-all shrink-0">
-                          <MapPin className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
-                        </div>
-                        <span className="text-xs font-black text-slate-700 tracking-tight truncate">
-                          {restaurant.concelho ? `${restaurant.concelho}, ` : ''}{restaurant.island}, Açores
-                        </span>
+                        <span className="text-xs font-black text-slate-700 tracking-tight">{restaurant.phone}</span>
                       </div>
+                    )}
+                    {restaurant.publicEmail && (
+                      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                        <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-all">
+                          <Mail className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
+                        </div>
+                        <span className="text-xs font-black text-slate-700 truncate tracking-tight">{restaurant.publicEmail}</span>
+                      </div>
+                    )}
+                    <div className="md:col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white transition-colors group">
+                      <div className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:bg-emerald-50 group-hover:border-emerald-100 transition-all shrink-0">
+                        <MapPin className="w-4 h-4 text-slate-400 group-hover:text-emerald-500" />
+                      </div>
+                      <span className="text-xs font-black text-slate-700 tracking-tight truncate">
+                        {restaurant.concelho ? `${restaurant.concelho}, ` : ''}{restaurant.island}, Açores
+                      </span>
+                    </div>
                   </div>
 
                   {/* Main Action Button */}
                   <div className="flex flex-col gap-3 pb-8">
-                    <button 
+                    <button
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
                     >
-                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBarCategory ? <Wine className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />} 
+                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBarCategory ? <Wine className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
                       {isBeauty ? 'Ver Serviços/Produtos' : isBarCategory ? 'Ver Cocktails/Bebidas' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
                     {restaurant.isConfirmed !== false && (
-                      <button 
+                      <button
                         onClick={startBooking}
                         className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                       >
-                        <CalendarCheck className="w-5 h-5" /> 
+                        <CalendarCheck className="w-5 h-5" />
                         {isBeauty ? 'Agendar Serviço' : 'Fazer Reserva Agora'}
                         <ArrowRight className="w-5 h-5" />
                       </button>
                     )}
-                    <button 
+                    <button
                       onClick={() => {
                         const query = `${restaurant.name}, ${restaurant.island}, Azores`;
                         const url = restaurant.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
@@ -892,710 +892,709 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
               )}
 
 
-            {bookingStep === 'datetime' && (
-              <motion.div 
-                key="datetime"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-8 space-y-8"
-              >
-                {/* Number of People */}
-                {!isBeauty && !isAutoRepair && !isOffice && (
-                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                          <Users className="w-5 h-5 text-red-500" /> Número de Pessoas
-                        </h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Selecione para quantas pessoas</p>
-                      </div>
-                      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-                        <button onClick={() => setGuests(Math.max(1, guests - 1))} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                          <Minus size={18} />
-                        </button>
-                        <span className="text-xl font-black text-slate-900 w-8 text-center">{guests}</span>
-                        <button onClick={() => setGuests(guests + 1)} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                          <Plus size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Calendar Integrated */}
-                <div className="space-y-4">
-                  <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-red-500" /> Selecione o Dia
-                  </h4>
-                  {renderCalendar()}
-                </div>
-
-                {/* Time Slots Integrated */}
-                {selectedDate && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-red-500" /> Horários Disponíveis
-                    </h4>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {timeSlots.map(time => (
-                        <button 
-                          key={time} 
-                          onClick={() => setSelectedTime(time)}
-                          className={`py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all active:scale-95
-                            ${selectedTime === time 
-                              ? 'border-red-500 bg-red-50 text-red-700 shadow-md' 
-                              : 'border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50'}`}
-                        >
-                          {time}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Final Details Popup Modal */}
-                <AnimatePresence>
-                  {selectedDate && selectedTime && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                      {/* Dark blurred glass backdrop */}
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setSelectedTime(null)}
-                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
-                      />
-                      
-                      {/* Premium Center Modal Container */}
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                        className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[3rem] p-8 shadow-2xl text-white space-y-6 overflow-y-auto max-h-[90vh] z-10 scrollbar-thin"
-                      >
-                        {/* Close button */}
-                        <button 
-                          onClick={() => setSelectedTime(null)}
-                          className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
-                        >
-                          <X size={18} />
-                        </button>
-
-                        <div className="flex items-center justify-between pr-8">
-                          <div>
-                            <h4 className="text-2xl font-black uppercase tracking-tighter">Detalhes Finais</h4>
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize a sua reserva</p>
-                          </div>
-                          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                            <CheckCircle className="text-red-500" />
-                          </div>
+              {bookingStep === 'datetime' && (
+                <motion.div
+                  key="datetime"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-8 space-y-8"
+                >
+                  {/* Number of People */}
+                  {!isBeauty && !isAutoRepair && !isOffice && (
+                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                            <Users className="w-5 h-5 text-red-500" /> Número de Pessoas
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Selecione para quantas pessoas</p>
                         </div>
-
-                        <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between text-xs font-bold">
-                          <div className="flex items-center gap-2 text-slate-300">
-                            <Calendar size={14} className="text-red-500" />
-                            <span>{selectedDate.toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-300">
-                            <Clock size={14} className="text-red-500" />
-                            <span>{selectedTime}</span>
-                          </div>
+                        <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                          <button onClick={() => setGuests(Math.max(1, guests - 1))} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                            <Minus size={18} />
+                          </button>
+                          <span className="text-xl font-black text-slate-900 w-8 text-center">{guests}</span>
+                          <button onClick={() => setGuests(guests + 1)} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                            <Plus size={18} />
+                          </button>
                         </div>
-
-                        {guestStep === 'details' ? (
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Nome Completo</label>
-                              <input 
-                                type="text"
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                                placeholder="Ex: João Silva"
-                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Telemóvel</label>
-                              <input 
-                                type="tel"
-                                value={customerPhone}
-                                onChange={(e) => setCustomerPhone(e.target.value)}
-                                placeholder="9xxxxxxxx"
-                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Email</label>
-                              <input 
-                                type="email"
-                                value={customerEmail}
-                                onChange={(e) => setCustomerEmail(e.target.value)}
-                                placeholder="email@exemplo.com"
-                                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
-                              <textarea 
-                                value={bookingNote}
-                                onChange={(e) => setBookingNote(e.target.value)}
-                                placeholder="Ex: Algum pedido especial para o agendamento..."
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
-                              />
-                            </div>
-                            
-                            <button 
-                              disabled={isProcessing}
-                              onClick={handleFinalize}
-                              className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6
-                                ${isProcessing 
-                                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                                  : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
-                            >
-                              {isProcessing ? 'A processar...' : (isBeauty ? 'Agendar Serviço' : 'Confirmar Reserva')}
-                              <ArrowRight className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2 text-xs text-slate-300">
-                              <p className="font-black text-[10px] text-slate-500 uppercase tracking-widest">Confirme os seus dados</p>
-                              <div className="grid grid-cols-2 gap-3 mt-1">
-                                <div>
-                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Nome Completo</label>
-                                  <input 
-                                    type="text"
-                                    value={customerName}
-                                    onChange={(e) => {
-                                      setCustomerName(e.target.value);
-                                      const parts = e.target.value.trim().split(' ');
-                                      setFirstName(parts[0] || '');
-                                      setLastName(parts.slice(1).join(' ') || '');
-                                    }}
-                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Telemóvel</label>
-                                  <input 
-                                    type="tel"
-                                    value={customerPhone}
-                                    onChange={(e) => setCustomerPhone(e.target.value)}
-                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
-                                  />
-                                </div>
-                                <div className="col-span-2">
-                                  <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Email</label>
-                                  <input 
-                                    type="email"
-                                    value={customerEmail}
-                                    onChange={(e) => setCustomerEmail(e.target.value)}
-                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Mini-POS Services selector for Beauty (Barbers/Salons) with modern cards layout */}
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Selecione os Serviços</label>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                                {(restaurant.services && restaurant.services.length > 0 
-                                  ? restaurant.services.filter((s: any) => s.isActive !== false)
-                                  : (restaurant.dishes && restaurant.dishes.length > 0
-                                      ? restaurant.dishes.map((d: any) => ({ id: d.id || d.name, name: d.name, price: d.price, duration: 30, image: d.image }))
-                                      : [
-                                          { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30, image: '' },
-                                          { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20, image: '' },
-                                          { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45, image: '' }
-                                        ]
-                                    )
-                                ).map((s: any) => {
-                                  const isSelected = selectedServices.some(item => item.id === s.id);
-                                  return (
-                                    <div 
-                                      key={s.id} 
-                                      onClick={() => toggleServiceSelection(s)}
-                                      className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between ${
-                                        isSelected 
-                                          ? 'border-red-500 bg-red-500/10 text-white shadow-lg shadow-red-500/10' 
-                                          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20'
-                                      }`}
-                                    >
-                                      {/* Image Container */}
-                                      <div className="h-28 overflow-hidden bg-slate-950 relative shrink-0">
-                                        <img 
-                                          src={getSafeImage(s.image)} 
-                                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                                          alt={s.name} 
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                                        
-                                        {/* Selection Checkmark Indicator */}
-                                        {isSelected && (
-                                          <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg">
-                                            <CheckCircle size={14} />
-                                          </div>
-                                        )}
-
-                                        {/* Price Badge */}
-                                        <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-red-600 text-white font-black text-[10px] rounded-lg shadow-md">
-                                          {s.price}€
-                                        </div>
-                                      </div>
-
-                                      {/* Details */}
-                                      <div className="p-3 flex-1 flex flex-col justify-between min-h-[60px]">
-                                        <h5 className="text-[11px] font-black uppercase tracking-tight line-clamp-2 leading-tight">{s.name}</h5>
-                                        <div className="flex items-center gap-1 mt-1.5">
-                                          <Clock size={10} className="text-slate-400" />
-                                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{s.duration || 30} min</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {isBeauty && isTimeFull && (
-                              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
-                                ⚠️ Lamento, mas já não temos vagas (cadeiras livres) disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
-                              </div>
-                            )}
-
-                            <div>
-                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
-                              <textarea 
-                                value={bookingNote}
-                                onChange={(e) => setBookingNote(e.target.value)}
-                                placeholder="Ex: Algum pedido especial para o agendamento..."
-                                className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
-                              />
-                            </div>
-
-                            <button 
-                              disabled={isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
-                              onClick={handleFinalize}
-                              className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                                ${(isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)) 
-                                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                                  : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
-                            >
-                              {isProcessing 
-                                ? 'A processar...' 
-                                : (isBeauty && isTimeFull) 
-                                  ? 'Sem vagas disponíveis' 
-                                  : (isBeauty && selectedServices.length === 0) 
-                                    ? 'Selecione pelo menos 1 serviço' 
-                                    : 'Confirmar Reserva'}
-                              <ArrowRight className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
-                      </motion.div>
+                      </div>
                     </div>
                   )}
-                </AnimatePresence>
-              </motion.div>
-            )}
 
-            {bookingStep === 'menu' && (
-              <motion.div 
-                key="menu"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="p-8 space-y-8"
-              >
-                <div className="flex items-center justify-between mb-2">
-                   <div>
+                  {/* Calendar Integrated */}
+                  <div className="space-y-4">
+                    <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-red-500" /> Selecione o Dia
+                    </h4>
+                    {renderCalendar()}
+                  </div>
+
+                  {/* Time Slots Integrated */}
+                  {selectedDate && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-red-500" /> Horários Disponíveis
+                      </h4>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {timeSlots.map(time => (
+                          <button
+                            key={time}
+                            onClick={() => setSelectedTime(time)}
+                            className={`py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all active:scale-95
+                            ${selectedTime === time
+                                ? 'border-red-500 bg-red-50 text-red-700 shadow-md'
+                                : 'border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50'}`}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Final Details Popup Modal */}
+                  <AnimatePresence>
+                    {selectedDate && selectedTime && (
+                      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        {/* Dark blurred glass backdrop */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onClick={() => setSelectedTime(null)}
+                          className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
+                        />
+
+                        {/* Premium Center Modal Container */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                          transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                          className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[3rem] p-8 shadow-2xl text-white space-y-6 overflow-y-auto max-h-[90vh] z-10 scrollbar-thin"
+                        >
+                          {/* Close button */}
+                          <button
+                            onClick={() => setSelectedTime(null)}
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
+                          >
+                            <X size={18} />
+                          </button>
+
+                          <div className="flex items-center justify-between pr-8">
+                            <div>
+                              <h4 className="text-2xl font-black uppercase tracking-tighter">Detalhes Finais</h4>
+                              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Personalize a sua reserva</p>
+                            </div>
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                              <CheckCircle className="text-red-500" />
+                            </div>
+                          </div>
+
+                          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between text-xs font-bold">
+                            <div className="flex items-center gap-2 text-slate-300">
+                              <Calendar size={14} className="text-red-500" />
+                              <span>{selectedDate.toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-300">
+                              <Clock size={14} className="text-red-500" />
+                              <span>{selectedTime}</span>
+                            </div>
+                          </div>
+
+                          {guestStep === 'details' ? (
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Nome Completo</label>
+                                <input
+                                  type="text"
+                                  value={customerName}
+                                  onChange={(e) => setCustomerName(e.target.value)}
+                                  placeholder="Ex: João Silva"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Telemóvel</label>
+                                <input
+                                  type="tel"
+                                  value={customerPhone}
+                                  onChange={(e) => setCustomerPhone(e.target.value)}
+                                  placeholder="9xxxxxxxx"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Email</label>
+                                <input
+                                  type="email"
+                                  value={customerEmail}
+                                  onChange={(e) => setCustomerEmail(e.target.value)}
+                                  placeholder="email@exemplo.com"
+                                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                                <textarea
+                                  value={bookingNote}
+                                  onChange={(e) => setBookingNote(e.target.value)}
+                                  placeholder="Ex: Algum pedido especial para o agendamento..."
+                                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
+                                />
+                              </div>
+
+                              <button
+                                disabled={isProcessing}
+                                onClick={handleFinalize}
+                                className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-6
+                                ${isProcessing
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                    : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                              >
+                                {isProcessing ? 'A processar...' : (isBeauty ? 'Agendar Serviço' : 'Confirmar Reserva')}
+                                <ArrowRight className="w-5 h-5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2 text-xs text-slate-300">
+                                <p className="font-black text-[10px] text-slate-500 uppercase tracking-widest">Confirme os seus dados</p>
+                                <div className="grid grid-cols-2 gap-3 mt-1">
+                                  <div>
+                                    <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Nome Completo</label>
+                                    <input
+                                      type="text"
+                                      value={customerName}
+                                      onChange={(e) => {
+                                        setCustomerName(e.target.value);
+                                        const parts = e.target.value.trim().split(' ');
+                                        setFirstName(parts[0] || '');
+                                        setLastName(parts.slice(1).join(' ') || '');
+                                      }}
+                                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Telemóvel</label>
+                                    <input
+                                      type="tel"
+                                      value={customerPhone}
+                                      onChange={(e) => setCustomerPhone(e.target.value)}
+                                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                    />
+                                  </div>
+                                  <div className="col-span-2">
+                                    <label className="text-[8px] font-bold text-slate-500 uppercase block mb-1">Email</label>
+                                    <input
+                                      type="email"
+                                      value={customerEmail}
+                                      onChange={(e) => setCustomerEmail(e.target.value)}
+                                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-1 focus:ring-red-500"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Mini-POS Services selector for Beauty (Barbers/Salons) with modern cards layout */}
+                              <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Selecione os Serviços</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                                  {(restaurant.services && restaurant.services.length > 0
+                                    ? restaurant.services.filter((s: any) => s.isActive !== false)
+                                    : (restaurant.dishes && restaurant.dishes.length > 0
+                                      ? restaurant.dishes.map((d: any) => ({ id: d.id || d.name, name: d.name, price: d.price, duration: 30, image: d.image }))
+                                      : [
+                                        { id: 's1', name: 'Corte Masculino', price: 12.00, duration: 30, image: '' },
+                                        { id: 's2', name: 'Barba Tradicional', price: 8.00, duration: 20, image: '' },
+                                        { id: 's3', name: 'Corte + Barba', price: 18.00, duration: 45, image: '' }
+                                      ]
+                                    )
+                                  ).map((s: any) => {
+                                    const isSelected = selectedServices.some(item => item.id === s.id);
+                                    return (
+                                      <div
+                                        key={s.id}
+                                        onClick={() => toggleServiceSelection(s)}
+                                        className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between ${isSelected
+                                            ? 'border-red-500 bg-red-500/10 text-white shadow-lg shadow-red-500/10'
+                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                                          }`}
+                                      >
+                                        {/* Image Container */}
+                                        <div className="h-28 overflow-hidden bg-slate-950 relative shrink-0">
+                                          <img
+                                            src={getSafeImage(s.image)}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            alt={s.name}
+                                          />
+                                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+
+                                          {/* Selection Checkmark Indicator */}
+                                          {isSelected && (
+                                            <div className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-lg">
+                                              <CheckCircle size={14} />
+                                            </div>
+                                          )}
+
+                                          {/* Price Badge */}
+                                          <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-red-600 text-white font-black text-[10px] rounded-lg shadow-md">
+                                            {s.price}€
+                                          </div>
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="p-3 flex-1 flex flex-col justify-between min-h-[60px]">
+                                          <h5 className="text-[11px] font-black uppercase tracking-tight line-clamp-2 leading-tight">{s.name}</h5>
+                                          <div className="flex items-center gap-1 mt-1.5">
+                                            <Clock size={10} className="text-slate-400" />
+                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{s.duration || 30} min</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {isBeauty && isTimeFull && (
+                                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
+                                  ⚠️ Lamento, mas já não temos vagas (cadeiras livres) disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
+                                </div>
+                              )}
+
+                              <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
+                                <textarea
+                                  value={bookingNote}
+                                  onChange={(e) => setBookingNote(e.target.value)}
+                                  placeholder="Ex: Algum pedido especial para o agendamento..."
+                                  className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none h-16"
+                                />
+                              </div>
+
+                              <button
+                                disabled={isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
+                                onClick={handleFinalize}
+                                className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
+                                ${(isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0))
+                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                    : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
+                              >
+                                {isProcessing
+                                  ? 'A processar...'
+                                  : (isBeauty && isTimeFull)
+                                    ? 'Sem vagas disponíveis'
+                                    : (isBeauty && selectedServices.length === 0)
+                                      ? 'Selecione pelo menos 1 serviço'
+                                      : 'Confirmar Reserva'}
+                                <ArrowRight className="w-5 h-5" />
+                              </button>
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {bookingStep === 'menu' && (
+                <motion.div
+                  key="menu"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-8 space-y-8"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
                       <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">
                         {isBeauty ? 'Serviços e Produtos do Salão' : isBarCategory ? 'Sugestoes da casa' : 'Sugestões do Chef'}
                       </h4>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{isBarCategory ? 'Os nossos melhores drinks' : 'Conheça as nossas especialidades'}</p>
-                   </div>
-                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${isBarCategory ? 'bg-amber-50 text-amber-500' : 'bg-red-50 text-red-500'}`}>
+                    </div>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${isBarCategory ? 'bg-amber-50 text-amber-500' : 'bg-red-50 text-red-500'}`}>
                       {isBarCategory ? <Wine size={24} /> : <Sparkles size={24} />}
-                   </div>
-                </div>
-
-                {isBeauty ? (
-                  <div className="space-y-8">
-                    {/* Services Sub-section */}
-                    {restaurant.services && restaurant.services.filter((s: any) => s.showInApp === true).length > 0 ? (
-                      <div className="space-y-4">
-                        <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Nossos Serviços</h5>
-                        <div className="grid grid-cols-2 gap-6">
-                          {restaurant.services.filter((s: any) => s.showInApp === true).map((svc: any, idx: number) => (
-                            <div key={`client-svc-${svc.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
-                              <div className="relative aspect-square overflow-hidden bg-slate-50">
-                                <img src={getSafeImage(svc.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={svc.name} />
-                                <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
-                                  {svc.promoPrice ? (
-                                    <>
-                                      <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {svc.price}€</span>
-                                      <span className="text-emerald-600 leading-none mt-0.5">Agora: {svc.promoPrice}€</span>
-                                    </>
-                                  ) : (
-                                    <span>{svc.price}€</span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="p-6 text-left">
-                                <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{svc.name}</h5>
-                                <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{svc.description || 'Serviço do Salão'}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {/* Products Sub-section */}
-                    {restaurant.products && restaurant.products.filter((p: any) => p.showInApp === true).length > 0 ? (
-                      <div className="space-y-4">
-                        <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Produtos Disponíveis</h5>
-                        <div className="grid grid-cols-2 gap-6">
-                          {restaurant.products.filter((p: any) => p.showInApp === true).map((prod: any, idx: number) => (
-                            <div key={`client-prod-${prod.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
-                              <div className="relative aspect-square overflow-hidden bg-slate-50">
-                                <img src={getSafeImage(prod.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={prod.name} />
-                                <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
-                                  {prod.promoPrice ? (
-                                    <>
-                                      <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {prod.price}€</span>
-                                      <span className="text-emerald-600 leading-none mt-0.5">Agora: {prod.promoPrice}€</span>
-                                    </>
-                                  ) : (
-                                    <span>{prod.price}€</span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="p-6 text-left">
-                                <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{prod.name}</h5>
-                                <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{prod.description || 'Produto Premium'}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {(!restaurant.services || restaurant.services.filter((s: any) => s.showInApp === true).length === 0) &&
-                     (!restaurant.products || restaurant.products.filter((p: any) => p.showInApp === true).length === 0) ? (
-                      <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                        <Sparkles size={48} className="mx-auto text-slate-300 mb-4" />
-                        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Sem serviços ou produtos na app...</p>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : restaurant.dishes && restaurant.dishes.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-6">
-                    {restaurant.dishes.map((dish, idx) => (
-                      <motion.div 
-                        key={idx}
-                        whileHover={{ y: -8 }}
-                        onClick={() => setSelectedDishIdx(idx)}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all cursor-pointer group"
-                      >
-                        <div className="relative aspect-square overflow-hidden bg-slate-50">
-                          <img 
-                            src={getSafeImage(dish.image)} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                            alt={dish.name} 
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg">
-                               <ArrowRight size={20} className="text-red-600" />
-                             </div>
-                          </div>
-                          <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
-                            {(dish as any).promoPrice ? (
-                              <>
-                                <span className="line-through text-slate-400 text-[8px] font-bold leading-none">Antes: {dish.price}€</span>
-                                <span className="text-emerald-600 leading-none mt-0.5">Agora: {(dish as any).promoPrice}€</span>
-                              </>
-                            ) : (
-                              <span>{dish.price}€</span>
-                            )}
-                          </div>
-                          <div className="absolute top-4 left-4 flex flex-col gap-1.5">
-                            <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
-                              <Sparkles size={8} /> Sugestão
-                            </span>
-                            {(dish as any).promoPrice && (
-                              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg ${(dish as any).promoType === 'week' ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}>
-                                {(dish as any).promoType === 'week' ? 'Promo da Semana' : 'Promo do Dia'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="p-6">
-                           <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{dish.name}</h5>
-                           <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Especialidade Local</span>
-                              <div className="flex items-center gap-1">
-                                 <Star size={10} className="text-yellow-400 fill-current" />
-                                 <span className="text-[9px] font-black text-slate-400">4.9</span>
-                              </div>
-                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                    <UtensilsCrossed size={48} className="mx-auto text-slate-300 mb-4" />
-                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Ementa em atualização...</p>
-                  </div>
-                )}
-
-                {restaurant.businessType === 'restaurant' && (
-                  <div className="flex flex-col gap-3">
-                    <button 
-                      onClick={() => setShowFullMenuPopup(true)}
-                      className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
-                    >
-                      <UtensilsCrossed size={18} /> Ver Ementa Completa
-                    </button>
-                    {restaurant.isConfirmed !== false && (
-                      <button 
-                        onClick={() => setBookingStep('datetime')}
-                        className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
-                      >
-                        <CalendarCheck size={18} /> Reservar Mesa Agora
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <AnimatePresence>
-                  {selectedDishIdx !== null && restaurant.dishes && restaurant.dishes[selectedDishIdx] && (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[200] bg-slate-900/98 backdrop-blur-2xl flex flex-col items-center justify-start overflow-y-auto"
-                    >
-                      <button 
-                        onClick={() => setSelectedDishIdx(null)}
-                        className="absolute top-6 right-6 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all border-none shadow-lg shadow-blue-500/40 z-[220] cursor-pointer"
-                      >
-                        <X size={22} />
-                      </button>
-                      
-                      {/* Mobile/Compact layout: image on top, text below */}
-                      <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-6 p-6 pt-4">
-                        <motion.div 
-                          key={`dish-img-${selectedDishIdx}`}
-                          initial={{ opacity: 0, scale: 0.92 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="w-full rounded-[2.5rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border-4 border-white/5"
-                        >
-                          <img 
-                            src={getSafeImage(restaurant.dishes[selectedDishIdx].image)} 
-                            className="w-full aspect-[4/3] object-cover" 
-                            alt={restaurant.dishes[selectedDishIdx].name} 
-                          />
-                        </motion.div>
-
-                        <motion.div 
-                          key={`dish-text-${selectedDishIdx}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="w-full text-center text-white space-y-4"
-                        >
-                          <span className="px-4 py-1.5 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest inline-block shadow-lg shadow-red-900/40">
-                            {isBarCategory ? 'Sugestão da Casa' : 'Especialidade Sugerida'}
-                          </span>
-                          <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">{restaurant.dishes[selectedDishIdx].name}</h3>
-                          {restaurant.dishes[selectedDishIdx].description && (
-                            <p className="text-sm text-white/60 font-medium leading-relaxed px-2">{restaurant.dishes[selectedDishIdx].description}</p>
-                          )}
-
-                          <div className="flex items-center justify-center gap-4 pt-2">
-                            {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
-                              <div className="flex flex-col items-center">
-                                <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
-                                <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
-                              </div>
-                            ) : (
-                              <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
-                            )}
-                          </div>
-
-                          <div className="flex justify-center gap-3 pt-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">1 de {restaurant.dishes.length} {isBarCategory ? 'bebidas' : 'especialidades'}</span>
-                          </div>
-
-                          {restaurant.isConfirmed !== false && (
-                            <button 
-                              onClick={() => {
-                                setSelectedDishIdx(null);
-                                setBookingStep('datetime');
-                              }}
-                              className="w-full px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 active:scale-95 transition-all flex items-center justify-center gap-3"
-                            >
-                              <CalendarCheck size={18} />
-                              {isBarCategory ? 'Reservar Mesa no Bar' : 'Reservar Mesa Agora'}
-                            </button>
-                          )}
-
-                          {/* Navigation buttons */}
-                          <div className="flex justify-center gap-4 pb-6">
-                            <button 
-                              onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)} 
-                              className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
-                            >
-                              <ChevronLeft size={24} />
-                            </button>
-                            <button 
-                              onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)} 
-                              className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
-                            >
-                              <ChevronRight size={24} />
-                            </button>
-                          </div>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            )}
-
-            {bookingStep === 'success' && (
-              <motion.div 
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="h-full flex flex-col items-center justify-center p-8 text-center min-h-[500px] bg-slate-900 text-white rounded-[2.5rem] relative overflow-hidden"
-              >
-                {/* Visual blur background items */}
-                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-3xl flex items-center justify-center mb-6 shadow-2xl ring-4 ring-emerald-500/20 animate-bounce">
-                  <CheckCircle size={40} strokeWidth={2.5} />
-                </div>
-                
-                <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">
-                  {isBeauty ? 'Agendamento Confirmado!' : 'Marcação Efetuada!'}
-                </h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">
-                  {restaurant.name} • {selectedDate?.toLocaleDateString()} às {selectedTime}
-                </p>
-                {isBeauty && (
-                  <p className="text-slate-300 text-[11px] font-semibold max-w-sm mb-6 leading-relaxed">
-                    O seu horário foi reservado com sucesso e ficou agendado automaticamente.
-                  </p>
-                )}
-
-                {/* ADVERTISING / FISHING BANNER */}
-                <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-8 text-left space-y-4 shadow-xl backdrop-blur-md">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">⚡</span>
-                    <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400">Sabia que...?</h4>
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Evite faturas em papel</p>
                     </div>
                   </div>
-                  
-                  <p className="text-slate-300 text-xs font-medium leading-relaxed">
-                    Pode consultar e gerir todas as suas faturas de forma 100% digital e automática com o seu NIF através do nosso portal oficial.
-                  </p>
-                  
-                  <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
-                    <p className="text-white font-black text-sm tracking-tight">faturas.azorestoyou.pt</p>
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Aceda ao seu painel fiscal nos Açores</p>
-                  </div>
-                </div>
 
-                <div className="w-full max-w-sm space-y-3">
-                  <a 
-                    href="https://azorestoyou.pt" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    🚀 Aceder a AzoresToYou.pt
-                  </a>
-                  
-                  <button 
-                    onClick={onClose} 
-                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95"
-                  >
-                    Concluir e Voltar
-                  </button>
-                </div>
+                  {isBeauty ? (
+                    <div className="space-y-8">
+                      {/* Services Sub-section */}
+                      {restaurant.services && restaurant.services.filter((s: any) => s.showInApp === true).length > 0 ? (
+                        <div className="space-y-4">
+                          <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Nossos Serviços</h5>
+                          <div className="grid grid-cols-2 gap-6">
+                            {restaurant.services.filter((s: any) => s.showInApp === true).map((svc: any, idx: number) => (
+                              <div key={`client-svc-${svc.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
+                                <div className="relative aspect-square overflow-hidden bg-slate-50">
+                                  <img src={getSafeImage(svc.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={svc.name} />
+                                  <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                                    {svc.promoPrice ? (
+                                      <>
+                                        <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {svc.price}€</span>
+                                        <span className="text-emerald-600 leading-none mt-0.5">Agora: {svc.promoPrice}€</span>
+                                      </>
+                                    ) : (
+                                      <span>{svc.price}€</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="p-6 text-left">
+                                  <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{svc.name}</h5>
+                                  <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{svc.description || 'Serviço do Salão'}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Products Sub-section */}
+                      {restaurant.products && restaurant.products.filter((p: any) => p.showInApp === true).length > 0 ? (
+                        <div className="space-y-4">
+                          <h5 className="text-xs font-black text-slate-400 uppercase tracking-widest text-left">Produtos Disponíveis</h5>
+                          <div className="grid grid-cols-2 gap-6">
+                            {restaurant.products.filter((p: any) => p.showInApp === true).map((prod: any, idx: number) => (
+                              <div key={`client-prod-${prod.id || idx}`} className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
+                                <div className="relative aspect-square overflow-hidden bg-slate-50">
+                                  <img src={getSafeImage(prod.image)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={prod.name} />
+                                  <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                                    {prod.promoPrice ? (
+                                      <>
+                                        <span className="line-through text-slate-450 text-[8px] font-bold leading-none">Antes: {prod.price}€</span>
+                                        <span className="text-emerald-600 leading-none mt-0.5">Agora: {prod.promoPrice}€</span>
+                                      </>
+                                    ) : (
+                                      <span>{prod.price}€</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="p-6 text-left">
+                                  <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{prod.name}</h5>
+                                  <p className="text-[9px] text-slate-405 font-bold uppercase tracking-widest truncate">{prod.description || 'Produto Premium'}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {(!restaurant.services || restaurant.services.filter((s: any) => s.showInApp === true).length === 0) &&
+                        (!restaurant.products || restaurant.products.filter((p: any) => p.showInApp === true).length === 0) ? (
+                        <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                          <Sparkles size={48} className="mx-auto text-slate-300 mb-4" />
+                          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Sem serviços ou produtos na app...</p>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : restaurant.dishes && restaurant.dishes.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-6">
+                      {restaurant.dishes.map((dish, idx) => (
+                        <motion.div
+                          key={idx}
+                          whileHover={{ y: -8 }}
+                          onClick={() => setSelectedDishIdx(idx)}
+                          className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl transition-all cursor-pointer group"
+                        >
+                          <div className="relative aspect-square overflow-hidden bg-slate-50">
+                            <img
+                              src={getSafeImage(dish.image)}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                              alt={dish.name}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg">
+                                <ArrowRight size={20} className="text-red-600" />
+                              </div>
+                            </div>
+                            <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-black text-red-600 shadow-sm flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
+                              {(dish as any).promoPrice ? (
+                                <>
+                                  <span className="line-through text-slate-400 text-[8px] font-bold leading-none">Antes: {dish.price}€</span>
+                                  <span className="text-emerald-600 leading-none mt-0.5">Agora: {(dish as any).promoPrice}€</span>
+                                </>
+                              ) : (
+                                <span>{dish.price}€</span>
+                              )}
+                            </div>
+                            <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+                              <span className="px-2 py-0.5 bg-red-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                                <Sparkles size={8} /> Sugestão
+                              </span>
+                              {(dish as any).promoPrice && (
+                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg ${(dish as any).promoType === 'week' ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}>
+                                  {(dish as any).promoType === 'week' ? 'Promo da Semana' : 'Promo do Dia'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="p-6">
+                            <h5 className="text-xs font-black text-slate-800 uppercase truncate leading-none mb-1">{dish.name}</h5>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Especialidade Local</span>
+                              <div className="flex items-center gap-1">
+                                <Star size={10} className="text-yellow-400 fill-current" />
+                                <span className="text-[9px] font-black text-slate-400">4.9</span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                      <UtensilsCrossed size={48} className="mx-auto text-slate-300 mb-4" />
+                      <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Ementa em atualização...</p>
+                    </div>
+                  )}
+
+                  {restaurant.businessType === 'restaurant' && (
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => setShowFullMenuPopup(true)}
+                        className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                      >
+                        <UtensilsCrossed size={18} /> Ver Ementa Completa
+                      </button>
+                      {restaurant.isConfirmed !== false && (
+                        <button
+                          onClick={() => setBookingStep('datetime')}
+                          className="w-full py-5 bg-red-600 text-white rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                        >
+                          <CalendarCheck size={18} /> Reservar Mesa Agora
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <AnimatePresence>
+                    {selectedDishIdx !== null && restaurant.dishes && restaurant.dishes[selectedDishIdx] && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-slate-900/98 backdrop-blur-2xl flex flex-col items-center justify-start overflow-y-auto"
+                      >
+                        <button
+                          onClick={() => setSelectedDishIdx(null)}
+                          className="absolute top-6 right-6 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all border-none shadow-lg shadow-blue-500/40 z-[220] cursor-pointer"
+                        >
+                          <X size={22} />
+                        </button>
+
+                        {/* Mobile/Compact layout: image on top, text below */}
+                        <div className="w-full max-w-lg mx-auto flex flex-col items-center gap-6 p-6 pt-4">
+                          <motion.div
+                            key={`dish-img-${selectedDishIdx}`}
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="w-full rounded-[2.5rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border-4 border-white/5"
+                          >
+                            <img
+                              src={getSafeImage(restaurant.dishes[selectedDishIdx].image)}
+                              className="w-full aspect-[4/3] object-cover"
+                              alt={restaurant.dishes[selectedDishIdx].name}
+                            />
+                          </motion.div>
+
+                          <motion.div
+                            key={`dish-text-${selectedDishIdx}`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="w-full text-center text-white space-y-4"
+                          >
+                            <span className="px-4 py-1.5 bg-red-600 rounded-full text-[10px] font-black uppercase tracking-widest inline-block shadow-lg shadow-red-900/40">
+                              {isBarCategory ? 'Sugestão da Casa' : 'Especialidade Sugerida'}
+                            </span>
+                            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">{restaurant.dishes[selectedDishIdx].name}</h3>
+                            {restaurant.dishes[selectedDishIdx].description && (
+                              <p className="text-sm text-white/60 font-medium leading-relaxed px-2">{restaurant.dishes[selectedDishIdx].description}</p>
+                            )}
+
+                            <div className="flex items-center justify-center gap-4 pt-2">
+                              {(restaurant.dishes[selectedDishIdx] as any).promoPrice ? (
+                                <div className="flex flex-col items-center">
+                                  <span className="line-through text-white/40 text-sm font-bold">Antes: {restaurant.dishes[selectedDishIdx].price}€</span>
+                                  <span className="text-5xl font-black text-emerald-400 drop-shadow-2xl">Agora: {(restaurant.dishes[selectedDishIdx] as any).promoPrice}€</span>
+                                </div>
+                              ) : (
+                                <div className="text-6xl font-black text-white drop-shadow-2xl">{restaurant.dishes[selectedDishIdx].price}€</div>
+                              )}
+                            </div>
+
+                            <div className="flex justify-center gap-3 pt-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">1 de {restaurant.dishes.length} {isBarCategory ? 'bebidas' : 'especialidades'}</span>
+                            </div>
+
+                            {restaurant.isConfirmed !== false && (
+                              <button
+                                onClick={() => {
+                                  setSelectedDishIdx(null);
+                                  setBookingStep('datetime');
+                                }}
+                                className="w-full px-10 py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-600/40 active:scale-95 transition-all flex items-center justify-center gap-3"
+                              >
+                                <CalendarCheck size={18} />
+                                {isBarCategory ? 'Reservar Mesa no Bar' : 'Reservar Mesa Agora'}
+                              </button>
+                            )}
+
+                            {/* Navigation buttons */}
+                            <div className="flex justify-center gap-4 pb-6">
+                              <button
+                                onClick={() => setSelectedDishIdx((selectedDishIdx - 1 + restaurant.dishes!.length) % restaurant.dishes!.length)}
+                                className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
+                              >
+                                <ChevronLeft size={24} />
+                              </button>
+                              <button
+                                onClick={() => setSelectedDishIdx((selectedDishIdx + 1) % restaurant.dishes!.length)}
+                                className="p-4 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
+                              >
+                                <ChevronRight size={24} />
+                              </button>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {bookingStep === 'success' && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="h-full flex flex-col items-center justify-center p-8 text-center min-h-[500px] bg-slate-900 text-white rounded-[2.5rem] relative overflow-hidden"
+                >
+                  {/* Visual blur background items */}
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-3xl flex items-center justify-center mb-6 shadow-2xl ring-4 ring-emerald-500/20 animate-bounce">
+                    <CheckCircle size={40} strokeWidth={2.5} />
+                  </div>
+
+                  <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">
+                    {isBeauty ? 'Agendamento Confirmado!' : 'Marcação Efetuada!'}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-4">
+                    {restaurant.name} • {selectedDate?.toLocaleDateString()} às {selectedTime}
+                  </p>
+                  {isBeauty && (
+                    <p className="text-slate-300 text-[11px] font-semibold max-w-sm mb-6 leading-relaxed">
+                      O seu horário foi reservado com sucesso e ficou agendado automaticamente.
+                    </p>
+                  )}
+
+                  {/* ADVERTISING / FISHING BANNER */}
+                  <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-8 text-left space-y-4 shadow-xl backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⚡</span>
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400">Sabia que...?</h4>
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Evite faturas em papel</p>
+                      </div>
+                    </div>
+
+                    <p className="text-slate-300 text-xs font-medium leading-relaxed">
+                      Pode consultar e gerir todas as suas faturas de forma 100% digital e automática com o seu NIF através do nosso portal oficial.
+                    </p>
+
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
+                      <p className="text-white font-black text-sm tracking-tight">faturas.azorestoyou.pt</p>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Aceda ao seu painel fiscal nos Açores</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full max-w-sm space-y-3">
+                    <a
+                      href="https://azorestoyou.pt"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      🚀 Aceder a AzoresToYou.pt
+                    </a>
+
+                    <button
+                      onClick={onClose}
+                      className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95"
+                    >
+                      Concluir e Voltar
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          {/* Full Menu Popup */}
+          <AnimatePresence>
+            {showFullMenuPopup && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 md:p-6"
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-slate-100 flex flex-col max-h-[90vh] p-8"
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-center pb-6 border-b border-slate-100 mb-6">
+                    <div className="text-left">
+                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Ementa Completa</h3>
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Todos os pratos disponíveis</p>
+                    </div>
+                    <button
+                      onClick={() => setShowFullMenuPopup(false)}
+                      className="p-3 bg-slate-100 text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-md cursor-pointer"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Dishes list/grid */}
+                  <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-2 gap-4 pb-4">
+                      {restaurant.dishes?.map((dish, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setSelectedDishIdx(idx);
+                          }}
+                          className="bg-slate-50 border border-slate-100 rounded-[2rem] p-4 flex flex-col justify-between hover:shadow-lg transition-all cursor-pointer group"
+                        >
+                          <div className="h-32 rounded-[1.5rem] overflow-hidden bg-slate-200 mb-3 relative">
+                            <img src={getSafeImage(dish.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <div className="absolute top-2 right-2 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[9px] font-black text-slate-800 shadow-sm">
+                              {dish.price}€
+                            </div>
+                          </div>
+                          <h4 className="text-xs font-black text-slate-800 uppercase truncate mb-1">{dish.name}</h4>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{dish.description || 'Especialidade da Casa'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-        {/* Full Menu Popup */}
-        <AnimatePresence>
-          {showFullMenuPopup && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 md:p-6"
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-slate-100 flex flex-col max-h-[90vh] p-8"
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center pb-6 border-b border-slate-100 mb-6">
-                  <div className="text-left">
-                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Ementa Completa</h3>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Todos os pratos disponíveis</p>
-                  </div>
-                  <button 
-                    onClick={() => setShowFullMenuPopup(false)}
-                    className="p-3 bg-slate-100 text-slate-800 hover:bg-red-500 hover:text-white rounded-full transition-all shadow-md cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                {/* Dishes list/grid */}
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                  <div className="grid grid-cols-2 gap-4 pb-4">
-                    {restaurant.dishes?.map((dish, idx) => (
-                      <div 
-                        key={idx}
-                        onClick={() => {
-                          setSelectedDishIdx(idx);
-                        }}
-                        className="bg-slate-50 border border-slate-100 rounded-[2rem] p-4 flex flex-col justify-between hover:shadow-lg transition-all cursor-pointer group"
-                      >
-                        <div className="h-32 rounded-[1.5rem] overflow-hidden bg-slate-200 mb-3 relative">
-                          <img src={getSafeImage(dish.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                          <div className="absolute top-2 right-2 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[9px] font-black text-slate-800 shadow-sm">
-                            {dish.price}€
-                          </div>
-                        </div>
-                        <h4 className="text-xs font-black text-slate-800 uppercase truncate mb-1">{dish.name}</h4>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate">{dish.description || 'Especialidade da Casa'}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 };

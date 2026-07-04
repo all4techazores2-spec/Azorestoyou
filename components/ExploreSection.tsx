@@ -57,11 +57,11 @@ interface ExploreSectionProps {
   featuredItems?: any[];
 }
 
-const ExploreSection: React.FC<ExploreSectionProps> = ({ 
-  category, 
-  destinationIsland, 
-  currentLanguage = 'pt', 
-  isAuthenticated, 
+const ExploreSection: React.FC<ExploreSectionProps> = ({
+  category,
+  destinationIsland,
+  currentLanguage = 'pt',
+  isAuthenticated,
   onShowAuth,
   initialSearchQuery = '',
   restaurants = [],
@@ -98,11 +98,11 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
-    : 'https://azorestoyou-1.onrender.com';
+    : 'https://azorestoyou-o5yx.onrender.com';
 
   const lang = currentLanguage as Language;
   const t = (key: any) => getTranslation(lang, key);
-  
+
   // DATA SOURCE: Only use data passed from server props
   const allRestaurants = restaurants || [];
   const allActivities = activities || [];
@@ -156,7 +156,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const [restaurantIslandFilter, setRestaurantIslandFilter] = useState<string>('all');
   const [restaurantCuisineFilter, setRestaurantCuisineFilter] = useState<string>('all');
   const [trailZoneFilter, setTrailZoneFilter] = useState<'Todos' | 'Oeste' | 'Centro' | 'Leste'>('Todos');
-  
+
   // Follow and Like states for Categories/Subcategories
   const [followedCats, setFollowedCats] = useState<Record<string, boolean>>(() => {
     try {
@@ -200,7 +200,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const renderFollowLikeButtons = (catKey: string) => {
     return null;
   };
-  
+
   // Handle external item selection (e.g. from slider)
   React.useEffect(() => {
     if (selectedItemId) {
@@ -227,7 +227,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     }
   }, [selectedItemId, category, activities, restaurants, beauty, onSelectedItemIdHandled]);
 
-  
+
   const isNearby = destinationIsland?.startsWith('nearby:');
   const userCoords = isNearby ? destinationIsland?.replace('nearby:', '').split(',').map(Number) : null;
 
@@ -236,19 +236,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   const isAllIslands = !destinationIsland || destinationIsland === 'all' || isNearby;
-  const targetIsland = isAllIslands ? null : destinationIsland; 
+  const targetIsland = isAllIslands ? null : destinationIsland;
 
   const sortItems = (items: any[]) => {
     if (!isNearby || !userCoords) return items;
     return [...items].map(item => {
-      const distance = (item.latitude && item.longitude) 
+      const distance = (item.latitude && item.longitude)
         ? getDistance(userCoords[0], userCoords[1], parseFloat(item.latitude), parseFloat(item.longitude))
         : 999999;
       return { ...item, distance };
@@ -258,22 +258,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const filteredRestaurants = sortItems(allRestaurants.filter(r => {
     const matchesIsland = restaurantIslandFilter === 'all' ? (isAllIslands || r.island === targetIsland) : r.island === restaurantIslandFilter;
     const matchesCuisine = restaurantCuisineFilter === 'all' || (r.cuisine || '').toLowerCase().includes(restaurantCuisineFilter.toLowerCase());
-    const matchesSearch = !restaurantSearch || 
-      (r.name || '').toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+    const matchesSearch = !restaurantSearch ||
+      (r.name || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
       (r.cuisine || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
       (r.island || '').toLowerCase().includes(restaurantSearch.toLowerCase());
     return matchesIsland && matchesCuisine && matchesSearch;
   }));
 
-  
+
   // Mapping for the expanded categories
   const getActivitiesByType = (types: string | string[]) => {
     const filtered = allActivities.filter(a => {
       const matchesType = Array.isArray(types) ? types.includes(a.type as string) : a.type === types;
       const matchesIsland = isAllIslands || a.island === targetIsland;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' ? !a.isPaid : a.isPaid);
-      const matchesQuery = !restaurantSearch || 
-        (a.title || '').toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+      const matchesQuery = !restaurantSearch ||
+        (a.title || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         (a.description || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         (a.island || '').toLowerCase().includes(restaurantSearch.toLowerCase());
       return matchesType && matchesIsland && matchesPrice && matchesQuery;
@@ -352,7 +352,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     const currentIsland = targetIsland || 'PDL';
     const fallbackBusSchedules = [...crpBuses, ...varelaBuses, ...avmBuses];
     const activeBusSchedules = (busSchedules && busSchedules.length > 0) ? busSchedules : fallbackBusSchedules;
-    
+
     // Grouping schedules into routes in the exact requested structure
     const getRoutesForCompany = (companyId: string, schedules: BusSchedule[]) => {
       const matchingSchedules = schedules.filter(s => {
@@ -427,7 +427,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       const allRoutes = getRoutesForCompany(currentCo.id, activeBusSchedules);
 
       // Filter routes by search query (origin or destination)
-      const filteredRoutes = allRoutes.filter(r => 
+      const filteredRoutes = allRoutes.filter(r =>
         (r.from || '').toLowerCase().includes(routeSearchQuery.toLowerCase()) ||
         (r.to || '').toLowerCase().includes(routeSearchQuery.toLowerCase())
       );
@@ -438,7 +438,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <button 
+                <button
                   onClick={() => setViewingCompanyId(null)}
                   className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-2xl border border-slate-200/50 transition-all active:scale-95 cursor-pointer"
                 >
@@ -458,7 +458,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               {/* Search Box */}
               <div className="relative w-full md:max-w-xs group">
                 <Search className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 group-focus-within:text-pink-500 transition-colors" />
-                <input 
+                <input
                   type="text"
                   placeholder="Pesquisar origem ou destino..."
                   value={routeSearchQuery}
@@ -499,13 +499,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       {hours.map((h, idx) => {
                         const isNext = h === nextOut;
                         return (
-                          <span 
+                          <span
                             key={idx}
-                            className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wide border transition-all ${
-                              isNext 
-                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/10 scale-105' 
+                            className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wide border transition-all ${isNext
+                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/10 scale-105'
                                 : 'bg-slate-50 text-slate-700 border-slate-200/60'
-                            }`}
+                              }`}
                             title={isNext ? 'Próxima saída' : undefined}
                           >
                             {h} {isNext && <span className="text-[7px] uppercase bg-white/20 px-1 py-0.5 rounded ml-0.5">Próxima</span>}
@@ -517,12 +516,12 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 };
 
                 return (
-                  <div 
+                  <div
                     key={route.id}
                     className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-md"
                   >
                     {/* Header/Banner clickable */}
-                    <div 
+                    <div
                       onClick={toggleExpanded}
                       className="p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
                     >
@@ -609,7 +608,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       { id: 'varela', name: 'Varela', desc: 'Auto Viação Varela', color: 'from-pink-600 to-rose-600' },
       { id: 'avm', name: 'AVM', desc: 'Auto Viação Micaelense', color: 'from-emerald-600 to-teal-600' }
     ];
-    
+
     const availableLocations = Array.from(new Set(
       activeBusSchedules
         .filter(s => s.island === currentIsland)
@@ -623,8 +622,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       const sDest = (s.destination || '').toLowerCase();
       const bOrigin = busOrigin.toLowerCase();
       const bDest = busDestination.toLowerCase();
-      return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && 
-             (sDest.includes(bDest) || bDest.includes(sDest));
+      return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) &&
+        (sDest.includes(bDest) || bDest.includes(sDest));
     });
 
     return (
@@ -632,13 +631,13 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         {/* Company Cards Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-             <div className="w-1.5 h-6 bg-pink-600 rounded-full"></div>
-             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Selecione uma Companhia</h3>
+            <div className="w-1.5 h-6 bg-pink-600 rounded-full"></div>
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Selecione uma Companhia</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {busCompanies.map(c => (
-              <button 
+              <button
                 key={c.id}
                 onClick={() => {
                   setViewingCompanyId(c.id);
@@ -648,21 +647,21 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${c.color} opacity-90 group-hover:opacity-100 transition-opacity`}></div>
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                   <Bus size={100} className="text-white" />
+                  <Bus size={100} className="text-white" />
                 </div>
-                
+
                 <div className="relative z-10 space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
-                     <Bus size={24} />
+                    <Bus size={24} />
                   </div>
                   <div>
                     <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{c.name}</h4>
                     <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mt-1">{c.desc}</p>
                   </div>
                   <div className="pt-4">
-                     <span className="px-4 py-2 bg-white/20 text-white text-[9px] font-black rounded-full uppercase tracking-widest border border-white/20 backdrop-blur-sm">
-                        Ver Rotas & Horários
-                     </span>
+                    <span className="px-4 py-2 bg-white/20 text-white text-[9px] font-black rounded-full uppercase tracking-widest border border-white/20 backdrop-blur-sm">
+                      Ver Rotas & Horários
+                    </span>
                   </div>
                 </div>
               </button>
@@ -673,121 +672,121 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         {/* Route Planner Card */}
         <div className="bg-white rounded-[3rem] shadow-xl border border-slate-100 overflow-hidden">
           <div className="bg-slate-900 px-10 py-8 text-white relative">
-             <div className="absolute top-0 right-0 p-10 opacity-5">
-                <Map size={140} />
-             </div>
-             <div className="relative z-10">
-                <h3 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
-                  <LandPlot className="text-pink-500" /> Planeie a sua Viagem
-                </h3>
-                <p className="text-slate-400 text-sm font-medium mt-2">Escolha o ponto de partida e chegada para descobrir horários</p>
-             </div>
+            <div className="absolute top-0 right-0 p-10 opacity-5">
+              <Map size={140} />
+            </div>
+            <div className="relative z-10">
+              <h3 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3">
+                <LandPlot className="text-pink-500" /> Planeie a sua Viagem
+              </h3>
+              <p className="text-slate-400 text-sm font-medium mt-2">Escolha o ponto de partida e chegada para descobrir horários</p>
+            </div>
           </div>
 
           <div className="p-10 space-y-8">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">De onde? (Localidade)</label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
-                    <select 
-                      value={busOrigin}
-                      onChange={(e) => { 
-                        const val = e.target.value;
-                        setBusOrigin(val); 
-                        setShowBusResults(false);
-                      }}
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
-                    >
-                      <option value="">Selecione o local de partida...</option>
-                      {availableLocations.map(loc => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">De onde? (Localidade)</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
+                  <select
+                    value={busOrigin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBusOrigin(val);
+                      setShowBusResults(false);
+                    }}
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
+                  >
+                    <option value="">Selecione o local de partida...</option>
+                    {availableLocations.map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
                 </div>
+              </div>
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">Para onde? (Localidade)</label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
-                    <select 
-                      value={busDestination}
-                      onChange={(e) => { 
-                        const val = e.target.value;
-                        setBusDestination(val); 
-                        setShowBusResults(false);
-                      }}
-                      className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
-                    >
-                      <option value="">Selecione o destino...</option>
-                      {availableLocations.filter(l => l !== busOrigin).map(loc => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">Para onde? (Localidade)</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-4 top-4 text-slate-400 w-5 h-5 group-focus-within:text-pink-500 transition-colors" />
+                  <select
+                    value={busDestination}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBusDestination(val);
+                      setShowBusResults(false);
+                    }}
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
+                  >
+                    <option value="">Selecione o destino...</option>
+                    {availableLocations.filter(l => l !== busOrigin).map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
                 </div>
+              </div>
 
-                <div className="md:col-span-2">
-                   {matchingSchedules.length > 0 && busOrigin && busDestination && (
-                     <motion.div 
-                       initial={{ opacity: 0, y: 10 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       className="mb-6 p-6 bg-pink-50 rounded-[2rem] border border-pink-100 flex items-center justify-between"
-                     >
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-pink-600 shadow-sm">
-                              <Bus size={24} />
-                           </div>
-                           <div>
-                              <p className="text-[10px] font-black text-pink-400 uppercase tracking-widest leading-none">Companhia Detetada</p>
-                              <p className="text-lg font-black text-pink-700 mt-1">
-                                 {matchingSchedules.map(s => s.company).join(' & ')}
-                              </p>
-                           </div>
-                        </div>
-                        <div className="hidden md:block">
-                           <span className="px-4 py-2 bg-pink-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest">Rota Ativa</span>
-                        </div>
-                     </motion.div>
-                   )}
+              <div className="md:col-span-2">
+                {matchingSchedules.length > 0 && busOrigin && busDestination && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-6 bg-pink-50 rounded-[2rem] border border-pink-100 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-pink-600 shadow-sm">
+                        <Bus size={24} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-pink-400 uppercase tracking-widest leading-none">Companhia Detetada</p>
+                        <p className="text-lg font-black text-pink-700 mt-1">
+                          {matchingSchedules.map(s => s.company).join(' & ')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="hidden md:block">
+                      <span className="px-4 py-2 bg-pink-600 text-white text-[10px] font-black rounded-full uppercase tracking-widest">Rota Ativa</span>
+                    </div>
+                  </motion.div>
+                )}
 
-                   <button 
-                     onClick={() => { setBusModalStep('options'); setShowBusOptionsModal(true); }}
-                     disabled={!busOrigin || !busDestination || matchingSchedules.length === 0}
-                     className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 cursor-pointer
-                       ${(!busOrigin || !busDestination || matchingSchedules.length === 0) 
-                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none' 
-                         : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:scale-[1.02] hover:shadow-pink-500/30 active:scale-95'}`}
-                   >
-                     {matchingSchedules.length === 0 && busOrigin && busDestination 
-                       ? 'Rota Não Disponível' 
-                       : 'Explorar Horários & Bilhetes'} 
-                     <ArrowRight className="w-5 h-5" />
-                   </button>
-                </div>
-             </div>
+                <button
+                  onClick={() => { setBusModalStep('options'); setShowBusOptionsModal(true); }}
+                  disabled={!busOrigin || !busDestination || matchingSchedules.length === 0}
+                  className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 cursor-pointer
+                       ${(!busOrigin || !busDestination || matchingSchedules.length === 0)
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
+                      : 'bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:scale-[1.02] hover:shadow-pink-500/30 active:scale-95'}`}
+                >
+                  {matchingSchedules.length === 0 && busOrigin && busDestination
+                    ? 'Rota Não Disponível'
+                    : 'Explorar Horários & Bilhetes'}
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        
+
         {/* Info Banner */}
         <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center gap-8 border border-white/5 relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/10 to-transparent"></div>
-           <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md relative z-10">
-              <Info className="text-blue-400" />
-           </div>
-           <div className="relative z-10 text-center md:text-left flex-1">
-              <h4 className="text-xl font-black uppercase tracking-tighter">Sabia que pode carregar o seu passe?</h4>
-              <p className="text-slate-400 text-sm mt-1">Utilize os seus créditos para adquirir bilhetes e passes turísticos diretamente na app.</p>
-           </div>
-           <div className="relative z-10">
-              <button className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all shadow-xl cursor-pointer">Saiba Mais</button>
-           </div>
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/10 to-transparent"></div>
+          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md relative z-10">
+            <Info className="text-blue-400" />
+          </div>
+          <div className="relative z-10 text-center md:text-left flex-1">
+            <h4 className="text-xl font-black uppercase tracking-tighter">Sabia que pode carregar o seu passe?</h4>
+            <p className="text-slate-400 text-sm mt-1">Utilize os seus créditos para adquirir bilhetes e passes turísticos diretamente na app.</p>
+          </div>
+          <div className="relative z-10">
+            <button className="px-8 py-3 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all shadow-xl cursor-pointer">Saiba Mais</button>
+          </div>
         </div>
       </div>
     );
   };
-;
+  ;
 
   const renderRestaurants = () => {
     return (
@@ -795,16 +794,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         {filteredRestaurants.length === 0 ? renderEmptyState() : (
           <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
             {filteredRestaurants.map(r => (
-              <div 
-                key={r.id} 
+              <div
+                key={r.id}
                 className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
                 onClick={() => setSelectedRestaurant(r)}
               >
                 <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
-                  <img 
-                    src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image} 
-                    alt={r.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                  <img
+                    src={r.image.startsWith('/') ? `${API_BASE_URL}${r.image}` : r.image}
+                    alt={r.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
                     <div className="bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-lg text-[9px] lg:text-[10px] font-black flex items-center gap-0.5 shadow-sm">
@@ -827,7 +826,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     </div>
                     <p className="text-xs lg:text-sm text-slate-500 line-clamp-2 lg:line-clamp-3 font-medium leading-relaxed mb-0 lg:mb-4">{r.description || 'Restaurante típico com sabores regionais.'}</p>
                   </div>
-                  
+
                   {/* Desktop Reviews footer */}
                   <div className="hidden lg:flex items-center justify-between pt-3 border-t border-slate-50 mt-auto">
                     <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">
@@ -859,7 +858,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const renderActivities = (type?: string | string[]) => {
     const isTrail = type === 'trail' || category === 'trails';
-    
+
     // Lista mapeada com os novos IDs oficiais para sincronização total (Opção 1)
     const listaTrilhosSaoMiguel = [
       { id: "PR03SMI_vista_rei_sete_cidades", nome: "Vista do Rei - Sete Cidades", codigo: "PR03SMI", zona: "Oeste", distancia: "7.7 km", duracao: "2h00m", imagemUrl: "/imagens/sete_cidades.jpg" },
@@ -877,9 +876,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     if (isTrail) {
       // 1. Mapear os dados para garantir que os IDs batem certo com o dadosTrilhos.ts
       data = data.map(a => {
-        const mapped = listaTrilhosSaoMiguel.find(t => 
-          a.id === t.id || 
-          a.title.toLowerCase().includes(t.nome.toLowerCase()) || 
+        const mapped = listaTrilhosSaoMiguel.find(t =>
+          a.id === t.id ||
+          a.title.toLowerCase().includes(t.nome.toLowerCase()) ||
           a.title.toLowerCase().includes(t.codigo.toLowerCase()) ||
           a.id.includes(t.codigo)
         );
@@ -905,19 +904,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         return (a as any).trailZone === trailZoneFilter;
       });
     }
-    
+
     return (
       <div className="space-y-6">
         {isTrail ? null : (
           <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-            <button 
+            <button
               onClick={() => setPriceFilter('all')}
               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
                 ${priceFilter === 'all' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
             >
               Todos
             </button>
-            <button 
+            <button
               onClick={() => setPriceFilter('free')}
               className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
                 ${priceFilter === 'free' ? 'bg-emerald-500 text-white border-transparent shadow-emerald-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
@@ -925,7 +924,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               Grátis
             </button>
             {type !== 'trail' && (
-              <button 
+              <button
                 onClick={() => setPriceFilter('paid')}
                 className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border whitespace-nowrap
                   ${priceFilter === 'paid' ? 'bg-blue-600 text-white border-transparent shadow-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'}`}
@@ -940,10 +939,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
             {data.map(a => {
               const trail = a as any;
-              
+
               return (
-                <div 
-                  key={a.id} 
+                <div
+                  key={a.id}
                   className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
                   onClick={() => {
                     if (a.type === 'trail' || a.type === 'landscape' || a.type === 'culture' || a.type === 'poi' || a.type === 'activity') {
@@ -952,28 +951,28 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                   }}
                 >
                   <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
-                     <img 
-                       src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image} 
-                       alt={a.title} 
-                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                     />
-                     <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
-                        {isTrail ? (
-                          <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
-                            {trail.trailCode || 'PR'}
+                    <img
+                      src={a.image.startsWith('/') ? `${API_BASE_URL}${a.image}` : a.image}
+                      alt={a.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
+                      {isTrail ? (
+                        <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
+                          {trail.trailCode || 'PR'}
+                        </span>
+                      ) : (
+                        a.isPaid ? (
+                          <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
+                            {a.price}€
                           </span>
                         ) : (
-                          a.isPaid ? (
-                            <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
-                              {a.price}€
-                            </span>
-                          ) : (
-                            <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
-                              Grátis
-                            </span>
-                          )
-                        )}
-                     </div>
+                          <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-md">
+                            Grátis
+                          </span>
+                        )
+                      )}
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0 lg:p-5 lg:flex lg:flex-col lg:justify-between lg:h-full">
                     <div>
@@ -1010,14 +1009,14 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   const renderBusiness = (data: Business[]) => {
     const filtered = sortItems(data.filter(b => isAllIslands || b.island === targetIsland));
-    
+
     if (filtered.length === 0) return renderEmptyState();
 
     return (
       <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
         {filtered.map(b => (
-          <div 
-            key={b.id} 
+          <div
+            key={b.id}
             className="bg-white rounded-3xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer group border border-slate-100 flex flex-row lg:flex-col h-auto lg:h-full p-4 lg:p-0 gap-4 lg:gap-0"
             onClick={() => {
               if (b.businessType === 'shop' || category === 'shops') {
@@ -1025,18 +1024,18 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               } else {
                 setSelectedRestaurant(b);
               }
-            }} 
+            }}
           >
             <div className="w-24 h-24 lg:w-auto lg:h-40 rounded-2xl lg:rounded-none overflow-hidden shrink-0 lg:shrink-0 relative">
-              <img 
-                src={b.image.startsWith('/') ? `${API_BASE_URL}${b.image}` : b.image} 
-                alt={b.name} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+              <img
+                src={b.image.startsWith('/') ? `${API_BASE_URL}${b.image}` : b.image}
+                alt={b.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute top-1.5 right-1.5 lg:top-3 lg:right-3">
-                 <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
-                   <MapPin className="w-3.5 h-3.5 text-red-500" />
-                 </div>
+                <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
+                  <MapPin className="w-3.5 h-3.5 text-red-500" />
+                </div>
               </div>
             </div>
             <div className="flex-1 min-w-0 lg:p-5 lg:flex lg:flex-col lg:justify-between lg:h-full">
@@ -1085,7 +1084,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 onClick={() => { setBeautyFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
-                <div 
+                <div
                   className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
                   style={{ backgroundColor: cat.color }}
                 >
@@ -1104,22 +1103,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     return (
       <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
         <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-           <div className="flex items-center gap-4">
-              <div 
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md"
-                style={{ backgroundColor: subcats.find(c => c.id === beautyFilter)?.color }}
-              >
-                {subcats.find(c => c.id === beautyFilter)?.icon}
-              </div>
-              <div>
-                <h3 className="font-black text-slate-800 uppercase tracking-tight">
-                  {subcats.find(c => c.id === beautyFilter)?.label}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} resultados
-                </p>
-              </div>
-           </div>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md"
+              style={{ backgroundColor: subcats.find(c => c.id === beautyFilter)?.color }}
+            >
+              {subcats.find(c => c.id === beautyFilter)?.icon}
+            </div>
+            <div>
+              <h3 className="font-black text-slate-800 uppercase tracking-tight">
+                {subcats.find(c => c.id === beautyFilter)?.label}
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {filtered.length} resultados
+              </p>
+            </div>
+          </div>
 
         </div>
 
@@ -1171,7 +1170,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 onClick={() => { setServicesFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
-                <div 
+                <div
                   className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
                   style={{ backgroundColor: cat.color }}
                 >
@@ -1190,47 +1189,47 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     return (
       <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
         <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-           <div className="flex items-center gap-4">
-              <div 
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
-                style={{ backgroundColor: subcats.find(c => c.id === servicesFilter)?.color }}
-              >
-                {subcats.find(c => c.id === servicesFilter)?.icon}
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                  {subcats.find(c => c.id === servicesFilter)?.label}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} serviços
-                </p>
-              </div>
-           </div>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
+              style={{ backgroundColor: subcats.find(c => c.id === servicesFilter)?.color }}
+            >
+              {subcats.find(c => c.id === servicesFilter)?.icon}
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                {subcats.find(c => c.id === servicesFilter)?.label}
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {filtered.length} serviços
+              </p>
+            </div>
+          </div>
 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(s => (
-            <div 
-              key={s.id} 
+            <div
+              key={s.id}
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
             >
               <div className="h-48 overflow-hidden relative">
-                <img 
-                  src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} 
-                  alt={s.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                <img
+                  src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image}
+                  alt={s.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                  <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
                 </div>
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
-                
+
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                     <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -1238,7 +1237,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     </div>
                     <span className="text-sm font-bold text-slate-700">{s.phone}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                     <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                       <Mail size={16} />
@@ -1246,173 +1245,17 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                     <span className="text-sm font-bold text-slate-700">{s.publicEmail}</span>
                   </div>
 
-                    <div className="flex gap-2 mt-2">
-                      <button 
-                        onClick={() => window.location.href = `mailto:${s.publicEmail}?subject=Pedido de Orçamento - AzoresToyou`}
-                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        {getTranslation(lang, 'request_quote')}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude) 
-                          ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
-                          : '#');
-                        if (url !== '#') {
-                          if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
-                            onShowMap(url);
-                          } else {
-                            window.open(url, '_blank');
-                          }
-                        }
-                        }}
-                        className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
-                      >
-                        <Map size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            </div>
-          </div>
-        );
-      };
-    
-      const renderAutoRepair = () => {
-        const subcats = [
-          { id: 'parts', label: getTranslation(lang, 'parts'), icon: <Settings size={24} />, color: '#E53935' },
-          { id: 'workshop', label: getTranslation(lang, 'workshop'), icon: <Wrench size={24} />, color: '#1E88E5' },
-          { id: 'bodywork', label: getTranslation(lang, 'bodywork'), icon: <Paintbrush size={24} />, color: '#FB8C00' },
-          { id: 'auto_electronics', label: getTranslation(lang, 'nav_auto_electronics'), icon: <Zap size={24} />, color: '#FFD600' },
-          { id: 'used_market', label: getTranslation(lang, 'nav_used_market'), icon: <ShoppingCart size={24} />, color: '#43A047' },
-        ];
-    
-        if (autoRepairFilter === 'auto_electronics') {
-           return (
-             <div className="space-y-6">
-                <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white"><Zap size={24}/></div>
-                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_auto_electronics')}</h3>
-                   </div>
-
-                </div>
-                {renderAutoElectronics()}
-             </div>
-           );
-        }
-    
-        if (autoRepairFilter === 'used_market') {
-           return (
-             <div className="space-y-6">
-                <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white"><ShoppingCart size={24}/></div>
-                      <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_used_market')}</h3>
-                   </div>
-
-                </div>
-                {renderUsedMarket()}
-             </div>
-           );
-        }
-    
-        const filtered = allAutoRepairs.filter(s => {
-          const matchIsland = isAllIslands || s.island === targetIsland;
-          const matchSubcat = autoRepairFilter === null || s.subcategory === autoRepairFilter;
-          return matchIsland && matchSubcat;
-        });
-    
-        if (!autoRepairFilter) {
-          return (
-            <div className="py-8 animate-in fade-in zoom-in duration-500">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-                {subcats.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setAutoRepairFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-                  >
-                    <div 
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: cat.color }}
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => window.location.href = `mailto:${s.publicEmail}?subject=Pedido de Orçamento - AzoresToyou`}
+                      className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95"
                     >
-                      {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
-                    </div>
-                    <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tight text-slate-700 group-hover:text-slate-900 text-center leading-tight">
-                      {cat.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        }
-    
-        return (
-          <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-            <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-               <div className="flex items-center gap-4">
-                  <div 
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
-                    style={{ backgroundColor: subcats.find(c => c.id === autoRepairFilter)?.color }}
-                  >
-                    {subcats.find(c => c.id === autoRepairFilter)?.icon}
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                      {subcats.find(c => c.id === autoRepairFilter)?.label}
-                    </h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {filtered.length} estabelecimentos encontrados
-                    </p>
-                    {renderFollowLikeButtons(`auto_${autoRepairFilter}`)}
-                  </div>
-               </div>
-
-            </div>
-    
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map(s => (
-                <div 
-                  key={s.id} 
-                  className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
-                >
-                  <div className="h-48 overflow-hidden relative">
-                    <img src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                       <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
-                    </div>
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                       <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
-                    
-                    <div className="flex gap-2 w-full">
-                      {s.isConfirmed !== false ? (
-                        <button 
-                          onClick={() => {
-                            const biz = { ...s, businessType: 'auto_repair' as const };
-                            setSelectedRestaurant(biz);
-                          }}
-                          className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
-                        >
-                          <Ticket size={18} />
-                          Reservar
-                        </button>
-                      ) : (
-                        <div className="flex-1 py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
-                          Apenas Informativo
-                        </div>
-                      )}
-                      <button 
-                        onClick={() => {
-                          const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude) 
-                          ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                      {getTranslation(lang, 'request_quote')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude)
+                          ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
                           : '#');
                         if (url !== '#') {
                           if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
@@ -1421,19 +1264,175 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                             window.open(url, '_blank');
                           }
                         }
-                        }}
-                        className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
-                      >
-                        <Map size={18} />
-                      </button>
-                    </div>
+                      }}
+                      className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+                    >
+                      <Map size={18} />
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAutoRepair = () => {
+    const subcats = [
+      { id: 'parts', label: getTranslation(lang, 'parts'), icon: <Settings size={24} />, color: '#E53935' },
+      { id: 'workshop', label: getTranslation(lang, 'workshop'), icon: <Wrench size={24} />, color: '#1E88E5' },
+      { id: 'bodywork', label: getTranslation(lang, 'bodywork'), icon: <Paintbrush size={24} />, color: '#FB8C00' },
+      { id: 'auto_electronics', label: getTranslation(lang, 'nav_auto_electronics'), icon: <Zap size={24} />, color: '#FFD600' },
+      { id: 'used_market', label: getTranslation(lang, 'nav_used_market'), icon: <ShoppingCart size={24} />, color: '#43A047' },
+    ];
+
+    if (autoRepairFilter === 'auto_electronics') {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white"><Zap size={24} /></div>
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_auto_electronics')}</h3>
+            </div>
+
+          </div>
+          {renderAutoElectronics()}
+        </div>
+      );
+    }
+
+    if (autoRepairFilter === 'used_market') {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center text-white"><ShoppingCart size={24} /></div>
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">{getTranslation(lang, 'nav_used_market')}</h3>
+            </div>
+
+          </div>
+          {renderUsedMarket()}
+        </div>
+      );
+    }
+
+    const filtered = allAutoRepairs.filter(s => {
+      const matchIsland = isAllIslands || s.island === targetIsland;
+      const matchSubcat = autoRepairFilter === null || s.subcategory === autoRepairFilter;
+      return matchIsland && matchSubcat;
+    });
+
+    if (!autoRepairFilter) {
+      return (
+        <div className="py-8 animate-in fade-in zoom-in duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+            {subcats.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => { setAutoRepairFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className="flex flex-col items-center gap-4 group p-6 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+              >
+                <div
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: cat.color }}
+                >
+                  {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
+                </div>
+                <span className="text-[10px] md:text-[11px] font-black uppercase tracking-tight text-slate-700 group-hover:text-slate-900 text-center leading-tight">
+                  {cat.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+        <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
+              style={{ backgroundColor: subcats.find(c => c.id === autoRepairFilter)?.color }}
+            >
+              {subcats.find(c => c.id === autoRepairFilter)?.icon}
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                {subcats.find(c => c.id === autoRepairFilter)?.label}
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {filtered.length} estabelecimentos encontrados
+              </p>
+              {renderFollowLikeButtons(`auto_${autoRepairFilter}`)}
             </div>
           </div>
-        );
-      };
+
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map(s => (
+            <div
+              key={s.id}
+              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group"
+            >
+              <div className="h-48 overflow-hidden relative">
+                <img src={s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
+                  <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                </div>
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
+                </div>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
+
+                <div className="flex gap-2 w-full">
+                  {s.isConfirmed !== false ? (
+                    <button
+                      onClick={() => {
+                        const biz = { ...s, businessType: 'auto_repair' as const };
+                        setSelectedRestaurant(biz);
+                      }}
+                      className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-xl active:scale-95"
+                    >
+                      <Ticket size={18} />
+                      Reservar
+                    </button>
+                  ) : (
+                    <div className="flex-1 py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                      Apenas Informativo
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      const url = (s as any).mapUrl || (s as any).mapsUrl || ((s.latitude && s.longitude)
+                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
+                        : '#');
+                      if (url !== '#') {
+                        if (onShowMap && !url.includes('google.com/maps/place') && !url.includes('maps.google.com/?q=')) {
+                          onShowMap(url);
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }
+                    }}
+                    className="p-4 bg-slate-100 text-slate-600 rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+                  >
+                    <Map size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
 
 
@@ -1469,8 +1468,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   const renderStandardBusiness = (items: Business[], title: string, icon: React.ReactNode, color: string, allowBooking: boolean = false) => {
     const filtered = items.filter(s => {
       const matchIsland = isAllIslands || s.island === targetIsland;
-      const matchSearch = !restaurantSearch || 
-        s.name.toLowerCase().includes(restaurantSearch.toLowerCase()) || 
+      const matchSearch = !restaurantSearch ||
+        s.name.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         s.description.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         s.island.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         (s.subcategory && s.subcategory.toLowerCase().includes(restaurantSearch.toLowerCase())) ||
@@ -1484,8 +1483,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(s => (
-            <div 
-              key={s.id} 
+            <div
+              key={s.id}
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-500 group cursor-pointer"
               onClick={() => {
                 if (s.businessType === 'offices' || category === 'offices') setSelectedRestaurant(s);
@@ -1496,122 +1495,122 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               }}
             >
               <div className="h-56 overflow-hidden relative">
-                <img 
-                  src={s.image && s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : (s.image || 'https://picsum.photos/400/300?random=' + s.id)} 
-                  alt={s.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                <img
+                  src={s.image && s.image.startsWith('/') ? `${API_BASE_URL}${s.image}` : (s.image || 'https://picsum.photos/400/300?random=' + s.id)}
+                  alt={s.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.concelho ? `${s.concelho}, ` : ''}{s.island}
+                  <MapPin className="w-3 h-3 text-blue-600" /> {s.concelho ? `${s.concelho}, ` : ''}{s.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{s.name}</h3>
-                   <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-white/20 text-white text-[8px] font-black rounded uppercase tracking-widest backdrop-blur-md border border-white/20">
-                         {title}
-                      </span>
-                   </div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{s.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-white/20 text-white text-[8px] font-black rounded uppercase tracking-widest backdrop-blur-md border border-white/20">
+                      {title}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-3 font-medium">{s.description || 'Nenhuma descrição disponível.'}</p>
-                
+
                 <div className="space-y-3 mb-6">
-                   <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                     <Phone size={12} /> Contactos
-                   </h4>
-                   <div className="flex flex-col gap-2">
-                      {s.phone && (
-                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                          <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
-                            <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700">{s.phone}</span>
+                  <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                    <Phone size={12} /> Contactos
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {s.phone && (
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
+                          <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
                         </div>
-                      )}
-                      {s.publicEmail && (
-                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                          <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
-                            <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700 truncate">{s.publicEmail}</span>
+                        <span className="text-xs font-bold text-slate-700">{s.phone}</span>
+                      </div>
+                    )}
+                    {s.publicEmail && (
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
+                          <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
                         </div>
-                      )}
-                   </div>
+                        <span className="text-xs font-bold text-slate-700 truncate">{s.publicEmail}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                   {s.phone && (
-                     <button 
-                       onClick={() => window.location.href = `tel:${s.phone}`}
-                       className="flex-1 min-w-[80px] py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
-                     >
-                       <PhoneCall size={16} /> Ligar
-                     </button>
-                   )}
-                   <button 
-                     onClick={() => {
-                       const url = (s.latitude && s.longitude) 
-                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                  {s.phone && (
+                    <button
+                      onClick={() => window.location.href = `tel:${s.phone}`}
+                      className="flex-1 min-w-[80px] py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
+                    >
+                      <PhoneCall size={16} /> Ligar
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      const url = (s.latitude && s.longitude)
+                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
                         : '#';
-                       if (url !== '#') {
-                         if (onShowMap) {
-                           onShowMap(url);
-                         } else {
-                           window.open(url, '_blank');
-                         }
-                       }
-                     }}
+                      if (url !== '#') {
+                        if (onShowMap) {
+                          onShowMap(url);
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }
+                    }}
                     className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                   >
-                     <Map size={16} /> Direções
-                   </button>
-                   {allowBooking && (s.isConfirmed !== false ? (
-                      <button 
-                        onClick={() => setSelectedOffice(s)}
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                      >
-                        <Calendar size={16} /> Agendar Visita
-                      </button>
-                    ) : (
-                      <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
-                        Apenas Informativo
-                      </div>
-                    ))}
-                   {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (s.businessType === 'shop' || category === 'shops') {
-                            setSelectedShopDetail(s);
-                          } else {
-                            setSelectedShop(s);
-                          }
-                        }}
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                      >
-                        {category === 'gyms' ? <Dumbbell size={16} /> : (category === 'real_estate' || s.businessType === 'real_estate') ? <Home size={16} /> : <ShoppingBag size={16} />}
-                        {category === 'gyms' ? 'Ver Máquinas / Instalações' : (category === 'real_estate' || s.businessType === 'real_estate') ? 'Ver Casas / Apartamentos' : 'Ver Artigos'}
-                      </button>
-                   )}
-                   {s.businessType === 'stands' && (
-                     <button 
-                       onClick={() => setSelectedStand(s)}
-                       className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                     >
-                       <CarFront size={16} /> Ver Viaturas
-                     </button>
-                   )}
+                  >
+                    <Map size={16} /> Direções
+                  </button>
+                  {allowBooking && (s.isConfirmed !== false ? (
+                    <button
+                      onClick={() => setSelectedOffice(s)}
+                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                    >
+                      <Calendar size={16} /> Agendar Visita
+                    </button>
+                  ) : (
+                    <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                      Apenas Informativo
+                    </div>
+                  ))}
+                  {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (s.businessType === 'shop' || category === 'shops') {
+                          setSelectedShopDetail(s);
+                        } else {
+                          setSelectedShop(s);
+                        }
+                      }}
+                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                    >
+                      {category === 'gyms' ? <Dumbbell size={16} /> : (category === 'real_estate' || s.businessType === 'real_estate') ? <Home size={16} /> : <ShoppingBag size={16} />}
+                      {category === 'gyms' ? 'Ver Máquinas / Instalações' : (category === 'real_estate' || s.businessType === 'real_estate') ? 'Ver Casas / Apartamentos' : 'Ver Artigos'}
+                    </button>
+                  )}
+                  {s.businessType === 'stands' && (
+                    <button
+                      onClick={() => setSelectedStand(s)}
+                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                    >
+                      <CarFront size={16} /> Ver Viaturas
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
-        
+
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-6">
-               {React.cloneElement(icon as React.ReactElement, { size: 40 })}
+              {React.cloneElement(icon as React.ReactElement, { size: 40 })}
             </div>
             <h4 className="text-lg font-black text-slate-800 uppercase tracking-tighter mb-2">Sem Resultados</h4>
             <p className="text-slate-400 text-sm font-medium">Ainda não existem registos nesta categoria para esta ilha.</p>
@@ -1635,62 +1634,62 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <div className="h-56 overflow-hidden relative">
                 <img src={s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                  <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{s.name}</h3>
-                   <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-orange-600 text-white text-[8px] font-black rounded uppercase tracking-widest">Loja de Animais</span>
-                   </div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{s.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[8px] font-black rounded uppercase tracking-widest">Loja de Animais</span>
+                  </div>
                 </div>
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-3 font-medium">{s.description}</p>
-                
+
                 <div className="space-y-3 mb-6">
-                   <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                     <Phone size={12} /> Contactos
-                   </h4>
-                   <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
-                          <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">{s.phone}</span>
+                  <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                    <Phone size={12} /> Contactos
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
+                        <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
-                          <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700 truncate">{s.publicEmail}</span>
+                      <span className="text-xs font-bold text-slate-700">{s.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
+                        <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
                       </div>
-                   </div>
+                      <span className="text-xs font-bold text-slate-700 truncate">{s.publicEmail}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
-                   <button 
-                     onClick={() => window.location.href = `tel:${s.phone}`}
-                     className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
-                   >
-                     <PhoneCall size={16} /> Ligar
-                   </button>
-                   <button 
-                     onClick={() => {
-                       const url = (s.latitude && s.longitude) 
-                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                  <button
+                    onClick={() => window.location.href = `tel:${s.phone}`}
+                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
+                  >
+                    <PhoneCall size={16} /> Ligar
+                  </button>
+                  <button
+                    onClick={() => {
+                      const url = (s.latitude && s.longitude)
+                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
                         : '#';
-                       if (url !== '#') {
-                         if (onShowMap) {
-                           onShowMap(url);
-                         } else {
-                           window.open(url, '_blank');
-                         }
-                       }
-                     }}
-                     className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                   >
-                     <Map size={16} /> Direções
-                   </button>
+                      if (url !== '#') {
+                        if (onShowMap) {
+                          onShowMap(url);
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }
+                    }}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Map size={16} /> Direções
+                  </button>
                 </div>
               </div>
             </div>
@@ -1714,17 +1713,17 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <div className="h-48 overflow-hidden relative">
                 <img src={s.image} alt={s.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
+                  <MapPin className="w-3 h-3 text-blue-600" /> {s.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">{s.name}</h3>
                 </div>
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-2">{s.description}</p>
                 <div className="flex gap-2 w-full">
                   {s.isConfirmed !== false ? (
-                    <button 
+                    <button
                       onClick={() => setSelectedRestaurant({ ...s, businessType: 'auto_repair' as any })}
                       className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-yellow-500 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-slate-900/10"
                     >
@@ -1735,10 +1734,10 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       Apenas Informativo
                     </div>
                   )}
-                  <button 
+                  <button
                     onClick={() => {
-                      const url = (s.latitude && s.longitude) 
-                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}` 
+                      const url = (s.latitude && s.longitude)
+                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
                         : '#';
                       if (url !== '#') {
                         if (onShowMap) {
@@ -1784,7 +1783,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 onClick={() => { setUsedMarketFilter(cat.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="flex flex-col items-center gap-6 group p-10 bg-white rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
               >
-                <div 
+                <div
                   className="w-24 h-24 rounded-[2rem] flex items-center justify-center text-white shadow-xl transition-transform group-hover:scale-110"
                   style={{ backgroundColor: cat.color }}
                 >
@@ -1806,28 +1805,28 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     return (
       <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
         <div className="flex items-center justify-between bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-           <div className="flex items-center gap-4">
-              <div 
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
-                style={{ backgroundColor: subcats.find(c => c.id === usedMarketFilter)?.color }}
-              >
-                {subcats.find(c => c.id === usedMarketFilter)?.icon}
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
-                  {subcats.find(c => c.id === usedMarketFilter)?.label}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {filtered.length} anúncios ativos
-                </p>
-              </div>
-           </div>
-           <button 
-             onClick={() => setUsedMarketFilter(null)}
-             className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
-           >
-             <ArrowRight size={14} className="rotate-180" /> Voltar
-           </button>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md"
+              style={{ backgroundColor: subcats.find(c => c.id === usedMarketFilter)?.color }}
+            >
+              {subcats.find(c => c.id === usedMarketFilter)?.icon}
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                {subcats.find(c => c.id === usedMarketFilter)?.label}
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {filtered.length} anúncios ativos
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setUsedMarketFilter(null)}
+            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 active:scale-95"
+          >
+            <ArrowRight size={14} className="rotate-180" /> Voltar
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1836,62 +1835,62 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <div className="h-56 overflow-hidden relative">
                 <img src={u.image} alt={u.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
-                   <MapPin className="w-3 h-3 text-blue-600" /> {u.island}
+                  <MapPin className="w-3 h-3 text-blue-600" /> {u.island}
                 </div>
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6">
-                   <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{u.name}</h3>
-                   <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded uppercase tracking-widest">Destaque</span>
-                   </div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{u.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded uppercase tracking-widest">Destaque</span>
+                  </div>
                 </div>
               </div>
               <div className="p-6">
                 <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-3 font-medium">{u.description}</p>
-                
+
                 <div className="space-y-3 mb-6">
-                   <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                     <User size={12} /> {getTranslation(lang, 'seller_info')}
-                   </h4>
-                   <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
-                          <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">{u.phone}</span>
+                  <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                    <User size={12} /> {getTranslation(lang, 'seller_info')}
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-blue-50 transition-colors">
+                        <PhoneCall size={14} className="text-slate-400 group-hover:text-blue-600" />
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
-                        <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
-                          <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700 truncate">{u.publicEmail}</span>
+                      <span className="text-xs font-bold text-slate-700">{u.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-50 group-hover:bg-purple-50 transition-colors">
+                        <Mail size={14} className="text-slate-400 group-hover:text-purple-600" />
                       </div>
-                   </div>
+                      <span className="text-xs font-bold text-slate-700 truncate">{u.publicEmail}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
-                   <button 
-                     onClick={() => window.location.href = `tel:${u.phone}`}
-                     className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95"
-                   >
-                     <PhoneCall size={16} /> Ligar
-                   </button>
-                   <button 
-                     onClick={() => {
-                       const url = (u.latitude && u.longitude) 
-                        ? `https://maps.google.com/?q=${u.latitude},${u.longitude}` 
+                  <button
+                    onClick={() => window.location.href = `tel:${u.phone}`}
+                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <PhoneCall size={16} /> Ligar
+                  </button>
+                  <button
+                    onClick={() => {
+                      const url = (u.latitude && u.longitude)
+                        ? `https://maps.google.com/?q=${u.latitude},${u.longitude}`
                         : '#';
-                       if (url !== '#') {
-                         if (onShowMap) {
-                           onShowMap(url);
-                         } else {
-                           window.open(url, '_blank');
-                         }
-                       }
-                     }}
-                     className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                   >
-                     <Map size={16} /> Direções
-                   </button>
+                      if (url !== '#') {
+                        if (onShowMap) {
+                          onShowMap(url);
+                        } else {
+                          window.open(url, '_blank');
+                        }
+                      }
+                    }}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Map size={16} /> Direções
+                  </button>
                 </div>
               </div>
             </div>
@@ -1910,7 +1909,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
+              <input
                 type="text"
                 placeholder="Procurar restaurante, cozinha ou local..."
                 value={restaurantSearch}
@@ -1919,7 +1918,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               />
             </div>
             <div className="flex gap-4">
-              <select 
+              <select
                 value={restaurantIslandFilter}
                 onChange={(e) => setRestaurantIslandFilter(e.target.value)}
                 className="px-4 py-4 lg:py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
@@ -1927,7 +1926,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 <option value="all">Todas as Ilhas</option>
                 {islands.map(i => <option key={i} value={i}>{i}</option>)}
               </select>
-              <select 
+              <select
                 value={restaurantCuisineFilter}
                 onChange={(e) => setRestaurantCuisineFilter(e.target.value)}
                 className="px-4 py-4 lg:py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs uppercase tracking-widest text-slate-600 appearance-none min-w-[140px] text-center cursor-pointer"
@@ -1943,7 +1942,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 {filteredRestaurants.length} Restaurantes
               </span>
               {restaurantSearch && (
-                <button 
+                <button
                   onClick={() => setRestaurantSearch('')}
                   className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-1"
                 >
@@ -1983,7 +1982,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
   return (
     <div className="px-6 md:px-10 pb-32 pt-0 md:pt-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* Breadcrumb & Back Button — hidden on mobile, visible on desktop */}
       <div className="hidden md:flex items-center justify-between mb-8 text-xs font-bold uppercase tracking-widest text-slate-400">
         <div className="flex items-center gap-2">
@@ -1991,7 +1990,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           <span>/</span>
           <span className="text-slate-500">{getCategoryTitle(category)}</span>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-4 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95 transition-all"
         >
@@ -2001,18 +2000,17 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
-        <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${
-          category === 'bars' || category === 'gyms' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
-        }`}>
+        <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${category === 'bars' || category === 'gyms' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
+          }`}>
           {/* Slider */}
-          <MostRequestedSlider 
-            items={featuredItems} 
+          <MostRequestedSlider
+            items={featuredItems}
             className={category === 'bars' || category === 'gyms' ? 'mb-0' : 'mb-12'}
             onAction={(item) => {
-              const res = restaurants.find(r => r.id === item.id) || 
-                          beauty.find(b => b.id === item.id) ||
-                          shops.find(s => s.id === item.id) ||
-                          activities.find(a => a.id === item.id);
+              const res = restaurants.find(r => r.id === item.id) ||
+                beauty.find(b => b.id === item.id) ||
+                shops.find(s => s.id === item.id) ||
+                activities.find(a => a.id === item.id);
               if (res) {
                 if (category === 'restaurants') setSelectedRestaurant(res as any);
                 else if (category === 'beauty') setSelectedRestaurant(res as any);
@@ -2023,9 +2021,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           />
 
           {/* Overlay Content */}
-          <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 pointer-events-none ${
-            category === 'bars' || category === 'gyms' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
-          }`}>
+          <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 pointer-events-none ${category === 'bars' || category === 'gyms' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
+            }`}>
             {/* Mobile-only floating back button — top-left corner of slider */}
             {category !== 'bars' && category !== 'gyms' && (
               <button
@@ -2039,19 +2036,19 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             {/* Centered Category Header inside Slider */}
             {category !== 'bars' && category !== 'gyms' && (
               <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
-                 <div 
-                   className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
-                   style={{ color: COLORS[category] || '#1A75BB' }}
-                 >
-                   {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-                 </div>
-                 <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
-                 <div className="flex items-center gap-2 justify-center">
-                   <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
-                     {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-                   </p>
-                 </div>
+                <div
+                  className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
+                  style={{ color: COLORS[category] || '#1A75BB' }}
+                >
+                  {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+                </div>
+                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
+                    {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -2067,22 +2064,22 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {featuredItems && featuredItems.length > 0 && (category === 'bars' || category === 'gyms') && (
         <div className="flex flex-col items-center text-center mt-2 mb-6 px-6 md:px-0 animate-in fade-in duration-500 w-full">
-           <div 
-             className="w-12 h-12 rounded-[1.5rem] flex items-center justify-center shadow-md mb-2 bg-white border border-slate-100 transition-all hover:scale-105"
-             style={{ color: COLORS[category] || '#1A75BB' }}
-           >
-             {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 24 })}
-           </div>
-           <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
-           <div className="flex items-center gap-1.5 justify-center mb-4">
-             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-               {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-             </p>
-           </div>
-           <div className="w-full lg:max-w-2xl xl:max-w-3xl">
-             {renderCategoryFilterBar()}
-           </div>
+          <div
+            className="w-12 h-12 rounded-[1.5rem] flex items-center justify-center shadow-md mb-2 bg-white border border-slate-100 transition-all hover:scale-105"
+            style={{ color: COLORS[category] || '#1A75BB' }}
+          >
+            {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 24 })}
+          </div>
+          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
+          <div className="flex items-center gap-1.5 justify-center mb-4">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+            </p>
+          </div>
+          <div className="w-full lg:max-w-2xl xl:max-w-3xl">
+            {renderCategoryFilterBar()}
+          </div>
         </div>
       )}
 
@@ -2093,7 +2090,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           <span>/</span>
           <span className="text-slate-500">{getCategoryTitle(category)}</span>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-4 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95 transition-all"
         >
@@ -2110,7 +2107,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
               <span>/</span>
               <span className="text-slate-500">{getCategoryTitle(category)}</span>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="flex items-center gap-1.5 hover:text-slate-600 transition-colors py-2 px-3 rounded-xl border border-slate-100 bg-white shadow-sm active:scale-95"
             >
@@ -2120,24 +2117,24 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
           {/* Category Header (Only when no featured slider is present) */}
           <div className="flex items-center gap-5 lg:flex-col lg:items-center lg:mx-auto text-left lg:text-center mb-8">
-             <div 
-               className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105"
-               style={{ backgroundColor: COLORS[category] || '#1A75BB' }}
-             >
-               {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-             </div>
-             <div className="lg:flex lg:flex-col lg:items-center">
-               <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
-               <div className="flex items-center gap-2 lg:justify-center">
-                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                   {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-                 </p>
-               </div>
-               <div className="lg:hidden">
-                 {renderFollowLikeButtons(`cat_${category}`)}
-               </div>
-             </div>
+            <div
+              className="w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105"
+              style={{ backgroundColor: COLORS[category] || '#1A75BB' }}
+            >
+              {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+            </div>
+            <div className="lg:flex lg:flex-col lg:items-center">
+              <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter leading-none mb-1">{getCategoryTitle(category)}</h2>
+              <div className="flex items-center gap-2 lg:justify-center">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+                </p>
+              </div>
+              <div className="lg:hidden">
+                {renderFollowLikeButtons(`cat_${category}`)}
+              </div>
+            </div>
           </div>
 
           {renderCategoryFilterBar()}
@@ -2151,9 +2148,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         {/* Desktop Popular Title */}
         <div className="hidden lg:flex items-center gap-3 mb-8">
           <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-            {category === 'restaurants' ? 'Restaurantes Populares' : 
-             category === 'trails' ? 'Trilhos Populares' :
-             category === 'activities' ? 'Experiências Populares' : 'Mais Reservados'}
+            {category === 'restaurants' ? 'Restaurantes Populares' :
+              category === 'trails' ? 'Trilhos Populares' :
+                category === 'activities' ? 'Experiências Populares' : 'Mais Reservados'}
           </h3>
           <span className="text-amber-500 font-black text-sm tracking-wide">⭐⭐⭐⭐⭐</span>
         </div>
@@ -2163,7 +2160,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {/* Modals */}
       {selectedRestaurant && (
-        <RestaurantModal 
+        <RestaurantModal
           isOpen={!!selectedRestaurant}
           onClose={() => setSelectedRestaurant(null)}
           restaurant={selectedRestaurant as Restaurant}
@@ -2239,133 +2236,133 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
 
       {showBusOptionsModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowBusOptionsModal(false)}></div>
-           <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-              <div className="bg-blue-600 p-8 text-white flex justify-between items-start">
-                 <div>
-                    <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight">Escolha o Bilhete</h3>
-                    <p className="text-blue-100 text-sm font-medium mt-1">Viagem de {busOrigin} para {busDestination}</p>
-                 </div>
-                 <button onClick={() => setShowBusOptionsModal(false)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all">
-                    <X size={24} />
-                 </button>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowBusOptionsModal(false)}></div>
+          <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="bg-blue-600 p-8 text-white flex justify-between items-start">
+              <div>
+                <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight">Escolha o Bilhete</h3>
+                <p className="text-blue-100 text-sm font-medium mt-1">Viagem de {busOrigin} para {busDestination}</p>
               </div>
-              
-              <div className="p-8 overflow-y-auto space-y-6">
-                 {busModalStep === 'options' && (
-                    <div className="grid grid-cols-1 gap-4">
-                       {[
-                         { id: 'single', title: 'Bilhete Simples', desc: 'Apenas uma viagem', price: '2.50€', icon: <Ticket /> },
-                         { id: 'return', title: 'Bilhete Ida e Volta', desc: 'Válido por 24h', price: '4.50€', icon: <ArrowRight className="rotate-90" /> },
-                         { id: 'tourist', title: 'Passe Turístico', desc: 'Viagens ilimitadas (3 dias)', price: '15.00€', icon: <Camera /> }
-                       ].map(opt => (
-                         <button 
-                           key={opt.id}
-                           onClick={() => { setSelectedTicketType(opt.id); setBusModalStep('schedules'); }}
-                           className="flex items-center gap-6 p-6 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-white hover:shadow-xl hover:border-blue-500 transition-all group"
-                         >
-                           <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                              {opt.icon}
-                           </div>
-                           <div className="flex-1 text-left">
-                              <h4 className="font-black text-slate-800 uppercase tracking-tight">{opt.title}</h4>
-                              <p className="text-xs text-slate-500 font-medium">{opt.desc}</p>
-                           </div>
-                           <span className="text-lg font-black text-blue-600">{opt.price}</span>
-                         </button>
-                       ))}
-                    </div>
-                 )}
+              <button onClick={() => setShowBusOptionsModal(false)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all">
+                <X size={24} />
+              </button>
+            </div>
 
-                 {busModalStep === 'schedules' && (
-                    <div className="space-y-6">
-                       {/* Day Selection Tabs */}
-                       <div className="flex bg-slate-100 p-1 rounded-2xl">
-                          {(['weekdays', 'saturdays', 'sundays'] as const).map(day => (
-                            <button
-                              key={day}
-                              onClick={() => setSelectedDayType(day)}
-                              className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all
+            <div className="p-8 overflow-y-auto space-y-6">
+              {busModalStep === 'options' && (
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { id: 'single', title: 'Bilhete Simples', desc: 'Apenas uma viagem', price: '2.50€', icon: <Ticket /> },
+                    { id: 'return', title: 'Bilhete Ida e Volta', desc: 'Válido por 24h', price: '4.50€', icon: <ArrowRight className="rotate-90" /> },
+                    { id: 'tourist', title: 'Passe Turístico', desc: 'Viagens ilimitadas (3 dias)', price: '15.00€', icon: <Camera /> }
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => { setSelectedTicketType(opt.id); setBusModalStep('schedules'); }}
+                      className="flex items-center gap-6 p-6 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-white hover:shadow-xl hover:border-blue-500 transition-all group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                        {opt.icon}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <h4 className="font-black text-slate-800 uppercase tracking-tight">{opt.title}</h4>
+                        <p className="text-xs text-slate-500 font-medium">{opt.desc}</p>
+                      </div>
+                      <span className="text-lg font-black text-blue-600">{opt.price}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {busModalStep === 'schedules' && (
+                <div className="space-y-6">
+                  {/* Day Selection Tabs */}
+                  <div className="flex bg-slate-100 p-1 rounded-2xl">
+                    {(['weekdays', 'saturdays', 'sundays'] as const).map(day => (
+                      <button
+                        key={day}
+                        onClick={() => setSelectedDayType(day)}
+                        className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all
                                 ${selectedDayType === day ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                              {day === 'weekdays' ? 'Dias Úteis' : day === 'saturdays' ? 'Sábados' : 'Domingos'}
-                            </button>
-                          ))}
-                       </div>
+                      >
+                        {day === 'weekdays' ? 'Dias Úteis' : day === 'saturdays' ? 'Sábados' : 'Domingos'}
+                      </button>
+                    ))}
+                  </div>
 
-                       <div className="space-y-3">
-                          {(() => {
-                            const currentIsland = targetIsland || 'PDL';
-                            const matches = busSchedules.filter(s => {
-                               if (s.island !== currentIsland) return false;
-                               if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
-                               const sOrigin = s.origin.toLowerCase();
-                               const sDest = s.destination.toLowerCase();
-                               const bOrigin = busOrigin.toLowerCase();
-                               const bDest = busDestination.toLowerCase();
-                               return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) && 
-                                      (sDest.includes(bDest) || bDest.includes(sDest));
-                            });
+                  <div className="space-y-3">
+                    {(() => {
+                      const currentIsland = targetIsland || 'PDL';
+                      const matches = busSchedules.filter(s => {
+                        if (s.island !== currentIsland) return false;
+                        if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
+                        const sOrigin = s.origin.toLowerCase();
+                        const sDest = s.destination.toLowerCase();
+                        const bOrigin = busOrigin.toLowerCase();
+                        const bDest = busDestination.toLowerCase();
+                        return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) &&
+                          (sDest.includes(bDest) || bDest.includes(sDest));
+                      });
 
-                            if (matches.length === 0) {
-                              return <p className="text-center py-8 text-slate-400 text-xs">Nenhum horário encontrado para esta rota.</p>;
-                            }
+                      if (matches.length === 0) {
+                        return <p className="text-center py-8 text-slate-400 text-xs">Nenhum horário encontrado para esta rota.</p>;
+                      }
 
-                            return matches.flatMap(s => {
-                               const times = s.schedule?.[selectedDayType] || (selectedDayType === 'weekdays' ? s.times : []);
-                               return times.map((time, tIdx) => ({
-                                 time,
-                                 company: s.company,
-                                 id: `${s.id}-${tIdx}`
-                               }));
-                            }).sort((a, b) => a.time.localeCompare(b.time)).map((s, idx) => (
-                              <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all">
-                                 <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-white rounded-lg shadow-sm"><Clock className="text-blue-600 w-4 h-4" /></div>
-                                    <div>
-                                       <span className="text-lg font-black text-slate-800 leading-none">{s.time}</span>
-                                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.company}</p>
-                                    </div>
-                                 </div>
-                                 <button 
-                                   onClick={() => setBusModalStep('payment')}
-                                   className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
-                                 >
-                                    Selecionar
-                                 </button>
-                              </div>
-                            ));
-                          })()}
-                       </div>
-                    </div>
-                  )}
+                      return matches.flatMap(s => {
+                        const times = s.schedule?.[selectedDayType] || (selectedDayType === 'weekdays' ? s.times : []);
+                        return times.map((time, tIdx) => ({
+                          time,
+                          company: s.company,
+                          id: `${s.id}-${tIdx}`
+                        }));
+                      }).sort((a, b) => a.time.localeCompare(b.time)).map((s, idx) => (
+                        <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all">
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-white rounded-lg shadow-sm"><Clock className="text-blue-600 w-4 h-4" /></div>
+                            <div>
+                              <span className="text-lg font-black text-slate-800 leading-none">{s.time}</span>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.company}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setBusModalStep('payment')}
+                            className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+                          >
+                            Selecionar
+                          </button>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
 
-                 {busModalStep === 'payment' && (
-                    <div className="text-center space-y-8 py-6">
-                       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                          <CreditCard size={40} />
-                       </div>
-                       <div>
-                          <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-tight">Confirmar Pagamento</h4>
-                          <p className="text-slate-500 font-medium mt-2">O valor será debitado dos seus créditos AzoresToyou.</p>
-                       </div>
-                       <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
-                          <span className="text-slate-400 font-bold uppercase text-xs tracking-widest">Total a pagar</span>
-                          <span className="text-2xl font-black text-slate-900">2.50€</span>
-                       </div>
-                       <button 
-                         onClick={() => {
-                           alert('Bilhete emitido com sucesso! Podes encontrá-lo na tua área de reservas.');
-                           setShowBusOptionsModal(false);
-                         }}
-                         className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all"
-                       >
-                          Confirmar Agora
-                       </button>
-                    </div>
-                 )}
-              </div>
-           </div>
+              {busModalStep === 'payment' && (
+                <div className="text-center space-y-8 py-6">
+                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                    <CreditCard size={40} />
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter leading-tight">Confirmar Pagamento</h4>
+                    <p className="text-slate-500 font-medium mt-2">O valor será debitado dos seus créditos AzoresToyou.</p>
+                  </div>
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                    <span className="text-slate-400 font-bold uppercase text-xs tracking-widest">Total a pagar</span>
+                    <span className="text-2xl font-black text-slate-900">2.50€</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      alert('Bilhete emitido com sucesso! Podes encontrá-lo na tua área de reservas.');
+                      setShowBusOptionsModal(false);
+                    }}
+                    className="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all"
+                  >
+                    Confirmar Agora
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

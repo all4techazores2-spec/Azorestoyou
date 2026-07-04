@@ -34,22 +34,22 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-  
+
   const [showGuidePrompt, setShowGuidePrompt] = useState(false);
   const [showGuideList, setShowGuideList] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [isCheckingGuide, setIsCheckingGuide] = useState(false);
   const [guideError, setGuideError] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   // Auto-slide for gallery
   useEffect(() => {
     if (!trail.gallery || trail.gallery.length <= 1 || bookingStep !== 'main') return;
-    
+
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % trail.gallery!.length);
     }, 4000);
-    
+
     return () => clearInterval(timer);
   }, [trail.gallery, bookingStep]);
 
@@ -59,7 +59,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-  
+
   const timeSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "14:30", "15:00", "15:30", "16:00"];
 
   const getDifficultyColor = (difficulty?: string) => {
@@ -94,7 +94,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
         onClose();
         return;
       }
-      
+
       const query = `${trail.title}, ${trail.island}, Azores`;
       const url = trail.mapUrl || `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
       if (onShowMap) {
@@ -112,7 +112,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
 
     setTimeout(() => {
       setIsCheckingGuide(false);
-      
+
       if (guideId === 'G1' || Math.random() > 0.7) {
         setGuideError(true);
       } else {
@@ -138,12 +138,12 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
     }
 
     setIsCheckingGuide(true);
-    
+
     // Detect API base URL (same logic as App.tsx)
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
       ? `http://${window.location.hostname}:3001`
-      : 'https://azorestoyou-1.onrender.com';
-    
+      : 'https://azorestoyou-o5yx.onrender.com';
+
     setTimeout(async () => {
       // 1. Mostrar sucesso imediatamente
       setIsCheckingGuide(false);
@@ -189,7 +189,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
             console.error("Erro ao persistir no servidor:", fetchErr);
           }
         }
-        
+
         // 3. Sincronizar com o pai (App.tsx) para atualizar estado local
         onReserveSuccess?.(resData, trail.title, trail.id);
       } catch (error) {
@@ -201,15 +201,15 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
           className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
         />
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -220,33 +220,33 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
               {/* Image Slider / Main Photo */}
               <div className="w-full h-full relative overflow-hidden">
                 <AnimatePresence mode="wait">
-                  <motion.img 
+                  <motion.img
                     key={trail.gallery && trail.gallery.length > 0 ? currentSlide : 'main'}
-                    src={trail.gallery && trail.gallery.length > 0 ? trail.gallery[currentSlide] : trail.image} 
+                    src={trail.gallery && trail.gallery.length > 0 ? trail.gallery[currentSlide] : trail.image}
                     initial={{ opacity: 0, scale: 1.1 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.5 }}
-                    className="w-full h-full object-cover" 
+                    className="w-full h-full object-cover"
                   />
                 </AnimatePresence>
-                
+
                 {/* Navigation Arrows for Gallery */}
                 {trail.gallery && trail.gallery.length > 1 && (
                   <>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev - 1 + trail.gallery!.length) % trail.gallery!.length); }}
                       className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-black/50"
                     >
                       <ChevronLeft size={20} />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev + 1) % trail.gallery!.length); }}
                       className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-black/50"
                     >
                       <ChevronRight size={20} />
                     </button>
-                    
+
                     {/* Dots Indicators */}
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                       {trail.gallery.map((_, i) => (
@@ -258,7 +258,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
               </div>
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-              
+
               <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-white text-slate-800 hover:bg-blue-600 hover:text-white rounded-full transition-all shadow-lg border border-slate-100 group">
                 <X size={20} className="group-active:scale-90 transition-transform" />
               </button>
@@ -285,7 +285,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
           {bookingStep !== 'main' && bookingStep !== 'success' && (
             <div className="p-6 border-b border-slate-100 shrink-0 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => {
                     if (bookingStep === 'datetime') setBookingStep('main');
                     else if (bookingStep === 'details') setBookingStep('datetime');
@@ -298,7 +298,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                 <div>
                   <h3 className="font-bold text-slate-800">Reserva: {trail.title}</h3>
                   <div className="flex gap-1 mt-1">
-                    {[1,2,3].map(i => (
+                    {[1, 2, 3].map(i => (
                       <div key={i} className={`h-1 w-8 rounded-full ${((bookingStep === 'datetime' && i >= 1) || (bookingStep === 'details' && i >= 2) || (bookingStep === 'payment' && i >= 3)) ? 'bg-pink-500' : 'bg-slate-200'}`} />
                     ))}
                   </div>
@@ -310,9 +310,9 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
 
           <div className="flex-1 overflow-y-auto">
             {bookingStep === 'success' ? (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 className="h-full flex flex-col items-center justify-center p-8 text-center min-h-[400px]"
               >
                 <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-8 shadow-sm">
@@ -321,11 +321,11 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                 <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Reserva Enviada!</h3>
                 <p className="text-slate-500 mb-10 max-w-sm leading-relaxed font-medium">
                   A sua solicitação para <strong className="text-slate-800">{trail.title}</strong> foi enviada com sucesso.
-                  <br/><br/>
+                  <br /><br />
                   Pode acompanhar o estado na secção <strong className="text-blue-600">"Os Meus Momentos"</strong>.
                 </p>
-                <button 
-                  onClick={onClose} 
+                <button
+                  onClick={onClose}
                   className="w-full py-5 bg-slate-900 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-xl hover:bg-black transition-all active:scale-[0.98]"
                 >
                   Concluir e Voltar
@@ -376,26 +376,26 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="mt-4 flex flex-col gap-2">
-                         {trail.type !== 'trail' && trail.phone && (
-                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400"/></div>
-                               <span className="text-xs font-bold">{trail.phone}</span>
-                            </div>
-                         )}
-                         {trail.type !== 'trail' && trail.email && (
-                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400"/></div>
-                               <span className="text-xs font-bold">{trail.email}</span>
-                            </div>
-                         )}
-                         {trail.address && (
-                            <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                               <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400"/></div>
-                               <span className="text-xs font-bold truncate">{trail.address}</span>
-                            </div>
-                         )}
+                        {trail.type !== 'trail' && trail.phone && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm"><Phone className="w-3.5 h-3.5 text-slate-400" /></div>
+                            <span className="text-xs font-bold">{trail.phone}</span>
+                          </div>
+                        )}
+                        {trail.type !== 'trail' && trail.email && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm"><Mail className="w-3.5 h-3.5 text-slate-400" /></div>
+                            <span className="text-xs font-bold">{trail.email}</span>
+                          </div>
+                        )}
+                        {trail.address && (
+                          <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <div className="p-1.5 bg-white rounded-lg shadow-sm"><MapPin className="w-3.5 h-3.5 text-slate-400" /></div>
+                            <span className="text-xs font-bold truncate">{trail.address}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -471,11 +471,10 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <button
                                   onClick={() => setIsLiveTracking(!isLiveTracking)}
-                                  className={`w-full py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                                    isLiveTracking
+                                  className={`w-full py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${isLiveTracking
                                       ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
                                       : 'bg-slate-900 hover:bg-black text-white'
-                                  }`}
+                                    }`}
                                 >
                                   <Navigation className={`w-4 h-4 ${isLiveTracking ? 'animate-bounce' : ''}`} />
                                   {isLiveTracking ? 'Parar Trilho' : 'Iniciar Trilho'}
@@ -514,7 +513,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                           <Check className="w-5 h-5" /> Fazer Reserva
                         </button>
                       )}
-                      <button 
+                      <button
                         onClick={() => {
                           if (trail.type === 'trail' && onShowInteractiveMap) {
                             onShowInteractiveMap(trail.id);
@@ -531,7 +530,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                           } else {
                             handleDirectionsClick();
                           }
-                        }} 
+                        }}
                         className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all ${(trail.type !== 'trail' && trail.isPaid) ? 'bg-slate-800 text-white hover:bg-slate-900' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
                       >
                         <Navigation className="w-5 h-5" /> Obter Direções
@@ -546,19 +545,19 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="font-bold text-slate-800 flex items-center gap-2"><Calendar className="w-5 h-5 text-pink-500" /> Selecione a Data</h4>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setCalendarMonth(new Date(calendarMonth.setMonth(calendarMonth.getMonth() - 1)))} className="p-1 hover:bg-slate-100 rounded-full"><ChevronLeft size={16}/></button>
+                          <button onClick={() => setCalendarMonth(new Date(calendarMonth.setMonth(calendarMonth.getMonth() - 1)))} className="p-1 hover:bg-slate-100 rounded-full"><ChevronLeft size={16} /></button>
                           <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{monthNames[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
-                          <button onClick={() => setCalendarMonth(new Date(calendarMonth.setMonth(calendarMonth.getMonth() + 1)))} className="p-1 hover:bg-slate-100 rounded-full"><ChevronRight size={16}/></button>
+                          <button onClick={() => setCalendarMonth(new Date(calendarMonth.setMonth(calendarMonth.getMonth() + 1)))} className="p-1 hover:bg-slate-100 rounded-full"><ChevronRight size={16} /></button>
                         </div>
                       </div>
                       <div className="grid grid-cols-7 gap-1">
-                        {["D","S","T","Q","Q","S","S"].map(d => <div key={d} className="text-[10px] font-black text-slate-400 text-center py-2">{d}</div>)}
+                        {["D", "S", "T", "Q", "Q", "S", "S"].map(d => <div key={d} className="text-[10px] font-black text-slate-400 text-center py-2">{d}</div>)}
                         {Array.from({ length: firstDayOfMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={`empty-${i}`} />)}
                         {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
                           const day = i + 1;
                           const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
                           const isSelected = selectedDate?.toDateString() === date.toDateString();
-                          const isPast = date < new Date(new Date().setHours(0,0,0,0));
+                          const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
                           return (
                             <button key={day} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-10 rounded-xl text-sm font-bold transition-all ${isSelected ? 'bg-pink-500 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-pink-50'}`}>
                               {day}
@@ -618,23 +617,23 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                     <h4 className="font-bold text-slate-800 flex items-center gap-2"><Wallet className="w-5 h-5 text-pink-500" /> Pagamento</h4>
                     <div className="grid grid-cols-1 gap-3">
                       <button onClick={() => setPaymentType('presencial')} className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all ${paymentType === 'presencial' ? 'border-pink-500 bg-pink-50' : 'border-slate-100 hover:border-slate-200'}`}>
-                        <div className={`p-3 rounded-xl ${paymentType === 'presencial' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Wallet size={24}/></div>
+                        <div className={`p-3 rounded-xl ${paymentType === 'presencial' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Wallet size={24} /></div>
                         <div className="text-left"><p className="font-bold text-slate-800">Pagamento no Local</p><p className="text-xs text-slate-500">Pague quando chegar</p></div>
                       </button>
                       <button onClick={() => setPaymentType('mbway')} className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all ${paymentType === 'mbway' ? 'border-pink-500 bg-pink-50' : 'border-slate-100 hover:border-slate-200'}`}>
-                        <div className={`p-3 rounded-xl ${paymentType === 'mbway' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Smartphone size={24}/></div>
+                        <div className={`p-3 rounded-xl ${paymentType === 'mbway' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Smartphone size={24} /></div>
                         <div className="text-left"><p className="font-bold text-slate-800">MBWay</p><p className="text-xs text-slate-500">Pagamento instantâneo</p></div>
                       </button>
                       <button onClick={() => setPaymentType('transfer')} className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all ${paymentType === 'transfer' ? 'border-pink-500 bg-pink-50' : 'border-slate-100 hover:border-slate-200'}`}>
-                        <div className={`p-3 rounded-xl ${paymentType === 'transfer' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><CreditCard size={24}/></div>
+                        <div className={`p-3 rounded-xl ${paymentType === 'transfer' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><CreditCard size={24} /></div>
                         <div className="text-left"><p className="font-bold text-slate-800">Cartão / Transferência</p><p className="text-xs text-slate-500">Visa, Mastercard</p></div>
                       </button>
-                      <button 
+                      <button
                         disabled={trail.isPaid && userCredits < (trail.price || 0)}
-                        onClick={() => setPaymentType('points')} 
+                        onClick={() => setPaymentType('points')}
                         className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all ${paymentType === 'points' ? 'border-pink-500 bg-pink-50' : 'border-slate-100 hover:border-slate-200'} ${trail.isPaid && userCredits < (trail.price || 0) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                       >
-                        <div className={`p-3 rounded-xl ${paymentType === 'points' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Star size={24}/></div>
+                        <div className={`p-3 rounded-xl ${paymentType === 'points' ? 'bg-pink-100 text-pink-600' : 'bg-slate-50 text-slate-400'}`}><Star size={24} /></div>
                         <div className="text-left">
                           <p className="font-bold text-slate-800">Créditos Azores4you</p>
                           <p className="text-xs text-slate-500">Saldo: {userCredits} créditos</p>
@@ -736,17 +735,17 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
                         <p className="text-xs text-slate-400 max-w-xs">A carregar o percurso detalhado para {trail.title}...</p>
                       </div>
                       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 450">
-                        <path 
-                          d="M 100 350 Q 200 100 400 225 T 700 100" 
-                          fill="none" 
-                          stroke="#2563eb" 
-                          strokeWidth="4" 
+                        <path
+                          d="M 100 350 Q 200 100 400 225 T 700 100"
+                          fill="none"
+                          stroke="#2563eb"
+                          strokeWidth="4"
                           strokeDasharray="8 8"
                           className="animate-[dash_20s_linear_infinite]"
                         />
                       </svg>
                     </div>
-                    
+
                     <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
                       <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                       <p className="text-xs text-blue-700 leading-relaxed">
@@ -762,7 +761,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
           {/* Loading Overlay (Internal to Panel) */}
           <AnimatePresence>
             {isCheckingGuide && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

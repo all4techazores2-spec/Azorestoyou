@@ -10,7 +10,7 @@ interface BarberProDashboardProps {
 
 const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLogout, onUpdateBusiness }) => {
   const [activeTab, setActiveTab] = useState<'analytics' | 'appointments' | 'services' | 'reviews' | 'room'>('analytics');
-  
+
   // Chairs room module states
   const [chairs, setChairs] = useState<any[]>([]);
   const [chairBlocks, setChairBlocks] = useState<any[]>([]);
@@ -39,10 +39,10 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
     }
     const slotStart = resv.time;
     const slotEnd = minutesToTime(timeToMinutes(slotStart) + duration);
-    
+
     return chairs.filter(chair => {
       if (!chair.isActive) return false;
-      const blocks = chairBlocks.filter(b => 
+      const blocks = chairBlocks.filter(b =>
         (b.chairId === chair.id || b.chairId === chair.chairId) &&
         b.date === resv.date &&
         b.status !== 'cancelled' &&
@@ -60,7 +60,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
   const confirmReservationWithChair = async (resv: any, chairId: string) => {
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'https://azorestoyou-1.onrender.com';
+      : 'https://azorestoyou-o5yx.onrender.com';
     try {
       const res = await fetch(`${API_BASE_URL}/api/reservations/${resv.id || resv._id}`, {
         method: 'PUT',
@@ -72,8 +72,8 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
         throw new Error(errData.error || 'Erro ao confirmar agendamento.');
       }
       const updatedRes = await res.json();
-      
-      const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+      const updatedReservations = (business.reservations || []).map((rv: any) =>
         (rv.id === resv.id || rv._id === resv._id) ? { ...rv, status: 'accepted', chairId, chairName: updatedRes.chairName } : rv
       );
       onUpdateBusiness({
@@ -93,7 +93,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-1.onrender.com';
+        : 'https://azorestoyou-o5yx.onrender.com';
       const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${business.id}`);
       if (resChairs.ok) {
         const dataChairs = await resChairs.json();
@@ -139,8 +139,8 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
           <span className="bg-white/5 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl">
             Modo Premium Ativo
           </span>
-          <button 
-            onClick={onLogout} 
+          <button
+            onClick={onLogout}
             className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-red-500/20 active:scale-95"
           >
             <LogOut className="w-4 h-4" /> Sair
@@ -209,53 +209,48 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
         {/* Tab Switching */}
         <div className="flex gap-2 border-b border-white/5 pb-px">
-          <button 
+          <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === 'analytics' 
-                ? 'border-indigo-500 text-white' 
+            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${activeTab === 'analytics'
+                ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             📊 Estatísticas & Faturação
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('appointments')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === 'appointments' 
-                ? 'border-indigo-500 text-white' 
+            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${activeTab === 'appointments'
+                ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             📅 Agenda Avançada
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('services')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === 'services' 
-                ? 'border-indigo-500 text-white' 
+            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${activeTab === 'services'
+                ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             ✂️ Gestão de Serviços
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('reviews')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === 'reviews' 
-                ? 'border-indigo-500 text-white' 
+            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${activeTab === 'reviews'
+                ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             ⭐ Feedback de Clientes
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('room')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${
-              activeTab === 'room' 
-                ? 'border-indigo-500 text-white' 
+            className={`px-6 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 ${activeTab === 'room'
+                ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             👁️ Ver Sala
           </button>
@@ -316,7 +311,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                       const updateStatus = async (newStatus: string) => {
                         const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                           ? 'http://localhost:3001'
-                          : 'https://azorestoyou-1.onrender.com';
+                          : 'https://azorestoyou-o5yx.onrender.com';
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/reservations/${r.id || r._id}`, {
                             method: 'PUT',
@@ -324,8 +319,8 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                             body: JSON.stringify({ status: newStatus })
                           });
                           if (!res.ok) throw new Error('Falha ao atualizar estado.');
-                          
-                          const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+                          const updatedReservations = (business.reservations || []).map((rv: any) =>
                             (rv.id === r.id || rv._id === r._id) ? { ...rv, status: newStatus } : rv
                           );
                           onUpdateBusiness({
@@ -348,21 +343,20 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                           </td>
                           <td className="py-4 px-4 text-xs font-black text-emerald-400">€15.00</td>
                           <td className="py-4 px-4">
-                            <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${
-                              r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                              r.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                              r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                              'bg-slate-800 text-slate-400 border-slate-700'
-                            }`}>
+                            <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                r.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                  r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                    'bg-slate-800 text-slate-400 border-slate-700'
+                              }`}>
                               {r.status === 'accepted' ? 'Confirmado' :
-                               r.status === 'pending' ? 'Pendente' : r.status === 'rejected' ? 'Recusado' : r.status}
+                                r.status === 'pending' ? 'Pendente' : r.status === 'rejected' ? 'Recusado' : r.status}
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
                             <div className="flex justify-end gap-2">
                               {r.status === 'pending' && (
                                 <>
-                                  <button 
+                                  <button
                                     onClick={() => {
                                       const avChairs = getAvailableChairsForResv(r);
                                       if (chairs.length === 1 && avChairs.length === 1) {
@@ -375,7 +369,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                                   >
                                     Confirmar
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={() => updateStatus('rejected')}
                                     className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
                                   >
@@ -384,7 +378,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                                 </>
                               )}
                               {r.status === 'accepted' && (
-                                <button 
+                                <button
                                   onClick={() => updateStatus('cancelled')}
                                   className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
                                 >
@@ -461,7 +455,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 <h2 className="text-base font-black uppercase tracking-wider text-purple-400">Ver Sala (Cadeiras)</h2>
                 <p className="text-xs text-slate-400 mt-1">Gerencie a ocupação em tempo real e associe cadeiras ao POS e Agenda.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAddChair(true)}
                 className="bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 text-purple-400 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all"
               >
@@ -473,20 +467,20 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
               <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-purple-400">Nova Cadeira de Barbearia</h3>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="Nome da Cadeira (Ex: Cadeira Pro 1)" 
-                    value={newChairName} 
+                  <input
+                    type="text"
+                    placeholder="Nome da Cadeira (Ex: Cadeira Pro 1)"
+                    value={newChairName}
                     onChange={(e) => setNewChairName(e.target.value)}
                     className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500"
                   />
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={async () => {
                         if (!newChairName.trim()) return;
                         const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                           ? 'http://localhost:3001'
-                          : 'https://azorestoyou-1.onrender.com';
+                          : 'https://azorestoyou-o5yx.onrender.com';
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/chairs`, {
                             method: 'POST',
@@ -506,7 +500,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                     >
                       Gravar
                     </button>
-                    <button 
+                    <button
                       onClick={() => setShowAddChair(false)}
                       className="bg-slate-850 hover:bg-slate-800 text-slate-300 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider"
                     >
@@ -532,7 +526,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 const handleStatusUpdate = async (status: string) => {
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-1.onrender.com';
+                    : 'https://azorestoyou-o5yx.onrender.com';
                   try {
                     if (status === 'blocked' || status === 'cleaning') {
                       const date = new Date().toISOString().split('T')[0];
@@ -566,7 +560,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!confirm('Deseja mesmo eliminar esta cadeira?')) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-1.onrender.com';
+                    : 'https://azorestoyou-o5yx.onrender.com';
                   try {
                     const res = await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
                       method: 'DELETE'
@@ -583,22 +577,22 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!chair.currentAppointmentId) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-1.onrender.com';
+                    : 'https://azorestoyou-o5yx.onrender.com';
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ status: 'in_service' })
                     });
-                    
-                    const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+                    const updatedReservations = (business.reservations || []).map((rv: any) =>
                       (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'in_service' } : rv
                     );
                     onUpdateBusiness({
                       ...business,
                       reservations: updatedReservations
                     });
-                    
+
                     loadChairsData();
                     alert('Atendimento iniciado com sucesso!');
                   } catch (err) {
@@ -610,22 +604,22 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!chair.currentAppointmentId) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-1.onrender.com';
+                    : 'https://azorestoyou-o5yx.onrender.com';
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ status: 'completed' })
                     });
-                    
-                    const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+                    const updatedReservations = (business.reservations || []).map((rv: any) =>
                       (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'completed' } : rv
                     );
                     onUpdateBusiness({
                       ...business,
                       reservations: updatedReservations
                     });
-                    
+
                     loadChairsData();
                     alert('Cadeira libertada.');
                   } catch (err) {
@@ -634,8 +628,8 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 };
 
                 return (
-                  <div 
-                    key={chair.id} 
+                  <div
+                    key={chair.id}
                     className="bg-slate-900 border border-white/5 rounded-3xl p-6 flex flex-col justify-between hover:scale-[1.02] transition-all hover:shadow-[0_0_15px_rgba(139,92,246,0.05)]"
                   >
                     <div className="space-y-4">
@@ -649,12 +643,12 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                             <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Nº {chair.chairNumber}</p>
                           </div>
                         </div>
-                        <span 
-                          className="text-[8px] font-black uppercase px-2.5 py-1 rounded-full border" 
-                          style={{ 
-                            color: statusColor, 
-                            borderColor: `${statusColor}33`, 
-                            backgroundColor: `${statusColor}10` 
+                        <span
+                          className="text-[8px] font-black uppercase px-2.5 py-1 rounded-full border"
+                          style={{
+                            color: statusColor,
+                            borderColor: `${statusColor}33`,
+                            backgroundColor: `${statusColor}10`
                           }}
                         >
                           {chair.status === 'available' ? 'Disponível' : chair.status}
@@ -681,7 +675,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
                     <div className="mt-6 flex flex-col gap-2">
                       {chair.status === 'Reservada' && (
-                        <button 
+                        <button
                           onClick={handleStartService}
                           className="w-full py-2.5 bg-purple-650 hover:bg-purple-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
                         >
@@ -690,7 +684,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                       )}
 
                       {chair.status === 'Em Atendimento' && (
-                        <button 
+                        <button
                           onClick={handleReleaseChair}
                           className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-750 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
                         >
@@ -700,19 +694,19 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
                       {chair.status === 'available' && (
                         <div className="grid grid-cols-3 gap-1.5">
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate('cleaning')}
                             className="py-2 bg-slate-950 border border-white/5 hover:bg-slate-850 text-slate-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                           >
                             Limpeza
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleStatusUpdate('blocked')}
                             className="py-2 bg-slate-950 border border-white/5 hover:bg-slate-850 text-slate-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                           >
                             Bloquear
                           </button>
-                          <button 
+                          <button
                             onClick={handleDeleteChair}
                             className="py-2 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                           >
@@ -722,11 +716,11 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                       )}
 
                       {chair.status !== 'available' && chair.status !== 'Reservada' && chair.status !== 'Em Atendimento' && (
-                        <button 
+                        <button
                           onClick={async () => {
                             const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                               ? 'http://localhost:3001'
-                              : 'https://azorestoyou-1.onrender.com';
+                              : 'https://azorestoyou-o5yx.onrender.com';
                             try {
                               const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
                               if (activeB) {
@@ -767,7 +761,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 <h3 className="text-sm font-black uppercase tracking-wider text-purple-400">Atribuir Cadeira</h3>
                 <p className="text-[9px] text-slate-400 mt-0.5">Selecione uma cadeira disponível para a reserva de {showAssignModal.customerName}.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAssignModal(null)}
                 className="w-8 h-8 rounded-full bg-slate-950 border border-white/10 text-white flex items-center justify-center hover:bg-slate-800 transition-all"
               >
@@ -783,7 +777,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {getAvailableChairsForResv(showAssignModal).map((chair) => (
-                <div 
+                <div
                   key={chair.id}
                   onClick={() => confirmReservationWithChair(showAssignModal, chair.id)}
                   className="p-3 bg-slate-950 border border-white/5 hover:border-purple-500 rounded-xl flex justify-between items-center cursor-pointer transition-all hover:bg-slate-900"

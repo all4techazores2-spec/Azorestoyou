@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Restaurant, Service } from '../types';
-import { 
-  LogOut, Calendar, Users, Scissors, Clock, CheckCircle, 
-  ShoppingBag, Image as ImageIcon, Star, Settings, Info, 
+import {
+  LogOut, Calendar, Users, Scissors, Clock, CheckCircle,
+  ShoppingBag, Image as ImageIcon, Star, Settings, Info,
   Menu, X, Bell, Plus, Upload, Trash2, Check, DollarSign, Edit, Eye, ChevronDown,
   Home, HelpCircle, User, CreditCard
 } from 'lucide-react';
@@ -16,7 +16,7 @@ interface BarberNormalDashboardProps {
 const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business, onUpdateBusiness, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'services' | 'pos' | 'gallery' | 'reviews' | 'profile' | 'settings' | 'help' | 'room'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  
+
   // Chairs room module states
   const [chairs, setChairs] = useState<any[]>([]);
   const [chairBlocks, setChairBlocks] = useState<any[]>([]);
@@ -29,7 +29,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-1.onrender.com';
+        : 'https://azorestoyou-o5yx.onrender.com';
       const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${business.id}`);
       if (resChairs.ok) {
         const dataChairs = await resChairs.json();
@@ -50,7 +50,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       loadChairsData();
     }
   }, [business.id, activeTab]);
-  
+
   // Local editable states
   const [description, setDescription] = useState(business.description || 'Barbearia premium com serviços de corte, barba e estética.');
   const [phone, setPhone] = useState(business.phone || '+351 912 345 678');
@@ -71,7 +71,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   // New features states
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
-  
+
   // Services states
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingService, setEditingService] = useState<any | null>(null);
@@ -168,10 +168,10 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
     const slotStart = resv.time;
     const slotEnd = minutesToTime(timeToMinutes(slotStart) + duration);
-    
+
     return chairs.filter(chair => {
       if (!chair.isActive) return false;
-      const blocks = chairBlocks.filter(b => 
+      const blocks = chairBlocks.filter(b =>
         (b.chairId === chair.id || b.chairId === chair.chairId) &&
         b.date === resv.date &&
         b.status !== 'cancelled' &&
@@ -189,7 +189,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const confirmReservationWithChair = async (resv: any, chairId: string) => {
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'https://azorestoyou-1.onrender.com';
+      : 'https://azorestoyou-o5yx.onrender.com';
     try {
       const res = await fetch(`${API_BASE_URL}/api/reservations/${resv.id || resv._id}`, {
         method: 'PUT',
@@ -201,9 +201,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         throw new Error(errData.error || 'Erro ao confirmar agendamento.');
       }
       const updatedRes = await res.json();
-      
+
       // Update locally
-      const updatedReservations = (business.reservations || []).map((rv: any) => 
+      const updatedReservations = (business.reservations || []).map((rv: any) =>
         (rv.id === resv.id || rv._id === resv._id) ? { ...rv, status: 'accepted', chairId, chairName: updatedRes.chairName } : rv
       );
       onUpdateBusiness({
@@ -222,7 +222,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
   const handlePOSForReservation = (resv: any) => {
     setClientName(resv.customerName || 'Cliente Geral');
     setSelectedPosReservation(resv);
-    
+
     // Load pre-selected services in cart
     const preselected: any[] = [];
     const items = resv.preOrder || resv.preorder || [];
@@ -318,7 +318,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'https://azorestoyou-1.onrender.com';
+      : 'https://azorestoyou-o5yx.onrender.com';
 
     const salePayload = {
       id: `SALE_${Date.now()}`,
@@ -344,16 +344,16 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
       });
       if (!res.ok) throw new Error('Falha ao gravar venda no servidor.');
       const savedSale = await res.json();
-      
+
       // Update local history list
       setSalesHistory(prev => [savedSale, ...prev]);
-      
+
       // Open success receipt modal
       setCompletedSale(savedSale);
 
       // Update local reservation status if matching POS selection
       if (selectedPosReservation) {
-        const updatedReservations = (business.reservations || []).map((rv: any) => 
+        const updatedReservations = (business.reservations || []).map((rv: any) =>
           (rv.id === selectedPosReservation.id) ? { ...rv, status: 'completed' } : rv
         );
         onUpdateBusiness({
@@ -394,7 +394,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
     }
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'https://azorestoyou-1.onrender.com';
+      : 'https://azorestoyou-o5yx.onrender.com';
     try {
       const updatedBusiness = {
         ...business,
@@ -441,19 +441,18 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans flex overflow-hidden selection:bg-[#D4AF37] selection:text-black">
-      
+
       {/* SIDEBAR */}
-      <aside className={`bg-[#0d0d0d] border-r border-[rgba(255,215,0,0.15)] flex flex-col transition-all duration-300 z-50 shrink-0 ${
-        sidebarOpen ? 'w-64' : 'w-20'
-      }`}>
+      <aside className={`bg-[#0d0d0d] border-r border-[rgba(255,215,0,0.15)] flex flex-col transition-all duration-300 z-50 shrink-0 ${sidebarOpen ? 'w-64' : 'w-20'
+        }`}>
         {/* Brand/Logo Section */}
         <div className="p-6 border-b border-[rgba(255,215,0,0.15)] flex flex-col items-center text-center">
           <div className="flex flex-col items-center justify-center">
             {business.logo ? (
-              <img 
-                src={business.logo} 
-                alt={business.name} 
-                className="w-12 h-12 rounded-full object-cover border border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)]" 
+              <img
+                src={business.logo}
+                alt={business.name}
+                className="w-12 h-12 rounded-full object-cover border border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)]"
               />
             ) : (
               <>
@@ -492,11 +491,10 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-[18px] text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
-                activeTab === item.id 
-                  ? 'bg-gradient-to-r from-amber-500/10 to-yellow-600/5 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-[18px] text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${activeTab === item.id
+                  ? 'bg-gradient-to-r from-amber-500/10 to-yellow-600/5 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]'
                   : 'border-transparent text-[#AFAFAF] hover:bg-neutral-900/50 hover:text-white'
-              }`}
+                }`}
             >
               <span className="shrink-0">{item.icon}</span>
               {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
@@ -512,9 +510,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         {/* Sidebar Barber User Profile */}
         <div className="p-4 border-t border-[rgba(255,215,0,0.15)] bg-black/20">
           <div className="flex items-center gap-3">
-            <img 
-              src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"} 
-              alt="Avatar" 
+            <img
+              src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"}
+              alt="Avatar"
               className="w-10 h-10 rounded-full object-cover border border-[#D4AF37]/30"
             />
             {sidebarOpen && (
@@ -537,7 +535,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        
+
         {/* Right side decoration layer (haircut models fading into background) */}
         <div className="absolute top-0 right-0 h-full w-24 bg-gradient-to-l from-black/85 to-transparent pointer-events-none z-10 hidden xl:block overflow-hidden opacity-25">
           <div className="flex flex-col gap-6 py-12 items-center">
@@ -558,9 +556,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               <h2 className="text-xl font-black text-white leading-none">{business.welcomeName || business.name || 'Parceiro'}!</h2>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6">
-            <div 
+            <div
               onClick={() => setShowCalendarModal(true)}
               className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors group"
             >
@@ -570,19 +568,19 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 <p className="text-[8px] text-[#AFAFAF] font-medium mt-0.5 uppercase tracking-widest">{new Date().toLocaleDateString('pt-PT', { weekday: 'long' })}</p>
               </div>
             </div>
-            
+
             <div className="relative text-neutral-400 hover:text-[#D4AF37] cursor-pointer">
               <Bell size={18} />
               <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#D4AF37] text-black text-[7px] font-black flex items-center justify-center rounded-full">
                 3
               </span>
             </div>
- 
+
             {/* User Profile dropdown badge */}
             <div className="flex items-center gap-2 border-l border-amber-500/10 pl-6 cursor-pointer group">
-              <img 
-                src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"} 
-                alt="Avatar" 
+              <img
+                src={business.logo || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=256"}
+                alt="Avatar"
                 className="w-8 h-8 rounded-full object-cover border border-[#D4AF37]/30"
               />
               <div className="text-left leading-none hidden sm:block">
@@ -602,7 +600,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <>
               {/* HERO COVER BANNER */}
               <div className="relative rounded-[18px] overflow-hidden border border-[rgba(255,215,0,0.15)] min-h-[160px] flex items-center justify-between p-6">
-                
+
                 {/* Left side clipper outline */}
                 <div className="absolute top-4 left-6 opacity-10 pointer-events-none hidden md:block">
                   <svg className="w-16 h-16 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -612,13 +610,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   </svg>
                 </div>
 
-                <img 
-                  src={business.coverImage || business.image || "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070"} 
-                  alt={business.name || 'Barbearia'} 
+                <img
+                  src={business.coverImage || business.image || "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=2070"}
+                  alt={business.name || 'Barbearia'}
                   className="absolute inset-0 w-full h-full object-cover opacity-15"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/75 to-transparent" />
-                
+
                 <div className="relative z-10 text-left space-y-2.5 max-w-lg">
                   <div className="flex items-center gap-3">
                     <h3 className="text-2xl font-black text-white tracking-tight">{business.name || 'Barbearia'}</h3>
@@ -630,7 +628,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   <p className="text-xs text-[#AFAFAF]">
                     O seu perfil está visível para todos os clientes.
                   </p>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('profile')}
                     className="flex items-center gap-2 px-4 py-1.5 bg-black/50 hover:bg-black border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all"
                   >
@@ -646,7 +644,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
               {/* 5 ALIGNED CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                
+
                 {/* CARD 1 */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 hover:shadow-[0_0_15px_rgba(212,175,55,0.08)] text-left">
                   <div className="flex items-center gap-4">
@@ -658,7 +656,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <h4 className="text-2xl font-black text-white mt-1">5</h4>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('appointments')}
                     className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
                   >
@@ -694,7 +692,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <h4 className="text-2xl font-black text-white mt-1">3</h4>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('appointments')}
                     className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] text-[9px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 text-center"
                   >
@@ -737,7 +735,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <p className="text-[7px] text-[#AFAFAF] mt-0.5 font-medium leading-tight">Faça vendas e receba pagamentos</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('pos')}
                     className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-amber-500 hover:to-[#D4AF37] text-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-[0_4px_10px_rgba(212,175,55,0.2)] text-center"
                   >
@@ -748,7 +746,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
               {/* THREE COLUMN GRID SECTION (MATCHING MOCKUP 4-3-3 RATIO) */}
               <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-                
+
                 {/* PRÓXIMOS AGENDAMENTOS (lg:col-span-4) */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-4 text-left">
                   <div className="flex justify-between items-center">
@@ -760,9 +758,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <div key={i} className="bg-black/30 border border-neutral-900 rounded-[14px] p-3 flex justify-between items-center hover:border-[#D4AF37]/20 transition-all">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="text-[11px] font-black text-white bg-black px-2.5 py-1 rounded border border-neutral-800 shrink-0">{r.time}</span>
-                          <img 
-                            src={r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`} 
-                            alt="" 
+                          <img
+                            src={r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.customerName}`}
+                            alt=""
                             className="w-7 h-7 rounded-full object-cover bg-neutral-900 shrink-0 border border-neutral-800"
                           />
                           <div className="min-w-0">
@@ -770,9 +768,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                             <p className="text-[8px] text-[#AFAFAF] truncate mt-0.5">{r.serviceName}</p>
                           </div>
                         </div>
-                        <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                          r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>
+                        <span className={`text-[7px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${r.status === 'accepted' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
                           {r.status === 'accepted' ? 'Confirmado' : 'Pendente'}
                         </span>
                       </div>
@@ -797,7 +794,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       </div>
                     ))}
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('services')}
                     className="w-full mt-2 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
@@ -827,7 +824,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       </div>
                     ))}
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('profile')}
                     className="w-full mt-2 py-2.5 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
@@ -839,7 +836,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
               {/* BOTTOM ROW (RATIO 4-3-3) */}
               <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-                
+
                 {/* ÚLTIMAS AVALIAÇÕES (lg:col-span-4) */}
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 space-y-4 lg:col-span-4 text-left">
                   <div className="flex justify-between items-center">
@@ -867,7 +864,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-5 flex flex-col justify-between text-left lg:col-span-3">
                   <div className="space-y-3">
                     <h4 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Mantenha o seu perfil atualizado</h4>
-                    
+
                     <div className="flex items-center gap-4 py-3">
                       <div className="relative w-14 h-14 shrink-0">
                         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -897,7 +894,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       </p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('profile')}
                     className="w-full mt-4 py-2 bg-black hover:bg-neutral-900 border border-[#D4AF37]/30 hover:border-[#D4AF37] text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all text-center"
                   >
@@ -915,7 +912,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       { label: '✂️ Editar Serviços', desc: 'Gerir preços', action: () => setActiveTab('services') },
                       { label: '🕐 Atualizar Horário', desc: 'Funcionamento', action: () => setActiveTab('profile') }
                     ].map((btn, idx) => (
-                      <button 
+                      <button
                         key={idx}
                         onClick={btn.action}
                         className="bg-black border border-neutral-900 hover:border-[#D4AF37]/45 rounded-xl p-3 text-left transition-all duration-300 hover:scale-[1.03] flex flex-col justify-between min-h-[75px]"
@@ -940,7 +937,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   const updateStatus = async (newStatus: string) => {
                     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                       ? 'http://localhost:3001'
-                      : 'https://azorestoyou-1.onrender.com';
+                      : 'https://azorestoyou-o5yx.onrender.com';
                     try {
                       const res = await fetch(`${API_BASE_URL}/api/reservations/${r.id || r._id}`, {
                         method: 'PUT',
@@ -949,9 +946,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       });
                       if (!res.ok) throw new Error('Falha ao atualizar estado.');
                       const updatedReservation = await res.json();
-                      
+
                       // Update business reservations array locally
-                      const updatedReservations = (business.reservations || []).map((resv: any) => 
+                      const updatedReservations = (business.reservations || []).map((resv: any) =>
                         (resv.id === r.id || resv._id === r._id) ? { ...resv, status: newStatus } : resv
                       );
                       onUpdateBusiness({
@@ -972,12 +969,11 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-black text-white">{r.customerName}</p>
-                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
-                              r.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                              r.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                              r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                              'bg-neutral-800 text-neutral-400'
-                            }`}>
+                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${r.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                r.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                  r.status === 'rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                    'bg-neutral-800 text-neutral-400'
+                              }`}>
                               {r.status === 'accepted' ? 'Confirmado' : r.status === 'pending' ? 'Pendente' : r.status === 'rejected' ? 'Recusado' : r.status}
                             </span>
                           </div>
@@ -989,7 +985,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                         <div className="flex gap-2">
                           {r.status === 'pending' && (
                             <>
-                              <button 
+                              <button
                                 onClick={() => {
                                   const avChairs = getAvailableChairsForResv(r);
                                   if (chairs.length === 1 && avChairs.length === 1) {
@@ -1002,7 +998,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                               >
                                 Confirmar
                               </button>
-                              <button 
+                              <button
                                 onClick={() => updateStatus('rejected')}
                                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
                               >
@@ -1011,7 +1007,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                             </>
                           )}
                           {r.status === 'accepted' && (
-                            <button 
+                            <button
                               onClick={() => updateStatus('cancelled')}
                               className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
                             >
@@ -1035,7 +1031,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Ver Sala (Cadeiras)</h2>
                   <p className="text-xs text-[#AFAFAF] mt-1">Gerencie a ocupação em tempo real e associe cadeiras ao POS e Agenda.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowAddChair(true)}
                   className="bg-black hover:bg-neutral-900 border border-[#D4AF37]/50 text-[#D4AF37] px-6 py-3 rounded-[18px] text-xs font-black uppercase tracking-wider transition-all"
                 >
@@ -1047,20 +1043,20 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 <div className="bg-[#0D0D0D] border border-[#D4AF37]/30 rounded-[18px] p-6 space-y-4">
                   <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Nova Cadeira de Barbearia</h3>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <input 
-                      type="text" 
-                      placeholder="Nome da Cadeira (Ex: Cadeira Principal)" 
-                      value={newChairName} 
+                    <input
+                      type="text"
+                      placeholder="Nome da Cadeira (Ex: Cadeira Principal)"
+                      value={newChairName}
                       onChange={(e) => setNewChairName(e.target.value)}
                       className="flex-1 bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]"
                     />
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={async () => {
                           if (!newChairName.trim()) return;
                           const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                             ? 'http://localhost:3001'
-                            : 'https://azorestoyou-1.onrender.com';
+                            : 'https://azorestoyou-o5yx.onrender.com';
                           try {
                             const res = await fetch(`${API_BASE_URL}/api/chairs`, {
                               method: 'POST',
@@ -1080,7 +1076,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       >
                         Gravar
                       </button>
-                      <button 
+                      <button
                         onClick={() => setShowAddChair(false)}
                         className="bg-neutral-800 hover:bg-neutral-700 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider"
                       >
@@ -1106,7 +1102,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   const handleStatusUpdate = async (status: string) => {
                     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                       ? 'http://localhost:3001'
-                      : 'https://azorestoyou-1.onrender.com';
+                      : 'https://azorestoyou-o5yx.onrender.com';
                     try {
                       if (status === 'blocked' || status === 'cleaning') {
                         const date = new Date().toISOString().split('T')[0];
@@ -1140,7 +1136,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     if (!confirm('Deseja mesmo eliminar esta cadeira?')) return;
                     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                       ? 'http://localhost:3001'
-                      : 'https://azorestoyou-1.onrender.com';
+                      : 'https://azorestoyou-o5yx.onrender.com';
                     try {
                       const res = await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
                         method: 'DELETE'
@@ -1157,22 +1153,22 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     if (!chair.currentAppointmentId) return;
                     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                       ? 'http://localhost:3001'
-                      : 'https://azorestoyou-1.onrender.com';
+                      : 'https://azorestoyou-o5yx.onrender.com';
                     try {
                       await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ status: 'in_service' })
                       });
-                      
-                      const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+                      const updatedReservations = (business.reservations || []).map((rv: any) =>
                         (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'in_service' } : rv
                       );
                       onUpdateBusiness({
                         ...business,
                         reservations: updatedReservations
                       });
-                      
+
                       loadChairsData();
                       alert('Atendimento iniciado com sucesso!');
                     } catch (err) {
@@ -1184,22 +1180,22 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     if (!chair.currentAppointmentId) return;
                     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                       ? 'http://localhost:3001'
-                      : 'https://azorestoyou-1.onrender.com';
+                      : 'https://azorestoyou-o5yx.onrender.com';
                     try {
                       await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ status: 'completed' })
                       });
-                      
-                      const updatedReservations = (business.reservations || []).map((rv: any) => 
+
+                      const updatedReservations = (business.reservations || []).map((rv: any) =>
                         (rv.id === chair.currentAppointmentId) ? { ...rv, status: 'completed' } : rv
                       );
                       onUpdateBusiness({
                         ...business,
                         reservations: updatedReservations
                       });
-                      
+
                       loadChairsData();
                       alert('Cadeira libertada.');
                     } catch (err) {
@@ -1208,8 +1204,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   };
 
                   return (
-                    <div 
-                      key={chair.id} 
+                    <div
+                      key={chair.id}
                       className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 flex flex-col justify-between hover:scale-[1.02] transition-all hover:shadow-[0_0_15px_rgba(212,175,55,0.05)]"
                     >
                       <div className="space-y-4">
@@ -1223,12 +1219,12 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                               <p className="text-[8px] text-[#AFAFAF] font-bold uppercase tracking-widest mt-0.5">Nº {chair.chairNumber}</p>
                             </div>
                           </div>
-                          <span 
-                            className="text-[8px] font-black uppercase px-2.5 py-1 rounded-full border" 
-                            style={{ 
-                              color: statusColor, 
-                              borderColor: `${statusColor}33`, 
-                              backgroundColor: `${statusColor}10` 
+                          <span
+                            className="text-[8px] font-black uppercase px-2.5 py-1 rounded-full border"
+                            style={{
+                              color: statusColor,
+                              borderColor: `${statusColor}33`,
+                              backgroundColor: `${statusColor}10`
                             }}
                           >
                             {chair.status === 'available' ? 'Disponível' : chair.status}
@@ -1256,13 +1252,13 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <div className="mt-6 flex flex-col gap-2">
                         {chair.status === 'Reservada' && (
                           <div className="grid grid-cols-2 gap-2">
-                            <button 
+                            <button
                               onClick={handleStartService}
                               className="py-2.5 bg-[#D4AF37] hover:bg-[#b8962d] text-black text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
                             >
                               Iniciar Serviço
                             </button>
-                            <button 
+                            <button
                               onClick={async () => {
                                 if (chair.currentAppointmentId) {
                                   const r = business.reservations?.find(resv => resv.id === chair.currentAppointmentId);
@@ -1278,7 +1274,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
                         {chair.status === 'Em Atendimento' && (
                           <div className="grid grid-cols-2 gap-2">
-                            <button 
+                            <button
                               onClick={async () => {
                                 if (chair.currentAppointmentId) {
                                   const r = business.reservations?.find(resv => resv.id === chair.currentAppointmentId);
@@ -1289,7 +1285,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                             >
                               Venda / Pagar
                             </button>
-                            <button 
+                            <button
                               onClick={handleReleaseChair}
                               className="py-2.5 bg-neutral-850 hover:bg-neutral-800 text-white text-[9px] font-black uppercase tracking-wider rounded-xl transition-all"
                             >
@@ -1300,19 +1296,19 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
                         {chair.status === 'available' && (
                           <div className="grid grid-cols-3 gap-1.5">
-                            <button 
+                            <button
                               onClick={() => handleStatusUpdate('cleaning')}
                               className="py-2 bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 text-neutral-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                             >
                               Limpeza
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleStatusUpdate('blocked')}
                               className="py-2 bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 text-neutral-400 hover:text-white text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                             >
                               Bloquear
                             </button>
-                            <button 
+                            <button
                               onClick={handleDeleteChair}
                               className="py-2 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all"
                             >
@@ -1322,11 +1318,11 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                         )}
 
                         {chair.status !== 'available' && chair.status !== 'Reservada' && chair.status !== 'Em Atendimento' && (
-                          <button 
+                          <button
                             onClick={async () => {
                               const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                                 ? 'http://localhost:3001'
-                                : 'https://azorestoyou-1.onrender.com';
+                                : 'https://azorestoyou-o5yx.onrender.com';
                               try {
                                 // Soft-release: use PUT to mark block as cancelled, preserving history
                                 const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
@@ -1372,7 +1368,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Catálogo de Serviços</h2>
                   <p className="text-xs text-[#AFAFAF] mt-1">{services.filter((s: any) => s.isActive !== false).length} serviços ativos</p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     setEditingService(null);
                     setServiceForm({ name: '', category: 'Corte', description: '', price: '', duration: '30', image: '', isActive: true });
@@ -1395,29 +1391,29 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome do Serviço *</label>
-                        <input type="text" value={serviceForm.name} onChange={e => setServiceForm(p => ({...p, name: e.target.value}))} placeholder="Ex: Corte Masculino" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                        <input type="text" value={serviceForm.name} onChange={e => setServiceForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: Corte Masculino" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       </div>
                       <div>
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Categoria</label>
-                        <select value={serviceForm.category} onChange={e => setServiceForm(p => ({...p, category: e.target.value}))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]">
-                          {['Corte','Barba','Corte + Barba','Infantil','Degradê','Coloração','Sobrancelha','Outros'].map(c => <option key={c}>{c}</option>)}
+                        <select value={serviceForm.category} onChange={e => setServiceForm(p => ({ ...p, category: e.target.value }))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]">
+                          {['Corte', 'Barba', 'Corte + Barba', 'Infantil', 'Degradê', 'Coloração', 'Sobrancelha', 'Outros'].map(c => <option key={c}>{c}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Preço (€) *</label>
-                        <input type="number" min="0" step="0.50" value={serviceForm.price} onChange={e => setServiceForm(p => ({...p, price: e.target.value}))} placeholder="12.00" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                        <input type="number" min="0" step="0.50" value={serviceForm.price} onChange={e => setServiceForm(p => ({ ...p, price: e.target.value }))} placeholder="12.00" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       </div>
                       <div>
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Duração (minutos)</label>
-                        <input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm(p => ({...p, duration: e.target.value}))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]" />
+                        <input type="number" min="5" step="5" value={serviceForm.duration} onChange={e => setServiceForm(p => ({ ...p, duration: e.target.value }))} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#D4AF37]" />
                       </div>
                       <div>
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL da Imagem</label>
-                        <input type="text" value={serviceForm.image} onChange={e => setServiceForm(p => ({...p, image: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                        <input type="text" value={serviceForm.image} onChange={e => setServiceForm(p => ({ ...p, image: e.target.value }))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Descrição</label>
-                        <textarea value={serviceForm.description} onChange={e => setServiceForm(p => ({...p, description: e.target.value}))} placeholder="Descreva o serviço brevemente..." rows={2} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
+                        <textarea value={serviceForm.description} onChange={e => setServiceForm(p => ({ ...p, description: e.target.value }))} placeholder="Descreva o serviço brevemente..." rows={2} className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
                       </div>
                     </div>
                     <div className="flex gap-3 pt-2">
@@ -1444,7 +1440,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
               )}
 
               {/* Services by Category */}
-              {['Corte','Barba','Corte + Barba','Infantil','Degradê','Coloração','Sobrancelha','Outros'].map(cat => {
+              {['Corte', 'Barba', 'Corte + Barba', 'Infantil', 'Degradê', 'Coloração', 'Sobrancelha', 'Outros'].map(cat => {
                 const catServices = services.filter((s: any) => s.category === cat);
                 if (catServices.length === 0) return null;
                 return (
@@ -1456,7 +1452,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {catServices.map((s: any) => (
-                        <div key={s.id} className={`bg-[#0d0d0d] border rounded-[18px] overflow-hidden transition-all hover:scale-[1.02] ${ s.isActive === false ? 'border-neutral-800 opacity-50' : 'border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/30' }`}>
+                        <div key={s.id} className={`bg-[#0d0d0d] border rounded-[18px] overflow-hidden transition-all hover:scale-[1.02] ${s.isActive === false ? 'border-neutral-800 opacity-50' : 'border-[rgba(255,215,0,0.15)] hover:border-[#D4AF37]/30'}`}>
                           {s.image && <img src={s.image} alt={s.name} className="w-full h-28 object-cover" />}
                           {!s.image && <div className="w-full h-28 bg-black/50 flex items-center justify-center text-4xl">✂️</div>}
                           <div className="p-4 space-y-2">
@@ -1494,7 +1490,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                                     onUpdateBusiness({ ...business, services: updated });
                                   }
                                 }}
-                                className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg transition-all ${ s.isActive === false ? 'bg-emerald-900/30 border border-emerald-700/40 text-emerald-400' : 'bg-amber-900/20 border border-amber-700/30 text-amber-400' }`}
+                                className={`px-3 py-1.5 text-[8px] font-black uppercase rounded-lg transition-all ${s.isActive === false ? 'bg-emerald-900/30 border border-emerald-700/40 text-emerald-400' : 'bg-amber-900/20 border border-amber-700/30 text-amber-400'}`}
                               >
                                 {s.isActive === false ? 'Ativar' : 'Desativar'}
                               </button>
@@ -1520,17 +1516,17 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
           {/* TAB: POS / VENDAS */}
           {activeTab === 'pos' && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 text-left animate-in fade-in duration-300">
-              
+
               {/* LEFT & CENTER PANEL: Catalog & Search */}
               <div className="xl:col-span-2 space-y-6 flex flex-col justify-between">
-                
+
                 {/* Search Bar & Client Button */}
                 <div className="flex gap-4">
                   <div className="relative flex-1 group">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-[#D4AF37] transition-colors">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
-                    <input 
+                    <input
                       id="pos-search-input"
                       type="text"
                       placeholder="Pesquisar serviços ou produtos..."
@@ -1542,7 +1538,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       Ctrl + K
                     </span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       const name = prompt('Introduza o nome do cliente:', clientName);
                       if (name !== null) setClientName(name.trim() || 'Cliente Geral');
@@ -1559,11 +1555,10 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     <button
                       key={cat}
                       onClick={() => setCategoryFilter(cat)}
-                      className={`px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 border ${
-                        categoryFilter === cat 
+                      className={`px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 border ${categoryFilter === cat
                           ? 'bg-[#D4AF37] border-[#D4AF37] text-black shadow-[0_4px_12px_rgba(212,175,55,0.25)]'
                           : 'bg-[#0D0D0D] border-neutral-900 text-[#AFAFAF] hover:border-[#D4AF37]/35 hover:text-white'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </button>
@@ -1596,7 +1591,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                           </div>
                           <div className="flex justify-between items-center mt-3 pt-2 border-t border-neutral-900/60">
                             <span className="text-xs font-black text-[#D4AF37]">€{s.price.toFixed(2)}</span>
-                            <button 
+                            <button
                               onClick={() => addToCart(s, 'service')}
                               className="w-7 h-7 bg-[#D4AF37]/10 hover:bg-[#D4AF37] border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] hover:text-black rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90"
                             >
@@ -1629,7 +1624,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                           </div>
                           <div className="flex justify-between items-center mt-2 pt-2 border-t border-neutral-900/60">
                             <span className="text-xs font-black text-[#D4AF37]">€{p.price.toFixed(2)}</span>
-                            <button 
+                            <button
                               onClick={() => addToCart(p, 'product')}
                               className="w-6 h-6 bg-[#D4AF37]/10 hover:bg-[#D4AF37] border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] hover:text-black rounded-lg flex items-center justify-center transition-all duration-300 active:scale-90"
                             >
@@ -1644,7 +1639,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 {/* OBSERVATIONS */}
                 <div className="pt-2">
                   <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Observações da venda (opcional)</label>
-                  <textarea 
+                  <textarea
                     placeholder="Escreva notas sobre o serviço prestado ou produtos vendidos..."
                     value={observations}
                     onChange={(e) => setObservations(e.target.value)}
@@ -1655,25 +1650,33 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 {/* Footer Shortcuts Buttons */}
                 <div className="grid grid-cols-5 gap-2 pt-2">
                   {[
-                    { label: '% Desconto', key: 'F2', action: () => {
-                      const val = prompt('Introduza o desconto (%):', String(discountPercent));
-                      if (val !== null) setDiscountPercent(Math.max(0, Math.min(100, parseFloat(val) || 0)));
-                    }},
-                    { label: '👥 Cliente', key: 'F3', action: () => {
-                      const name = prompt('Nome do cliente:', clientName);
-                      if (name !== null) setClientName(name.trim() || 'Cliente Geral');
-                    }},
-                    { label: '📦 Produto', key: 'F4', action: () => {
-                      const searchInput = document.getElementById('pos-search-input');
-                      if (searchInput) searchInput.focus();
-                    }},
+                    {
+                      label: '% Desconto', key: 'F2', action: () => {
+                        const val = prompt('Introduza o desconto (%):', String(discountPercent));
+                        if (val !== null) setDiscountPercent(Math.max(0, Math.min(100, parseFloat(val) || 0)));
+                      }
+                    },
+                    {
+                      label: '👥 Cliente', key: 'F3', action: () => {
+                        const name = prompt('Nome do cliente:', clientName);
+                        if (name !== null) setClientName(name.trim() || 'Cliente Geral');
+                      }
+                    },
+                    {
+                      label: '📦 Produto', key: 'F4', action: () => {
+                        const searchInput = document.getElementById('pos-search-input');
+                        if (searchInput) searchInput.focus();
+                      }
+                    },
                     { label: '🗑️ Limpar', key: 'F5', action: () => setCart([]) },
-                    { label: '❌ Cancelar', key: 'Del', action: () => {
-                      setCart([]);
-                      setClientName('Cliente Geral');
-                      setDiscountPercent(0);
-                      setObservations('');
-                    }}
+                    {
+                      label: '❌ Cancelar', key: 'Del', action: () => {
+                        setCart([]);
+                        setClientName('Cliente Geral');
+                        setDiscountPercent(0);
+                        setObservations('');
+                      }
+                    }
                   ].map(btn => (
                     <button
                       key={btn.key}
@@ -1690,7 +1693,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
               {/* RIGHT PANEL: Current Receipt / Cart & Payment */}
               <div className="bg-[#0D0D0D] border border-[#D4AF37]/15 rounded-[18px] p-6 flex flex-col justify-between gap-6 h-full relative overflow-hidden">
-                
+
                 {/* Cart Header */}
                 <div className="flex justify-between items-center border-b border-neutral-900 pb-3">
                   <h3 className="text-xs font-black uppercase tracking-widest text-[#AFAFAF] flex items-center gap-2">
@@ -1727,7 +1730,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                         <div className="text-right pl-2">
                           <span className="text-[11px] font-black text-white">€{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
-                        <button 
+                        <button
                           onClick={() => removeFromCart(item.id, item.type)}
                           className="text-neutral-600 hover:text-red-400 p-1 transition-colors pl-2"
                         >
@@ -1760,7 +1763,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
                 {/* Sub-action buttons */}
                 <div className="grid grid-cols-2 gap-2">
-                  <button 
+                  <button
                     onClick={() => {
                       const val = prompt('Introduza o desconto (%):', String(discountPercent));
                       if (val !== null) setDiscountPercent(Math.max(0, Math.min(100, parseFloat(val) || 0)));
@@ -1769,7 +1772,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   >
                     % Adicionar Desconto
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       const name = prompt('Nome do cliente:', clientName);
                       if (name !== null) setClientName(name.trim() || 'Cliente Geral');
@@ -1793,11 +1796,10 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                       <button
                         key={method.id}
                         onClick={() => setPaymentMethod(method.id as any)}
-                        className={`p-3 rounded-xl flex items-center gap-2 border transition-all duration-300 ${
-                          paymentMethod === method.id 
+                        className={`p-3 rounded-xl flex items-center gap-2 border transition-all duration-300 ${paymentMethod === method.id
                             ? 'bg-black border-[#D4AF37] text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)]'
                             : 'bg-black/40 border-neutral-900 text-neutral-400 hover:border-neutral-800'
-                        }`}
+                          }`}
                       >
                         <span className="text-sm">{method.icon}</span>
                         <span className="text-[10px] font-black uppercase tracking-wider">{method.label}</span>
@@ -1824,7 +1826,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-6 text-left">
               <div className="flex justify-between items-center">
                 <h2 className="text-base font-black uppercase tracking-wider text-[#D4AF37]">Galeria</h2>
-                <button 
+                <button
                   onClick={handlePhotoUpload}
                   className="bg-black border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 rounded-[18px] text-xs font-black uppercase tracking-wider transition-all"
                 >
@@ -1836,7 +1838,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   <div key={idx} className="relative aspect-square rounded-[18px] overflow-hidden border border-neutral-900 group">
                     <img src={img} className="w-full h-full object-cover" alt="" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                      <button 
+                      <button
                         onClick={() => {
                           if (confirm('Remover esta foto?')) {
                             const updated = {
@@ -1890,35 +1892,35 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Identidade</h3>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome do Negócio *</label>
-                      <input type="text" value={bizForm.name} onChange={e => setBizForm(p => ({...p, name: e.target.value}))} placeholder="Ex: BragaBarber" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.name} onChange={e => setBizForm(p => ({ ...p, name: e.target.value }))} placeholder="Ex: BragaBarber" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Nome de Boas-Vindas (saudação)</label>
-                      <input type="text" value={bizForm.welcomeName} onChange={e => setBizForm(p => ({...p, welcomeName: e.target.value}))} placeholder="Ex: Carlos" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.welcomeName} onChange={e => setBizForm(p => ({ ...p, welcomeName: e.target.value }))} placeholder="Ex: Carlos" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       <p className="text-[8px] text-[#AFAFAF] mt-1">Aparece como: "Bem-vindo de volta, Carlos!"</p>
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Descrição</label>
-                      <textarea value={bizForm.description} onChange={e => setBizForm(p => ({...p, description: e.target.value}))} rows={3} placeholder="Descreva a sua barbearia..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
+                      <textarea value={bizForm.description} onChange={e => setBizForm(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="Descreva a sua barbearia..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37] resize-none" />
                     </div>
                   </div>
                   <div className="bg-[#0d0d0d] border border-[rgba(255,215,0,0.15)] rounded-[18px] p-6 space-y-4">
                     <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Contactos</h3>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Telemóvel</label>
-                      <input type="text" value={bizForm.phone} onChange={e => setBizForm(p => ({...p, phone: e.target.value}))} placeholder="+351 912 345 678" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.phone} onChange={e => setBizForm(p => ({ ...p, phone: e.target.value }))} placeholder="+351 912 345 678" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Email</label>
-                      <input type="email" value={bizForm.email} onChange={e => setBizForm(p => ({...p, email: e.target.value}))} placeholder="barbearia@email.com" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="email" value={bizForm.email} onChange={e => setBizForm(p => ({ ...p, email: e.target.value }))} placeholder="barbearia@email.com" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Morada</label>
-                      <input type="text" value={bizForm.address} onChange={e => setBizForm(p => ({...p, address: e.target.value}))} placeholder="Rua Principal, Ponta Delgada" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.address} onChange={e => setBizForm(p => ({ ...p, address: e.target.value }))} placeholder="Rua Principal, Ponta Delgada" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">Google Maps (link)</label>
-                      <input type="text" value={bizForm.googleMapsLink} onChange={e => setBizForm(p => ({...p, googleMapsLink: e.target.value}))} placeholder="https://maps.google.com/..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.googleMapsLink} onChange={e => setBizForm(p => ({ ...p, googleMapsLink: e.target.value }))} placeholder="https://maps.google.com/..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                   </div>
                 </div>
@@ -1928,12 +1930,12 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Imagens</h3>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL do Logótipo</label>
-                      <input type="text" value={bizForm.logo} onChange={e => setBizForm(p => ({...p, logo: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.logo} onChange={e => setBizForm(p => ({ ...p, logo: e.target.value }))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       {bizForm.logo && <img src={bizForm.logo} alt="Logo" className="w-16 h-16 rounded-full object-cover border border-[#D4AF37]/30 mt-2" />}
                     </div>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">URL da Imagem de Capa</label>
-                      <input type="text" value={bizForm.coverImage} onChange={e => setBizForm(p => ({...p, coverImage: e.target.value}))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.coverImage} onChange={e => setBizForm(p => ({ ...p, coverImage: e.target.value }))} placeholder="https://..." className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                       {bizForm.coverImage && <img src={bizForm.coverImage} alt="Capa" className="w-full h-24 rounded-xl object-cover border border-neutral-800 mt-2" />}
                     </div>
                   </div>
@@ -1948,7 +1950,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                     <h3 className="text-xs font-black uppercase tracking-widest text-[#D4AF37]">Dados Fiscais</h3>
                     <div>
                       <label className="block text-[9px] font-black uppercase tracking-widest text-[#AFAFAF] mb-1.5">IBAN</label>
-                      <input type="text" value={bizForm.iban} onChange={e => setBizForm(p => ({...p, iban: e.target.value}))} placeholder="PT50 0000 0000 0000 0000 0000 0" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
+                      <input type="text" value={bizForm.iban} onChange={e => setBizForm(p => ({ ...p, iban: e.target.value }))} placeholder="PT50 0000 0000 0000 0000 0000 0" className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-[#D4AF37]" />
                     </div>
                   </div>
                 </div>
@@ -1988,7 +1990,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
             <div className="w-20 h-20 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full flex items-center justify-center mx-auto text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
               <Check className="w-10 h-10" />
             </div>
-            
+
             <div className="space-y-1">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D4AF37]">Venda Processada</p>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight">Venda Concluída!</h3>
@@ -2051,26 +2053,26 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
             {/* Action Buttons */}
             <div className="grid grid-cols-3 gap-2">
-              <button 
-                onClick={() => alert('A enviar comando para a impressora térmica... (Simulado)')} 
+              <button
+                onClick={() => alert('A enviar comando para a impressora térmica... (Simulado)')}
                 className="py-3 bg-black hover:bg-neutral-950 border border-neutral-800 hover:border-[#D4AF37]/30 text-[9px] font-black uppercase text-white rounded-xl transition-all"
               >
                 🖨️ Recibo
               </button>
-              <button 
+              <button
                 onClick={() => {
                   const email = prompt('Introduza o email do cliente:', 'cliente@email.com');
                   if (email) alert(`Recibo digital enviado com sucesso para: ${email}`);
-                }} 
+                }}
                 className="py-3 bg-black hover:bg-neutral-950 border border-neutral-800 hover:border-[#D4AF37]/30 text-[9px] font-black uppercase text-white rounded-xl transition-all"
               >
                 📧 Email
               </button>
-              <button 
+              <button
                 onClick={() => {
                   const phone = prompt('Introduza o número de telemóvel do cliente:', '+351 900 000 000');
                   if (phone) alert(`Recibo digital enviado por WhatsApp para: ${phone}`);
-                }} 
+                }}
                 className="py-3 bg-black hover:bg-neutral-950 border border-neutral-800 hover:border-[#D4AF37]/30 text-[9px] font-black uppercase text-white rounded-xl transition-all"
               >
                 💬 WhatsApp
@@ -2096,7 +2098,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#D4AF37]">Atribuir Cadeira</h3>
                 <p className="text-[9px] text-[#AFAFAF] mt-0.5">Selecione uma cadeira disponível para a reserva de {showAssignModal.customerName}.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAssignModal(null)}
                 className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-white flex items-center justify-center hover:bg-neutral-800 transition-all"
               >
@@ -2112,7 +2114,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {getAvailableChairsForResv(showAssignModal).map((chair) => (
-                <div 
+                <div
                   key={chair.id}
                   onClick={() => confirmReservationWithChair(showAssignModal, chair.id)}
                   className="p-3 bg-black/40 border border-neutral-900 hover:border-[#D4AF37] rounded-xl flex justify-between items-center cursor-pointer transition-all hover:bg-black/80"
@@ -2144,8 +2146,8 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         const month = currentCalendarMonth.getMonth();
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
         // Filter reservations strictly by this business
         const bizReservations = (business.reservations || []).filter((r: any) => {
@@ -2154,7 +2156,7 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
         });
 
         const getReservationsForDay = (day: number) => {
-          const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           return bizReservations.filter((r: any) => {
             const rDate = r.date || r.reservationDate || r.dateTime?.split('T')[0] || '';
             return rDate === dateStr;
@@ -2216,9 +2218,9 @@ const BarberNormalDashboard: React.FC<BarberNormalDashboardProps> = ({ business,
                   return (
                     <div
                       key={day}
-                      className={`rounded-xl p-2 min-h-[60px] text-left cursor-default transition-all hover:bg-white/5 border ${ isDayToday ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5' : 'border-transparent' }`}
+                      className={`rounded-xl p-2 min-h-[60px] text-left cursor-default transition-all hover:bg-white/5 border ${isDayToday ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5' : 'border-transparent'}`}
                     >
-                      <span className={`text-[10px] font-black block leading-none ${ isDayToday ? 'text-[#D4AF37]' : 'text-white/60' }`}>{day}</span>
+                      <span className={`text-[10px] font-black block leading-none ${isDayToday ? 'text-[#D4AF37]' : 'text-white/60'}`}>{day}</span>
                       {dayResvs.length > 0 && (
                         <div className="mt-1 space-y-0.5">
                           {confirmed > 0 && (

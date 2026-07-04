@@ -49,7 +49,7 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-1.onrender.com';
+        : 'https://azorestoyou-o5yx.onrender.com';
 
       const resData = {
         id: Math.random().toString(36).substr(2, 9),
@@ -96,7 +96,7 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col relative"
@@ -117,15 +117,14 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
           </div>
 
           <div className="flex gap-1.5 mb-4 p-1 bg-slate-50 rounded-xl border border-slate-100">
-             {['Data e Hora', 'Seus Dados', 'Concluído'].map((s, i) => (
-               <div key={i} className={`flex-1 py-1.5 text-[8px] font-black uppercase text-center rounded-lg transition-all ${
-                 (i === 0 && step === 'datetime') || (i === 1 && step === 'details') || (i === 2 && step === 'success')
+            {['Data e Hora', 'Seus Dados', 'Concluído'].map((s, i) => (
+              <div key={i} className={`flex-1 py-1.5 text-[8px] font-black uppercase text-center rounded-lg transition-all ${(i === 0 && step === 'datetime') || (i === 1 && step === 'details') || (i === 2 && step === 'success')
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-300'
-               }`}>
-                 {s}
-               </div>
-             ))}
+                }`}>
+                {s}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -151,17 +150,16 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                       <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ChevronRight size={14} /></button>
                     </div>
                     <div className="grid grid-cols-7 gap-0.5">
-                      {['D','S','T','Q','Q','S','S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[8px] font-black text-slate-300 py-0.5">{d}</div>)}
+                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, idx) => <div key={`${d}-${idx}`} className="text-center text-[8px] font-black text-slate-300 py-0.5">{d}</div>)}
                       {Array.from({ length: firstDay(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => <div key={i} />)}
                       {Array.from({ length: daysInMonth(calendarMonth.getFullYear(), calendarMonth.getMonth()) }).map((_, i) => {
                         const day = i + 1;
                         const date = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
                         const isSelected = selectedDate.toDateString() === date.toDateString();
-                        const isPast = date < new Date(new Date().setHours(0,0,0,0));
+                        const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
                         return (
-                          <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-8 w-8 rounded-lg text-[10px] font-bold transition-all ${
-                            isSelected ? 'bg-blue-600 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
-                          }`}>{day}</button>
+                          <button key={i} disabled={isPast} onClick={() => setSelectedDate(date)} className={`h-8 w-8 rounded-lg text-[10px] font-bold transition-all ${isSelected ? 'bg-blue-600 text-white shadow-md' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'
+                            }`}>{day}</button>
                         );
                       })}
                     </div>
@@ -173,19 +171,17 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                     </h4>
                     <div className="grid grid-cols-4 gap-1.5">
                       {timeSlots.map(t => (
-                        <button key={t} onClick={() => setSelectedTime(t)} className={`py-2 rounded-lg text-[10px] font-black transition-all border ${
-                          selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
-                        }`}>{t}</button>
+                        <button key={t} onClick={() => setSelectedTime(t)} className={`py-2 rounded-lg text-[10px] font-black transition-all border ${selectedTime === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'
+                          }`}>{t}</button>
                       ))}
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     disabled={!selectedTime}
                     onClick={handleNext}
-                    className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-                      selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${selectedTime ? 'bg-slate-900 text-white shadow-xl hover:bg-blue-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      }`}
                   >
                     Próximo Passo <ArrowRight size={16} />
                   </button>
@@ -232,12 +228,11 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                     <button onClick={() => setStep('datetime')} className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
                       Voltar
                     </button>
-                    <button 
+                    <button
                       disabled={!name || !phone || !email || isSubmitting}
                       onClick={handleSubmit}
-                      className={`flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                        name && phone && email && !isSubmitting ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-700' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                      }`}
+                      className={`flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${name && phone && email && !isSubmitting ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-700' : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                        }`}
                     >
                       {isSubmitting ? 'A enviar...' : 'Solicitar Visita'} <CheckCircle size={16} />
                     </button>
@@ -257,9 +252,9 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
                     </p>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 text-left space-y-2">
-                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Escritório</span> <span>{office.name}</span></div>
-                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Data</span> <span>{selectedDate.toLocaleDateString()}</span></div>
-                     <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Hora</span> <span>{selectedTime}</span></div>
+                    <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Escritório</span> <span>{office.name}</span></div>
+                    <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Data</span> <span>{selectedDate.toLocaleDateString()}</span></div>
+                    <div className="flex justify-between text-xs font-bold"><span className="text-slate-400 uppercase text-[9px] tracking-widest">Hora</span> <span>{selectedTime}</span></div>
                   </div>
                 </motion.div>
               )}
