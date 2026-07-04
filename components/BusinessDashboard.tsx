@@ -2109,6 +2109,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [selectedResForTable, setSelectedResForTable] = useState<Reservation | null>(null);
   const [editingDish, setEditingDish] = useState<{idx: number, dish: Dish} | null>(null);
   const [editingProduct, setEditingProduct] = useState<{idx: number, product: Product} | null>(null);
+  const [deletedMockProductIds, setDeletedMockProductIds] = useState<string[]>([]);
 
   const startDishEdit = (idx: number) => {
     setEditingDish({ idx, dish: { ...(isBeauty ? business.services : business.dishes)[idx] } });
@@ -2215,6 +2216,64 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       handleUpdate(updatesToSave);
       setEditingProduct(null);
     }
+  };
+
+  const handleEditPosProduct = (product: any) => {
+    // 1. Search in dishes
+    const dishIdx = (business.dishes || []).findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+    if (dishIdx !== -1) {
+      startDishEdit(dishIdx);
+      return;
+    }
+
+    // 2. Search in products
+    const prodIdx = (products || []).findIndex(p => p.id === product.id || p.name.toLowerCase() === product.name.toLowerCase());
+    if (prodIdx !== -1) {
+      startProductEdit(prodIdx);
+      return;
+    }
+
+    // 3. Mock product -> convert to actual dish first, then edit
+    const newDish: Dish = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.category || 'Ementa',
+      description: product.description || '',
+      image: product.image || ''
+    };
+    const updatedDishes = [...(business.dishes || []), newDish];
+    handleUpdate({ dishes: updatedDishes });
+    setEditingDish({ idx: updatedDishes.length - 1, dish: { ...newDish } });
+  };
+
+  const handleDeletePosProduct = (product: any) => {
+    if (!confirm(`Tem a certeza que deseja eliminar o produto "${product.name}"?`)) {
+      return;
+    }
+
+    // 1. Search and remove from dishes
+    const dishIdx = (business.dishes || []).findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+    if (dishIdx !== -1) {
+      const updatedDishes = (business.dishes || []).filter((_, i) => i !== dishIdx);
+      handleUpdate({ dishes: updatedDishes });
+      alert(`Produto "${product.name}" eliminado com sucesso!`);
+      return;
+    }
+
+    // 2. Search and remove from products
+    const prodIdx = (products || []).findIndex(p => p.id === product.id || p.name.toLowerCase() === product.name.toLowerCase());
+    if (prodIdx !== -1) {
+      const updatedProducts = (products || []).filter((_, i) => i !== prodIdx);
+      setProducts(updatedProducts);
+      handleUpdate({ products: updatedProducts });
+      alert(`Produto "${product.name}" eliminado com sucesso!`);
+      return;
+    }
+
+    // 3. Mock product
+    setDeletedMockProductIds(prev => [...prev, product.id]);
+    alert(`Produto "${product.name}" eliminado com sucesso!`);
   };
 
   const addDish = () => {
@@ -3816,9 +3875,11 @@ return t;
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
               ...(products || []).filter(p => p.category !== 'Stock Interno' && !isBeauty && !isShop ? !(business.dishes || []).some(d => d.id === p.id || d.name.toLowerCase() === p.name.toLowerCase()) : true).map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
+                !deletedMockProductIds.includes(ms.id) &&
                 !(business.services || []).some(s => s.name === ms.name) &&
                 !(products || []).some(p => p.name === ms.name)
               ) : isShop ? [] : MOCK_POS_PRODUCTS.filter(mp => 
+                !deletedMockProductIds.includes(mp.id) &&
                 !(business.dishes || []).some(d => d.name === mp.name) &&
                 !(products || []).some(p => p.name === mp.name)
               ))
@@ -3948,14 +4009,42 @@ return t;
                              </div>
                              <div className="p-5 flex-1 flex flex-col">
                                <p className="font-black text-slate-800 text-sm leading-tight mb-2 flex-1">{product.name}</p>
-                               <div className="flex flex-col">
-                                 {(product as any).promoPrice ? (
-                                   <div className="flex flex-col">
-                                     <span className="line-through text-slate-400 text-xs font-bold leading-none mb-1">Antes: €{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</span>
-                                     <span className="text-emerald-600 font-black text-lg">Agora: €{(Number((product as any).promoPrice) || 0).toFixed(2).replace('.', ',')}</span>
+                               <div className="flex justify-between items-center mt-auto w-full gap-2">
+                                 <div className="flex flex-col">
+                                   {(product as any).promoPrice ? (
+                                     <div className="flex flex-col">
+                                       <span className="line-through text-slate-400 text-xs font-bold leading-none mb-1">Antes: €{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</span>
+                                       <span className="text-emerald-600 font-black text-lg">Agora: €{(Number((product as any).promoPrice) || 0).toFixed(2).replace('.', ',')}</span>
+                                     </div>
+                                   ) : (
+                                     <p className="font-black text-slate-800 text-lg">€{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
+                                   )}
+                                 </div>
+                                 {isRestaurant && (!isStaff || (isStaff && staffRole === 'manager')) && (
+                                   <div className="flex gap-1.5 items-center" onClick={(e) => e.stopPropagation()}>
+                                     <button 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                         handleEditPosProduct(product);
+                                       }}
+                                       className="p-1.5 bg-slate-100 hover:bg-orange-500 hover:text-white rounded-lg transition-all text-slate-500"
+                                       title="Editar Produto"
+                                     >
+                                       <Edit size={12} />
+                                     </button>
+                                     <button 
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                         handleDeletePosProduct(product);
+                                       }}
+                                       className="p-1.5 bg-slate-100 hover:bg-red-600 hover:text-white rounded-lg transition-all text-slate-500"
+                                       title="Eliminar Produto"
+                                     >
+                                       <Trash2 size={12} />
+                                     </button>
                                    </div>
-                                 ) : (
-                                   <p className="font-black text-slate-800 text-lg">€{(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
                                  )}
                                </div>
                              </div>
