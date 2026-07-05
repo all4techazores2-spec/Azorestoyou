@@ -939,7 +939,7 @@ const App: React.FC = () => {
 
     if (finalBusinessId) {
       const biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal].find(b => b.id === finalBusinessId);
-      const isBarber = (biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia' || (finalBusinessId.startsWith('BEA') && biz?.subcategory !== 'manicure' && email?.toLowerCase() !== 'aasnailsstudio@gmail.com'));
+      const isBarber = (biz?.subcategory === 'barber' || biz?.subcategory === 'barbearia' || (finalBusinessId.startsWith('BEA') && biz?.subcategory !== 'manicure' && biz?.subcategory !== 'tattoo_shop' && email?.toLowerCase() !== 'aasnailsstudio@gmail.com'));
       if (isBarber) {
         setIsAuthenticated(false);
         setIsBusiness(false);

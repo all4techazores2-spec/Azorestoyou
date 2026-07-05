@@ -21,6 +21,27 @@ import * as constants from '../constants';
 import { API_BASE_URL } from '../config';
 import { searchOpenStreetMapPlaces, searchWikidataTourism, checkDuplicates } from '../services/freeDataImportService';
 
+const TattooMachineIcon: React.FC<{ size?: number; className?: string }> = ({ size = 24, className = "" }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+    style={{ width: size, height: size }}
+  >
+    <path d="M3 21l3-3" />
+    <path d="M5 19l4-4 2 2-4 4z" />
+    <path d="M8 16l6-6" />
+    <circle cx="16" cy="8" r="2" />
+    <path d="M14 6l4 4" />
+    <path d="M17 5l3-3-2-2-3 3" />
+    <path d="M11 11l4 4" />
+  </svg>
+);
+
 console.log("%c🚀 Azores4you v1.2.1 - Pro Instance Active", "color: #10b981; font-weight: bold; font-size: 14px;");
 
 const islandMapping: Record<string, string> = {
@@ -4836,7 +4857,7 @@ Av. do Mar, Madalena, Pico
                     { id: 'barber', label: 'Barbeiros', icon: <User size={18} />, color: '#10B981' },
                     { id: 'manicure', label: 'Manicure', icon: <Brush size={18} />, color: '#F59E0B' },
                     { id: 'massage', label: 'Massagens', icon: <Flower2 size={18} />, color: '#EC4899' },
-                    { id: 'tattoo_shop', label: 'Tattoo Shops', icon: <Paintbrush size={18} />, color: '#C9A66B' },
+                    { id: 'tattoo_shop', label: 'Tattoo Shops', icon: <TattooMachineIcon size={18} />, color: '#C9A66B' },
                   ].map(cat => (
                     <button
                       key={cat.id}

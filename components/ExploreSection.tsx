@@ -16,6 +16,27 @@ import { varelaBuses } from '../data/varela_buses';
 import { avmBuses } from '../data/avm_buses';
 import { motion, AnimatePresence } from 'motion/react';
 
+const TattooMachineIcon: React.FC<{ size?: number; className?: string }> = ({ size = 24, className = "" }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+    style={{ width: size, height: size }}
+  >
+    <path d="M3 21l3-3" />
+    <path d="M5 19l4-4 2 2-4 4z" />
+    <path d="M8 16l6-6" />
+    <circle cx="16" cy="8" r="2" />
+    <path d="M14 6l4 4" />
+    <path d="M17 5l3-3-2-2-3 3" />
+    <path d="M11 11l4 4" />
+  </svg>
+);
+
 interface ExploreSectionProps {
   category: ExploreCategory;
   destinationIsland: string | undefined;
@@ -1066,7 +1087,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       { id: 'barber', label: getTranslation(lang, 'barber'), icon: <User size={24} />, color: '#10B981' },
       { id: 'manicure', label: getTranslation(lang, 'manicure'), icon: <Brush size={24} />, color: '#F59E0B' },
       { id: 'massage', label: getTranslation(lang, 'massage'), icon: <Flower2 size={24} />, color: '#EC4899' },
-      { id: 'tattoo_shop', label: getTranslation(lang, 'tattoo_shop'), icon: <Paintbrush size={24} />, color: '#C9A66B' },
+      { id: 'tattoo_shop', label: getTranslation(lang, 'tattoo_shop'), icon: <TattooMachineIcon size={24} />, color: '#C9A66B' },
     ];
 
     const filtered = allBeauty.filter(b => {

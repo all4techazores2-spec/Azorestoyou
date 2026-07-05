@@ -23,6 +23,27 @@ interface RestaurantModalProps {
 type BookingStep = 'info' | 'datetime' | 'menu' | 'success';
 type PopupStep = 'notes' | 'preorder_choice' | 'menu' | 'prep_time' | 'payment_methods';
 
+const TattooMachineIcon: React.FC<{ size?: number; className?: string }> = ({ size = 24, className = "" }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+    style={{ width: size, height: size }}
+  >
+    <path d="M3 21l3-3" />
+    <path d="M5 19l4-4 2 2-4 4z" />
+    <path d="M8 16l6-6" />
+    <circle cx="16" cy="8" r="2" />
+    <path d="M14 6l4 4" />
+    <path d="M17 5l3-3-2-2-3 3" />
+    <path d="M11 11l4 4" />
+  </svg>
+);
+
 const RestaurantModal: React.FC<RestaurantModalProps> = ({
   restaurant,
   onClose,
@@ -36,6 +57,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   onShowMap
 }) => {
   const isBeauty = restaurant ? (restaurant.businessType === 'beauty' || (restaurant.id && restaurant.id.startsWith('BEA')) || (restaurant as any).id?.startsWith('BEA')) : false;
+  const isTattoo = restaurant ? (restaurant.subcategory === 'tattoo_shop') : false;
   const isShop = restaurant ? (restaurant.businessType === 'shop') : false;
   const isAutoRepair = restaurant ? (restaurant.businessType === 'auto_repair') : false;
   const isOffice = restaurant ? (restaurant.businessType === 'office') : false;
@@ -743,7 +765,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                         </>
                       ) : (
                         <>
-                          {isBeauty ? <Scissors className="w-5 h-5 text-red-500 mb-2" /> : <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />}
+                          {isTattoo ? <TattooMachineIcon className="w-5 h-5 text-red-500 mb-2" /> : isBeauty ? <Scissors className="w-5 h-5 text-red-500 mb-2" /> : <UtensilsCrossed className="w-5 h-5 text-red-500 mb-2" />}
                           <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{isBeauty ? 'Categoria' : getTranslation(currentLang, 'cuisine')}</span>
                           <span className="font-bold text-slate-700 text-xs mt-1">{restaurant.cuisine}</span>
                         </>
@@ -857,7 +879,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       onClick={() => setBookingStep('menu')}
                       className="w-full py-5 bg-white text-red-600 border-2 border-red-100 rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-xl shadow-red-500/5 hover:bg-red-50 hover:border-red-500 transition-all flex items-center justify-center gap-3 active:scale-95 group"
                     >
-                      {isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBarCategory ? <Wine className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
+                      {isTattoo ? <TattooMachineIcon className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBeauty ? <Scissors className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : isBarCategory ? <Wine className="w-5 h-5 group-hover:rotate-12 transition-transform" /> : <UtensilsCrossed className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
                       {isBeauty ? 'Ver Serviços/Produtos' : isBarCategory ? 'Ver Cocktails/Bebidas' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
