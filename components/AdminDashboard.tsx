@@ -115,7 +115,7 @@ interface AdminDashboardProps {
   onUpdateUsers?: (users: any[]) => void;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace' | 'news';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], bars = [], events = [], municipal = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [], marketplaceCategories = [],
@@ -178,6 +178,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [aiSelectedDraftIds, setAiSelectedDraftIds] = useState<string[]>([]);
   const [aiEditingItemIndex, setAiEditingItemIndex] = useState<number | null>(null);
   const [aiIsLoading, setAiIsLoading] = useState(false);
+  const [adminNews, setAdminNews] = useState<any[]>([]);
+
+  const fetchAdminNews = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/news`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminNews(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminNews();
+  }, []);
 
   const parseQuantity = (text: string): number | 'all' => {
     const normalized = text.toLowerCase().trim();
@@ -948,6 +965,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'cars': onUpdateCars(cars.filter(c => c.id !== id)); break;
       case 'buses': onUpdateBusSchedules(busSchedules.filter(b => b.id !== id)); break;
       case 'marketplace': onUpdateMarketplaceAds(marketplaceAds.filter(ad => ad.id !== id)); break;
+      case 'news':
+        fetch(`${API_BASE_URL}/api/news/${id}`, { method: 'DELETE' }).then(() => fetchAdminNews());
+        break;
     }
     setModifiedCategories(prev => new Set(prev).add(activeTab));
   };
@@ -1104,6 +1124,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     try {
       const updatedItem = { ...editingItem };
+      
+      if (activeTab === 'news') {
+        const url = isAddingNew ? `${API_BASE_URL}/api/news` : `${API_BASE_URL}/api/news/${updatedItem.id}`;
+        const method = isAddingNew ? 'POST' : 'PUT';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedItem)
+        });
+        if (res.ok) {
+          fetchAdminNews();
+          alert('✅ Notícia guardada com sucesso!');
+        } else {
+          alert('❌ Erro ao guardar notícia.');
+        }
+        setEditingItem(null);
+        setIsAddingNew(false);
+        setIsSaving(false);
+        return;
+      }
       
       // Helper to add or update item in local list (NO SERVER SYNC HERE)
       const updateLocal = (list: any[], setter: (l: any[]) => void) => {
@@ -1443,6 +1483,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'marketplace':
         newItem = { id: `cat_${timestamp}`, label: '', icon: 'ShoppingBag' };
         break;
+      case 'news':
+        newItem = {
+          id: `news_${timestamp}`,
+          title: '',
+          description: '',
+          content: '',
+          date: new Date().toLocaleDateString('pt-PT'),
+          time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+          image: '',
+          sliderImages: []
+        };
+        break;
       case 'suppliers':
         alert('Por favor, adicione fornecedores diretamente no cartão de cada restaurante abaixo.');
         return;
@@ -1747,6 +1799,106 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
 
     switch (activeTab) {
+      case 'news':
+        return (
+          <>
+            {commonInput('Título da Notícia', 'title')}
+            {commonInput('Descrição Curta (Apresentada no Card)', 'description')}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Conteúdo Completo da Notícia</label>
+              <textarea 
+                rows={6}
+                className="w-full border p-3 rounded-2xl bg-white font-medium focus:outline-none focus:border-blue-500"
+                value={editingItem.content || ''}
+                onChange={e => setEditingItem({ ...editingItem, content: e.target.value })}
+                placeholder="Escreva a notícia detalhadamente..."
+              />
+            </div>
+            {commonInput('Data de Publicação', 'date')}
+            {commonInput('Hora de Publicação', 'time')}
+            
+            {/* Capa Image Upload Field */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Foto da Notícia (Capa / Pequena)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 border p-2 rounded-lg"
+                  value={editingItem.image}
+                  onChange={e => setEditingItem({...editingItem, image: e.target.value})}
+                  placeholder="URL da imagem ou faça upload..."
+                />
+                <label className={`cursor-pointer p-2 rounded-lg border flex items-center justify-center transition-all bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100`}>
+                   <ImageIcon className="w-5 h-5" />
+                   <input 
+                     type="file" 
+                     className="hidden" 
+                     accept="image/*,.webp"
+                     onChange={async (e) => {
+                       if (e.target.files?.[0]) {
+                         const fd = new FormData();
+                         fd.append('image', e.target.files[0]);
+                         try {
+                           const res = await fetch(`${API_BASE_URL}/api/upload`, { method: 'POST', body: fd });
+                           if (res.ok) {
+                             const data = await res.json();
+                             setEditingItem({ ...editingItem, image: data.url });
+                           }
+                         } catch (err) {
+                           console.error(err);
+                         }
+                       }
+                     }}
+                   />
+                </label>
+              </div>
+            </div>
+
+            {/* Slider Images Upload Field */}
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Fotos Adicionais (Slider do Topo)</label>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mb-2">Insira URLs separadas por vírgula ou faça upload de novas fotos</p>
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="text"
+                  placeholder="Ex: https://image1.jpg, https://image2.jpg"
+                  className="w-full border p-2.5 rounded-xl font-bold"
+                  value={(editingItem.sliderImages || []).join(', ')}
+                  onChange={e => setEditingItem({
+                    ...editingItem,
+                    sliderImages: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  })}
+                />
+                <label className="cursor-pointer px-4 py-2 bg-slate-900 text-white hover:bg-blue-600 rounded-xl text-xs font-black uppercase text-center self-start">
+                  + Fazer Upload de Foto para o Slider
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*,.webp"
+                    onChange={async (e) => {
+                       if (e.target.files?.[0]) {
+                         const fd = new FormData();
+                         fd.append('image', e.target.files[0]);
+                         try {
+                           const res = await fetch(`${API_BASE_URL}/api/upload`, { method: 'POST', body: fd });
+                           if (res.ok) {
+                             const data = await res.json();
+                             setEditingItem({
+                               ...editingItem,
+                               sliderImages: [...(editingItem.sliderImages || []), data.url]
+                             });
+                           }
+                         } catch (err) {
+                           console.error(err);
+                         }
+                       }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          </>
+        );
       case 'marketplace':
         return (
           <>
@@ -3059,6 +3211,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'buses': list = busSchedules; break;
       case 'customers': list = users; break;
       case 'marketplace': list = marketplaceCategories || []; break;
+      case 'news': list = adminNews; break;
       default: list = [];
     }
 
@@ -3106,7 +3259,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       'events': 'Eventos & Espetáculos',
       'municipal': 'Serviços Municipais',
       'marketplace': 'Classificados (Marketplace)',
-      'customers': 'Gestão de Clientes'
+      'customers': 'Gestão de Clientes',
+      'news': 'Notícias da Região'
     };
     return titles[activeTab as string] || activeTab?.toUpperCase() || 'Painel';
   };
@@ -3252,6 +3406,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <ShoppingCart className={`w-6 h-6 ${activeTab === 'marketplace' ? 'text-white' : 'text-orange-500'}`} /> 
             <span className="font-black uppercase tracking-widest text-xs">Marketplace</span>
+          </button>
+
+          <button 
+            onClick={() => { setActiveTab('news'); setEditingItem(null); setShowOtherTabs(false); }} 
+            className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all mt-2 ${activeTab === 'news' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-xl shadow-rose-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <FileText className={`w-6 h-6 ${activeTab === 'news' ? 'text-white' : 'text-red-500'}`} /> 
+            <span className="font-black uppercase tracking-widest text-xs">Notícias</span>
           </button>
           
           <div className="h-px bg-slate-800/50 my-4 mx-2"></div>

@@ -6,6 +6,7 @@ import AzoresLogo from './AzoresLogo';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import { WeatherWidget } from './WeatherWidget';
+import { NewsDetailModal } from './NewsDetailModal';
 
 interface HomeSectionProps {
   language: Language;
@@ -32,6 +33,73 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   const [heroIndex, setHeroIndex] = useState(0);
   const [slides, setSlides] = useState<any[]>([]);
   const t = (key: any) => getTranslation(language, key);
+
+  const [news, setNews] = useState<any[]>([]);
+  const [selectedNews, setSelectedNews] = useState<any | null>(null);
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/news`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setNews(data);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      setNews([
+        {
+          id: 'n_santa_clara',
+          title: 'Santa Clara vence em casa e consolida subida na Liga',
+          description: 'A equipa açoriana somou mais três pontos valiosos frente aos seus adeptos, demonstrando grande atitude e eficácia desportiva.',
+          content: 'O Santa Clara garantiu uma vitória categórica por 2-0 frente aos seus adeptos. A equipa demonstrou excelente coesão defensiva e eficácia ofensiva, garantindo o resultado na segunda parte. Esta vitória consolida a posição na parte superior da tabela classificativa e gera enorme otimismo para as próximas jornadas desportivas.',
+          date: '05/07/2026',
+          time: '15:30',
+          image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
+          sliderImages: [
+            'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1540747737956-37872404a87a?w=500&auto=format&fit=crop'
+          ]
+        },
+        {
+          id: 'n_regional_1',
+          title: 'Governo dos Açores anuncia novos investimentos ambientais',
+          description: 'Nova verba destina-se à preservação dos trilhos naturais e miradouros, protegendo a biodiversidade única das nove ilhas.',
+          content: 'Com o objetivo de promover o turismo sustentável, o Governo Regional anunciou um pacote financeiro exclusivo para a requalificação e limpeza de miradouros, trilhos pedestres e áreas protegidas. O plano arranca já este mês em São Miguel, Terceira e Pico, estendendo-se posteriormente a todas as restantes ilhas do arquipélago.',
+          date: '05/07/2026',
+          time: '12:15',
+          image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&auto=format&fit=crop',
+          sliderImages: []
+        },
+        {
+          id: 'n_regional_2',
+          title: 'Festival de Chamarritas atrai milhares à ilha do Pico',
+          description: 'O evento cultural tradicional celebra a música regional e danças típicas, juntando locais e turistas numa festa única.',
+          content: 'A ilha do Pico acolheu este fim de semana a maior edição de sempre do Festival Anual de Chamarritas. O evento contou com atuações improvisadas de tocadores locais e danças de roda tradicionais que se prolongaram pela noite dentro, atraindo milhares de visitantes continentais e internacionais.',
+          date: '04/07/2026',
+          time: '21:00',
+          image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop',
+          sliderImages: []
+        },
+        {
+          id: 'n_regional_3',
+          title: 'Novas ligações marítimas inter-ilhas entram em funcionamento',
+          description: 'Aumento da frequência de ferries pretende melhorar a mobilidade local e facilitar deslocações turísticas no arquipélago.',
+          content: 'Entrou hoje em vigor o novo horário alargado para a frota de ferries inter-ilhas. A medida visa facilitar a mobilidade diária dos açorianos e oferecer alternativas mais flexíveis para turistas que viajam entre ilhas vizinhas, especialmente nos grupos central e ocidental.',
+          date: '04/07/2026',
+          time: '09:45',
+          image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=500&auto=format&fit=crop',
+          sliderImages: []
+        }
+      ]);
+    };
+    fetchNews();
+  }, []);
 
   const defaultSlides = [
     { id: 'slide_1', image: '/hero/11.jpg', subtitle: 'Experiência Açores', title: 'Descubra\nSão Miguel', description: 'A natureza em estado puro para as suas férias perfeitas.', buttonText: 'Explorar agora' },
@@ -357,28 +425,51 @@ const HomeSection: React.FC<HomeSectionProps> = ({
         </div>
       </div>
 
-      {/* Explore Categories Grid */}
-      <div className="space-y-4 px-6 pb-10">
-        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter">Explore por categoria</h3>
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mainCategories.map((cat) => (
+      {/* Regional News Grid */}
+      <div className="space-y-4 px-6 pb-10 flex flex-col items-center">
+        <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter text-center w-full">Notícias da Região</h3>
+        
+        <div className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl space-y-5 text-slate-200">
+          {news.map((item) => (
             <div 
-              key={cat.id} 
-              onClick={() => onNavigate(cat.id as any)}
-              className="relative h-28 rounded-3xl overflow-hidden shadow-sm group cursor-pointer"
+              key={item.id || item.title} 
+              className="flex items-start gap-4 pb-4 border-b border-white/5 last:border-b-0 last:pb-0"
             >
-              <img src={cat.image} alt={cat.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute inset-0 bg-black/30"></div>
-              <div className="absolute inset-0 p-5 flex flex-col justify-center">
-                 <h4 className="text-base font-black text-white uppercase tracking-tighter mb-0.5">{cat.title}</h4>
-                 <p className="text-[9px] font-bold text-white/70 uppercase tracking-widest mb-3">{cat.subtitle}</p>
-                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-slate-900">
-                    <ArrowRight size={14} />
-                 </div>
+              <div className="w-20 h-20 bg-slate-950 rounded-2xl overflow-hidden shrink-0 border border-white/5">
+                <img src={item.image} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                  <span>{item.date}</span>
+                  <span>·</span>
+                  <span>{item.time}</span>
+                </div>
+                <h4 className="text-white font-black text-xs mt-1 leading-snug line-clamp-1">{item.title}</h4>
+                <p className="text-slate-400 text-[10px] font-semibold mt-1 line-clamp-2 leading-relaxed">
+                  {item.description}
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedNews(item);
+                    setIsNewsModalOpen(true);
+                  }}
+                  className="mt-2.5 px-3.5 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                >
+                  Ver Notícia
+                </button>
               </div>
             </div>
           ))}
         </div>
+
+        <NewsDetailModal 
+          isOpen={isNewsModalOpen}
+          onClose={() => {
+            setIsNewsModalOpen(false);
+            setSelectedNews(null);
+          }}
+          newsItem={selectedNews}
+        />
       </div>
     </div>
   );
