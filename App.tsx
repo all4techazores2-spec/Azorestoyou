@@ -679,6 +679,7 @@ const App: React.FC = () => {
   const [showGuestExitPromo, setShowGuestExitPromo] = useState(false);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [showMyTattooProjects, setShowMyTattooProjects] = useState(false);
+  const [clientHasSentTattooProject, setClientHasSentTattooProject] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
@@ -729,6 +730,28 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('notifiedResIds', JSON.stringify(Array.from(notifiedResIds)));
   }, [notifiedResIds]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userProfile?.email) {
+      setClientHasSentTattooProject(false);
+      return;
+    }
+    const checkProjects = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/tattoo_projects`);
+        if (response.ok) {
+          const data = await response.json();
+          const hasSent = data.some((p: any) => p.client_id === userProfile.email && p.status !== 'Rascunho');
+          setClientHasSentTattooProject(hasSent);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    checkProjects();
+    const interval = setInterval(checkProjects, 10000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, userProfile]);
 
   useEffect(() => {
     if (!isAuthenticated || isAdmin || isBusiness) return;
@@ -3284,6 +3307,7 @@ const App: React.FC = () => {
           setShowProfileModal(false);
           setShowMyTattooProjects(true);
         }}
+        hasSentTattooProject={clientHasSentTattooProject}
         onUpdateProfile={async (update) => {
            setUserProfile({
              name: update.name,

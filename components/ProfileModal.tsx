@@ -26,9 +26,10 @@ interface ProfileModalProps {
   onShowCommunity?: () => void;
   onShowMessages?: () => void;
   onShowTattooProjects?: () => void;
+  hasSentTattooProject?: boolean;
 }
 
-type ProfileView = 'menu' | 'edit';
+type ProfileView = 'menu' | 'edit' | 'faturas_orcamentos';
 
 
 
@@ -45,7 +46,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   onShowSOS,
   onShowCommunity,
   onShowMessages,
-  onShowTattooProjects
+  onShowTattooProjects,
+  hasSentTattooProject = false
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [view, setView] = useState<ProfileView>('menu');
@@ -106,7 +108,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           >
             <div className="p-6 border-b border-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {view === 'edit' && (
+                {view !== 'menu' && (
                   <button onClick={() => setView('menu')} className="p-2 hover:bg-slate-100 rounded-full transition-colors mr-2">
                     <ArrowLeft size={20} className="text-slate-400" />
                   </button>
@@ -166,13 +168,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       </button>
 
                       <button 
-                        onClick={() => onShowInvoices?.()}
+                        onClick={() => setView('faturas_orcamentos')}
                         className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
                       >
                         <div className="p-3 rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
                           <CreditCard size={20} />
                         </div>
-                        <span className="font-bold text-slate-700">Faturas</span>
+                        <span className="font-bold text-slate-700">Faturas / Orçamentos</span>
                       </button>
 
                       <button 
@@ -195,17 +197,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                         <span className="font-bold text-slate-700">Comunidade Azorestoyou</span>
                       </button>
 
-                      <button 
-                        onClick={() => {
-                          onShowTattooProjects?.();
-                        }}
-                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
-                      >
-                        <div className="p-3 rounded-2xl bg-yellow-500 text-slate-950 shadow-lg shadow-yellow-500/20 group-hover:scale-110 transition-transform">
-                          <Sliders size={20} />
-                        </div>
-                        <span className="font-bold text-slate-700">Projetos de Tatuagem</span>
-                      </button>
+
 
                       {/* SOS Button inside Profile */}
                       <button 
@@ -235,6 +227,49 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                         Sair da Aplicação
                       </button>
                     </div>
+                  </motion.div>
+                ) : view === 'faturas_orcamentos' ? (
+                  <motion.div 
+                    key="faturas_orcamentos"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-4"
+                  >
+                    <button 
+                      onClick={() => {
+                        setView('menu');
+                        onShowInvoices?.();
+                      }}
+                      className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                    >
+                      <div className="p-3 rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                        <CreditCard size={20} />
+                      </div>
+                      <span className="font-bold text-slate-700">Ver Faturas</span>
+                    </button>
+
+                    {hasSentTattooProject && (
+                      <button 
+                        onClick={() => {
+                          setView('menu');
+                          onShowTattooProjects?.();
+                        }}
+                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                      >
+                        <div className="p-3 rounded-2xl bg-yellow-500 text-slate-950 shadow-lg shadow-yellow-500/20 group-hover:scale-110 transition-transform">
+                          <Sliders size={20} />
+                        </div>
+                        <span className="font-bold text-slate-700">Projetos de Tatuagem</span>
+                      </button>
+                    )}
+
+                    <button 
+                      onClick={() => setView('menu')}
+                      className="w-full mt-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                    >
+                      Voltar ao Perfil
+                    </button>
                   </motion.div>
                 ) : (
                   <motion.div 

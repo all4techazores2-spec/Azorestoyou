@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Camera, Image as ImageIcon, Check, RotateCw, RefreshCw, 
   Trash2, Undo, Redo, Eye, EyeOff, Save, Send, Plus, Sparkles, 
-  ChevronRight, ChevronLeft, Layers, Sliders, Maximize2, Minimize2 
+  ChevronRight, ChevronLeft, Layers, Sliders, Maximize2, Minimize2, Loader2
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -29,8 +29,8 @@ interface CanvasState {
 interface PreviewVersion {
   id: string;
   name: string;
-  clientPhoto: string; // Base64 or url
-  tattooPng: string; // Base64 or url
+  clientPhoto: string; // Cloudinary URL
+  tattooPng: string; // Cloudinary URL
   canvasState: CanvasState;
   createdAt: string;
 }
@@ -54,9 +54,20 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
   const [bodyZone, setBodyZone] = useState('');
   const [bodySide, setBodySide] = useState<'frente' | 'costas'>('frente');
   const [gender, setGender] = useState<'homem' | 'mulher'>('homem');
+  
+  // Cloudinary image links
   const [clientPhoto, setClientPhoto] = useState<string>('');
   const [tattooPng, setTattooPng] = useState<string>('');
   
+  // Loader and upload state
+  const [uploading, setUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Refs for hidden inputs
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const designInputRef = useRef<HTMLInputElement>(null);
+
   // Versions
   const [versions, setVersions] = useState<PreviewVersion[]>([]);
   const [currentVersionId, setCurrentVersionId] = useState<string>('');
@@ -170,12 +181,103 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
             setStep(5);
             return 100;
           }
-          return prev + 10;
+          return prev + 20;
         });
-      }, 150);
+      }, 100);
       return () => clearInterval(interval);
     }
   }, [step]);
+
+  // Image compression and Cloudinary upload logic
+  const compressAndUploadImage = (file: File, folderType: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      // 1. Format validation
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        const err = 'Formato inválido! Por favor envie JPG, PNG ou WEBP.';
+        setErrorMessage(err);
+        reject(new Error(err));
+        return;
+      }
+      setErrorMessage('');
+
+      // 2. Read file to image
+      const reader = new FileReader();
+      reader.onerror = () => {
+        const err = 'Erro ao ler o ficheiro.';
+        setErrorMessage(err);
+        reject(new Error(err));
+      };
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => {
+          const err = 'Erro ao carregar ficheiro como imagem.';
+          setErrorMessage(err);
+          reject(new Error(err));
+        };
+        img.onload = async () => {
+          // Resize/compress in memory using Canvas
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 1200;
+
+          if (width > max_size || height > max_size) {
+            if (width > height) {
+              height = Math.round((height * max_size) / width);
+              width = max_size;
+            } else {
+              width = Math.round((width * max_size) / height);
+              height = max_size;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+          }
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          // Upload to server -> Cloudinary
+          try {
+            setUploading(true);
+            const res = await fetch(`${API_BASE_URL}/api/upload-cloudinary`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image: compressedBase64,
+                businessId,
+                folderType,
+                clientId: clientEmail,
+                projectId: projectCode
+              })
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              resolve(data.secure_url);
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              const msg = errData.error || 'Falha ao efetuar upload no servidor.';
+              setErrorMessage(msg);
+              reject(new Error(msg));
+            }
+          } catch (err: any) {
+            const msg = `Erro de rede: ${err.message}`;
+            setErrorMessage(msg);
+            reject(err);
+          } finally {
+            setUploading(false);
+          }
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Apply a state action and add to Undo history
   const updateCanvasState = (newState: Partial<CanvasState>) => {
@@ -275,42 +377,64 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
     }
   };
 
-  // Upload handlers
-  const handleClientPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Native Mobile Camera & Gallery Handlers
+  const handleCameraPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setClientPhoto(reader.result as string);
+      try {
+        const url = await compressAndUploadImage(file, 'client_photos');
+        setClientPhoto(url);
         setStep(2);
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
-  const handleTattooPngUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setTattooPng(reader.result as string);
-        setStep(4);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const url = await compressAndUploadImage(file, 'client_photos');
+        setClientPhoto(url);
+        setStep(2);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
-  // Mock Camera simulation
-  const triggerMockCamera = () => {
-    // Generate a default high quality skin placement mockup background
-    setClientPhoto('https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&q=80');
-    setStep(2);
+  const handleTattooDesignUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const url = await compressAndUploadImage(file, 'references');
+        setTattooPng(url);
+        setStep(4);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
-  // Mock Tattoo simulation design templates
-  const selectTattooTemplate = (url: string) => {
-    setTattooPng(url);
-    setStep(4);
+  // Fallback template selection
+  const selectTattooTemplate = async (url: string) => {
+    setUploading(true);
+    try {
+      // Fetch reference design and upload to Cloudinary to maintain full HTTPS pipeline
+      const resFetch = await fetch(url);
+      const blob = await resFetch.blob();
+      const file = new File([blob], 'template.jpg', { type: 'image/jpeg' });
+      const cloudUrl = await compressAndUploadImage(file, 'references');
+      setTattooPng(cloudUrl);
+      setStep(4);
+    } catch (e) {
+      // Fallback directly to URL if fetch fails
+      setTattooPng(url);
+      setStep(4);
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Final Action: Save Project or Send to Studio
@@ -347,7 +471,10 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
       preferred_date: preferredDate,
       budget: budget,
       messages: [],
-      history: [{ action: `Projeto criado como ${finalStatus}`, date: new Date().toISOString() }]
+      history: [
+        { id: `hist_${Date.now()}_1`, action: 'Projeto criado', date: new Date().toISOString() },
+        { id: `hist_${Date.now()}_2`, action: `Estado alterado para ${finalStatus}`, date: new Date().toISOString() }
+      ]
     };
 
     try {
@@ -389,6 +516,14 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         className="fixed inset-0 z-[1100] bg-slate-950 flex flex-col font-sans text-slate-100 overflow-hidden"
       >
+        {/* Loading Overlay */}
+        {uploading && (
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[1200] flex flex-col items-center justify-center space-y-4">
+            <Loader2 className="w-10 h-10 text-yellow-500 animate-spin" />
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">A processar imagem e a enviar para a Cloud...</p>
+          </div>
+        )}
+
         {/* Top Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-900/50 backdrop-blur-xl border-b border-white/5 shrink-0">
           <div className="flex items-center gap-3">
@@ -408,36 +543,63 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
         {/* Dynamic Wizard Step Content */}
         <div className="flex-1 overflow-y-auto flex flex-col">
           
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/25 rounded-2xl flex items-center gap-3 text-red-400 text-xs font-semibold">
+              <span className="text-base">⚠️</span>
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
           {/* STEP 1: Select/Take Photo */}
           {step === 1 && (
             <div className="flex-1 max-w-lg mx-auto w-full flex flex-col justify-center p-8 space-y-8">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl font-black tracking-tight text-white">Vamos criar o teu projeto</h1>
                 <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                  Cria uma simulação da tua tatuagem sobre a tua própria pele antes de enviar a proposta ao estúdio.
+                  Tire uma fotografia em tempo real ou selecione uma imagem da galeria para desenhar a sua simulação de tatuagem.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
+                {/* Hidden native input files */}
+                <input 
+                  ref={cameraInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment" 
+                  onChange={handleCameraPhoto} 
+                  className="hidden" 
+                />
+                <input 
+                  ref={galleryInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleGalleryPhoto} 
+                  className="hidden" 
+                />
+
                 <button 
-                  onClick={triggerMockCamera}
+                  onClick={() => cameraInputRef.current?.click()}
                   className="group relative flex flex-col items-center justify-center p-8 bg-slate-900 border border-white/5 hover:border-yellow-500/30 rounded-3xl transition-all shadow-xl hover:shadow-yellow-500/5"
                 >
                   <div className="w-14 h-14 bg-white/5 group-hover:bg-yellow-500/10 rounded-full flex items-center justify-center text-slate-350 group-hover:text-yellow-500 transition-all mb-4">
                     <Camera size={26} />
                   </div>
-                  <span className="font-bold text-white text-base">📷 Tirar fotografia</span>
-                  <span className="text-xs text-slate-500 font-semibold mt-1">Usa a câmara em tempo real</span>
+                  <span className="font-bold text-white text-base">📷 Tirar Fotografia</span>
+                  <span className="text-xs text-slate-500 font-semibold mt-1">Abre a câmara móvel diretamente</span>
                 </button>
 
-                <label className="group relative flex flex-col items-center justify-center p-8 bg-slate-900 border border-white/5 hover:border-yellow-500/30 rounded-3xl cursor-pointer transition-all shadow-xl hover:shadow-yellow-500/5">
-                  <input type="file" accept="image/*" onChange={handleClientPhotoUpload} className="hidden" />
+                <button 
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="group relative flex flex-col items-center justify-center p-8 bg-slate-900 border border-white/5 hover:border-yellow-500/30 rounded-3xl transition-all shadow-xl hover:shadow-yellow-500/5"
+                >
                   <div className="w-14 h-14 bg-white/5 group-hover:bg-yellow-500/10 rounded-full flex items-center justify-center text-slate-350 group-hover:text-yellow-500 transition-all mb-4">
                     <ImageIcon size={26} />
                   </div>
-                  <span className="font-bold text-white text-base">🖼 Escolher fotografia</span>
-                  <span className="text-xs text-slate-500 font-semibold mt-1">Escolhe da galeria do telemóvel</span>
-                </label>
+                  <span className="font-bold text-white text-base">🖼 Escolher da Galeria</span>
+                  <span className="text-xs text-slate-500 font-semibold mt-1">Carregue ficheiros do dispositivo</span>
+                </button>
               </div>
             </div>
           )}
@@ -467,7 +629,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
               <div className="relative bg-slate-900/60 border border-white/5 rounded-3xl p-6 flex flex-col items-center">
                 <div className="w-48 h-80 flex items-center justify-center border border-white/5 rounded-2xl bg-slate-950 relative overflow-hidden">
                   {/* Stylized mockup of a body frame */}
-                  <div className="w-12 h-12 rounded-full border-2 border-slate-700/60 mt-[-100px] flex items-center justify-center text-[10px] text-slate-600 font-bold">Cabeça</div>
+                  <div className="w-12 h-12 rounded-full border-2 border-slate-700/60 mt-[-100px] flex items-center justify-center text-[10px] text-slate-650 font-bold">Cabeça</div>
                   <div className="w-24 h-40 border-2 border-slate-700/60 rounded-3xl absolute top-28 flex items-center justify-center text-xs text-slate-500 font-black">
                     {bodySide === 'frente' ? 'Tronco' : 'Costas'}
                   </div>
@@ -525,23 +687,33 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
           {step === 3 && (
             <div className="flex-1 max-w-lg mx-auto w-full flex flex-col justify-center p-8 space-y-6">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl font-black text-white">Carregar Desenho da Tatuagem</h1>
-                <p className="text-xs text-slate-400 font-semibold">Envie o desenho desejado em PNG (fundo transparente preferencialmente), JPG ou WEBP.</p>
+                <h1 className="text-2xl font-black text-white">Desenho da Tatuagem</h1>
+                <p className="text-xs text-slate-400 font-semibold">Envie o desenho desejado em PNG, JPG ou WEBP para sobrepor.</p>
               </div>
 
               <div className="space-y-4">
-                <label className="group relative flex flex-col items-center justify-center p-12 bg-slate-900 border-2 border-dashed border-white/10 hover:border-yellow-500/30 rounded-3xl cursor-pointer transition-all">
-                  <input type="file" accept="image/*" onChange={handleTattooPngUpload} className="hidden" />
+                <input 
+                  ref={designInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleTattooDesignUpload} 
+                  className="hidden" 
+                />
+
+                <button 
+                  onClick={() => designInputRef.current?.click()}
+                  className="w-full group relative flex flex-col items-center justify-center p-12 bg-slate-900 border-2 border-dashed border-white/10 hover:border-yellow-500/30 rounded-3xl cursor-pointer transition-all"
+                >
                   <div className="w-14 h-14 bg-white/5 group-hover:bg-yellow-500/10 rounded-full flex items-center justify-center text-slate-350 group-hover:text-yellow-500 transition-all mb-4">
                     <Plus size={26} />
                   </div>
-                  <span className="font-bold text-white text-base">Selecionar Desenho</span>
-                  <span className="text-xs text-slate-500 font-semibold mt-1">PNG, JPG ou WEBP</span>
-                </label>
+                  <span className="font-bold text-white text-base">Selecionar Ficheiro do Desenho</span>
+                  <span className="text-xs text-slate-500 font-semibold mt-1">Suporta PNG, JPG ou WEBP</span>
+                </button>
 
                 {/* Templates preview */}
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Ou escolha um estilo de exemplo</h3>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Ou use um desenho de exemplo</h3>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { name: 'Mandala', url: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=150&q=80' },
@@ -715,13 +887,13 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <button 
                     onClick={() => updateCanvasState({ mirror: !canvasState.mirror })}
-                    className="py-3 bg-slate-950 hover:bg-slate-900 border border-white/5 rounded-xl font-black text-[10px] uppercase tracking-wider text-slate-300 flex items-center justify-center gap-1.5"
+                    className="py-3 bg-slate-955 hover:bg-slate-900 border border-white/5 rounded-xl font-black text-[10px] uppercase tracking-wider text-slate-300 flex items-center justify-center gap-1.5"
                   >
                     Espelhar
                   </button>
                   <button 
                     onClick={duplicateVersion}
-                    className="py-3 bg-slate-950 hover:bg-slate-900 border border-white/5 rounded-xl font-black text-[10px] uppercase tracking-wider text-slate-300 flex items-center justify-center gap-1.5"
+                    className="py-3 bg-slate-955 hover:bg-slate-900 border border-white/5 rounded-xl font-black text-[10px] uppercase tracking-wider text-slate-300 flex items-center justify-center gap-1.5"
                   >
                     Duplicar Ver.
                   </button>
@@ -737,7 +909,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
                         className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${
                           currentVersionId === ver.id 
                             ? 'bg-yellow-500/10 border-yellow-500/30' 
-                            : 'bg-slate-955 border-white/5 hover:border-white/10'
+                            : 'bg-slate-950 border-white/5 hover:border-white/10'
                         }`}
                       >
                         <button 
@@ -760,7 +932,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
 
                 {/* Action navigation */}
                 <div className="flex gap-2 pt-4">
-                  <button onClick={saveVersion} className="flex-1 py-4 bg-slate-950 hover:bg-slate-900 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest text-white flex items-center justify-center gap-2">
+                  <button onClick={saveVersion} className="flex-1 py-4 bg-slate-955 hover:bg-slate-900 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest text-white flex items-center justify-center gap-2">
                     <Save size={14} />
                     Guardar
                   </button>
@@ -867,7 +1039,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
                       <input 
                         type="number" placeholder="Ex: 350" 
                         value={budget} onChange={e => setBudget(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-yellow-500 transition-all"
+                        className="w-full px-4 py-3 bg-slate-955 border border-white/5 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-yellow-500 transition-all"
                       />
                     </div>
                     <div>
@@ -875,7 +1047,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
                       <input 
                         type="date" 
                         value={preferredDate} onChange={e => setPreferredDate(e.target.value)}
-                        className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-yellow-500 transition-all"
+                        className="w-full px-4 py-3 bg-slate-955 border border-white/5 rounded-2xl text-white font-bold text-xs focus:outline-none focus:border-yellow-500 transition-all"
                       />
                     </div>
                   </div>
@@ -890,7 +1062,7 @@ export const TattooDesigner: React.FC<TattooDesignerProps> = ({
                   </div>
 
                   {/* AI Estimated details warning */}
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-white/5 text-[10px] text-slate-450 leading-relaxed space-y-2">
+                  <div className="p-4 bg-slate-955 rounded-2xl border border-white/5 text-[10px] text-slate-400 leading-relaxed space-y-2">
                     <p className="font-bold text-yellow-500/80">Estoque de Estimativa Técnica:</p>
                     <p>
                       * Estilo sugerido: Preto e Cinza / Realismo<br/>

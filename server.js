@@ -118,6 +118,44 @@ app.get('/api/db-diagnostics', (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.post('/api/upload-cloudinary', async (req, res) => {
+    try {
+        const { image, businessId, folderType, clientId, projectId } = req.body;
+        if (!image) {
+            return res.status(400).json({ error: "Missing image data" });
+        }
+
+        const validFolders = [
+            'client_photos', 'references', 'previews', 'completed',
+            'signatures', 'invoices', 'consent_forms', 'attachments'
+        ];
+        const targetFolder = validFolders.includes(folderType) ? folderType : 'general';
+        const cloudinaryFolder = `azorestoyou/tattoo/${businessId || 'default'}/${targetFolder}`;
+
+        const uploadResult = await cloudinary.uploader.upload(image, {
+            folder: cloudinaryFolder,
+            resource_type: 'auto'
+        });
+
+        res.json({
+            businessId: businessId || 'default',
+            clientId: clientId || 'anonymous',
+            projectId: projectId || 'temp',
+            folder: targetFolder,
+            public_id: uploadResult.public_id,
+            secure_url: uploadResult.secure_url,
+            createdAt: new Date().toISOString(),
+            width: uploadResult.width,
+            height: uploadResult.height,
+            format: uploadResult.format,
+            bytes: uploadResult.bytes,
+            tags: uploadResult.tags || []
+        });
+    } catch (err) {
+        console.error("❌ Cloudinary upload failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Debug endpoint to check DB contents
 app.get('/api/debug-db', async (req, res) => {
