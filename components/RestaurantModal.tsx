@@ -6,6 +6,7 @@ import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
+import { TattooDesigner } from './TattooDesigner';
 
 interface RestaurantModalProps {
   restaurant: Business | null;
@@ -99,6 +100,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   const [showFullMenuPopup, setShowFullMenuPopup] = useState(false);
 
   const [guestStep, setGuestStep] = useState<'details' | 'minipos'>('details');
+  const [showTattooDesigner, setShowTattooDesigner] = useState(false);
 
   // Follow and Like state for individual business
   const [isFollowed, setIsFollowed] = useState(() => {
@@ -883,7 +885,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       {isBeauty ? 'Ver Serviços/Produtos' : isBarCategory ? 'Ver Cocktails/Bebidas' : 'Ver Ementa'}
                       <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all" />
                     </button>
-                    {restaurant.isConfirmed !== false && (
+                    {isTattoo ? (
+                      <button
+                        onClick={() => setShowTattooDesigner(true)}
+                        className="w-full py-5 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-slate-950 font-black uppercase text-[11px] tracking-[0.2em] rounded-[1.75rem] shadow-2xl shadow-yellow-500/25 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                      >
+                        <Sparkles className="w-5 h-5 animate-pulse" />
+                        ✨ Experimentar Tatuagem
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    ) : restaurant.isConfirmed !== false && (
                       <button
                         onClick={startBooking}
                         className="w-full py-5 bg-red-600 text-white rounded-[1.75rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -1617,6 +1628,15 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           </AnimatePresence>
         </motion.div>
       </div>
+
+      <TattooDesigner 
+        isOpen={showTattooDesigner} 
+        onClose={() => setShowTattooDesigner(false)} 
+        businessId={restaurant?.id || ''} 
+        businessName={restaurant?.name || ''} 
+        userProfile={userProfile} 
+        language={language}
+      />
     </AnimatePresence>
   );
 };

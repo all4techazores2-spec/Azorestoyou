@@ -33,6 +33,7 @@ import BarberProDashboard from './components/BarberProDashboard';
 import ManicureDashboard from './components/ManicureDashboard';
 import TattooDashboard from './components/TattooDashboard';
 import { PublicServicesDashboard } from './components/PublicServicesDashboard';
+import { MyTattooProjects } from './components/MyTattooProjects';
 import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
@@ -677,6 +678,7 @@ const App: React.FC = () => {
   const [guestFormData, setGuestFormData] = useState({ name: '', people: 2, phone: '', email: '' });
   const [showGuestExitPromo, setShowGuestExitPromo] = useState(false);
   const [showSOSModal, setShowSOSModal] = useState(false);
+  const [showMyTattooProjects, setShowMyTattooProjects] = useState(false);
   const [returnToProfile, setReturnToProfile] = useState(false);
   const [showIslandSelection, setShowIslandSelection] = useState(false);
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
@@ -3278,6 +3280,10 @@ const App: React.FC = () => {
         language={language} 
         userCredits={userCredits}
         userProfile={userProfile}
+        onShowTattooProjects={() => {
+          setShowProfileModal(false);
+          setShowMyTattooProjects(true);
+        }}
         onUpdateProfile={async (update) => {
            setUserProfile({
              name: update.name,
@@ -3414,6 +3420,13 @@ const App: React.FC = () => {
         onClose={() => setShowSOSModal(false)} 
         language={language} 
         onShowMap={(url: string) => setShowMapUrl(url)}
+      />
+
+      <MyTattooProjects 
+        isOpen={showMyTattooProjects}
+        onClose={() => setShowMyTattooProjects(false)}
+        userProfile={userProfile}
+        language={language}
       />
 
       <ChatModal 

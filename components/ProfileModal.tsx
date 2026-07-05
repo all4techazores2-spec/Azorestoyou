@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, Lock, Camera, CheckCircle, ArrowLeft, Calendar, CreditCard, MessageCircle, Users, LogOut } from 'lucide-react';
+import { X, User, Mail, Phone, Lock, Camera, CheckCircle, ArrowLeft, Calendar, CreditCard, MessageCircle, Users, LogOut, Sliders } from 'lucide-react';
 import { COLORS } from '../constants';
 import { getTranslation } from '../translations';
 import { Language } from '../types';
@@ -25,6 +25,7 @@ interface ProfileModalProps {
   onShowSOS?: () => void;
   onShowCommunity?: () => void;
   onShowMessages?: () => void;
+  onShowTattooProjects?: () => void;
 }
 
 type ProfileView = 'menu' | 'edit';
@@ -43,7 +44,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   onLogout,
   onShowSOS,
   onShowCommunity,
-  onShowMessages
+  onShowMessages,
+  onShowTattooProjects
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [view, setView] = useState<ProfileView>('menu');
@@ -191,6 +193,18 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                           <Users size={20} />
                         </div>
                         <span className="font-bold text-slate-700">Comunidade Azorestoyou</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          onShowTattooProjects?.();
+                        }}
+                        className="flex items-center gap-4 w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-[2rem] transition-all group"
+                      >
+                        <div className="p-3 rounded-2xl bg-yellow-500 text-slate-950 shadow-lg shadow-yellow-500/20 group-hover:scale-110 transition-transform">
+                          <Sliders size={20} />
+                        </div>
+                        <span className="font-bold text-slate-700">Projetos de Tatuagem</span>
                       </button>
 
                       {/* SOS Button inside Profile */}
