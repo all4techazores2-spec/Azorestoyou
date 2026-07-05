@@ -1844,6 +1844,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <option value="barber">Barbearia</option>
                     <option value="manicure">Manicure</option>
                     <option value="massage">Massagem</option>
+                    <option value="tattoo_shop">Tattoo Shops</option>
                   </select>
                 </div>
                 {editingItem.subcategory === 'barber' && (
@@ -4835,6 +4836,7 @@ Av. do Mar, Madalena, Pico
                     { id: 'barber', label: 'Barbeiros', icon: <User size={18} />, color: '#10B981' },
                     { id: 'manicure', label: 'Manicure', icon: <Brush size={18} />, color: '#F59E0B' },
                     { id: 'massage', label: 'Massagens', icon: <Flower2 size={18} />, color: '#EC4899' },
+                    { id: 'tattoo_shop', label: 'Tattoo Shops', icon: <Paintbrush size={18} />, color: '#C9A66B' },
                   ].map(cat => (
                     <button
                       key={cat.id}

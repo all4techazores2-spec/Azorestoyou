@@ -1066,6 +1066,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       { id: 'barber', label: getTranslation(lang, 'barber'), icon: <User size={24} />, color: '#10B981' },
       { id: 'manicure', label: getTranslation(lang, 'manicure'), icon: <Brush size={24} />, color: '#F59E0B' },
       { id: 'massage', label: getTranslation(lang, 'massage'), icon: <Flower2 size={24} />, color: '#EC4899' },
+      { id: 'tattoo_shop', label: getTranslation(lang, 'tattoo_shop'), icon: <Paintbrush size={24} />, color: '#C9A66B' },
     ];
 
     const filtered = allBeauty.filter(b => {

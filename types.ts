@@ -388,7 +388,7 @@ export type ExploreCategory =
   | 'marketplace'
   | null;
 
-export type BeautySubCategory = 'beauty_salon' | 'hairdresser' | 'barber' | 'manicure' | 'massage';
+export type BeautySubCategory = 'beauty_salon' | 'hairdresser' | 'barber' | 'manicure' | 'massage' | 'tattoo_shop';
 export type AutoRepairSubCategory = 'parts' | 'workshop' | 'bodywork';
 
 export interface Service {

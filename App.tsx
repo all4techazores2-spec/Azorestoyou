@@ -31,6 +31,7 @@ import HotelDashboard from './components/HotelDashboard';
 import BarberNormalDashboard from './components/BarberNormalDashboard';
 import BarberProDashboard from './components/BarberProDashboard';
 import ManicureDashboard from './components/ManicureDashboard';
+import TattooDashboard from './components/TattooDashboard';
 import { PublicServicesDashboard } from './components/PublicServicesDashboard';
 import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
@@ -2133,6 +2134,29 @@ const App: React.FC = () => {
         );
       }
 
+
+      if (isBeauty && biz.subcategory === 'tattoo_shop') {
+        return (
+          <ErrorBoundary>
+            <TattooDashboard
+              business={biz}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                setBeauty(prev => prev.map(item => item.id === updated.id ? updated : item));
+                try {
+                  await fetch(`${API_BASE_URL}/api/beauty/${updated.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                } catch (err) {
+                  console.error("Erro ao atualizar tattoo studio no servidor:", err);
+                }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
 
       if (isBeauty && biz.subcategory === 'manicure') {
         return (
