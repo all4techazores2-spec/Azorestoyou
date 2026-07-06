@@ -13,7 +13,7 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera, Map
+  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera, Map, FileText
 } from 'lucide-react';
 
 import * as constants from '../constants';
