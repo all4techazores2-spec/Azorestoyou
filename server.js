@@ -219,6 +219,7 @@ const handleBusinessUpdate = async (req, res) => {
             }
             if (existingItem.tables !== undefined) {
                 if (req.body.tables && Array.isArray(req.body.tables)) {
+                    console.log("INCOMING TABLES:", JSON.stringify(req.body.tables, null, 2));
                     updatedItem.tables = req.body.tables.map(t => {
                         const existingTable = existingItem.tables.find(et => et.id === t.id);
                         if (existingTable) {

@@ -143,6 +143,7 @@ export interface RestaurantTable {
   currentTab?: OrderItem[];
   alertStatus?: 'none' | 'calling_waiter' | 'waiting_bill' | 'new_order';
   walkInDetails?: { name: string; phone?: string; email?: string; pax: number };
+  qrCodeUrl?: string;
 }
 
 export interface Reservation {

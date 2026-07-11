@@ -1171,6 +1171,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     { id: 'K1', tableId: 'T2', status: 'preparing', timestamp: new Date().toISOString(), items: business.dishes && business.dishes.length > 0 ? [{ dish: business.dishes[0], quantity: 2 }] : [] },
   ]);
 
+  const [kitchenScrollIndices, setKitchenScrollIndices] = useState<Record<string, number>>({});
+
   const lastLocalUpdateRef = React.useRef<number>(0);
   const [assignStaffTableTarget, setAssignStaffTableTarget] = useState<any | null>(null);
 
