@@ -438,6 +438,27 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     const url = `${baseUrl}/?qr=${business.id}&table=${tableId}`;
     setQrTableTarget(tableId);
     setGeneratedQRUrl(url);
+
+    const updatedTables = tables.map(t => {
+      if (String(t.id) === String(tableId)) {
+        return { ...t, qrCodeUrl: url };
+      }
+      return t;
+    });
+    setTables(updatedTables);
+    handleUpdate({ tables: updatedTables });
+  };
+
+  const handleUnlinkQR = (tableId: string) => {
+    const updatedTables = tables.map(t => {
+      if (String(t.id) === String(tableId)) {
+        return { ...t, qrCodeUrl: null };
+      }
+      return t;
+    });
+    setTables(updatedTables);
+    setGeneratedQRUrl(null);
+    handleUpdate({ tables: updatedTables });
   };
 
   const handlePrintQR = () => {
@@ -1191,7 +1212,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     if (business.staff) setStaff(business.staff);
     // Também atualizar produtos e mesas se mudarem no Super Admin
     if (business.products) setProducts(business.products);
-    if (business.tables) setTables(business.tables);
+    if (business.tables) {
+      setTables(prev => business.tables.map((bt: any) => {
+        const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
+        return {
+          ...bt,
+          qrCodeUrl: bt.qrCodeUrl !== undefined && bt.qrCodeUrl !== null ? bt.qrCodeUrl : (localTable?.qrCodeUrl || null)
+        };
+      }));
+    }
   }, [business]);
 
   const [isSyncingVisual, setIsSyncingVisual] = useState(false);
