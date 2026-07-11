@@ -229,7 +229,8 @@ const handleBusinessUpdate = async (req, res) => {
                                 reservationTime: t.reservationTime !== undefined ? t.reservationTime : existingTable.reservationTime,
                                 currentTab: t.currentTab || existingTable.currentTab,
                                 pendingOrderItems: t.pendingOrderItems || existingTable.pendingOrderItems,
-                                alertStatus: t.alertStatus || existingTable.alertStatus
+                                alertStatus: t.alertStatus || existingTable.alertStatus,
+                                qrCodeUrl: t.qrCodeUrl !== undefined ? t.qrCodeUrl : existingTable.qrCodeUrl
                             };
                         }
                         return t;

@@ -1772,6 +1772,12 @@ const App: React.FC = () => {
                 guestName: guestFormData.name,
                 guestPhone: guestFormData.phone,
               }))],
+              currentTab: [...(t.currentTab || []), ...items.map(it => ({
+                ...it,
+                guestSession: guestSessionId,
+                guestName: guestFormData.name,
+                guestPhone: guestFormData.phone,
+              }))],
             };
           }
           return t;

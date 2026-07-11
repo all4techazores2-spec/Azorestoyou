@@ -3783,87 +3783,117 @@ return t;
                      </div>
 
                      <div className="space-y-4 flex-1">
-                        <AnimatePresence mode="popLayout">
-                          {kitchenOrders
+                        {(() => {
+                          const groupOrders = kitchenOrders
                             .filter(o => 
                               o.status === statusGroup.id || 
                               (statusGroup.id === 'preparing' && o.status === 'preparando') ||
                               (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
                             )
-                            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-                              .map((order, idx) => (
-                              <motion.div 
-                                layout
-                                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.8, x: 20 }}
-                                key={order.id} 
-                                className={`bg-white p-5 rounded-3xl shadow-sm border-2 ${statusGroup.id === 'preparing' ? 'border-orange-200 ring-4 ring-orange-50' : 'border-transparent'} group hover:shadow-xl transition-all duration-300`}
-                              >
-                                 <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                       <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId)?.number || '??'}</p>
-                                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">#{order.id.slice(-4)}</p>
-                                    </div>
-                                    <div className="text-right">
-                                       <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                                          {new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
-                                       </p>
-                                    </div>
-                                 </div>
+                            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                          
+                          const scrollIdx = kitchenScrollIndices[statusGroup.id] || 0;
+                          const visibleOrders = groupOrders.slice(scrollIdx, scrollIdx + 3);
 
-                                 <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    {order.requestedPrepTime && (
-                                       <div className={`mb-3 p-2 rounded-xl text-center text-[10px] font-black uppercase tracking-widest ${order.requestedPrepTime === 'now' ? 'bg-emerald-500 text-white animate-pulse' : 'bg-blue-600 text-white'}`}>
-                                          {order.requestedPrepTime === 'now' ? '🚀 Preparar Imediatamente' : `⏰ Iniciar em ${order.requestedPrepTime} min`}
+                          return (
+                            <>
+                              {groupOrders.length > 3 && (
+                                <div className="flex justify-between items-center mb-3 bg-white/60 border border-slate-100 p-2.5 rounded-2xl select-none">
+                                  <button 
+                                    type="button"
+                                    disabled={scrollIdx === 0} 
+                                    onClick={() => setKitchenScrollIndices(prev => ({ ...prev, [statusGroup.id]: Math.max(0, scrollIdx - 3) }))}
+                                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-650 hover:text-slate-800 disabled:opacity-40 disabled:hover:bg-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 shadow-sm cursor-pointer"
+                                  >
+                                    {"<- Ant."}
+                                  </button>
+                                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                    {scrollIdx + 1}-{Math.min(scrollIdx + 3, groupOrders.length)} de {groupOrders.length}
+                                  </span>
+                                  <button 
+                                    type="button"
+                                    disabled={scrollIdx + 3 >= groupOrders.length} 
+                                    onClick={() => setKitchenScrollIndices(prev => ({ ...prev, [statusGroup.id]: scrollIdx + 3 }))}
+                                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-650 hover:text-slate-800 disabled:opacity-40 disabled:hover:bg-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 shadow-sm cursor-pointer"
+                                  >
+                                    {"Seg. ->"}
+                                  </button>
+                                </div>
+                              )}
+                              
+                              <AnimatePresence mode="popLayout">
+                                {visibleOrders.map((order, idx) => (
+                                  <motion.div 
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                                    key={order.id} 
+                                    className={`bg-white p-5 rounded-3xl shadow-sm border-2 ${statusGroup.id === 'preparing' ? 'border-orange-200 ring-4 ring-orange-50' : 'border-transparent'} group hover:shadow-xl transition-all duration-300 mb-4 last:mb-0`}
+                                  >
+                                    <div className="flex justify-between items-start mb-4">
+                                       <div>
+                                          <p className="font-black text-xl text-slate-800 tracking-tighter">Mesa #{tables.find(t => t.id === order.tableId)?.number || '??'}</p>
+                                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">#{order.id.slice(-4)}</p>
                                        </div>
-                                    )}
-                                    {order.items.map((item, i) => (
-                                      <div key={i} className="flex justify-between items-center">
-                                         <div className="flex items-center gap-3">
-                                            <span className="w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{item.quantity}x</span>
-                                            <div className="flex flex-col">
-                                               <span className="text-sm font-bold text-slate-700 tracking-tight">{item.dish.name}</span>
-                                               {item.meatPoint && <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Ponto: {item.meatPoint}</span>}
+                                       <div className="text-right">
+                                          <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                                             {new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
+                                          </p>
+                                       </div>
+                                    </div>
+
+                                    <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                       {order.requestedPrepTime && (
+                                          <div className={`mb-3 p-2 rounded-xl text-center text-[10px] font-black uppercase tracking-widest ${order.requestedPrepTime === 'now' ? 'bg-emerald-500 text-white animate-pulse' : 'bg-blue-600 text-white'}`}>
+                                             {order.requestedPrepTime === 'now' ? '🚀 Preparar Imediatamente' : `⏰ Iniciar em ${order.requestedPrepTime} min`}
+                                          </div>
+                                       )}
+                                       {order.items.map((item, i) => (
+                                         <div key={i} className="flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                               <span className="w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{item.quantity}x</span>
+                                               <div className="flex flex-col">
+                                                  <span className="text-sm font-bold text-slate-700 tracking-tight">{item.dish.name}</span>
+                                                  {item.meatPoint && <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Ponto: {item.meatPoint}</span>}
+                                               </div>
                                             </div>
                                          </div>
-                                      </div>
-                                    ))}
-                                 </div>
+                                       ))}
+                                    </div>
 
-                                 {statusGroup.id !== 'delivered' && (
-                                   <button 
-                                     onClick={() => {
-                                        const nextStatus = statusGroup.id === 'pending' ? 'preparing' : statusGroup.id === 'preparing' ? 'ready' : 'delivered';
-                                        const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus, timestamp: new Date().toISOString()} : o);
-                                        setKitchenOrders(updatedOrders);
-                                        handleUpdate({ kitchenOrders: updatedOrders });
-                                     }}
-                                     className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${
-                                       statusGroup.id === 'pending' ? 'bg-orange-500 text-white shadow-orange-500/20 hover:bg-orange-600' :
-                                       statusGroup.id === 'preparing' ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600' :
-                                       'bg-slate-900 text-white hover:bg-black'
-                                     }`}
-                                   >
-                                      {statusGroup.id === 'pending' ? 'Começar a Preparar' : statusGroup.id === 'preparing' ? 'Marcar como Pronto' : 'Entregar Pedido'}
-                                      <ArrowRight size={14} />
-                                   </button>
-                                 )}
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
-                          
-                          {kitchenOrders.filter(o => 
-                             o.status === statusGroup.id || 
-                             (statusGroup.id === 'preparing' && o.status === 'preparando') ||
-                             (statusGroup.id === 'pending' && (o.status === 'waiting_confirmation' || o.status === 'sent_to_kitchen' || o.status === 'pending_admin'))
-                          ).length === 0 && (
-                            <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-20 grayscale">
-                               <div className="text-4xl mb-2">{statusGroup.emoji}</div>
-                               <p className="text-[10px] font-black uppercase tracking-widest">Sem pedidos</p>
-                            </div>
-                          )}
-                       </div>
+                                    {statusGroup.id !== 'delivered' && (
+                                      <button 
+                                        onClick={() => {
+                                           const nextStatus = statusGroup.id === 'pending' ? 'preparing' : statusGroup.id === 'preparing' ? 'ready' : 'delivered';
+                                           const updatedOrders = kitchenOrders.map(o => o.id === order.id ? {...o, status: nextStatus, timestamp: new Date().toISOString()} : o);
+                                           setKitchenOrders(updatedOrders);
+                                           handleUpdate({ kitchenOrders: updatedOrders });
+                                        }}
+                                        className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${
+                                          statusGroup.id === 'pending' ? 'bg-orange-500 text-white shadow-orange-500/20 hover:bg-orange-650' :
+                                          statusGroup.id === 'preparing' ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600' :
+                                          'bg-slate-900 text-white hover:bg-black'
+                                        }`}
+                                      >
+                                         {statusGroup.id === 'pending' ? 'Começar a Preparar' : statusGroup.id === 'preparing' ? 'Marcar como Pronto' : 'Entregar Pedido'}
+                                         <ArrowRight size={14} />
+                                      </button>
+                                    )}
+                                 </motion.div>
+                                ))}
+                              </AnimatePresence>
+                              
+                              {groupOrders.length === 0 && (
+                                <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-20 grayscale">
+                                   <div className="text-4xl mb-2">{statusGroup.emoji}</div>
+                                   <p className="text-[10px] font-black uppercase tracking-widest">Sem pedidos</p>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                     </div>
                     </div>
                   ))}
                </div>
