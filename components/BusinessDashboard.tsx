@@ -3189,14 +3189,17 @@ return t;
                                       {tables.map(t => (
                                         <button
                                           key={t.id}
-                                          onClick={() => { setQrTableTarget(String(t.id)); setGeneratedQRUrl(null); setQrDropdownOpen(false); }}
+                                          onClick={() => { setQrTableTarget(String(t.id)); setGeneratedQRUrl(t.qrCodeUrl || null); setQrDropdownOpen(false); }}
                                           className={`w-full text-left px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-between gap-3 border-b border-white/5 last:border-0 ${
                                             String(qrTableTarget) === String(t.id)
                                               ? 'bg-blue-600 text-white'
                                               : 'text-slate-200 hover:bg-white/10'
                                           }`}
                                         >
-                                          <span>{isBeauty ? 'Cadeira' : 'Mesa'} {t.number}{t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}</span>
+                                          <span className="flex items-center gap-2">
+                                            {t.qrCodeUrl && <QrCode size={12} className="text-blue-400" />}
+                                            <span>{isBeauty ? 'Cadeira' : 'Mesa'} {t.number}{t.area && t.area !== 'Geral' ? ` · ${t.area}` : ''}</span>
+                                          </span>
                                           <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase flex-shrink-0 ${
                                             t.status === 'occupied' ? 'bg-red-500/30 text-red-300' :
                                             t.status === 'reserved' ? 'bg-orange-500/30 text-orange-300' :
@@ -3215,8 +3218,19 @@ return t;
                                 className="px-5 py-2.5 bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
                               >
                                 <QrCode size={14} />
-                                Gerar QR Code
+                                {tables.find(t => String(t.id) === String(qrTableTarget))?.qrCodeUrl ? 'Regerar QR' : 'Gerar QR Code'}
                               </button>
+                              {/* Remove/Unlink if active */}
+                              {tables.find(t => String(t.id) === String(qrTableTarget))?.qrCodeUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => qrTableTarget && handleUnlinkQR(qrTableTarget)}
+                                  className="px-5 py-2.5 bg-rose-650 hover:bg-rose-550 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-rose-600/20 cursor-pointer"
+                                >
+                                  <X size={14} />
+                                  Remover QR
+                                </button>
+                              )}
                               {/* Print */}
                               <button
                                 onClick={handlePrintQR}
