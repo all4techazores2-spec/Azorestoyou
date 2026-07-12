@@ -1208,21 +1208,21 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const lastLocalUpdateRef = React.useRef<number>(0);
   const [assignStaffTableTarget, setAssignStaffTableTarget] = useState<any | null>(null);
 
-  // Sincronização em Tempo Real: Quando o servidor envia dados novos via App.tsx, 
-  // nós atualizamos os estados locais do dashboard.
+  // Sincronização em Tempo Real: Apenas dados de tempo real (reservas, pedidos cozinha, staff).
+  // NUNCA sobrescrever products/categories/posCategories via polling — são geridos pelo utilizador.
   useEffect(() => {
-    // Evitar que atualizações locais frescas (últimos 4 segundos) sejam sobrepostas
-    // por dados temporariamente antigos vindos das consultas de polling em segundo plano.
+    // Proteção: ignorar polls durante os primeiros 15s após qualquer edição local
     const timeSinceLastLocalUpdate = Date.now() - lastLocalUpdateRef.current;
-    if (timeSinceLastLocalUpdate < 8000) {
-      console.log("⏳ Local update is fresh. Ignoring background sync to prevent flickering.");
+    if (timeSinceLastLocalUpdate < 15000) {
+      console.log("⏳ Edição local recente. Ignorando sincronização de fundo.");
       return;
     }
+    // Apenas sincronizar dados em tempo real do servidor
     if (business.reservations) setReservations(business.reservations);
     if (business.kitchenOrders) setKitchenOrders(business.kitchenOrders);
     if (business.staff) setStaff(business.staff);
-    // Também atualizar produtos e mesas se mudarem no Super Admin
-    if (business.products) setProducts(business.products);
+    // NÃO sobrescrever products, posCategories, dishes ou services via polling.
+    // Esses dados só devem atualizar quando o utilizador guarda explicitamente via handleUpdate().
     if (business.tables) {
       setTables(prev => business.tables.map((bt: any) => {
         const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
@@ -1241,14 +1241,15 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     onForceRefreshRef.current = onForceRefresh;
   }, [onForceRefresh]);
 
-  // Auto-Refresh (2 segundos) para manter o dashboard atualizado com novas reservas
+  // Auto-Refresh (15 segundos) para manter reservas e pedidos atualizados em tempo real.
+  // Intervalo aumentado para reduzir risco de sobrescrever edições locais.
   useEffect(() => {
     const refreshInterval = setInterval(() => {
       console.log("⏱️ Auto-refreshing dashboard data from server...");
       setIsSyncingVisual(true);
       if (onForceRefreshRef.current) onForceRefreshRef.current();
       setTimeout(() => setIsSyncingVisual(false), 800);
-    }, 2000);
+    }, 15000);
     return () => clearInterval(refreshInterval);
   }, []);
 
@@ -3998,12 +3999,20 @@ return t;
             // Para restaurante: usar posCategories (dinâmico) em vez do array hardcoded
             const activePosCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : posCategories;
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
-            // allCats: para restaurante, apenas as categorias configuradas (mais Pratos do Dia/Semana especiais)
+            // allCats: apenas categorias que têm produtos em stock + "Todos" sempre visível
+            const categoriesWithProducts = new Set(posProducts.map(p => p.category));
+            const hasDayPromos = posProducts.some(p => (p as any).promoType === 'day' || p.category === 'Pratos do Dia');
+            const hasWeekPromos = posProducts.some(p => (p as any).promoType === 'week' || p.category === 'Pratos da Semana');
             const allCats = isBeauty
-              ? ['Todos', ...Array.from(new Set([...BEAUTY_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || BEAUTY_POS_CATEGORIES.includes(c))]
+              ? ['Todos', ...Array.from(new Set([...BEAUTY_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || (BEAUTY_POS_CATEGORIES.includes(c) && categoriesWithProducts.has(c)))]
               : isShop
-              ? ['Todos', ...Array.from(new Set([...SHOP_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || SHOP_POS_CATEGORIES.includes(c))]
-              : ['Todos', ...posCategories, 'Pratos do Dia', 'Pratos da Semana'].filter((c, i, arr) => arr.indexOf(c) === i);
+              ? ['Todos', ...Array.from(new Set([...SHOP_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || (SHOP_POS_CATEGORIES.includes(c) && categoriesWithProducts.has(c)))]
+              : [
+                  'Todos',
+                  ...posCategories.filter(c => categoriesWithProducts.has(c)),
+                  ...(hasDayPromos ? ['Pratos do Dia'] : []),
+                  ...(hasWeekPromos ? ['Pratos da Semana'] : []),
+                ].filter((c, i, arr) => arr.indexOf(c) === i);
 
             const filteredBySearch = posProducts.filter(p => 
               p.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||

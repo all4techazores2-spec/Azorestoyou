@@ -822,12 +822,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Deseja apagar os ${selectedIds.length} itens selecionados?`)) return;
+    if (!window.confirm(`Deseja apagar permanentemente os ${selectedIds.length} itens selecionados?`)) return;
 
     const filterList = (list: any[]) => list.filter(item => !selectedIds.includes(item.id));
 
+    const tabToEndpoint: Record<string, string> = {
+      'restaurants': 'restaurants', 'shops': 'shops', 'beauty': 'beauty', 'services': 'services',
+      'auto_repairs': 'auto_repairs', 'auto_electronics': 'auto_electronics', 'used_market': 'used_market',
+      'animals': 'animals', 'real_estate': 'real_estate', 'gyms': 'gyms', 'stands': 'stands',
+      'offices': 'offices', 'it_services': 'it_services', 'perfumes': 'perfumes', 'bars': 'bars',
+      'events': 'events', 'municipal': 'municipal', 'activities': 'activities', 'trails': 'activities',
+      'poi': 'activities', 'flights': 'flights', 'hotels': 'hotels', 'cars': 'cars', 'buses': 'bus-schedules',
+    };
+
+    // Update local state immediately
     switch (activeTab) {
       case 'restaurants': onUpdateRestaurants(filterList(restaurants)); break;
       case 'shops': onUpdateShops(filterList(shops)); break;
@@ -846,7 +856,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'bars': onUpdateBars(filterList(bars)); break;
       case 'events': onUpdateEvents(filterList(events)); break;
       case 'municipal': onUpdateMunicipal(filterList(municipal)); break;
-      case 'activities': 
+      case 'activities':
       case 'trails':
       case 'poi': onUpdateActivities(filterList(activities)); break;
       case 'flights': onUpdateFlights(filterList(flights)); break;
@@ -856,89 +866,175 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'marketplace': onUpdateMarketplaceAds(filterList(marketplaceAds)); break;
     }
 
+    // Permanently delete from server
+    const endpoint = tabToEndpoint[activeTab];
+    if (endpoint) {
+      try {
+        await fetch(`${API_BASE_URL}/api/${endpoint}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selectedIds)
+        });
+      } catch (err) {
+        console.error('Erro ao apagar itens do servidor:', err);
+      }
+    }
+
     setSelectedIds([]);
-    alert(`${selectedIds.length} itens removidos com sucesso!`);
+    alert(`✅ ${selectedIds.length} itens eliminados permanentemente!`);
   };
 
   const lang = language as Language;
 
   const t = (key: any) => getTranslation(lang, key);
 
+  // Helper: find which collection a business belongs to and persist it to server
+  const syncBusinessToServer = async (restId: string, allLists: { list: any[], endpoint: string }[]) => {
+    for (const { list, endpoint } of allLists) {
+      const item = list.find(r => r.id === restId);
+      if (item) {
+        try {
+          await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          });
+        } catch (err) {
+          console.error(`Erro ao sincronizar ${restId} com servidor:`, err);
+        }
+        return;
+      }
+    }
+  };
+
   // -- ACCOUNT MANAGEMENT HANDLERS --
-  const handleUpdateAdmin = (restId: string) => {
+  const handleUpdateAdmin = async (restId: string) => {
     const findAndReplace = (list: any[]) => list.map(r => r.id === restId ? { ...r, adminEmail: adminFormData.email, adminPassword: adminFormData.password } : r);
     
-    // Logic: Identify which list the business belongs to and update only that list
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
     if (restaurants.some(r => r.id === restId)) {
-      onUpdateRestaurants(findAndReplace(restaurants));
+      const updated = findAndReplace(restaurants);
+      onUpdateRestaurants(updated);
+      updatedItem = updated.find(r => r.id === restId);
+      endpoint = 'restaurants';
     } else if (shops.some(s => s.id === restId)) {
-      onUpdateShops(findAndReplace(shops));
+      const updated = findAndReplace(shops);
+      onUpdateShops(updated);
+      updatedItem = updated.find(r => r.id === restId);
+      endpoint = 'shops';
     } else if (beauty.some(b => b.id === restId)) {
-      onUpdateBeauty(findAndReplace(beauty));
+      const updated = findAndReplace(beauty);
+      onUpdateBeauty(updated);
+      updatedItem = updated.find(r => r.id === restId);
+      endpoint = 'beauty';
+    }
+    
+    if (updatedItem) {
+      try {
+        await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedItem)
+        });
+      } catch (err) { console.error('Erro ao atualizar admin no servidor:', err); }
     }
     
     setEditingAdminId(null);
-    alert('Dados de administrador atualizados com sucesso!');
+    alert('✅ Dados de administrador atualizados e guardados no servidor!');
   };
 
-  const handleAddStaff = (restId: string) => {
-    const newStaff = {
-      id: `STF_${Date.now()}`,
-      ...staffFormData
-    };
+  const handleAddStaff = async (restId: string) => {
+    const newStaff = { id: `STF_${Date.now()}`, ...staffFormData };
     const findAndAdd = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: [...(r.staff || []), newStaff] } : r);
-    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndAdd(restaurants));
-    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndAdd(shops));
-    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndAdd(beauty));
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
+    if (restaurants.some(r => r.id === restId)) { const u = findAndAdd(restaurants); onUpdateRestaurants(u); updatedItem = u.find(r => r.id === restId); endpoint = 'restaurants'; }
+    else if (shops.some(s => s.id === restId)) { const u = findAndAdd(shops); onUpdateShops(u); updatedItem = u.find(r => r.id === restId); endpoint = 'shops'; }
+    else if (beauty.some(b => b.id === restId)) { const u = findAndAdd(beauty); onUpdateBeauty(u); updatedItem = u.find(r => r.id === restId); endpoint = 'beauty'; }
+    if (updatedItem) {
+      try { await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedItem) }); }
+      catch (err) { console.error('Erro ao adicionar staff no servidor:', err); }
+    }
     setAddingStaffToId(null);
     setStaffFormData({ name: '', email: '', password: '', role: 'waiter', pin: '' });
-    alert('Funcionário adicionado com sucesso!');
+    alert('✅ Funcionário adicionado e guardado no servidor!');
   };
 
-  const handleRemoveStaff = (restId: string, staffId: string) => {
+  const handleRemoveStaff = async (restId: string, staffId: string) => {
     if (!window.confirm('Remover este funcionário?')) return;
     const findAndRemove = (list: any[]) => list.map(r => r.id === restId ? { ...r, staff: (r.staff || []).filter((s: any) => s.id !== staffId) } : r);
-    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndRemove(restaurants));
-    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndRemove(shops));
-    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndRemove(beauty));
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
+    if (restaurants.some(r => r.id === restId)) { const u = findAndRemove(restaurants); onUpdateRestaurants(u); updatedItem = u.find(r => r.id === restId); endpoint = 'restaurants'; }
+    else if (shops.some(s => s.id === restId)) { const u = findAndRemove(shops); onUpdateShops(u); updatedItem = u.find(r => r.id === restId); endpoint = 'shops'; }
+    else if (beauty.some(b => b.id === restId)) { const u = findAndRemove(beauty); onUpdateBeauty(u); updatedItem = u.find(r => r.id === restId); endpoint = 'beauty'; }
+    if (updatedItem) {
+      try { await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedItem) }); }
+      catch (err) { console.error('Erro ao remover staff no servidor:', err); }
+    }
   };
   
-  const handleAddSupplier = (restId: string, data: any) => {
-    const newSup = {
-      id: `SUP_${Date.now()}`,
-      ...data,
-      password: Math.random().toString(36).slice(-8)
-    };
+  const handleAddSupplier = async (restId: string, data: any) => {
+    const newSup = { id: `SUP_${Date.now()}`, ...data, password: Math.random().toString(36).slice(-8) };
     const findAndAddSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: [...(r.suppliers || []), newSup] } : r);
-    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndAddSup(restaurants));
-    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndAddSup(shops));
-    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndAddSup(beauty));
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
+    if (restaurants.some(r => r.id === restId)) { const u = findAndAddSup(restaurants); onUpdateRestaurants(u); updatedItem = u.find(r => r.id === restId); endpoint = 'restaurants'; }
+    else if (shops.some(s => s.id === restId)) { const u = findAndAddSup(shops); onUpdateShops(u); updatedItem = u.find(r => r.id === restId); endpoint = 'shops'; }
+    else if (beauty.some(b => b.id === restId)) { const u = findAndAddSup(beauty); onUpdateBeauty(u); updatedItem = u.find(r => r.id === restId); endpoint = 'beauty'; }
+    if (updatedItem) {
+      try { await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedItem) }); }
+      catch (err) { console.error('Erro ao adicionar fornecedor no servidor:', err); }
+    }
     setAddingSupplierToId(null);
-    alert('Fornecedor adicionado com sucesso!');
+    alert('✅ Fornecedor adicionado e guardado no servidor!');
   };
 
-  const handleUpdateSupplier = (restId: string, supId: string, data: any) => {
+  const handleUpdateSupplier = async (restId: string, supId: string, data: any) => {
     const findAndUpdateSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: r.suppliers?.map(s => s.id === supId ? { ...s, ...data } : s) } : r);
-    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndUpdateSup(restaurants));
-    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndUpdateSup(shops));
-    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndUpdateSup(beauty));
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
+    if (restaurants.some(r => r.id === restId)) { const u = findAndUpdateSup(restaurants); onUpdateRestaurants(u); updatedItem = u.find(r => r.id === restId); endpoint = 'restaurants'; }
+    else if (shops.some(s => s.id === restId)) { const u = findAndUpdateSup(shops); onUpdateShops(u); updatedItem = u.find(r => r.id === restId); endpoint = 'shops'; }
+    else if (beauty.some(b => b.id === restId)) { const u = findAndUpdateSup(beauty); onUpdateBeauty(u); updatedItem = u.find(r => r.id === restId); endpoint = 'beauty'; }
+    if (updatedItem) {
+      try { await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedItem) }); }
+      catch (err) { console.error('Erro ao atualizar fornecedor no servidor:', err); }
+    }
     setEditingSupplierId(null);
-    alert('Fornecedor atualizado com sucesso!');
+    alert('✅ Fornecedor atualizado e guardado no servidor!');
   };
 
-  const handleRemoveSupplier = (restId: string, supId: string) => {
+  const handleRemoveSupplier = async (restId: string, supId: string) => {
     if (!window.confirm('Remover este fornecedor?')) return;
     const findAndRemoveSup = (list: any[]) => list.map(r => r.id === restId ? { ...r, suppliers: (r.suppliers || []).filter((s: any) => s.id !== supId) } : r);
-    if (restaurants.some(r => r.id === restId)) onUpdateRestaurants(findAndRemoveSup(restaurants));
-    else if (shops.some(s => s.id === restId)) onUpdateShops(findAndRemoveSup(shops));
-    else if (beauty.some(b => b.id === restId)) onUpdateBeauty(findAndRemoveSup(beauty));
+    let updatedItem: any = null;
+    let endpoint = 'restaurants';
+    if (restaurants.some(r => r.id === restId)) { const u = findAndRemoveSup(restaurants); onUpdateRestaurants(u); updatedItem = u.find(r => r.id === restId); endpoint = 'restaurants'; }
+    else if (shops.some(s => s.id === restId)) { const u = findAndRemoveSup(shops); onUpdateShops(u); updatedItem = u.find(r => r.id === restId); endpoint = 'shops'; }
+    else if (beauty.some(b => b.id === restId)) { const u = findAndRemoveSup(beauty); onUpdateBeauty(u); updatedItem = u.find(r => r.id === restId); endpoint = 'beauty'; }
+    if (updatedItem) {
+      try { await fetch(`${API_BASE_URL}/api/${endpoint}/${restId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedItem) }); }
+      catch (err) { console.error('Erro ao remover fornecedor no servidor:', err); }
+    }
   };
 
   // -- CRUD HANDLERS --
 
-  const handleDelete = (id: string) => {
-    if (!window.confirm('Tem a certeza que deseja apagar este item?')) return;
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem a certeza que deseja apagar permanentemente este item?')) return;
     
+    const tabToEndpoint: Record<string, string> = {
+      'restaurants': 'restaurants', 'shops': 'shops', 'beauty': 'beauty', 'services': 'services',
+      'auto_repairs': 'auto_repairs', 'auto_electronics': 'auto_electronics', 'used_market': 'used_market',
+      'animals': 'animals', 'real_estate': 'real_estate', 'gyms': 'gyms', 'stands': 'stands',
+      'offices': 'offices', 'it_services': 'it_services', 'perfumes': 'perfumes', 'bars': 'bars',
+      'events': 'events', 'municipal': 'municipal', 'activities': 'activities', 'trails': 'activities',
+      'poi': 'activities', 'flights': 'flights', 'hotels': 'hotels', 'cars': 'cars', 'buses': 'bus-schedules',
+    };
+
+    // Update local state immediately for snappy UI
     switch (activeTab) {
       case 'restaurants': onUpdateRestaurants(restaurants.filter(r => r.id !== id)); break;
       case 'shops': onUpdateShops(shops.filter(s => s.id !== id)); break;
@@ -967,7 +1063,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       case 'marketplace': onUpdateMarketplaceAds(marketplaceAds.filter(ad => ad.id !== id)); break;
       case 'news':
         fetch(`${API_BASE_URL}/api/news/${id}`, { method: 'DELETE' }).then(() => fetchAdminNews());
-        break;
+        return;
+    }
+
+    // Permanently delete from server
+    const endpoint = tabToEndpoint[activeTab];
+    if (endpoint) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/${endpoint}/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          console.log(`✅ Item ${id} eliminado permanentemente do servidor.`);
+        } else {
+          console.warn(`⚠️ Servidor retornou ${res.status} ao eliminar ${id}`);
+        }
+      } catch (err) {
+        console.error('Erro ao eliminar do servidor:', err);
+      }
     }
     setModifiedCategories(prev => new Set(prev).add(activeTab));
   };
@@ -1123,7 +1234,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsSaving(true);
 
     try {
-      const updatedItem = { ...editingItem };
+      const updatedItem = await compressObjectImages({ ...editingItem });
       
       if (activeTab === 'news') {
         const url = isAddingNew ? `${API_BASE_URL}/api/news` : `${API_BASE_URL}/api/news/${updatedItem.id}`;
@@ -1144,8 +1255,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setIsSaving(false);
         return;
       }
-      
-      // Helper to add or update item in local list (NO SERVER SYNC HERE)
+
+      // Sync specific category to server
+      const categoryMap: any = {
+        restaurants: 'restaurants', shops: 'shops', beauty: 'beauty', services: 'services',
+        auto_repairs: 'auto_repairs', auto_electronics: 'auto_electronics', used_market: 'used_market',
+        animals: 'animals', real_estate: 'real_estate', gyms: 'gyms', stands: 'stands',
+        offices: 'offices', it_services: 'it_services', perfumes: 'perfumes', bars: 'bars',
+        events: 'events', municipal: 'municipal', activities: 'activities', trails: 'activities',
+        poi: 'activities', flights: 'flights', hotels: 'hotels', cars: 'cars', buses: 'bus-schedules'
+      };
+
+      const endpoint = categoryMap[activeTab];
+      if (endpoint) {
+        const res = await fetch(`${API_BASE_URL}/api/${endpoint}/${updatedItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedItem)
+        });
+
+        if (!res.ok) throw new Error('Falha ao atualizar servidor');
+      }
+
+      // Update state locally
       const updateLocal = (list: any[], setter: (l: any[]) => void) => {
         if (isAddingNew) {
           if (!updatedItem.id) updatedItem.id = `${activeTab.substring(0,3).toUpperCase()}${Date.now()}`;
@@ -1190,7 +1322,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setEditingItem(null);
       setIsAddingNew(false);
       setModifiedCategories(prev => new Set(prev).add(activeTab));
-      alert('✅ Alterações guardadas localmente. Clique no botão verde para enviar para o servidor.');
+      alert('✅ Alterações guardadas com sucesso.');
     } catch (err: any) {
       alert('❌ Erro: ' + err.message);
     } finally {

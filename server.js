@@ -304,6 +304,46 @@ ALL_BUSINESS_COLLECTIONS.forEach(key => {
     });
     
     app.put(`/api/${key}/:id`, handleBusinessUpdate);
+
+    // DELETE single item permanently from database
+    app.delete(`/api/${key}/:id`, async (req, res) => {
+        try {
+            const { id } = req.params;
+            const db = await readDB();
+            if (!db[key]) return res.status(404).json({ error: 'Collection not found' });
+            const before = db[key].length;
+            db[key] = db[key].filter(item => item.id !== id);
+            if (db[key].length === before) return res.status(404).json({ error: 'Item not found' });
+            await writeDB(db);
+            console.log(`🗑️ Deleted ${key}/${id} permanently from database.`);
+            res.json({ success: true, id });
+        } catch (err) {
+            console.error(`❌ Delete ${key} failed:`, err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // DELETE multiple items (bulk)
+    app.delete(`/api/${key}`, async (req, res) => {
+        try {
+            const ids = req.body;
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({ error: 'Body must be a non-empty array of IDs' });
+            }
+            const db = await readDB();
+            if (!db[key]) return res.status(404).json({ error: 'Collection not found' });
+            const idSet = new Set(ids);
+            const before = db[key].length;
+            db[key] = db[key].filter(item => !idSet.has(item.id));
+            const deleted = before - db[key].length;
+            await writeDB(db);
+            console.log(`🗑️ Bulk deleted ${deleted} items from ${key}.`);
+            res.json({ success: true, deleted });
+        } catch (err) {
+            console.error(`❌ Bulk delete ${key} failed:`, err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
     
     app.post(`/api/${key}`, async (req, res) => {
         try {
