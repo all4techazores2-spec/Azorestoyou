@@ -1256,6 +1256,12 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [products, setProducts] = useState<Product[]>(business.products || []);
   const [selectedCatalogCategory, setSelectedCatalogCategory] = useState(null);
   const [showInternalStock, setShowInternalStock] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // posCategories: lista dinâmica guardada em business.posCategories, fallback para POS_CATEGORIES
+  const posCategories: string[] = (business as any).posCategories || POS_CATEGORIES;
+  const savePosCategories = (cats: string[]) => handleUpdate({ posCategories: cats } as any);
   const [calDate, setCalDate] = useState(() => new Date());
   const [updates, setUpdates] = useState<RestaurantUpdate[]>(business.updates || []);
   const [editingUpdate, setEditingUpdate] = useState<{idx: number, update: RestaurantUpdate} | null>(null);
@@ -3989,9 +3995,15 @@ return t;
               ))
             ];
             
-            const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : [...POS_CATEGORIES, 'Pratos do Dia', 'Pratos da Semana'];
+            // Para restaurante: usar posCategories (dinâmico) em vez do array hardcoded
+            const activePosCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : posCategories;
             const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
-            const allCats = ['Todos', ...Array.from(new Set([...availableCategories, ...currentCategories]))].filter(cat => isBeauty ? (cat === 'Todos' || BEAUTY_POS_CATEGORIES.includes(cat)) : isShop ? (cat === 'Todos' || SHOP_POS_CATEGORIES.includes(cat)) : true);
+            // allCats: para restaurante, apenas as categorias configuradas (mais Pratos do Dia/Semana especiais)
+            const allCats = isBeauty
+              ? ['Todos', ...Array.from(new Set([...BEAUTY_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || BEAUTY_POS_CATEGORIES.includes(c))]
+              : isShop
+              ? ['Todos', ...Array.from(new Set([...SHOP_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || SHOP_POS_CATEGORIES.includes(c))]
+              : ['Todos', ...posCategories, 'Pratos do Dia', 'Pratos da Semana'].filter((c, i, arr) => arr.indexOf(c) === i);
 
             const filteredBySearch = posProducts.filter(p => 
               p.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||
@@ -6147,9 +6159,9 @@ ${items.map((it, i) => `        <Line>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                    <div>
                      <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Catálogo de Produtos</h3>
-                     <p className="text-slate-400 text-sm font-medium">Bebidas, Cafetaria e Suplementos</p>
+                     <p className="text-slate-400 text-sm font-medium">{posCategories.length} categorias · {products.filter(p => p.category !== 'Stock Interno').length} produtos</p>
                    </div>
-                   <div className="flex items-center gap-3 w-full md:w-auto">
+                   <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                      <button 
                        onClick={() => {
                          setShowInternalStock(!showInternalStock);
@@ -6163,6 +6175,14 @@ ${items.map((it, i) => `        <Line>
                      >
                        <Package className="w-4 h-4" /> Stock Interno
                      </button>
+                     {!isBeauty && !isShop && (
+                       <button
+                         onClick={() => { setNewCategoryName(''); setShowAddCategoryModal(true); }}
+                         className="px-5 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center gap-2 border bg-emerald-500 text-white border-emerald-500 shadow-xl shadow-emerald-500/20 hover:bg-emerald-600 hover:scale-105 active:scale-95"
+                       >
+                         <Plus className="w-4 h-4" /> Nova Categoria
+                       </button>
+                     )}
                      <button onClick={addProduct} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
                        <Plus className="w-4 h-4" /> Novo Produto
                      </button>
@@ -6211,10 +6231,10 @@ ${items.map((it, i) => `        <Line>
 
                 {!showInternalStock && selectedCatalogCategory === null && (
                   (() => {
-                    const availableCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : POS_CATEGORIES;
+                    const baseCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : posCategories;
                     const currentCategories = Array.from(new Set(products.map(p => p.category)))
                       .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
-                    const displayCategories = Array.from(new Set([...availableCategories, ...currentCategories]))
+                    const displayCategories = Array.from(new Set([...baseCategories, ...currentCategories]))
                       .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
                     
                     return (
@@ -6304,10 +6324,26 @@ ${items.map((it, i) => `        <Line>
                               key={cat}
                               whileHover={{ y: -6, scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              onClick={() => setSelectedCatalogCategory(cat)}
-                              className={`cursor-pointer rounded-[2rem] border p-8 flex flex-col justify-between transition-all duration-300 bg-gradient-to-br ${gradient} shadow-md hover:shadow-xl ${glow} group`}
+                              className={`relative cursor-pointer rounded-[2rem] border p-8 flex flex-col justify-between transition-all duration-300 bg-gradient-to-br ${gradient} shadow-md hover:shadow-xl ${glow} group`}
                             >
-                              <div className="flex justify-between items-start mb-6">
+                              {!isBeauty && !isShop && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const hasProducts = products.some(p => p.category === cat);
+                                    if (hasProducts) {
+                                      if (!confirm(`A categoria "${cat}" tem ${count} produto(s). Eliminar mesmo assim?\n\nOs produtos existentes mantêm a categoria, mas ela deixará de aparecer no POS.`)) return;
+                                    }
+                                    const updated = posCategories.filter(c => c !== cat);
+                                    savePosCategories(updated);
+                                  }}
+                                  className="absolute top-3 right-3 w-8 h-8 bg-white/80 hover:bg-red-50 border border-slate-200 hover:border-red-300 rounded-xl flex items-center justify-center text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 shadow-sm"
+                                  title={`Eliminar categoria ${cat}`}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                              <div className="flex justify-between items-start mb-6" onClick={() => setSelectedCatalogCategory(cat)}>
                                 <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center ${iconColor} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                                   <Icon className="w-7 h-7" />
                                 </div>
@@ -6433,6 +6469,75 @@ ${items.map((it, i) => `        <Line>
                   </div>
                 )}
              </motion.div>
+          )}
+
+          {/* ══ Modal: Nova Categoria ══ */}
+          {showAddCategoryModal && (
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowAddCategoryModal(false)}
+            >
+              <div
+                className="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-sm"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                    <Plus size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-800 text-lg tracking-tight">Nova Categoria</h3>
+                    <p className="text-xs text-slate-400 font-medium">Aparece no POS automaticamente</p>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  autoFocus
+                  value={newCategoryName}
+                  onChange={e => setNewCategoryName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const trimmed = newCategoryName.trim();
+                      if (!trimmed) return;
+                      if (posCategories.map(c => c.toLowerCase()).includes(trimmed.toLowerCase())) {
+                        alert('Já existe uma categoria com esse nome.');
+                        return;
+                      }
+                      savePosCategories([...posCategories, trimmed]);
+                      setShowAddCategoryModal(false);
+                      setNewCategoryName('');
+                    }
+                    if (e.key === 'Escape') setShowAddCategoryModal(false);
+                  }}
+                  placeholder="Ex: Sobremesas, Petiscos…"
+                  className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 font-bold text-slate-800 text-base placeholder:text-slate-300 mb-6"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAddCategoryModal(false)}
+                    className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-black uppercase text-xs tracking-widest hover:bg-slate-50 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      const trimmed = newCategoryName.trim();
+                      if (!trimmed) return;
+                      if (posCategories.map(c => c.toLowerCase()).includes(trimmed.toLowerCase())) {
+                        alert('Já existe uma categoria com esse nome.');
+                        return;
+                      }
+                      savePosCategories([...posCategories, trimmed]);
+                      setShowAddCategoryModal(false);
+                      setNewCategoryName('');
+                    }}
+                    className="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-black uppercase text-xs tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20"
+                  >
+                    Criar
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === 'suppliers' && (
