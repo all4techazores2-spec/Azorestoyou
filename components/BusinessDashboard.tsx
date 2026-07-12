@@ -863,7 +863,6 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     
     const pendingItems = table.pendingOrderItems || [];
     // Filtrar apenas pratos (comida, sopas, entradas, sobremesas) para enviar para a cozinha
-    // Itens sem categoria são considerados pratos por defeito
     const drinkCategories = ['bebidas', 'cafetaria', 'vinhos', 'cervejas', 'bebida', 'vinho', 'cerveja', 'bar'];
     const foodItems = pendingItems.filter((item: any) => {
       const cat = (item.dish?.category || item.category || '').toLowerCase().trim();
@@ -872,14 +871,23 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     
     let updatedKitchenOrders = [...(kitchenOrders || [])];
     if (foodItems.length > 0) {
-      const newOrder = {
-        id: `ORD_${Date.now()}`,
-        tableId: String(tableId),
-        items: foodItems,
-        status: 'pending' as const,
-        timestamp: new Date().toISOString()
-      };
-      updatedKitchenOrders.push(newOrder);
+      // Agrupar por guestName — um KitchenOrder por pessoa
+      const groupsByGuest: Record<string, any[]> = {};
+      foodItems.forEach((item: any) => {
+        const guestKey = item.guestName || 'Mesa';
+        if (!groupsByGuest[guestKey]) groupsByGuest[guestKey] = [];
+        groupsByGuest[guestKey].push(item);
+      });
+      Object.entries(groupsByGuest).forEach(([guestName, guestItems]) => {
+        updatedKitchenOrders.push({
+          id: `ORD_${Date.now()}_${guestName.replace(/\s/g, '')}`,
+          tableId: String(tableId),
+          guestName,
+          items: guestItems,
+          status: 'pending' as const,
+          timestamp: new Date().toISOString()
+        });
+      });
     }
     
     const updatedTables = tables.map(t => {
@@ -901,7 +909,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       kitchenOrders: updatedKitchenOrders
     });
     
-    alert(`👨‍🍳 Pedido enviado com sucesso para a Cozinha! (${foodItems.length} pratos encaminhados)`);
+    const totalPeople = Object.keys(
+      foodItems.reduce((acc: Record<string, boolean>, item: any) => { acc[item.guestName || 'Mesa'] = true; return acc; }, {})
+    ).length;
+    alert(`👨‍🍳 Pedido enviado para a Cozinha! (${foodItems.length} pratos, ${totalPeople} ${totalPeople === 1 ? 'pessoa' : 'pessoas'})`);
   };
 
   const handleVerMesa = (tableId: string | number) => {
@@ -3393,6 +3404,15 @@ return t;
                                      </span>
                                    </div>
                                  )}
+                                 {/* Bola laranja pulsante para itens de bar pendentes */}
+                                 {((table as any).pendingBarItems || []).some((item: any) => item.deliveryStatus === 'pending') && (
+                                   <div className="absolute -bottom-2 -right-2 flex h-6 w-6 z-40">
+                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                     <span className="relative inline-flex rounded-full h-6 w-6 border-2 border-white shadow-lg bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-[9px] font-black text-white">
+                                       🍹
+                                     </span>
+                                   </div>
+                                 )}
                               </motion.button>
 
                                {table.alertStatus === 'bill_confirmed' && (
@@ -3894,6 +3914,12 @@ return t;
                                              {order.requestedPrepTime === 'now' ? '🚀 Preparar Imediatamente' : `⏰ Iniciar em ${order.requestedPrepTime} min`}
                                           </div>
                                        )}
+                                       {/* Se o pedido tem guestName, mostrar nome em destaque */}
+                                       {(order as any).guestName && (order as any).guestName !== 'Mesa' && (
+                                         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2">
+                                           <span className="text-xs font-black text-blue-600">👤 {(order as any).guestName}</span>
+                                         </div>
+                                       )}
                                        {order.items.map((item, i) => (
                                          <div key={i} className="flex justify-between items-center">
                                             <div className="flex items-center gap-3">
@@ -3901,6 +3927,9 @@ return t;
                                                <div className="flex flex-col">
                                                   <span className="text-sm font-bold text-slate-700 tracking-tight">{item.dish.name}</span>
                                                   {item.meatPoint && <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Ponto: {item.meatPoint}</span>}
+                                                  {(item as any).guestName && !(order as any).guestName && (
+                                                    <span className="text-[9px] font-black text-purple-500 uppercase tracking-widest">👤 {(item as any).guestName}</span>
+                                                  )}
                                                </div>
                                             </div>
                                          </div>
@@ -4237,6 +4266,51 @@ return t;
                         );
                       })}
                     </div>
+
+                    {/* Bebidas pendentes de entrega (itens de bar do remote order) */}
+                    {(() => {
+                      const selectedTable = tables.find(t => String(t.id) === String(selectedTableId));
+                      const pendingBarItems: any[] = (selectedTable as any)?.pendingBarItems?.filter((it: any) => it.deliveryStatus === 'pending') || [];
+                      if (pendingBarItems.length === 0) return null;
+                      return (
+                        <div className="px-6 py-4 border-t-2 border-orange-200 bg-orange-50">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Bebidas Pendentes de Entrega</p>
+                          </div>
+                          <div className="space-y-2">
+                            {pendingBarItems.map((barItem: any, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between bg-white border border-orange-200 rounded-xl px-3 py-2 animate-pulse-once">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-black text-slate-800 truncate">{barItem.dish?.name || barItem.name}</p>
+                                  {barItem.guestName && (
+                                    <p className="text-[9px] font-bold text-orange-500">👤 {barItem.guestName}</p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    const updatedTables = tables.map(t => {
+                                      if (String(t.id) === String(selectedTableId)) {
+                                        const updatedBarItems = ((t as any).pendingBarItems || []).map((bi: any, i: number) =>
+                                          i === (((selectedTable as any).pendingBarItems || []).indexOf(barItem)) ? { ...bi, deliveryStatus: 'delivered' } : bi
+                                        );
+                                        return { ...t, pendingBarItems: updatedBarItems } as any;
+                                      }
+                                      return t;
+                                    });
+                                    setTables(updatedTables);
+                                    handleUpdate({ tables: updatedTables });
+                                  }}
+                                  className="ml-2 px-2.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 flex-shrink-0"
+                                >
+                                  ✓ Entregar
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="p-8 bg-slate-50/50 border-t border-slate-100 space-y-6">
                       <div className="space-y-3">

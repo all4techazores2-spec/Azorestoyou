@@ -1631,14 +1631,7 @@ const App: React.FC = () => {
     const guestTable = (guestRestaurant.tables || []).find((t: any) => String(t.id) === String(guestTableId));
     const tableName = guestTable ? `Mesa ${guestTable.number}` : `Mesa ${guestTableId}`;
 
-    // Auto-reconhecer: se mesa já tem cliente registado, skip ao formulário
-    const tableAlreadyHasGuest = guestTable && guestTable.status === 'occupied' && guestTable.customerName && guestTable.guestPhone;
-    if (tableAlreadyHasGuest && !guestCheckIn) {
-      if (!guestFormData.name && guestTable.customerName) {
-        setGuestFormData({ name: guestTable.customerName || '', people: guestTable.seats || 2, phone: guestTable.guestPhone || '', email: guestTable.guestEmail || '' });
-      }
-      setGuestCheckIn(true);
-    }
+    // Cada pessoa deve sempre identificar-se com o seu nome — sem auto-skip
     const handleGuestExit = () => setShowGuestExitPromo(true);
     const doExit = () => { setIsGuestMode(false); setGuestCheckIn(false); setHasEnteredApp(false); setGuestOrderSent(false); setShowGuestExitPromo(false); setGuestFormData({ name: '', people: 2, phone: '', email: '' }); };
 
@@ -1663,80 +1656,34 @@ const App: React.FC = () => {
               <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mt-1">{tableName} · Bem-vindo!</p>
             </div>
             {/* Form */}
-            <div className="p-7 space-y-4">
+            <div className="p-7 space-y-5">
+              {/* Indicação da mesa */}
+              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 text-center">
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">O seu nome aparecerá no pedido enviado para a cozinha</p>
+              </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nome do Responsável *</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">O seu Nome *</label>
                 <input
                   type="text"
                   value={guestFormData.name}
                   onChange={e => setGuestFormData(p => ({ ...p, name: e.target.value }))}
                   placeholder="Ex: João Silva"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nº de Pessoas *</label>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setGuestFormData(p => ({ ...p, people: Math.max(1, p.people - 1) }))}
-                    className="w-11 h-11 bg-slate-100 hover:bg-slate-200 rounded-2xl flex items-center justify-center font-black text-slate-700 transition-all active:scale-90 text-lg">−</button>
-                  <span className="flex-1 text-center font-black text-2xl text-slate-800">{guestFormData.people}</span>
-                  <button onClick={() => setGuestFormData(p => ({ ...p, people: Math.min(20, p.people + 1) }))}
-                    className="w-11 h-11 bg-slate-100 hover:bg-slate-200 rounded-2xl flex items-center justify-center font-black text-slate-700 transition-all active:scale-90 text-lg">+</button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Telemóvel *</label>
-                <input
-                  type="tel"
-                  value={guestFormData.phone}
-                  onChange={e => setGuestFormData(p => ({ ...p, phone: e.target.value }))}
-                  placeholder="Ex: 912 345 678"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email <span className="text-slate-300">(opcional)</span></label>
-                <input
-                  type="email"
-                  value={guestFormData.email}
-                  onChange={e => setGuestFormData(p => ({ ...p, email: e.target.value }))}
-                  placeholder="Ex: joao@email.com"
+                  autoFocus
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 />
               </div>
               <button
                 onClick={async () => {
-                  if (!guestFormData.name.trim() || !guestFormData.phone.trim()) {
-                    alert('Por favor preencha o nome e o telemóvel.');
+                  if (!guestFormData.name.trim()) {
+                    alert('Por favor escreva o seu nome.');
                     return;
                   }
-                  // Save guest info to the table on the server
-                  const updatedTables = (guestRestaurant.tables || []).map((t: any) => {
-                    if (String(t.id) === String(guestTableId)) {
-                      return {
-                        ...t,
-                        status: 'occupied',
-                        customerName: guestFormData.name,
-                        seats: guestFormData.people,
-                        guestPhone: guestFormData.phone,
-                        guestEmail: guestFormData.email,
-                      };
-                    }
-                    return t;
-                  });
-                  try {
-                    await fetch(`${API_BASE_URL}/api/restaurants/${guestRestaurantId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ ...guestRestaurant, tables: updatedTables }),
-                    });
-                    await fetchData(0, ['restaurants']);
-                  } catch (e) {}
+                  // Não sobrescreve customerName da mesa — apenas guarda localmente
                   setGuestCheckIn(true);
                 }}
                 className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/30 active:scale-95 mt-2"
               >
-                Entrar e Ver Menu 🍽️
+                Ver Menu e Pedir 🍽️
               </button>
               <button
                 onClick={() => { setIsGuestMode(false); setHasEnteredApp(false); }}
@@ -1758,26 +1705,42 @@ const App: React.FC = () => {
     const handleGuestOrder = async (items: OrderItem[]) => {
       const guestSessionId = `GUEST_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       const freshRestaurant = restaurants.find(r => String(r.id) === String(guestRestaurantId)) || guestRestaurant;
+      
+      // Separar itens em cozinha (comida) e bar (bebidas)
+      const drinkCategories = ['bebidas', 'cafetaria', 'vinhos', 'cervejas', 'bebida', 'vinho', 'cerveja', 'bar'];
+      const kitchenItems = items.filter(it => {
+        const cat = ((it as any).dish?.category || (it as any).category || '').toLowerCase().trim();
+        return cat === '' || !drinkCategories.includes(cat);
+      });
+      const barItems = items.filter(it => {
+        const cat = ((it as any).dish?.category || (it as any).category || '').toLowerCase().trim();
+        return cat !== '' && drinkCategories.includes(cat);
+      });
+
       try {
         const updatedTables = (freshRestaurant.tables || []).map((t: any) => {
           if (String(t.id) === String(guestTableId)) {
+            const enrichedKitchen = kitchenItems.map(it => ({
+              ...it,
+              guestSession: guestSessionId,
+              guestName: guestFormData.name,
+            }));
+            const enrichedBar = barItems.map(it => ({
+              ...it,
+              guestSession: guestSessionId,
+              guestName: guestFormData.name,
+              deliveryStatus: 'pending' as const,
+            }));
             return {
               ...t,
               status: 'occupied',
-              alertStatus: 'new_order',
-              customerName: guestFormData.name,
-              pendingOrderItems: [...(t.pendingOrderItems || []), ...items.map(it => ({
-                ...it,
-                guestSession: guestSessionId,
-                guestName: guestFormData.name,
-                guestPhone: guestFormData.phone,
-              }))],
-              currentTab: [...(t.currentTab || []), ...items.map(it => ({
-                ...it,
-                guestSession: guestSessionId,
-                guestName: guestFormData.name,
-                guestPhone: guestFormData.phone,
-              }))],
+              alertStatus: kitchenItems.length > 0 ? 'new_order' : (barItems.length > 0 ? 'bar_pending' : t.alertStatus),
+              // pendingOrderItems: apenas itens de cozinha (para enviar à cozinha)
+              pendingOrderItems: [...(t.pendingOrderItems || []), ...enrichedKitchen],
+              // pendingBarItems: itens de bar com deliveryStatus para alerta laranja
+              pendingBarItems: [...(t.pendingBarItems || []), ...enrichedBar],
+              // currentTab: todos os itens (para a conta)
+              currentTab: [...(t.currentTab || []), ...[...enrichedKitchen, ...enrichedBar]],
             };
           }
           return t;
