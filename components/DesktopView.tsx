@@ -475,7 +475,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
   const ptHotels = getHotels('pt') || [];
   const ptActivities = getActivities('pt') || [];
 
-  const cais20 = ptRestaurants.find(r => r.name.toLowerCase().includes('cais 20')) || {
+  const cais20 = ptRestaurants.find(r => r?.name?.toLowerCase().includes('cais 20')) || {
     name: 'Cais 20',
     cuisine: 'Restaurante',
     rating: 4.8,
@@ -484,7 +484,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     island: 'São Miguel'
   };
 
-  const hotelHighlight = ptHotels.find(h => h.name.toLowerCase().includes('pedras do mar') || h.name.toLowerCase().includes('meia nau')) || {
+  const hotelHighlight = ptHotels.find(h => h?.name?.toLowerCase().includes('pedras do mar') || h?.name?.toLowerCase().includes('meia nau')) || {
     name: 'Pedras do Mar Resort & SPA',
     island: 'São Miguel',
     rating: 4.7,
@@ -492,7 +492,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop'
   };
 
-  const activityHighlight = ptActivities.find(a => a.name.toLowerCase().includes('whale') || a.name.toLowerCase().includes('baleias')) || {
+  const activityHighlight = ptActivities.find(a => a?.name?.toLowerCase().includes('whale') || a?.name?.toLowerCase().includes('baleias')) || {
     name: 'Whale Watching',
     island: 'São Miguel',
     rating: 4.9,
@@ -500,7 +500,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop'
   };
 
-  const trailHighlight = ptActivities.find(a => a.name.toLowerCase().includes('lagoa') || a.name.toLowerCase().includes('trilho') || a.name.toLowerCase().includes('furnas')) || {
+  const trailHighlight = ptActivities.find(a => a?.name?.toLowerCase().includes('lagoa') || a?.name?.toLowerCase().includes('trilho') || a?.name?.toLowerCase().includes('furnas')) || {
     name: 'Lagoa do Fogo',
     island: 'São Miguel',
     rating: 4.9,
