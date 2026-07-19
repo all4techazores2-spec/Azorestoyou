@@ -6,12 +6,13 @@ import {
   Utensils, Bus, Car, Tent, LayoutGrid, Mountain, 
   Facebook, Instagram, Youtube, Send, ArrowRight,
   ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors,
-  MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark, Check, Info, Headphones, Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning
+  MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark, Check, Info, Headphones, Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning, X
 } from 'lucide-react';
 import AzoresLogo from './AzoresLogo';
 import { Language } from '../types';
 import { API_BASE_URL } from '../config';
 import { WeatherWidget } from './WeatherWidget';
+import { getRestaurants, getHotels, getActivities } from '../constants';
 
 interface DesktopViewProps {
   language: Language;
@@ -414,6 +415,99 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
       });
     }, 2500);
   };
+  const [news, setNews] = useState<any[]>([
+    {
+      id: 'n_santa_clara',
+      title: 'Santa Clara vence em casa e consolida subida na Liga',
+      description: 'A equipa açoriana somou mais três pontos valiosos frente aos seus adeptos, demonstrando grande atitude e eficácia desportiva.',
+      content: 'O Santa Clara garantiu uma vitória categórica por 2-0 frente aos seus adeptos. A equipa demonstrou excelente coesão defensiva e eficácia ofensiva, garantindo o resultado na segunda parte. Esta vitória consolida a posição na parte superior da tabela classificativa e gera enorme otimismo para as próximas jornadas desportivas.',
+      date: '19/07/2026',
+      time: '15:30',
+      image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
+      island: 'São Miguel'
+    },
+    {
+      id: 'n_regional_1',
+      title: 'Governo dos Açores anuncia novos investimentos ambientais',
+      description: 'Nova verba destina-se à preservação dos trilhos naturais e miradouros, protegendo a biodiversidade única das nove ilhas.',
+      content: 'Com o objetivo de promover o turismo sustentável, o Governo Regional anunciou um pacote financeiro exclusivo para a requalificação e limpeza de miradouros, trilhos pedestres e áreas protegidas. O plano arranca já este mês em São Miguel, Terceira e Pico, estendendo-se posteriormente a todas as restantes ilhas do arquipélago.',
+      date: '19/07/2026',
+      time: '12:15',
+      image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&auto=format&fit=crop',
+      island: 'Terceira'
+    },
+    {
+      id: 'n_regional_2',
+      title: 'Festival de Chamarritas atrai milhares à ilha do Pico',
+      description: 'O evento cultural tradicional celebra a música regional e danças típicas, juntando locais e turistas numa festa única.',
+      content: 'A ilha do Pico acolheu este fim de semana a maior edição de sempre do Festival Anual de Chamarritas. O evento contou com atuações improvisadas de tocadores locais e danças de roda tradicionais que se prolongaram pela noite dentro, atraindo milhares de visitantes continentais e internacionais.',
+      date: '18/07/2026',
+      time: '21:00',
+      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop',
+      island: 'Pico'
+    },
+    {
+      id: 'n_regional_3',
+      title: 'Novas ligações marítimas inter-ilhas entram em funcionamento',
+      description: 'Aumento da frequência de ferries pretende melhorar a mobilidade local e facilitar deslocações turísticas no arquipélago.',
+      content: 'Entrou hoje em vigor o novo horário alargado para a frota de ferries inter-ilhas. A medida visa facilitar a mobilidade diária dos açorianos e oferecer alternativas mais flexíveis para turistas que viajam entre ilhas vizinhas, especialmente nos grupos central e ocidental.',
+      date: '18/07/2026',
+      time: '09:45',
+      image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=500&auto=format&fit=crop',
+      island: 'Faial'
+    }
+  ]);
+  const [selectedNewsIsland, setSelectedNewsIsland] = useState('Todas');
+  const [selectedNews, setSelectedNews] = useState<any | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/news`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setNews(data);
+        }
+      })
+      .catch(err => console.error("Error fetching news:", err));
+  }, []);
+
+  const ptRestaurants = getRestaurants('pt') || [];
+  const ptHotels = getHotels('pt') || [];
+  const ptActivities = getActivities('pt') || [];
+
+  const cais20 = ptRestaurants.find(r => r.name.toLowerCase().includes('cais 20')) || {
+    name: 'Cais 20',
+    cuisine: 'Restaurante',
+    rating: 4.8,
+    reviews: 324,
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop',
+    island: 'São Miguel'
+  };
+
+  const hotelHighlight = ptHotels.find(h => h.name.toLowerCase().includes('pedras do mar') || h.name.toLowerCase().includes('meia nau')) || {
+    name: 'Pedras do Mar Resort & SPA',
+    island: 'São Miguel',
+    rating: 4.7,
+    reviews: 198,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop'
+  };
+
+  const activityHighlight = ptActivities.find(a => a.name.toLowerCase().includes('whale') || a.name.toLowerCase().includes('baleias')) || {
+    name: 'Whale Watching',
+    island: 'São Miguel',
+    rating: 4.9,
+    reviews: 412,
+    image: 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop'
+  };
+
+  const trailHighlight = ptActivities.find(a => a.name.toLowerCase().includes('lagoa') || a.name.toLowerCase().includes('trilho') || a.name.toLowerCase().includes('furnas')) || {
+    name: 'Lagoa do Fogo',
+    island: 'São Miguel',
+    rating: 4.9,
+    reviews: 256,
+    image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop'
+  };
+
   const [slides, setSlides] = useState<any[]>([]);
   
   const [searchVal, setSearchVal] = useState('');
@@ -675,18 +769,17 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
 
           </div>
 
-          {/* DESTAQUES PARA SI */}
           <div className="flex flex-col gap-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">Destaques para si</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Destaques</h3>
               <button 
                 onClick={() => {
-                  const element = document.getElementById('categories-section');
+                  const element = document.getElementById('news-section');
                   if (element) element.scrollIntoView({ behavior: 'smooth' });
                 }} 
                 className="text-[11px] font-black text-green-600 hover:text-green-700 tracking-widest flex items-center gap-1.5 uppercase transition-colors"
               >
-                Ver todos <ArrowRight size={12} />
+                Ver Notícias <ArrowRight size={12} />
               </button>
             </div>
 
@@ -696,21 +789,21 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 onClick={() => onNavigate('restaurants')} 
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col group"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-44 overflow-hidden bg-slate-50">
                   <span className="absolute top-3 left-3 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10">Restaurante</span>
                   <img 
-                    src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop" 
-                    alt="Cais 20" 
+                    src={cais20.image.startsWith('http') ? cais20.image : `${API_BASE_URL}${cais20.image}`} 
+                    alt={cais20.name} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                   />
                 </div>
                 <div className="p-5 flex flex-col text-left flex-1 justify-between">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">Cais 20</h4>
-                    <p className="text-xs text-slate-450 font-bold mb-3">Ponta Delgada</p>
+                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">{cais20.name}</h4>
+                    <p className="text-xs text-slate-450 font-bold mb-3">{cais20.island === 'PDL' ? 'Ponta Delgada, São Miguel' : cais20.island}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ 4.8 <span className="text-slate-400 font-medium">(324)</span></span>
+                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ {cais20.rating} <span className="text-slate-400 font-medium">({cais20.reviews})</span></span>
                     <span className="text-xs font-black text-slate-800">€ €</span>
                   </div>
                 </div>
@@ -721,21 +814,21 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 onClick={() => onNavigate('accommodation')} 
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col group"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-44 overflow-hidden bg-slate-50">
                   <span className="absolute top-3 left-3 bg-purple-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10">Alojamento</span>
                   <img 
-                    src="https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=600&auto=format&fit=crop" 
-                    alt="Pedras do Mar" 
+                    src={hotelHighlight.image.startsWith('http') ? hotelHighlight.image : `${API_BASE_URL}${hotelHighlight.image}`} 
+                    alt={hotelHighlight.name} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                   />
                 </div>
                 <div className="p-5 flex flex-col text-left flex-1 justify-between">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">Pedras do Mar Resort & SPA</h4>
-                    <p className="text-xs text-slate-450 font-bold mb-3">Fenais da Luz</p>
+                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">{hotelHighlight.name}</h4>
+                    <p className="text-xs text-slate-450 font-bold mb-3">{hotelHighlight.island}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ 4.7 <span className="text-slate-400 font-medium">(198)</span></span>
+                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ {hotelHighlight.rating || 4.7} <span className="text-slate-400 font-medium">({hotelHighlight.reviews || 198})</span></span>
                     <span className="text-xs font-black text-slate-800">€€€ €</span>
                   </div>
                 </div>
@@ -746,21 +839,21 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 onClick={() => onNavigate('trails')} 
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col group"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-44 overflow-hidden bg-slate-50">
                   <span className="absolute top-3 left-3 bg-green-650 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10">Trilho</span>
                   <img 
-                    src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop" 
-                    alt="Lagoa do Fogo" 
+                    src={trailHighlight.image.startsWith('http') ? trailHighlight.image : `${API_BASE_URL}${trailHighlight.image}`} 
+                    alt={trailHighlight.name} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                   />
                 </div>
                 <div className="p-5 flex flex-col text-left flex-1 justify-between">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">Lagoa do Fogo</h4>
-                    <p className="text-xs text-slate-450 font-bold mb-3">Ribeira Grande</p>
+                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">{trailHighlight.name}</h4>
+                    <p className="text-xs text-slate-450 font-bold mb-3">{trailHighlight.island}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ 4.9 <span className="text-slate-400 font-medium">(256)</span></span>
+                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ {trailHighlight.rating || 4.9} <span className="text-slate-400 font-medium">({trailHighlight.reviews || 256})</span></span>
                     <span className="text-xs font-black text-green-605">Grátis</span>
                   </div>
                 </div>
@@ -771,21 +864,21 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 onClick={() => onNavigate('activities')} 
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col group"
               >
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-44 overflow-hidden bg-slate-50">
                   <span className="absolute top-3 left-3 bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10">Atividade</span>
                   <img 
-                    src="https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=600&auto=format&fit=crop" 
-                    alt="Whale Watching" 
+                    src={activityHighlight.image.startsWith('http') ? activityHighlight.image : `${API_BASE_URL}${activityHighlight.image}`} 
+                    alt={activityHighlight.name} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                   />
                 </div>
                 <div className="p-5 flex flex-col text-left flex-1 justify-between">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">Whale Watching</h4>
-                    <p className="text-xs text-slate-450 font-bold mb-3">Ponta Delgada</p>
+                    <h4 className="text-sm font-black text-slate-900 mb-1 group-hover:text-green-600 transition-colors">{activityHighlight.name}</h4>
+                    <p className="text-xs text-slate-450 font-bold mb-3">{activityHighlight.island}</p>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ 4.9 <span className="text-slate-400 font-medium">(412)</span></span>
+                    <span className="text-xs font-bold text-amber-500 flex items-center gap-1">★ {activityHighlight.rating || 4.9} <span className="text-slate-400 font-medium">({activityHighlight.reviews || 412})</span></span>
                     <span className="text-xs font-black text-slate-800">€ €</span>
                   </div>
                 </div>
@@ -878,7 +971,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                 rel="noopener noreferrer" 
                 className="text-sm font-black text-green-600 hover:text-green-700 transition-colors leading-none mb-1 flex items-center gap-1"
               >
-                +351 912 345 678
+                +351 910 251 062
               </a>
               <span className="text-[10px] font-bold text-slate-400">Todos os dias: 09h00 – 19h00</span>
             </div>
@@ -888,94 +981,80 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
 
       </div>
 
-      {/* RENDER THE STANDARD PAGES BELOW THE MAIN GRID */}
-      {/* CATEGORIES DETAILED GRID */}
-      <section className="py-24 max-w-7xl mx-auto px-8 relative" id="categories-section">
-        <div className="flex flex-col items-center gap-4 mb-16">
-          <div className="flex items-center gap-4 w-full">
-            <div className="flex-1 h-[1px] bg-slate-200"></div>
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">Navegue pelas categorias</span>
-            <div className="flex-1 h-[1px] bg-slate-200"></div>
-          </div>
-        </div>
-
-        <div className="relative px-12">
-          <button 
-            onClick={() => {
-              const maxPage = Math.ceil(categories.length / 6) - 1;
-              setCategoryPage(prev => (prev > 0 ? prev - 1 : maxPage));
-            }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-650 hover:bg-slate-50 transition-all active:scale-90 z-10"
-          >
-            <ChevronLeft size={24} />
-          </button>
-
-          <div className="overflow-hidden">
-            <motion.div 
-              key={categoryPage}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-6 gap-8"
-            >
-              {categories.slice(categoryPage * 6, (categoryPage + 1) * 6).map((cat) => (
-                <button 
-                  key={cat.id}
-                  onClick={() => onNavigate(cat.id)}
-                  className="group flex flex-col items-center gap-6 p-8 rounded-[3rem] hover:bg-slate-50 transition-all active:scale-95"
+      {/* REGIONAL NEWS CENTER (ESTILO RTP AÇORES) */}
+      <section className="py-16 max-w-7xl mx-auto px-8 border-t border-slate-150 mt-16" id="news-section">
+        <div className="flex flex-col gap-8">
+          
+          {/* Header and Island Filters */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-150">
+            <div className="text-left">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Notícias da Região</h2>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Acompanhe a atualidade do arquipélago</p>
+            </div>
+            
+            {/* Island Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-hide max-w-full">
+              {['Todas', 'São Miguel', 'Terceira', 'Faial', 'Pico', 'São Jorge', 'Flores', 'Graciosa', 'Santa Maria', 'Corvo'].map((island) => (
+                <button
+                  key={island}
+                  onClick={() => setSelectedNewsIsland(island)}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                    selectedNewsIsland === island 
+                      ? 'bg-green-600 text-white shadow-sm' 
+                      : 'bg-white border border-slate-200 text-slate-650 hover:bg-slate-50'
+                  }`}
                 >
-                  <div className="w-24 h-24 rounded-[2rem] bg-white shadow-xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-2xl border border-slate-50" style={{ color: cat.color }}>
-                    {cat.icon}
-                  </div>
-                  <div className="text-center">
-                    <span className="block text-sm font-black text-slate-900 uppercase tracking-tighter mb-1 truncate w-28">{cat.label}</span>
-                    <span className="block text-[10px] font-bold text-slate-405 uppercase tracking-widest truncate w-28">{cat.sub}</span>
-                  </div>
+                  {island}
                 </button>
               ))}
-            </motion.div>
+            </div>
           </div>
 
-          <button 
-            onClick={() => {
-              const maxPage = Math.ceil(categories.length / 6) - 1;
-              setCategoryPage(prev => (prev < maxPage ? prev + 1 : 0));
-            }}
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-lg border border-slate-100 flex items-center justify-center text-slate-650 hover:bg-slate-50 transition-all active:scale-90 z-10"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
-
-        <div className="flex justify-center gap-2 mt-8">
-          {Array.from({ length: Math.ceil(categories.length / 6) }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCategoryPage(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${categoryPage === i ? 'w-8 bg-green-600' : 'w-2 bg-slate-205'}`}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* FEATURES ROW */}
-      <section className="pb-24 max-w-7xl mx-auto px-8">
-        <div className="bg-slate-50/50 rounded-[4rem] p-12 border border-slate-100 flex items-center justify-between">
-          {features.map((f, i) => (
-            <React.Fragment key={i}>
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-3xl bg-white shadow-lg flex items-center justify-center text-green-500 border border-green-50">
-                  {f.icon}
+          {/* News Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {news
+              .filter((item) => selectedNewsIsland === 'Todas' || item.island === selectedNewsIsland)
+              .map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => setSelectedNews(item)}
+                  className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex flex-col group text-left"
+                >
+                  <div className="relative h-44 overflow-hidden bg-slate-100">
+                    <span className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg z-10">
+                      {item.island}
+                    </span>
+                    <img 
+                      src={item.image.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
+                        {item.date} • {item.time}
+                      </span>
+                      <h4 className="text-sm font-black text-slate-900 leading-snug group-hover:text-green-600 transition-colors line-clamp-2 mb-2">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-slate-450 line-clamp-3 leading-relaxed font-bold">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="text-[10px] font-black text-green-605 uppercase tracking-widest mt-4 flex items-center gap-1 group-hover:text-green-700">
+                      Ler notícia <ArrowRight size={10} className="transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-tighter mb-1">{f.title}</h4>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{f.sub}</p>
-                </div>
+              ))}
+            {news.filter((item) => selectedNewsIsland === 'Todas' || item.island === selectedNewsIsland).length === 0 && (
+              <div className="col-span-full py-16 text-center">
+                <span className="text-sm font-bold text-slate-405 uppercase tracking-wider">Sem notícias disponíveis para esta ilha.</span>
               </div>
-              {i < features.length - 1 && <div className="h-12 w-[1px] bg-slate-200"></div>}
-            </React.Fragment>
-          ))}
+            )}
+          </div>
+
         </div>
       </section>
 
@@ -1199,6 +1278,51 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                     Aderir Agora
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: LER NOTÍCIA */}
+      <AnimatePresence>
+        {selectedNews && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 text-left"
+            >
+              <div className="relative h-64 bg-slate-900">
+                <img 
+                  src={selectedNews.image.startsWith('http') ? selectedNews.image : `${API_BASE_URL}${selectedNews.image}`} 
+                  alt={selectedNews.title} 
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <button 
+                  onClick={() => setSelectedNews(null)}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 hover:bg-black/65 text-white flex items-center justify-center transition-colors z-20"
+                >
+                  <X size={20} />
+                </button>
+                <div className="absolute bottom-6 left-8 right-8 text-white">
+                  <span className="bg-green-600 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg">
+                    {selectedNews.island}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest ml-3">
+                    {selectedNews.date} • {selectedNews.time}
+                  </span>
+                  <h3 className="text-xl lg:text-2xl font-black tracking-tight mt-3 leading-tight">
+                    {selectedNews.title}
+                  </h3>
+                </div>
+              </div>
+              <div className="p-8 max-h-[60vh] overflow-y-auto">
+                <p className="text-sm font-semibold text-slate-705 leading-relaxed whitespace-pre-line">
+                  {selectedNews.content || selectedNews.description}
+                </p>
               </div>
             </motion.div>
           </div>
