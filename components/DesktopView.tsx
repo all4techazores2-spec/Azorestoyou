@@ -38,15 +38,15 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
 }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-[9999] bg-white border-b border-slate-100 shadow-sm pointer-events-auto h-20 flex items-center">
-      <div className="max-w-7xl w-full mx-auto px-8 flex items-center justify-between">
+      <div className="w-full px-8 flex items-center justify-between">
         
-        {/* Left side: Logo & Navigation */}
-        <div className="flex items-center gap-12">
-          {/* Logo */}
-          <div className="flex items-center cursor-pointer shrink-0" onClick={() => { onNavigate(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-            <img src="/pngletras.png" alt="Logo" className="h-10 w-auto object-contain" />
-          </div>
+        {/* Left side: Stretched Logo as far left as possible */}
+        <div className="flex items-center cursor-pointer shrink-0" onClick={() => { onNavigate(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <img src="/pngletras.png" alt="Logo" className="h-16 w-auto object-contain" />
+        </div>
 
+        {/* Right side: Everything else pushed to the far right */}
+        <div className="flex items-center gap-10">
           {/* Navigation Menu */}
           <nav className="flex items-center gap-6">
             {[
@@ -79,33 +79,35 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
               </a>
             ))}
           </nav>
-        </div>
 
-        {/* Right side elements */}
-        <div className="flex items-center gap-6">
-          <button onClick={onShowFavorites} className="p-2 rounded-full transition-all hover:bg-slate-100 text-slate-400 hover:text-red-500">
-            <Heart size={20} />
-          </button>
-          
-          <button 
-            onClick={isAuthenticated ? onShowProfile : onShowAuth}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95"
-          >
-            <User size={16} />
-            {isAuthenticated ? (userProfile?.name?.split(' ')[0] || 'Perfil') : 'Entrar'}
-          </button>
+          <div className="h-6 w-[1px] bg-slate-200"></div>
 
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-slate-50 text-xs font-black uppercase tracking-wider">
-              <span>PT</span>
-              <ChevronDown size={12} />
+          {/* User actions */}
+          <div className="flex items-center gap-6">
+            <button onClick={onShowFavorites} className="p-2 rounded-full transition-all hover:bg-slate-100 text-slate-400 hover:text-red-500">
+              <Heart size={20} />
             </button>
-            <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-1.5 z-[101]">
-              {['Português', 'English', 'Español', 'Français', 'Deutsch'].map((l) => (
-                <button key={l} className="w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-650 hover:bg-slate-50 hover:text-green-600 rounded-xl transition-colors">
-                  {l}
-                </button>
-              ))}
+            
+            <button 
+              onClick={isAuthenticated ? onShowProfile : onShowAuth}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95"
+            >
+              <User size={16} />
+              {isAuthenticated ? (userProfile?.name?.split(' ')[0] || 'Perfil') : 'Entrar'}
+            </button>
+
+            <div className="relative group">
+              <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 bg-slate-50 text-xs font-black uppercase tracking-wider">
+                <span>PT</span>
+                <ChevronDown size={12} />
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 p-1.5 z-[101]">
+                {['Português', 'English', 'Español', 'Français', 'Deutsch'].map((l) => (
+                  <button key={l} className="w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-650 hover:bg-slate-50 hover:text-green-600 rounded-xl transition-colors">
+                    {l}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -528,7 +530,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     <div className="hidden lg:block bg-[#f8fafc] selection:bg-green-100 selection:text-green-900 pt-24 pb-16">
       
       {/* MAIN REDESIGNED GRID */}
-      <div className="max-w-7xl mx-auto px-8 grid grid-cols-12 gap-8 items-start">
+      <div className="w-full px-8 grid grid-cols-12 gap-8 items-start">
         
         {/* LEFT COLUMN: BANNER SLIDER & HIGHLIGHTS */}
         <div className="col-span-8 lg:col-span-9 flex flex-col gap-10">
