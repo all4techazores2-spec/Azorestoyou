@@ -9,7 +9,7 @@ import CarStandModal from './CarStandModal';
 import ShopCatalogModal from './ShopCatalogModal';
 import ShopDetailModal from './ShopDetailModal';
 import MostRequestedSlider from './MostRequestedSlider';
-import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users, ChevronDown, ChevronUp, Search, ArrowLeft, Wine } from 'lucide-react';
+import { MapPin, ArrowRight, Utensils, Mountain, Camera, LandPlot, Bus, Info, Clock, Ticket, Map, Heart, ShoppingBag, Sparkles, Scissors, User, Flower2, Hand, LayoutDashboard, Brush, X, Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, Mail, PhoneCall, Leaf, PencilRuler, ThermometerSnowflake, DraftingCompass, Settings, Car, ShoppingCart, MessageSquare, Dog, Phone, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Home, CreditCard, Star, ThumbsUp, Users, ChevronDown, ChevronUp, Search, ArrowLeft, Wine, Landmark } from 'lucide-react';
 import { getTranslation } from '../translations';
 import { crpBuses } from '../data/crp_buses';
 import { varelaBuses } from '../data/varela_buses';
