@@ -43,7 +43,7 @@ export const DesktopHeader: React.FC<DesktopViewProps & { scrolled: boolean }> =
         
         {/* Left side: Stretched Logo as far left as possible */}
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => { onNavigate(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-          <img src="/pngletras.png" alt="Logo" className="h-16 w-auto object-contain" />
+          <img src="/pngletras.png" alt="Logo" className="h-20 w-auto object-contain" />
         </div>
 
         {/* Right side: Everything else pushed to the far right */}
