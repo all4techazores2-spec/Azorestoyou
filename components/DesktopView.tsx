@@ -6,7 +6,7 @@ import {
   Utensils, Bus, Car, Tent, LayoutGrid, Mountain, 
   Facebook, Instagram, Youtube, Send, ArrowRight,
   ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors,
-  MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark, Check, Info, Headphones
+  MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark, Check, Info, Headphones, Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning
 } from 'lucide-react';
 import AzoresLogo from './AzoresLogo';
 import { Language } from '../types';
