@@ -142,7 +142,7 @@ const TrailModal: React.FC<TrailModalProps> = ({ trail, onClose, language, isAut
     // Detect API base URL (same logic as App.tsx)
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
       ? `http://${window.location.hostname}:3001`
-      : 'https://azorestoyou-o5yx.onrender.com';
+      : 'https://azorestoyou-nyvy.onrender.com';
 
     setTimeout(async () => {
       // 1. Mostrar sucesso imediatamente

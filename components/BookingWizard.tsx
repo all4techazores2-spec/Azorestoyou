@@ -45,7 +45,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
 }) => {
   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3001'
-    : 'https://azorestoyou-o5yx.onrender.com';
+    : 'https://azorestoyou-nyvy.onrender.com';
 
   const [nights, setNights] = useState(currentItinerary?.nights || 3);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);

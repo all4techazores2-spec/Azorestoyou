@@ -157,7 +157,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
         try {
           const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:3001'
-            : 'https://azorestoyou-o5yx.onrender.com';
+            : 'https://azorestoyou-nyvy.onrender.com';
           const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${restaurant.id}`);
           if (resChairs.ok) {
             const dataChairs = await resChairs.json();
@@ -292,7 +292,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       // Detetar automaticamente o endereço do backend
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-o5yx.onrender.com';
+        : 'https://azorestoyou-nyvy.onrender.com';
 
       // Determine if paying online
       const isPaidOnline = paymentType === 'mbway' || paymentType === 'transfer';

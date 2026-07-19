@@ -1,7 +1,7 @@
 
 // Azores4you - Global Configuration
 export const OFFICIAL_DOMAIN = 'azorestoyou.pt';
-export const RENDER_BACKEND = 'https://azorestoyou-o5yx.onrender.com';
+export const RENDER_BACKEND = 'https://azorestoyou-nyvy.onrender.com';
 export const LOCAL_BACKEND = 'http://localhost:3001';
 
 export const isLocal = () => {

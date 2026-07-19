@@ -49,7 +49,7 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-o5yx.onrender.com';
+        : 'https://azorestoyou-nyvy.onrender.com';
 
       const resData = {
         id: Math.random().toString(36).substr(2, 9),

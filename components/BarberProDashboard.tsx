@@ -60,7 +60,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
   const confirmReservationWithChair = async (resv: any, chairId: string) => {
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'https://azorestoyou-o5yx.onrender.com';
+      : 'https://azorestoyou-nyvy.onrender.com';
     try {
       const res = await fetch(`${API_BASE_URL}/api/reservations/${resv.id || resv._id}`, {
         method: 'PUT',
@@ -93,7 +93,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
     try {
       const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3001'
-        : 'https://azorestoyou-o5yx.onrender.com';
+        : 'https://azorestoyou-nyvy.onrender.com';
       const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${business.id}`);
       if (resChairs.ok) {
         const dataChairs = await resChairs.json();
@@ -311,7 +311,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                       const updateStatus = async (newStatus: string) => {
                         const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                           ? 'http://localhost:3001'
-                          : 'https://azorestoyou-o5yx.onrender.com';
+                          : 'https://azorestoyou-nyvy.onrender.com';
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/reservations/${r.id || r._id}`, {
                             method: 'PUT',
@@ -480,7 +480,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                         if (!newChairName.trim()) return;
                         const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                           ? 'http://localhost:3001'
-                          : 'https://azorestoyou-o5yx.onrender.com';
+                          : 'https://azorestoyou-nyvy.onrender.com';
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/chairs`, {
                             method: 'POST',
@@ -526,7 +526,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 const handleStatusUpdate = async (status: string) => {
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-o5yx.onrender.com';
+                    : 'https://azorestoyou-nyvy.onrender.com';
                   try {
                     if (status === 'blocked' || status === 'cleaning') {
                       const date = new Date().toISOString().split('T')[0];
@@ -560,7 +560,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!confirm('Deseja mesmo eliminar esta cadeira?')) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-o5yx.onrender.com';
+                    : 'https://azorestoyou-nyvy.onrender.com';
                   try {
                     const res = await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
                       method: 'DELETE'
@@ -577,7 +577,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!chair.currentAppointmentId) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-o5yx.onrender.com';
+                    : 'https://azorestoyou-nyvy.onrender.com';
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
@@ -604,7 +604,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   if (!chair.currentAppointmentId) return;
                   const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                     ? 'http://localhost:3001'
-                    : 'https://azorestoyou-o5yx.onrender.com';
+                    : 'https://azorestoyou-nyvy.onrender.com';
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
@@ -720,7 +720,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                           onClick={async () => {
                             const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
                               ? 'http://localhost:3001'
-                              : 'https://azorestoyou-o5yx.onrender.com';
+                              : 'https://azorestoyou-nyvy.onrender.com';
                             try {
                               const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
                               if (activeB) {
