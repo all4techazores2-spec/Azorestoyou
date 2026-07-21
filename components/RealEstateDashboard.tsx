@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, Home, Percent, BarChart3, 
   MessageSquare, Settings, LogOut, Search, Bell, MapPin, Plus, Trash2, 
-  Edit3, X, ChevronDown, CheckCircle, AlertTriangle, Calendar, ChevronRight, 
+  Edit3, X, ChevronDown, ChevronLeft, CheckCircle, AlertTriangle, Calendar, ChevronRight, 
   Image as ImageIcon, ArrowRight, Star, Package, Clock, FileText, Check, 
   FileSpreadsheet, TrendingUp, Sparkles, SlidersHorizontal, Compass, RefreshCw, Mail, PhoneCall,
   User, Eye, Users, CloudSun, Wind, Droplets, Sunrise, Sunset, Thermometer
