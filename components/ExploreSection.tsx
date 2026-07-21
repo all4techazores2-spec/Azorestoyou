@@ -1535,7 +1535,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-sm text-slate-500 mb-6 leading-relaxed line-clamp-3 font-medium">{s.description || 'Nenhuma descrição disponível.'}</p>
+                <p className={`text-sm text-slate-500 mb-6 leading-relaxed line-clamp-3 font-medium ${(category === 'real_estate' || s.businessType === 'real_estate') ? 'hidden md:block' : ''}`}>
+                  {s.description || 'Nenhuma descrição disponível.'}
+                </p>
 
                 <div className="space-y-3 mb-6">
                   <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2">
@@ -1562,66 +1564,129 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {s.phone && (
-                    <button
-                      onClick={() => window.location.href = `tel:${s.phone}`}
-                      className="flex-1 min-w-[80px] py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
-                    >
-                      <PhoneCall size={16} /> Ligar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      const url = (s.latitude && s.longitude)
-                        ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
-                        : '#';
-                      if (url !== '#') {
-                        if (onShowMap) {
-                          onShowMap(url);
-                        } else {
-                          window.open(url, '_blank');
-                        }
-                      }
-                    }}
-                    className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    <Map size={16} /> Direções
-                  </button>
-                  {allowBooking && (s.isConfirmed !== false ? (
-                    <button
-                      onClick={() => setSelectedOffice(s)}
-                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                    >
-                      <Calendar size={16} /> Agendar Visita
-                    </button>
-                  ) : (
-                    <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
-                      Apenas Informativo
-                    </div>
-                  ))}
-                  {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (s.businessType === 'shop' || category === 'shops') {
-                          setSelectedShopDetail(s);
-                        } else {
+                  {(category === 'real_estate' || s.businessType === 'real_estate') ? (
+                    <div className="space-y-2 w-full">
+                      <div className="grid grid-cols-3 gap-2">
+                        {s.phone && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `tel:${s.phone}`;
+                            }}
+                            className="py-3.5 bg-slate-900 text-white rounded-2xl font-black uppercase text-[9px] tracking-wider hover:bg-blue-600 transition-all flex flex-col items-center justify-center gap-1 active:scale-95 shadow-sm"
+                          >
+                            <PhoneCall size={14} />
+                            <span>Ligar</span>
+                          </button>
+                        )}
+                        {s.phone && (
+                          <a
+                            href={`https://wa.me/${s.phone.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="py-3.5 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[9px] tracking-wider hover:bg-emerald-700 transition-all flex flex-col items-center justify-center gap-1 active:scale-95 shadow-sm text-center"
+                          >
+                            <MessageSquare size={14} />
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = (s.latitude && s.longitude)
+                              ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
+                              : '#';
+                            if (url !== '#') {
+                              if (onShowMap) {
+                                onShowMap(url);
+                              } else {
+                                window.open(url, '_blank');
+                              }
+                            }
+                          }}
+                          className="py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[9px] tracking-wider hover:bg-slate-200 transition-all flex flex-col items-center justify-center gap-1 active:scale-95"
+                        >
+                          <Map size={14} />
+                          <span>Direções</span>
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedShop(s);
-                        }
-                      }}
-                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                    >
-                      {category === 'gyms' ? <Dumbbell size={16} /> : (category === 'real_estate' || s.businessType === 'real_estate') ? <Home size={16} /> : <ShoppingBag size={16} />}
-                      {category === 'gyms' ? 'Ver Máquinas / Instalações' : (category === 'real_estate' || s.businessType === 'real_estate') ? 'Ver Casas / Apartamentos' : 'Ver Artigos'}
-                    </button>
-                  )}
-                  {s.businessType === 'stands' && (
-                    <button
-                      onClick={() => setSelectedStand(s)}
-                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
-                    >
-                      <CarFront size={16} /> Ver Viaturas
-                    </button>
+                        }}
+                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                      >
+                        <Home size={16} />
+                        Ver Imóveis do Vendedor
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {s.phone && (
+                        <button
+                          onClick={() => window.location.href = `tel:${s.phone}`}
+                          className="flex-1 min-w-[80px] py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-slate-900/10"
+                        >
+                          <PhoneCall size={16} /> Ligar
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          const url = (s.latitude && s.longitude)
+                            ? `https://maps.google.com/?q=${s.latitude},${s.longitude}`
+                            : '#';
+                          if (url !== '#') {
+                            if (onShowMap) {
+                              onShowMap(url);
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }
+                        }}
+                        className="flex-1 min-w-[80px] py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Map size={16} /> Direções
+                      </button>
+                      {allowBooking && (s.isConfirmed !== false ? (
+                        <button
+                          onClick={() => setSelectedOffice(s)}
+                          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                        >
+                          <Calendar size={16} /> Agendar Visita
+                        </button>
+                      ) : (
+                        <div className="w-full py-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[9px] font-black uppercase tracking-wider text-center flex items-center justify-center">
+                          Apenas Informativo
+                        </div>
+                      ))}
+                      {(s.businessType === 'shop' || s.businessType === 'gyms' || s.businessType === 'real_estate' || category === 'gyms' || category === 'real_estate') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (s.businessType === 'shop' || category === 'shops') {
+                              setSelectedShopDetail(s);
+                            } else {
+                              setSelectedShop(s);
+                            }
+                          }}
+                          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                        >
+                          {category === 'gyms' ? <Dumbbell size={16} /> : (category === 'real_estate' || s.businessType === 'real_estate') ? <Home size={16} /> : <ShoppingBag size={16} />}
+                          {category === 'gyms' ? 'Ver Máquinas / Instalações' : (category === 'real_estate' || s.businessType === 'real_estate') ? 'Ver Casas / Apartamentos' : 'Ver Artigos'}
+                        </button>
+                      )}
+                      {s.businessType === 'stands' && (
+                        <button
+                          onClick={() => setSelectedStand(s)}
+                          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-blue-200"
+                        >
+                          <CarFront size={16} /> Ver Viaturas
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
