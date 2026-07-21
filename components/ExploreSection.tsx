@@ -243,10 +243,16 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
           setSelectedRestaurant(item as any);
           if (onSelectedItemIdHandled) onSelectedItemIdHandled();
         }
+      } else if (category === 'real_estate') {
+        const item = realEstate.find(r => r.id === selectedItemId);
+        if (item) {
+          setSelectedShop(item);
+          if (onSelectedItemIdHandled) onSelectedItemIdHandled();
+        }
       }
       // Add other categories as needed
     }
-  }, [selectedItemId, category, activities, restaurants, beauty, onSelectedItemIdHandled]);
+  }, [selectedItemId, category, activities, restaurants, beauty, realEstate, onSelectedItemIdHandled]);
 
 
   const isNearby = destinationIsland?.startsWith('nearby:');

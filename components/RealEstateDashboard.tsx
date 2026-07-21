@@ -181,6 +181,13 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
     }
   };
 
+  const handleShare = (p: RealEstateProperty) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?seller=${business.id}&property=${p.id}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => alert("Link de partilha copiado para a área de transferência!"))
+      .catch(() => alert("Erro ao copiar o link."));
+  };
+
   const handleSaveProperty = (e: React.FormEvent) => {
     e.preventDefault();
     if (!propertyForm.name || !propertyForm.price) return;
@@ -473,8 +480,15 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
                         <h4 className="text-sm font-black text-slate-800 uppercase truncate leading-none">{p.name}</h4>
                         <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><MapPin size={10} /> Ponta Delgada, PDL</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex items-center gap-3">
                         <span className="font-mono text-base font-black text-slate-850">€{p.price.toLocaleString('pt-PT')}</span>
+                        <button 
+                          onClick={() => handleShare(p)}
+                          title="Gerar Link de Partilha"
+                          className="p-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-xl text-[#0A4E9B] hover:scale-105 transition-all"
+                        >
+                          <Compass size={14} />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -534,6 +548,13 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
                       <div className="flex items-center justify-between border-t border-slate-50 pt-4">
                         <span className="font-mono text-lg font-black text-slate-800">€{p.price.toLocaleString('pt-PT')}</span>
                         <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleShare(p)}
+                            title="Gerar Link de Partilha"
+                            className="p-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-xl text-[#0A4E9B] hover:scale-105 transition-all"
+                          >
+                            <Compass size={14} />
+                          </button>
                           <button 
                             onClick={() => {
                               setPropertyForm(p);

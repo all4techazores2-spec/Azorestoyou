@@ -274,6 +274,18 @@ const App: React.FC = () => {
     }
   }, [beauty, restaurants]);
 
+  // --- DETEÇÃO DE PARTILHA DE IMÓVEL/CONSULTOR ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sellerId = params.get('seller');
+    if (sellerId) {
+      console.log("⚡ Deteção de Partilha de Imobiliária/Consultor:", sellerId);
+      setExploreCategory('real_estate');
+      setHasEnteredApp(true);
+      setSelectedTrailId(sellerId);
+    }
+  }, [realEstate]);
+
   // Load from IndexedDB on initial mount for massive storage capacity
   useEffect(() => {
     const loadCaches = async () => {

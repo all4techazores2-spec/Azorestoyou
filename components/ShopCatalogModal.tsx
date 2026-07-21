@@ -43,6 +43,19 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
     setCurrentPropPhotoIdx(0);
   }, [selectedProductIdx]);
 
+  useEffect(() => {
+    if (shop && products.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const propId = params.get('property') || params.get('prop');
+      if (propId) {
+        const foundIdx = products.findIndex((p: any) => p.id === propId || p.name === propId);
+        if (foundIdx !== -1) {
+          setSelectedProductIdx(foundIdx);
+        }
+      }
+    }
+  }, [shop, products]);
+
   const handleNextProduct = () => {
     if (selectedProductIdx === null || products.length === 0) return;
     setSelectedProductIdx((selectedProductIdx + 1) % products.length);
@@ -68,7 +81,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
         {/* Close Button */}
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur-md text-slate-400 rounded-xl hover:bg-white hover:text-slate-900 transition-all shadow-xl border border-slate-100"
+          className="absolute top-4 right-4 z-[120] p-2 bg-white/90 backdrop-blur-md text-slate-400 rounded-xl hover:bg-white hover:text-slate-900 transition-all shadow-xl border border-slate-100"
         >
           <X size={18} />
         </button>
@@ -217,19 +230,21 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
             >
               <button 
                 onClick={() => setSelectedProductIdx(null)}
-                className="absolute top-8 right-8 p-3 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all border border-white/10"
+                className="absolute top-8 right-8 p-3 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all border border-white/10 z-[120]"
               >
                 <X size={24} />
               </button>
 
               <div className="flex flex-col md:flex-row items-center gap-10 w-full max-w-5xl">
                 {/* Navigation Arrows (Desktop) */}
-                <button 
-                  onClick={handlePrevProduct}
-                  className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
-                >
-                  <ChevronLeft size={32} />
-                </button>
+                {!isRealEstate && (
+                  <button 
+                    onClick={handlePrevProduct}
+                    className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                  >
+                    <ChevronLeft size={32} />
+                  </button>
+                )}
 
                 <div className="flex-1 flex flex-col md:flex-row items-center gap-12">
                    <motion.div 
@@ -345,25 +360,31 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                       )}
 
                       {/* Mobile Navigation */}
-                      <div className="flex md:hidden justify-center gap-4 pt-8">
-                         <button onClick={handlePrevProduct} className="p-4 bg-white/10 rounded-2xl"><ChevronLeft size={24} /></button>
-                         <button onClick={handleNextProduct} className="p-4 bg-white/10 rounded-2xl"><ChevronRight size={24} /></button>
-                      </div>
+                      {!isRealEstate && (
+                        <div className="flex md:hidden justify-center gap-4 pt-8">
+                           <button onClick={handlePrevProduct} className="p-4 bg-white/10 rounded-2xl"><ChevronLeft size={24} /></button>
+                           <button onClick={handleNextProduct} className="p-4 bg-white/10 rounded-2xl"><ChevronRight size={24} /></button>
+                        </div>
+                      )}
                    </motion.div>
                 </div>
 
-                <button 
-                  onClick={handleNextProduct}
-                  className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
-                >
-                  <ChevronRight size={32} />
-                </button>
+                {!isRealEstate && (
+                  <button 
+                    onClick={handleNextProduct}
+                    className="hidden md:flex p-5 bg-white/10 text-white rounded-3xl hover:bg-white/20 transition-all border border-white/10 shadow-2xl"
+                  >
+                    <ChevronRight size={32} />
+                  </button>
+                )}
               </div>
 
               {/* Counter Indicator */}
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
-                {selectedProductIdx + 1} de {products.length} {isGym ? 'máquinas' : isRealEstate ? 'imóveis' : 'artigos'}
-              </div>
+              {!isRealEstate && (
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
+                  {selectedProductIdx + 1} de {products.length} {isGym ? 'máquinas' : isRealEstate ? 'imóveis' : 'artigos'}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
