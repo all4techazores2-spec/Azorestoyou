@@ -19,11 +19,13 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 }) => {
   const [currentBgSlide, setCurrentBgSlide] = useState(0);
   const [selectedProductIdx, setSelectedProductIdx] = useState<number | null>(null);
+  const [currentPropPhotoIdx, setCurrentPropPhotoIdx] = useState<number>(0);
   const [showPanorama, setShowPanorama] = useState<string | null>(null);
 
   if (!shop) return null;
 
   const isGym = category === 'gyms' || shop.businessType === 'gyms';
+  const isRealEstate = category === 'real_estate' || shop.businessType === 'real_estate';
   const products = shop.products || (shop as any).dishes || (shop as any).services || [];
   const gallery = shop.gallery || (products.length > 0 ? products.map(p => p.image).slice(0, 5) : ['https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200']);
 
@@ -36,6 +38,11 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
     return () => clearInterval(timer);
   }, [gallery.length]);
 
+  // Reset property photo slide on selected product change
+  useEffect(() => {
+    setCurrentPropPhotoIdx(0);
+  }, [selectedProductIdx]);
+
   const handleNextProduct = () => {
     if (selectedProductIdx === null || products.length === 0) return;
     setSelectedProductIdx((selectedProductIdx + 1) % products.length);
@@ -45,6 +52,11 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
     if (selectedProductIdx === null || products.length === 0) return;
     setSelectedProductIdx((selectedProductIdx - 1 + products.length) % products.length);
   };
+
+  const selectedProduct = selectedProductIdx !== null ? products[selectedProductIdx] : null;
+  const propertyPhotos = selectedProduct 
+    ? [selectedProduct.image, ...(selectedProduct.gallery || [])].filter(Boolean) 
+    : [];
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -87,8 +99,8 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
               <h2 className="text-xl md:text-4xl font-black uppercase tracking-tighter mb-1 drop-shadow-lg">{shop.name}</h2>
               <p className="text-[10px] md:text-sm font-bold text-white/70 tracking-widest uppercase flex items-center gap-2">
                 <Map size={12} className="text-red-400" /> {shop.island} • {
-                  shop.businessType === 'gyms' ? 'GINÁSIO' : 
-                  shop.businessType === 'real_estate' ? 'IMOBILIÁRIA' : 
+                  isGym ? 'GINÁSIO' : 
+                  isRealEstate ? 'Comercial' : 
                   'LOJA REGIONAL'
                 }
               </p>
@@ -125,7 +137,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                        }
                      }
                    }}
-                   className="flex-1 md:flex-initial px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                   className="flex-1 md:flex-initial px-4 py-3 bg-slate-100 text-slate-650 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                  >
                    <Map size={14} /> Ver Mapa
                  </button>
@@ -137,8 +149,8 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
               <div className="flex items-center justify-between mb-8">
                  <div>
                    <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tighter">
-                     {shop.businessType === 'gyms' ? 'Instalações & Equipamento' : 
-                      shop.businessType === 'real_estate' ? 'Casas & Apartamentos' :
+                     {isGym ? 'Instalações & Equipamento' : 
+                      isRealEstate ? 'Imóveis Disponíveis' :
                       'Artigos em Exposição'}
                    </h4>
                    <p className="text-xs font-bold text-slate-400">Toque para abrir o catálogo imersivo</p>
@@ -169,15 +181,15 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                              <ArrowRight size={20} className="text-blue-600" />
                            </div>
                         </div>
-                        {shop.businessType !== 'gyms' && product.price > 0 && (
+                        {(!isGym || isRealEstate) && product.price > 0 && (
                           <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-black text-blue-600 shadow-sm">
-                            {product.price}€
+                            {product.price.toLocaleString('pt-PT')}€
                           </div>
                         )}
                       </div>
                       <div className="p-6">
                         <h5 className="text-xs font-black text-slate-800 uppercase truncate mb-1">{product.name}</h5>
-                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{product.category || 'Regional'}</span>
+                        <span className="text-[9px] font-black text-slate-350 uppercase tracking-widest">{product.category || (isRealEstate ? 'Comercial' : 'Regional')}</span>
                       </div>
                     </motion.div>
                   ))}
@@ -185,7 +197,9 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
               ) : (
                 <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
                   <ShoppingBag size={48} className="mx-auto text-slate-300 mb-4" />
-                  <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Ainda não existem artigos listados</p>
+                  <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                    {isRealEstate ? 'Ainda não existem imóveis listados' : 'Ainda não existem artigos listados'}
+                  </p>
                 </div>
               )}
             </div>
@@ -219,18 +233,69 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
                 <div className="flex-1 flex flex-col md:flex-row items-center gap-12">
                    <motion.div 
-                     key={`img-${products[selectedProductIdx].id}`}
+                     key={`img-${products[selectedProductIdx].id}-${currentPropPhotoIdx}`}
                      initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
                      drag="x"
                      dragConstraints={{ left: 0, right: 0 }}
                      onDragEnd={(e, info) => {
-                       if (info.offset.x > 100) handlePrevProduct();
-                       else if (info.offset.x < -100) handleNextProduct();
+                       if (isRealEstate && propertyPhotos.length > 1) {
+                         if (info.offset.x > 100) {
+                           setCurrentPropPhotoIdx(prev => (prev - 1 + propertyPhotos.length) % propertyPhotos.length);
+                         } else if (info.offset.x < -100) {
+                           setCurrentPropPhotoIdx(prev => (prev + 1) % propertyPhotos.length);
+                         }
+                       } else {
+                         if (info.offset.x > 100) handlePrevProduct();
+                         else if (info.offset.x < -100) handleNextProduct();
+                       }
                      }}
-                     className="w-full md:w-[450px] aspect-square rounded-[3rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-8 border-white/5 cursor-grab active:cursor-grabbing"
+                     className="w-full md:w-[450px] aspect-square rounded-[3rem] overflow-hidden shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] border-8 border-white/5 cursor-grab active:cursor-grabbing relative"
                    >
-                     <img src={products[selectedProductIdx].image} className="w-full h-full object-cover pointer-events-none" alt="Product Large" />
+                     {isRealEstate && propertyPhotos.length > 0 ? (
+                       <>
+                         <img src={propertyPhotos[currentPropPhotoIdx]} className="w-full h-full object-cover pointer-events-none" alt="Product Large" />
+                         
+                         {/* Photo Navigation Inside Property Card */}
+                         {propertyPhotos.length > 1 && (
+                           <>
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setCurrentPropPhotoIdx(prev => (prev - 1 + propertyPhotos.length) % propertyPhotos.length);
+                               }}
+                               className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-md border border-white/10"
+                             >
+                               <ChevronLeft size={16} />
+                             </button>
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setCurrentPropPhotoIdx(prev => (prev + 1) % propertyPhotos.length);
+                               }}
+                               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-md border border-white/10"
+                             >
+                               <ChevronRight size={16} />
+                             </button>
+                             {/* Dots indicators inside image */}
+                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 bg-black/20 backdrop-blur px-2.5 py-1.5 rounded-full">
+                               {propertyPhotos.map((_, dotIdx) => (
+                                 <button
+                                   key={dotIdx}
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setCurrentPropPhotoIdx(dotIdx);
+                                   }}
+                                   className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentPropPhotoIdx ? 'bg-white w-3' : 'bg-white/40'}`}
+                                 />
+                               ))}
+                             </div>
+                           </>
+                         )}
+                       </>
+                     ) : (
+                       <img src={products[selectedProductIdx].image} className="w-full h-full object-cover pointer-events-none" alt="Product Large" />
+                     )}
                    </motion.div>
 
                    <motion.div 
@@ -240,26 +305,26 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
                      className="flex-1 text-center md:text-left text-white space-y-6"
                    >
                       <div>
-                        {!isGym && (
+                        {(!isGym || isRealEstate) && (
                           <span className="px-4 py-1 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block shadow-lg shadow-blue-900/40">
-                            {shop.businessType === 'real_estate' ? 'Oportunidade Imobiliária' : 'Artigo Regional'}
+                            {isRealEstate ? 'Imóvel' : 'Artigo Regional'}
                           </span>
                         )}
-                        <h3 className="text-2xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4">{products[selectedProductIdx].name}</h3>
-                        <p className="text-lg md:text-xl text-white/60 font-bold leading-relaxed max-w-md mx-auto md:mx-0">{products[selectedProductIdx].description}</p>
+                        <h3 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">{products[selectedProductIdx].name}</h3>
+                        <p className="text-sm md:text-base text-white/70 font-semibold leading-relaxed max-w-md mx-auto md:mx-0">{products[selectedProductIdx].description}</p>
                       </div>
                       
                       <div className="flex flex-col md:flex-row items-center gap-6 pt-6">
-                        {!isGym && products[selectedProductIdx].price > 0 && (
+                        {(!isGym || isRealEstate) && products[selectedProductIdx].price > 0 && (
                           <>
-                            <div className="text-5xl font-black text-amber-400 drop-shadow-2xl">{products[selectedProductIdx].price}€</div>
+                            <div className="text-5xl font-black text-amber-400 drop-shadow-2xl">{products[selectedProductIdx].price.toLocaleString('pt-PT')}€</div>
                             <div className="h-10 w-[1px] bg-white/10 hidden md:block" />
                           </>
                         )}
-                        {!isGym && (
+                        {(!isGym || isRealEstate) && (
                           <div className="flex flex-col items-center md:items-start opacity-50">
                              <span className="text-[10px] font-black uppercase tracking-widest">
-                               {shop.businessType === 'real_estate' ? 'Disponível na Agência' : 'Disponível em Loja'}
+                               {isRealEstate ? 'Disponível com o Consultor' : 'Disponível em Loja'}
                              </span>
                              <span className="text-xs font-bold">{shop.name}</span>
                           </div>
@@ -297,7 +362,7 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
 
               {/* Counter Indicator */}
               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">
-                {selectedProductIdx + 1} de {products.length} {shop.businessType === 'gyms' ? 'máquinas' : shop.businessType === 'real_estate' ? 'imóveis' : 'artigos'}
+                {selectedProductIdx + 1} de {products.length} {isGym ? 'máquinas' : isRealEstate ? 'imóveis' : 'artigos'}
               </div>
             </motion.div>
           )}
@@ -314,6 +379,5 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
     </div>
   );
 };
-
 
 export default ShopCatalogModal;

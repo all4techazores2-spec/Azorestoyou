@@ -26,6 +26,7 @@ import BusinessDashboard from './components/BusinessDashboard';
 import { ServiceDashboard } from './components/ServiceDashboard';
 import { CommerceDashboard } from './components/CommerceDashboard';
 import RentCarDashboard from './components/RentCarDashboard';
+import { RealEstateDashboard } from './components/RealEstateDashboard';
 import SupplierDashboard from './components/SupplierDashboard';
 import HotelDashboard from './components/HotelDashboard';
 import BarberNormalDashboard from './components/BarberNormalDashboard';
@@ -2070,7 +2071,7 @@ const App: React.FC = () => {
   if ((isBusiness || isStaff) && currentBusinessId) {
     // Procurar o negócio nos estados sincronizados com o servidor
     const targetId = currentBusinessId.trim();
-    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal].find(b => b.id === targetId);
+    let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal, ...realEstate].find(b => b.id === targetId);
     
     // Fallback: Se não encontrou no estado (sincronização pendente), apenas retornar erro amigável
     if (!biz) {
@@ -2317,6 +2318,31 @@ const App: React.FC = () => {
                   });
                 } catch (err) {
                   console.error("Erro ao atualizar loja no servidor:", err);
+                }
+              }}
+            />
+          </ErrorBoundary>
+        );
+      }
+
+      const isRealEstate = bType === 'real_estate' || targetId.startsWith('RE') || (biz.businessType && biz.businessType.toLowerCase() === 'real_estate');
+      if (isRealEstate) {
+        return (
+          <ErrorBoundary>
+            <RealEstateDashboard 
+              business={biz}
+              language={language}
+              onLogout={handleLogout}
+              onUpdateBusiness={async (updated) => {
+                setRealEstate(prev => prev.map(item => item.id === updated.id ? updated : item));
+                try {
+                  await fetch(`${API_BASE_URL}/api/real_estate/${updated.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                } catch (err) {
+                  console.error("Erro ao atualizar imobiliária no servidor:", err);
                 }
               }}
             />
@@ -3253,7 +3279,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} hotels={hotels} municipal={municipal} />
+      <AuthModal isOpen={showAuthModal} onClose={() => { setShowAuthModal(false); setPendingFlight(null); }} onSuccess={(isAdmin, bizId, email, role, name, phone, password) => handleAuthSuccess(isAdmin, bizId, email, role, name, phone, password)} language={language} restaurants={restaurants} shops={shops} beauty={beauty} cars={cars} hotels={hotels} municipal={municipal} realEstate={realEstate} />
       <PackagePreviewModal isOpen={showPackageModal} onClose={() => setShowPackageModal(false)} itinerary={itinerary} onContinue={handleContinueFromPackage} language={language} />
       <IslandSelectionModal 
         isOpen={showBusIslandModal || showIslandSelection} 
