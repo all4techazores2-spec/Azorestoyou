@@ -53,6 +53,8 @@ const ShopCatalogModal: React.FC<ShopCatalogModalProps> = ({
           setSelectedProductIdx(foundIdx);
         }
       }
+      // Limpar os parâmetros do URL para não persistir estados indesejados ao navegar
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, [shop, products]);
 

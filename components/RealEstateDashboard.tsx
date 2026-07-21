@@ -106,11 +106,34 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mocked state for SaaS features
+  // Dynamic Visits & Calendar States
+  const [visitsList, setVisitsList] = useState([
+    { id: '1', client: 'João Silva', time: '14:30', date: '2026-07-22', property: 'Apartamento Vista Lagoa', status: 'Confirmada' },
+    { id: '2', client: 'Maria Santos', time: '16:00', date: '2026-07-24', property: 'Vivenda Sete Cidades', status: 'Pendente' },
+    { id: '3', client: 'António Tavares', time: '10:00', date: '2026-07-28', property: 'Terreno Praia do Pópulo', status: 'Confirmada' }
+  ]);
+
+  const [calendarDate, setCalendarDate] = useState(new Date(2026, 6, 1)); // Default: July 2026
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<string>('2026-07-22');
+  const [newVisitForm, setNewVisitForm] = useState({
+    client: '',
+    time: '10:00',
+    date: '2026-07-22',
+    property: '',
+    status: 'Pendente'
+  });
+
+  const [crmLeads, setCrmLeads] = useState([
+    { id: 'l1', name: 'Carlos Ribeiro', status: 'Novo Interesse', email: 'carlos@mail.com', phone: '912345678', date: '2026-07-20' },
+    { id: 'l2', name: 'Ana Oliveira', status: 'Visita Agendada', email: 'ana.o@mail.com', phone: '918765432', date: '2026-07-21' },
+    { id: 'l3', name: 'Rui Ferreira', status: 'Em Negociação', email: 'rui.f@mail.com', phone: '965551234', date: '2026-07-19' }
+  ]);
+
+  // Mocked stats
   const stats = {
     active: properties.filter(p => p.status === 'Ativo').length,
-    leads: 24,
-    visits: 8,
+    leads: crmLeads.length + 21,
+    visits: visitsList.length,
     views: 1420
   };
 
@@ -120,15 +143,7 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
     { day: 'Sexta', temp: '24°C', icon: '☀️' }
   ];
 
-  const mockVisits = [
-    { client: 'João Silva', time: '14:30', status: 'Confirmada' },
-    { client: 'Maria Santos', time: '16:00', status: 'Pendente' }
-  ];
-
-  const mockLeads = [
-    { name: 'Carlos Ribeiro', status: 'Novo Interesse', email: 'carlos@mail.com' },
-    { name: 'Ana Oliveira', status: 'Visita Agendada', email: 'ana.o@mail.com' }
-  ];
+  const mockLeads = crmLeads.slice(0, 2);
 
   // Handle Image Upload Helper
   const handleFileUpload = async (files: FileList | null, field: 'image' | 'gallery') => {
@@ -182,9 +197,9 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
   };
 
   const handleShare = (p: RealEstateProperty) => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?seller=${business.id}&property=${p.id}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?seller=${business.id}`;
     navigator.clipboard.writeText(shareUrl)
-      .then(() => alert("Link de partilha copiado para a área de transferência!"))
+      .then(() => alert("Link de partilha do consultor copiado para a área de transferência!"))
       .catch(() => alert("Erro ao copiar o link."));
   };
 
@@ -703,6 +718,233 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
             </div>
           )}
 
+          {/* TAB 4: CALENDÁRIO INTERATIVO CRM */}
+          {activeTab === 'calendario' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div>
+                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-1">Calendário de Visitas</h1>
+                <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">Agende e consulte visitas de clientes aos seus imóveis em exposição</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-8">
+                {/* Monthly Calendar Grid Widget */}
+                <div className="col-span-2 bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-6 shadow-sm space-y-6">
+                  <div className="flex justify-between items-center">
+                    <span className="font-black text-slate-800 uppercase text-xs tracking-wider">Julho 2026</span>
+                    <div className="flex gap-2">
+                      <button type="button" className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronLeft size={16} /></button>
+                      <button type="button" className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronRight size={16} /></button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => <span key={d}>{d}</span>)}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2">
+                    {/* Empty padding days for July 2026 starting on Wednesday (3 padding days) */}
+                    {[null, null, null].map((_, idx) => (
+                      <div key={`pad-${idx}`} className="aspect-square bg-slate-50/20 rounded-xl opacity-30" />
+                    ))}
+                    {Array.from({ length: 31 }, (_, dayIdx) => {
+                      const dayNumber = dayIdx + 1;
+                      const dateStr = `2026-07-${String(dayNumber).padStart(2, '0')}`;
+                      const isSelected = selectedCalendarDay === dateStr;
+                      const dayVisits = visitsList.filter(v => v.date === dateStr);
+                      const hasVisits = dayVisits.length > 0;
+
+                      return (
+                        <button
+                          key={dayNumber}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCalendarDay(dateStr);
+                            setNewVisitForm(prev => ({ ...prev, date: dateStr }));
+                          }}
+                          className={`aspect-square rounded-xl flex flex-col items-center justify-between p-2 transition-all relative border font-bold text-xs ${
+                            isSelected 
+                              ? 'bg-[#0A4E9B] text-white border-transparent shadow-lg shadow-blue-500/20 font-black'
+                              : 'bg-white/50 border-slate-100/60 hover:bg-white text-slate-700'
+                          }`}
+                        >
+                          <span>{dayNumber}</span>
+                          {hasVisits && (
+                            <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-[#37B34A]'} animate-pulse`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Scheduling form & Day visits overview */}
+                <div className="space-y-6">
+                  {/* Day Visitas Details */}
+                  <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-6 shadow-sm space-y-4">
+                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider">Visitas para {selectedCalendarDay.split('-').reverse().join('/')}</h3>
+                    <div className="space-y-3">
+                      {visitsList.filter(v => v.date === selectedCalendarDay).map((v) => (
+                        <div key={v.id} className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center">
+                          <div>
+                            <p className="font-black text-slate-800 text-xs uppercase tracking-tight leading-none mb-1">{v.client}</p>
+                            <p className="text-[10px] text-slate-400 font-bold">{v.property}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-mono text-[10px] font-black text-[#0A4E9B] block">{v.time}</span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-[#37B34A] text-[8px] font-black uppercase tracking-wider mt-1 inline-block">{v.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {visitsList.filter(v => v.date === selectedCalendarDay).length === 0 && (
+                        <p className="text-slate-400 text-xs italic text-center py-6">Nenhuma visita agendada para este dia.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add Appointment form */}
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!newVisitForm.client) return;
+                      const newVisit = {
+                        id: `V${Date.now()}`,
+                        client: newVisitForm.client,
+                        time: newVisitForm.time,
+                        date: newVisitForm.date,
+                        property: newVisitForm.property || properties[0]?.name || 'Visita Geral',
+                        status: newVisitForm.status as any
+                      };
+                      setVisitsList(prev => [...prev, newVisit]);
+                      setNewVisitForm(prev => ({ ...prev, client: '' }));
+                      alert("Visita agendada com sucesso!");
+                    }}
+                    className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-6 shadow-sm space-y-4"
+                  >
+                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5"><Calendar size={14} className="text-[#37B34A]" /> Agendar Visita</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450 mb-1">Nome do Cliente</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newVisitForm.client}
+                          onChange={e => setNewVisitForm(prev => ({ ...prev, client: e.target.value }))}
+                          placeholder="Ex: João da Silva"
+                          className="w-full border border-slate-200 focus:border-blue-500 rounded-xl p-2.5 text-xs font-semibold focus:outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450 mb-1">Hora</label>
+                        <input 
+                          type="time" 
+                          required
+                          value={newVisitForm.time}
+                          onChange={e => setNewVisitForm(prev => ({ ...prev, time: e.target.value }))}
+                          className="w-full border border-slate-200 focus:border-blue-500 rounded-xl p-2.5 text-xs font-semibold focus:outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-450 mb-1">Imóvel</label>
+                        <select 
+                          value={newVisitForm.property}
+                          onChange={e => setNewVisitForm(prev => ({ ...prev, property: e.target.value }))}
+                          className="w-full border border-slate-200 focus:border-blue-500 rounded-xl p-2.5 text-xs font-black focus:outline-none bg-white"
+                        >
+                          <option value="">Selecione um imóvel...</option>
+                          {properties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                        </select>
+                      </div>
+                      <button 
+                        type="submit"
+                        className="w-full py-3 bg-[#37B34A] hover:bg-[#2e993f] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md"
+                      >
+                        Agendar Visita
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: LEADS CRM */}
+          {activeTab === 'leads' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div>
+                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-1">Leads Recentes</h1>
+                <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">Acompanhe novos contactos e potenciais compradores registados</p>
+              </div>
+
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-8 shadow-sm space-y-6">
+                <div className="space-y-4">
+                  {crmLeads.map((l) => (
+                    <div key={l.id} className="p-4 bg-white/80 border border-slate-100 rounded-3xl flex items-center justify-between hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-slate-100 flex items-center justify-center font-black text-sm text-[#0A4E9B] uppercase">
+                          {l.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-850 uppercase tracking-tight">{l.name}</h4>
+                          <p className="text-xs text-slate-450 font-bold">{l.email} • {l.phone}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="px-3 py-1 rounded bg-purple-50 text-purple-700 text-[9px] font-black uppercase tracking-wider border border-purple-100">{l.status}</span>
+                        <span className="text-xs text-slate-400 font-bold">{l.date}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: VISITAS CRM LIST */}
+          {activeTab === 'visitas' && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              <div>
+                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-1">Lista de Visitas</h1>
+                <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">Histórico de todas as visitas agendadas e respetivo estado</p>
+              </div>
+
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-8 shadow-sm space-y-6">
+                <div className="space-y-4">
+                  {visitsList.map((v) => (
+                    <div key={v.id} className="p-4 bg-white/80 border border-slate-100 rounded-3xl flex items-center justify-between hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Calendar size={20} /></div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-850 uppercase tracking-tight">Visita com {v.client}</h4>
+                          <p className="text-xs text-slate-450 font-bold">{v.property}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <span className="text-xs font-black text-slate-800 block">{v.date}</span>
+                          <span className="text-[10px] font-bold text-slate-400">{v.time}</span>
+                        </div>
+                        <span className="px-3 py-1 rounded bg-emerald-50 text-[#37B34A] text-[9px] font-black uppercase tracking-wider border border-emerald-100">{v.status}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: PLACEHOLDERS FOR REMAINING CRM VIEWS */}
+          {['mensagens', 'clientes', 'relatorios', 'favoritos'].includes(activeTab) && (
+            <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white/40 p-12 text-center shadow-sm">
+                <Compass size={48} className="mx-auto text-[#0A4E9B] opacity-40 mb-4" />
+                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight mb-2">Módulo {activeTab.toUpperCase()}</h3>
+                <p className="text-slate-450 text-xs font-bold leading-relaxed max-w-md mx-auto">
+                  Este módulo faz parte do pacote de CRM Imobiliário Premium SaaS 2026. A carregar bases de dados associadas...
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
 
       </main>
@@ -730,14 +972,14 @@ export const RealEstateDashboard: React.FC<RealEstateDashboardProps> = ({
         <div className="bg-white/60 border border-white/50 p-5 rounded-2xl shadow-sm space-y-4 flex-1 flex flex-col">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-450 flex items-center gap-1.5"><Calendar size={14} className="text-amber-500" /> Agenda de Visitas</h3>
           <div className="space-y-3 flex-1 overflow-y-auto max-h-[160px] scrollbar-hide">
-            {mockVisits.map((v, i) => (
+            {visitsList.map((v, i) => (
               <div key={i} className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl space-y-1.5">
                 <div className="flex justify-between items-center">
                   <span className="font-black text-xs text-slate-800 uppercase tracking-tight">{v.client}</span>
                   <span className="font-mono text-[9px] font-black text-[#0A4E9B]">{v.time}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[9px] font-bold text-slate-400">Visita Imóvel</span>
+                  <span className="text-[9px] font-bold text-slate-400">{v.property || 'Visita Imóvel'}</span>
                   <span className="px-2 py-0.5 rounded bg-emerald-50 text-[#37B34A] text-[8px] font-black uppercase tracking-wider">{v.status}</span>
                 </div>
               </div>
