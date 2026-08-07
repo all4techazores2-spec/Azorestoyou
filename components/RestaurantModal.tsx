@@ -433,6 +433,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
 
   const getFilteredTimeSlots = () => {
     if (!selectedDate) return [];
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+    if ((restaurant.blockedDates || []).includes(dateStr)) {
+      return [];
+    }
     const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
     // Check if closed on Sunday (0)
@@ -615,21 +619,27 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
             const day = i + 1;
             const date = new Date(year, month, day);
             const isPast = date < today;
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const isBlocked = (restaurant.blockedDates || []).includes(dateStr);
+            const isDisabled = isPast || isBlocked;
             const isSelected = selectedDate?.getTime() === date.getTime();
             return (
               <button
                 key={day}
-                disabled={isPast}
+                disabled={isDisabled}
                 onClick={() => setSelectedDate(date)}
                 style={{
                   backgroundColor: isSelected ? COLORS.primary : undefined,
                   boxShadow: isSelected ? `0 10px 15px -3px ${COLORS.primary}33` : undefined
                 }}
-                className={`h-8 w-8 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center
-                  ${isSelected ? 'text-white scale-105 z-10' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'}
+                className={`h-8 w-8 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center relative
+                  ${isSelected ? 'text-white scale-105 z-10' : isBlocked ? 'text-red-400 bg-red-500/5 cursor-not-allowed line-through' : isPast ? 'text-slate-200 cursor-not-allowed' : 'text-slate-600 hover:bg-white hover:text-blue-600'}
                 `}
               >
                 {day}
+                {isBlocked && (
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-red-400" />
+                )}
               </button>
             );
           })}
