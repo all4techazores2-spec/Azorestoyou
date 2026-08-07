@@ -10275,6 +10275,333 @@ isBeauty ? (
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* MESSAGES INBOX MODAL */}
+      <AnimatePresence>
+        {showMessagesInbox && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}
+              className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh] text-white"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center text-blue-400">
+                    <MessageSquare size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black tracking-tighter uppercase text-white">Mensagens & Pedidos Recentes</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Integrado com Redes Sociais & Google</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowMessagesInbox(false)} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><X size={20} /></button>
+              </div>
+
+              {/* Message List */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {[
+                  { id: 'msg-1', source: 'Instagram', sender: 'Gustavo Pereira', text: 'Olá! Têm mesa livre para hoje às 21h30 para 4 pessoas?', time: 'Há 5m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo' },
+                  { id: 'msg-2', source: 'Facebook', sender: 'Ana Silva', text: 'Boa tarde, queria encomendar um caril de frango para take-away.', time: 'Há 12m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana' },
+                  { id: 'msg-3', source: 'Google', sender: 'Domingos Madeira', text: 'Tem opções vegetarianas ou sem glúten na vossa ementa?', time: 'Há 25m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Domingos' },
+                  { id: 'msg-4', source: 'Instagram', sender: 'Beatriz Costa', text: 'Fiz uma reserva na app, mas preciso de alterar para 6 pessoas, é possível?', time: 'Há 1h', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Beatriz' }
+                ].map(msg => (
+                  <div key={msg.id} className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 shrink-0">
+                      <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${
+                          msg.source === 'Instagram' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30' :
+                          msg.source === 'Facebook' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>{msg.source}</span>
+                        <span className="text-[10px] text-slate-400 font-bold">{msg.time}</span>
+                      </div>
+                      <p className="font-bold text-sm mt-1">{msg.sender}</p>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">{msg.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom message */}
+              <div className="border-t border-white/5 pt-4 mt-4 text-center">
+                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                  * Este é um modo visual de demonstração. Integração de API em desenvolvimento.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showReservationsListModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}
+              className="bg-white rounded-[2rem] w-full max-w-3xl overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh] text-slate-900"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                    <Calendar size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black tracking-tighter uppercase text-slate-900">Reservas Hoje - Lista</h3>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Gerir estados de ocupação e chegada dos clientes</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowReservationsListModal(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all"><X size={20} /></button>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {(reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada').length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300 animate-pulse" />
+                    <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">Sem reservas ativas para hoje.</p>
+                  </div>
+                ) : (
+                  (reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada').map(res => {
+                    const statusText = 
+                      res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado (Dentro do Restaurante)' :
+                      res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Por Confirmar';
+                    
+                    const statusColor = 
+                      res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200';
+
+                    return (
+                      <div key={res.id} className="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-slate-100">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${statusColor}`}>{statusText}</span>
+                          </div>
+                          <p className="font-black text-slate-800">{res.customerName}</p>
+                          <p className="text-[10px] text-slate-500 font-bold mt-0.5">🕒 {res.time || '--:--'} &nbsp;|&nbsp; 📅 {res.date || '--'} &nbsp;|&nbsp; 👥 {res.people || res.guests || 1} pessoas</p>
+                          {res.customerPhone && <p className="text-[10px] text-slate-400 font-bold mt-0.5">📞 {res.customerPhone}</p>}
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {(res.status === 'pending' || res.status === 'pendente') && (
+                            <button
+                              onClick={() => {
+                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'accepted' } : r);
+                                setReservations(updated);
+                                handleUpdate({ reservations: updated });
+                              }}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                            >
+                              Confirmar
+                            </button>
+                          )}
+
+                          {(res.status === 'accepted' || res.status === 'confirmado') && (
+                            <button
+                              onClick={() => {
+                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'seated' } : r);
+                                setReservations(updated);
+                                handleUpdate({ reservations: updated });
+                              }}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                            >
+                              Sentar Cliente
+                            </button>
+                          )}
+
+                          {(res.status === 'seated' || res.status === 'ocupado') && (
+                            <button
+                              onClick={() => {
+                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'completed' } : r);
+                                setReservations(updated);
+                                handleUpdate({ reservations: updated });
+                              }}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                            >
+                              Finalizar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showCalendarOverlay && (() => {
+          const augustDaysCount = 31;
+          const offsetDays = 6; 
+          const blockedDates = business.blockedDates || [];
+
+          const getReservationsForDay = (day: number) => {
+            const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
+            return (reservations || []).filter(r => {
+              if (!r.date) return false;
+              const rDateStr = r.date.includes('/') ? r.date.split('/').reverse().join('-') : r.date;
+              return rDateStr === dateStr && r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada';
+            });
+          };
+
+          const dayReservations = getReservationsForDay(selectedCalendarDay);
+          const currentDayStr = `2026-08-${String(selectedCalendarDay).padStart(2, '0')}`;
+          const isCurrentDayBlocked = blockedDates.includes(currentDayStr);
+
+          const handleToggleBlockDay = () => {
+            let updated: string[];
+            if (isCurrentDayBlocked) {
+              updated = blockedDates.filter((d: string) => d !== currentDayStr);
+            } else {
+              updated = [...blockedDates, currentDayStr];
+            }
+            handleUpdate({ blockedDates: updated });
+          };
+
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[300] bg-slate-955/95 backdrop-blur-md flex items-center justify-center p-4 text-white"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, y: 20 }} 
+                animate={{ scale: 1, y: 0 }}
+                className="bg-[#141B23] border border-white/10 rounded-[2.5rem] w-full max-w-4xl overflow-hidden shadow-2xl p-8 relative flex flex-col md:flex-row gap-8 max-h-[90vh]"
+              >
+                {/* Close Button */}
+                <button 
+                  onClick={() => setShowCalendarOverlay(false)} 
+                  className="absolute top-6 right-6 p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-full transition-all border border-white/10 group cursor-pointer z-50"
+                >
+                  <X size={20} className="group-active:scale-90 transition-transform" />
+                </button>
+
+                {/* Left side: Calendar Grid */}
+                <div className="flex-1 flex flex-col">
+                  <div className="mb-6 text-left">
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Calendário de Reservas</p>
+                    <h3 className="text-2xl font-black tracking-tight uppercase mt-1">Agosto 2026</h3>
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="grid grid-cols-7 gap-2 bg-[#0D1218] p-4 rounded-3xl border border-white/5">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
+                      <div key={d} className="text-center text-[10px] font-black text-slate-500 py-1 uppercase">{d}</div>
+                    ))}
+                    
+                    {/* Empty slots for offset */}
+                    {Array.from({ length: offsetDays }).map((_, i) => (
+                      <div key={`offset-${i}`} />
+                    ))}
+
+                    {/* August Days */}
+                    {Array.from({ length: augustDaysCount }).map((_, i) => {
+                      const day = i + 1;
+                      const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
+                      const isBlocked = blockedDates.includes(dateStr);
+                      const isSelected = selectedCalendarDay === day;
+                      const dayRes = getReservationsForDay(day);
+                      const hasRes = dayRes.length > 0;
+
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => setSelectedCalendarDay(day)}
+                          className={`relative h-12 w-full rounded-2xl text-xs font-black transition-all flex flex-col items-center justify-center cursor-pointer border ${
+                            isSelected 
+                              ? 'bg-amber-500 border-amber-400 text-slate-950 scale-105 shadow-lg shadow-amber-500/20' 
+                              : isBlocked 
+                                ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20' 
+                                : 'bg-white/5 border-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span>{day}</span>
+                          {/* Dot Indicator for reservations */}
+                          {hasRes && (
+                            <span className={`w-1.5 h-1.5 rounded-full absolute bottom-1.5 ${isSelected ? 'bg-slate-950' : 'bg-blue-400 animate-pulse'}`} />
+                          )}
+                          {/* Blocked line-through visual */}
+                          {isBlocked && (
+                            <div className="absolute inset-x-2 h-0.5 bg-red-500/50 rotate-12 pointer-events-none" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right side: Day Details */}
+                <div className="w-full md:w-[350px] flex flex-col bg-[#0D1218] border border-white/5 rounded-3xl p-6 overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4 flex-shrink-0">
+                    <div className="text-left">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Detalhes do Dia</p>
+                      <h4 className="text-lg font-black text-white">{selectedCalendarDay} de Agosto</h4>
+                    </div>
+                    {/* Day Block Toggle Button */}
+                    <button
+                      onClick={handleToggleBlockDay}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        isCurrentDayBlocked 
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                          : 'bg-red-600/25 border border-red-500/30 text-red-400 hover:bg-red-600 hover:text-white'
+                      }`}
+                    >
+                      {isCurrentDayBlocked ? 'Desbloquear Dia' : 'Bloquear Dia'}
+                    </button>
+                  </div>
+
+                  {/* Day Status Alert */}
+                  {isCurrentDayBlocked && (
+                    <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black px-4 py-2.5 rounded-xl uppercase tracking-widest text-center animate-pulse">
+                      🚫 Este dia está BLOQUEADO na App
+                    </div>
+                  )}
+
+                  {/* List of reservations for the day */}
+                  <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
+                    {dayReservations.length === 0 ? (
+                      <div className="text-center py-12 text-slate-500">
+                        <Calendar className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">Sem reservas para este dia.</p>
+                      </div>
+                    ) : (
+                      dayReservations.map(res => (
+                        <div key={res.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
+                          <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                            <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[9px] font-mono font-bold">
+                              🕒 {res.time || '--:--'}
+                            </span>
+                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                              res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-500/20 text-blue-400' :
+                              res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-500/20 text-emerald-400' :
+                              'bg-amber-500/20 text-amber-400'
+                            }`}>
+                              {res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado' :
+                               res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs font-black text-white leading-none">{res.customerName}</p>
+                            <p className="text-[9px] text-slate-400 leading-none">📞 {res.customerPhone || 'Sem telefone'}</p>
+                            <p className="text-[9px] text-slate-400 leading-none">✉️ {res.customerEmail || 'Sem email'}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };
@@ -10548,358 +10875,7 @@ const BusinessBottomNav: React.FC<BusinessBottomNavProps> = ({ activeTab, onTab,
 
       {/* STOCK SCANNER MODAL */}
       <AnimatePresence>
-        {showMessagesInbox && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}
-              className="bg-slate-900 border border-white/10 rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh] text-white"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center text-blue-400">
-                    <MessageSquare size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black tracking-tighter uppercase text-white">Mensagens & Pedidos Recentes</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Integrado com Redes Sociais & Google</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowMessagesInbox(false)} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><X size={20} /></button>
-              </div>
-
-              {/* Message List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {[
-                  { id: 'msg-1', source: 'Instagram', sender: 'Gustavo Pereira', text: 'Olá! Têm mesa livre para hoje às 21h30 para 4 pessoas?', time: 'Há 5m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo' },
-                  { id: 'msg-2', source: 'Facebook', sender: 'Ana Silva', text: 'Boa tarde, queria encomendar um caril de frango para take-away.', time: 'Há 12m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana' },
-                  { id: 'msg-3', source: 'Google', sender: 'Domingos Madeira', text: 'Tem opções vegetarianas ou sem glúten na vossa ementa?', time: 'Há 25m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Domingos' },
-                  { id: 'msg-4', source: 'Instagram', sender: 'Beatriz Costa', text: 'Fiz uma reserva na app, mas preciso de alterar para 6 pessoas, é possível?', time: 'Há 1h', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Beatriz' }
-                ].map(msg => (
-                  <div key={msg.id} className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 shrink-0">
-                      <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${
-                          msg.source === 'Instagram' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30' :
-                          msg.source === 'Facebook' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        }`}>{msg.source}</span>
-                        <span className="text-[10px] text-slate-400 font-bold">{msg.time}</span>
-                      </div>
-                      <p className="font-bold text-sm mt-1">{msg.sender}</p>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">{msg.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom message */}
-              <div className="border-t border-white/5 pt-4 mt-4 text-center">
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                  * Este é um modo visual de demonstração. Integração de API em desenvolvimento.
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {showReservationsListModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}
-              className="bg-white rounded-[2rem] w-full max-w-3xl overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh] text-slate-900"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                    <Calendar size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black tracking-tighter uppercase text-slate-900">Reservas Hoje - Lista</h3>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Gerir estados de ocupação e chegada dos clientes</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowReservationsListModal(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all"><X size={20} /></button>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {activeReservations.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="w-12 h-12 mx-auto mb-4 text-slate-300 animate-pulse" />
-                    <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">Sem reservas ativas para hoje.</p>
-                  </div>
-                ) : (
-                  activeReservations.map(res => {
-                    const statusText = 
-                      res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado (Dentro do Restaurante)' :
-                      res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Por Confirmar';
-                    
-                    const statusColor = 
-                      res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-amber-50 text-amber-700 border-amber-200';
-
-                    return (
-                      <div key={res.id} className="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-slate-100">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-[#D4AF37] bg-slate-900 border border-white/5">
-                            {res.customerName ? res.customerName.charAt(0).toUpperCase() : 'C'}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-black text-slate-900 text-sm">{res.customerName}</p>
-                              <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${statusColor}`}>
-                                {statusText}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-500 font-semibold mt-1">ID Reserva: <span className="font-bold text-slate-700">{res.id || 'N/A'}</span></p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">📞 {res.customerPhone || 'N/A'} • ✉️ {res.customerEmail || 'N/A'}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 self-end md:self-auto">
-                          <span className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest border border-slate-300">
-                            🕒 {res.time || '--:--'}
-                          </span>
-                          
-                          {/* Status transition controls */}
-                          {(res.status === 'pending' || res.status === 'pendente') && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'accepted' } : r);
-                                  setReservations(updated);
-                                  handleUpdate({ reservations: updated });
-                                }}
-                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
-                              >
-                                Confirmar
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm("Rejeitar esta reserva?")) {
-                                    const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'rejected' } : r);
-                                    setReservations(updated);
-                                    handleUpdate({ reservations: updated });
-                                  }
-                                }}
-                                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
-                              >
-                                Rejeitar
-                              </button>
-                            </>
-                          )}
-                          
-                          {(res.status === 'accepted' || res.status === 'confirmado') && (
-                            <button
-                              onClick={() => {
-                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'seated' } : r);
-                                setReservations(updated);
-                                handleUpdate({ reservations: updated });
-                              }}
-                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
-                            >
-                              Sentar Cliente
-                            </button>
-                          )}
-
-                          {(res.status === 'seated' || res.status === 'ocupado') && (
-                            <button
-                              onClick={() => {
-                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'completed' } : r);
-                                setReservations(updated);
-                                handleUpdate({ reservations: updated });
-                              }}
-                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
-                            >
-                              Finalizar
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {showCalendarOverlay && (() => {
-          const augustDaysCount = 31;
-          const offsetDays = 6; 
-          const blockedDates = business.blockedDates || [];
-
-          const getReservationsForDay = (day: number) => {
-            const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
-            return (reservations || []).filter(r => {
-              if (!r.date) return false;
-              const rDateStr = r.date.includes('/') ? r.date.split('/').reverse().join('-') : r.date;
-              return rDateStr === dateStr && r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada';
-            });
-          };
-
-          const dayReservations = getReservationsForDay(selectedCalendarDay);
-          const currentDayStr = `2026-08-${String(selectedCalendarDay).padStart(2, '0')}`;
-          const isCurrentDayBlocked = blockedDates.includes(currentDayStr);
-
-          const handleToggleBlockDay = () => {
-            let updated: string[];
-            if (isCurrentDayBlocked) {
-              updated = blockedDates.filter((d: string) => d !== currentDayStr);
-            } else {
-              updated = [...blockedDates, currentDayStr];
-            }
-            handleUpdate({ blockedDates: updated });
-          };
-
-          return (
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[300] bg-slate-955/95 backdrop-blur-md flex items-center justify-center p-4 text-white"
-            >
-              <motion.div 
-                initial={{ scale: 0.95, y: 20 }} 
-                animate={{ scale: 1, y: 0 }}
-                className="bg-[#141B23] border border-white/10 rounded-[2.5rem] w-full max-w-4xl overflow-hidden shadow-2xl p-8 relative flex flex-col md:flex-row gap-8 max-h-[90vh]"
-              >
-                {/* Close Button */}
-                <button 
-                  onClick={() => setShowCalendarOverlay(false)} 
-                  className="absolute top-6 right-6 p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-full transition-all border border-white/10 group cursor-pointer z-50"
-                >
-                  <X size={20} className="group-active:scale-90 transition-transform" />
-                </button>
-
-                {/* Left side: Calendar Grid */}
-                <div className="flex-1 flex flex-col">
-                  <div className="mb-6 text-left">
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Calendário de Reservas</p>
-                    <h3 className="text-2xl font-black tracking-tight uppercase mt-1">Agosto 2026</h3>
-                  </div>
-
-                  {/* Calendar Grid */}
-                  <div className="grid grid-cols-7 gap-2 bg-[#0D1218] p-4 rounded-3xl border border-white/5">
-                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-                      <div key={d} className="text-center text-[10px] font-black text-slate-500 py-1 uppercase">{d}</div>
-                    ))}
-                    
-                    {/* Empty slots for offset */}
-                    {Array.from({ length: offsetDays }).map((_, i) => (
-                      <div key={`offset-${i}`} />
-                    ))}
-
-                    {/* August Days */}
-                    {Array.from({ length: augustDaysCount }).map((_, i) => {
-                      const day = i + 1;
-                      const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
-                      const isBlocked = blockedDates.includes(dateStr);
-                      const isSelected = selectedCalendarDay === day;
-                      const dayRes = getReservationsForDay(day);
-                      const hasRes = dayRes.length > 0;
-
-                      return (
-                        <button
-                          key={day}
-                          onClick={() => setSelectedCalendarDay(day)}
-                          className={`relative h-12 w-full rounded-2xl text-xs font-black transition-all flex flex-col items-center justify-center cursor-pointer border ${
-                            isSelected 
-                              ? 'bg-amber-500 border-amber-400 text-slate-950 scale-105 shadow-lg shadow-amber-500/20' 
-                              : isBlocked 
-                                ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20' 
-                                : 'bg-white/5 border-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          <span>{day}</span>
-                          {/* Dot Indicator for reservations */}
-                          {hasRes && (
-                            <span className={`w-1.5 h-1.5 rounded-full absolute bottom-1.5 ${isSelected ? 'bg-slate-950' : 'bg-blue-400 animate-pulse'}`} />
-                          )}
-                          {/* Blocked line-through visual */}
-                          {isBlocked && (
-                            <div className="absolute inset-x-2 h-0.5 bg-red-500/50 rotate-12 pointer-events-none" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Right side: Day Details */}
-                <div className="w-full md:w-[350px] flex flex-col bg-[#0D1218] border border-white/5 rounded-3xl p-6 overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4 flex-shrink-0">
-                    <div className="text-left">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Detalhes do Dia</p>
-                      <h4 className="text-lg font-black text-white">{selectedCalendarDay} de Agosto</h4>
-                    </div>
-                    {/* Day Block Toggle Button */}
-                    <button
-                      onClick={handleToggleBlockDay}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                        isCurrentDayBlocked 
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                          : 'bg-red-600/25 border border-red-500/30 text-red-400 hover:bg-red-600 hover:text-white'
-                      }`}
-                    >
-                      {isCurrentDayBlocked ? 'Desbloquear Dia' : 'Bloquear Dia'}
-                    </button>
-                  </div>
-
-                  {/* Day Status Alert */}
-                  {isCurrentDayBlocked && (
-                    <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black px-4 py-2.5 rounded-xl uppercase tracking-widest text-center animate-pulse">
-                      🚫 Este dia está BLOQUEADO na App
-                    </div>
-                  )}
-
-                  {/* List of reservations for the day */}
-                  <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
-                    {dayReservations.length === 0 ? (
-                      <div className="text-center py-12 text-slate-500">
-                        <Calendar className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">Sem reservas para este dia.</p>
-                      </div>
-                    ) : (
-                      dayReservations.map(res => (
-                        <div key={res.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
-                          <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
-                            <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[9px] font-mono font-bold">
-                              🕒 {res.time || '--:--'}
-                            </span>
-                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                              res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-500/20 text-blue-400' :
-                              res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-500/20 text-emerald-400' :
-                              'bg-amber-500/20 text-amber-400'
-                            }`}>
-                              {res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado' :
-                               res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
-                            </span>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-black text-white leading-none">{res.customerName}</p>
-                            <p className="text-[9px] text-slate-400 leading-none">📞 {res.customerPhone || 'Sem telefone'}</p>
-                            <p className="text-[9px] text-slate-400 leading-none">✉️ {res.customerEmail || 'Sem email'}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          );
-        })()}
- 
-         {showStockModal && (
+        {showStockModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="lg:hidden fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-end"
             onClick={(e) => { if (e.target === e.currentTarget) closeAll(); }}
