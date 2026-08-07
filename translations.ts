@@ -1306,9 +1306,11 @@ export const translations = {
     fuel_Gasóleo: 'Diesel',
     fuel_Híbrido: 'Hybrid',
     fuel_Elétrico: 'Elektrisch',
-  }
+  },
+  // Sem dicionário próprio ainda: getTranslation recorre ao inglês (depois PT) para qualquer chave em falta.
+  hi: {} as Record<string, string>,
 };
 
 export const getTranslation = (lang: Language, key: keyof typeof translations.pt) => {
-  return translations[lang][key] || translations.pt[key];
+  return translations[lang]?.[key] || translations.en[key] || translations.pt[key];
 };

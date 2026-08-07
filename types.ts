@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Language = 'pt' | 'en' | 'es' | 'it' | 'de';
+export type Language = 'pt' | 'en' | 'es' | 'it' | 'de' | 'hi';
 
 export interface Airport {
   code: string;

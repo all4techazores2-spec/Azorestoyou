@@ -8,7 +8,7 @@ import {
   Clock, Coffee, Wine, Beer, ShoppingBag, Users, 
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
-  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Bell, RefreshCw, Eye, ChefHat,
+  QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Euro, Bell, RefreshCw, Eye, ChefHat,
   ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -376,12 +376,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const isHotel = bType === 'hotel' || bType === 'al' || bType === 'accommodation';
   const isRentCar = bType === 'rentcar' || bType === 'car' || bType === 'rent-a-car';
   const isRestaurant = !isBeauty && !isShop && !isService && !isHotel && !isRentCar;
+  const isIndianRestaurant = (business.name || '').toLowerCase().includes('indian');
 
   // Procurar funcionário logado na lista de equipa (movido para baixo)
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(
-    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') : 
+    isStaff ? (staffRole === 'chef' || staffRole === 'cook' ? 'kitchen' : 'tables') :
     isShop ? 'pos' : 'tables'
+  );
+  const [activeLang, setActiveLang] = useState<Language>(
+    (localStorage.getItem('dashboardLang') as Language) || language
   );
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
@@ -1743,8 +1747,13 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     alert('Configurações salvas com sucesso!');
   };
 
-  const lang = language as Language;
+  const lang = activeLang;
   const t = (key: any) => getTranslation(lang, key);
+
+  const handleLangChange = (newLang: Language) => {
+    setActiveLang(newLang);
+    localStorage.setItem('dashboardLang', newLang);
+  };
 
   const pendingCount = reservations.filter(r => r.status === 'pending' || r.status === 'pendente').length;
 
@@ -3075,6 +3084,27 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-6">
+                   <div className={`flex items-center gap-1 p-1 border rounded-xl md:rounded-2xl ${isRestaurant ? 'bg-[#141B23] border-white/5' : 'bg-slate-50 border-slate-150'}`}>
+                      {([
+                        { code: 'pt', flag: '🇵🇹', label: 'Português' },
+                        { code: 'en', flag: '🇬🇧', label: 'English' },
+                        { code: 'es', flag: '🇪🇸', label: 'Español' },
+                        ...(isIndianRestaurant ? [{ code: 'hi', flag: '🇮🇳', label: 'हिन्दी' }] : []),
+                      ] as { code: Language; flag: string; label: string }[]).map(({ code, flag, label }) => (
+                        <button
+                          key={code}
+                          onClick={() => handleLangChange(code)}
+                          title={label}
+                          className={`w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg md:rounded-xl text-base md:text-lg transition-all cursor-pointer ${
+                            lang === code
+                              ? (isRestaurant ? 'bg-[#D4AF37]/20 ring-2 ring-[#D4AF37] scale-105' : 'bg-blue-100 ring-2 ring-blue-500 scale-105')
+                              : 'opacity-50 hover:opacity-100 hover:scale-105'
+                          }`}
+                        >
+                          {flag}
+                        </button>
+                      ))}
+                   </div>
                    <div className="flex items-center gap-2 md:gap-3">
                       <button onClick={() => setShowMessagesInbox(true)} className={`p-2 md:p-3 border rounded-xl md:rounded-2xl transition-all relative ${isRestaurant ? 'bg-[#141B23] border-white/5 text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 border-slate-150 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}`}>
                           <MessageSquare size={18} />
@@ -5745,7 +5775,7 @@ ${items.map((it, i) => `        <Line>
                       { label: 'Check-outs', value: '7', icon: <LogOut size={22} />, color: 'emerald', change: '↓ 5% vs ontem' },
                       { label: 'Hóspedes', value: '42', icon: <Users size={22} />, color: 'indigo', change: '↑ 8% vs ontem' }
                     ] : []),
-                    { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2).replace('.', ',')}` : '€ 0,00', icon: <DollarSign size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
+                    { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2).replace('.', ',')}` : '€ 0,00', icon: <Euro size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
                     { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2).replace('.', ',')}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
                   ].map((stat, i) => (
                     <div 
