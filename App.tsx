@@ -2337,7 +2337,7 @@ const App: React.FC = () => {
         );
       }
 
-      const isRealEstate = bType === 'real_estate' || targetId.startsWith('RE') || (biz.businessType && biz.businessType.toLowerCase() === 'real_estate');
+      const isRealEstate = bType === 'real_estate' || (targetId.startsWith('RE') && !targetId.startsWith('RES')) || (biz.businessType && biz.businessType.toLowerCase() === 'real_estate');
       if (isRealEstate) {
         return (
           <ErrorBoundary>
