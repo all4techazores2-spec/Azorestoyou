@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Restaurant, Language, Dish, Product, RestaurantTable, Reservation, RestaurantUpdate, KitchenOrder, StaffMember, Service } from '../types';
 import { getTranslation } from '../translations';
+import { useAutoTranslate } from '../services/useAutoTranslate';
 import { 
   Utensils, Edit, Trash2, Plus, Save, X, LogOut, 
   LayoutDashboard, Image as ImageIcon, CheckCircle, 
@@ -9,12 +10,31 @@ import {
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Euro, Bell, RefreshCw, Eye, ChefHat,
-  ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud
+  ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud, Volume2, VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
 
+let youTubeApiPromise: Promise<void> | null = null;
+function loadYouTubeIframeApi(): Promise<void> {
+  if ((window as any).YT?.Player) return Promise.resolve();
+  if (youTubeApiPromise) return youTubeApiPromise;
+  youTubeApiPromise = new Promise((resolve) => {
+    const prevCallback = (window as any).onYouTubeIframeAPIReady;
+    (window as any).onYouTubeIframeAPIReady = () => {
+      if (typeof prevCallback === 'function') prevCallback();
+      resolve();
+    };
+    if (!document.getElementById('youtube-iframe-api')) {
+      const tag = document.createElement('script');
+      tag.id = 'youtube-iframe-api';
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+    }
+  });
+  return youTubeApiPromise;
+}
 
 interface BusinessDashboardProps {
   business: Restaurant;
@@ -387,6 +407,67 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [activeLang, setActiveLang] = useState<Language>(
     (localStorage.getItem('dashboardLang') as Language) || language
   );
+  const dashboardRootRef = React.useRef<HTMLDivElement>(null);
+  const [musicQuery, setMusicQuery] = useState('');
+  const [musicResults, setMusicResults] = useState<{ videoId: string; title: string; channelTitle: string; thumbnail: string }[]>([]);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicError, setMusicError] = useState<string | null>(null);
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [musicVolume, setMusicVolume] = useState(80);
+  const ytPlayerDivRef = React.useRef<HTMLDivElement>(null);
+  const ytPlayerRef = React.useRef<any>(null);
+
+  const handleMusicSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = musicQuery.trim();
+    if (!q) return;
+    setMusicLoading(true);
+    setMusicError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/youtube-search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro na pesquisa.');
+      setMusicResults(data.results || []);
+      if ((data.results || []).length === 0) setMusicError('Sem resultados para essa pesquisa.');
+    } catch (err: any) {
+      setMusicError(err.message || 'Falha ao pesquisar no YouTube.');
+      setMusicResults([]);
+    } finally {
+      setMusicLoading(false);
+    }
+  };
+
+  const stopMusic = () => {
+    ytPlayerRef.current?.stopVideo?.();
+    ytPlayerRef.current?.destroy?.();
+    ytPlayerRef.current = null;
+    setActiveVideoId(null);
+  };
+
+  React.useEffect(() => {
+    if (!activeVideoId) return;
+    let cancelled = false;
+    loadYouTubeIframeApi().then(() => {
+      if (cancelled || !ytPlayerDivRef.current) return;
+      if (ytPlayerRef.current?.loadVideoById) {
+        ytPlayerRef.current.loadVideoById(activeVideoId);
+      } else {
+        ytPlayerRef.current = new (window as any).YT.Player(ytPlayerDivRef.current, {
+          videoId: activeVideoId,
+          playerVars: { autoplay: 1 },
+          events: {
+            onReady: (e: any) => { e.target.setVolume(musicVolume); e.target.playVideo(); },
+          },
+        });
+      }
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeVideoId]);
+
+  React.useEffect(() => {
+    return () => { ytPlayerRef.current?.destroy?.(); };
+  }, []);
   const [reservationsTab, setReservationsTab] = useState<'list' | 'orders'>('list');
   const [editingItem, setEditingItem] = useState<Restaurant | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
@@ -1274,6 +1355,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [showReservationsListModal, setShowReservationsListModal] = useState(false);
   const [showCalendarOverlay, setShowCalendarOverlay] = useState(false);
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<number>(new Date().getMonth() === 7 ? new Date().getDate() : 1);
+  const [calendarViewDate, setCalendarViewDate] = useState<Date>(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [products, setProducts] = useState<Product[]>(business.products || []);
   const [selectedCatalogCategory, setSelectedCatalogCategory] = useState(null);
   const [showInternalStock, setShowInternalStock] = useState(false);
@@ -1754,6 +1836,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setActiveLang(newLang);
     localStorage.setItem('dashboardLang', newLang);
   };
+
+  useAutoTranslate(dashboardRootRef, activeLang);
 
   const pendingCount = reservations.filter(r => r.status === 'pending' || r.status === 'pendente').length;
 
@@ -2848,7 +2932,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     );
   }
   return (
-    <div className={`min-h-screen ${isRestaurant ? 'bg-[#0A0F16] text-white' : 'bg-slate-50 text-slate-900'} flex font-sans overflow-hidden relative`}>
+    <div ref={dashboardRootRef} className={`min-h-screen ${isRestaurant ? 'bg-[#0A0F16] text-white' : 'bg-slate-50 text-slate-900'} flex font-sans overflow-hidden relative`}>
       {/* ── BARRA DE NAVEGAÇÃO MOBILE ── */}
       {isStaff ? (
         <StaffBottomNav
@@ -3071,9 +3155,9 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
                       <h2 className={`text-sm md:text-xl font-black flex items-center gap-2 md:gap-3 leading-none ${isRestaurant ? 'text-white' : 'text-slate-800'}`}>
                          Olá, {displayName.split(' ')[0]}! 👋
                       </h2>
-                    <button 
-                      onClick={() => setShowCalendarOverlay(true)} 
-                      className={`hidden sm:flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 ${isRestaurant ? 'bg-[#141B23] border-white/5 text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'}`}
+                    <button
+                      onClick={() => setShowCalendarOverlay(true)}
+                      className={`hidden sm:flex items-center gap-3 px-5 py-3 mt-2.5 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 ${isRestaurant ? 'bg-[#141B23] border-white/5 text-[#9AA4B2] hover:bg-[#1C2430] hover:text-white' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'}`}
                     >
                        <Calendar size={18} className={isRestaurant ? 'text-[#D4AF37]' : 'text-blue-500'} />
                        <span className="text-xs font-black uppercase tracking-widest">
@@ -5758,7 +5842,7 @@ ${items.map((it, i) => `        <Line>
                 )}
 
                 {/* ── KPI CARDS ── */}
-                <div className={isBeauty ? "flex flex-wrap justify-center gap-4 w-full" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"}>
+                <div className="flex flex-wrap justify-center gap-4 w-full">
                   {[
                     { 
                       label: isBeauty ? 'Marcações Hoje' : 'Reservas Hoje', 
@@ -5777,16 +5861,18 @@ ${items.map((it, i) => `        <Line>
                     ] : []),
                     { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2).replace('.', ',')}` : '€ 0,00', icon: <Euro size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
                     { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2).replace('.', ',')}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
+                    { label: 'Calendário', value: (reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada').length, icon: <Calendar size={22} />, color: 'blue', change: 'Ver reservas', onClick: () => setShowCalendarOverlay(true) },
+                    { label: 'Avaliações', value: averageRating, icon: <Star size={22} />, color: 'amber', change: `${uniqueReviews.length} avaliações`, onClick: () => setActiveTab('reviews') },
                   ].map((stat, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       onClick={stat.onClick}
-                      className={`bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group ${isBeauty ? 'flex-1 min-w-[200px] max-w-[280px]' : ''} ${stat.onClick ? 'cursor-pointer hover:border-blue-400' : ''}`}
+                      className={`bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex-1 min-w-[200px] max-w-[280px] ${stat.onClick ? 'cursor-pointer hover:border-blue-400' : ''}`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform`}>{stat.icon}</div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-tight">{stat.label}</p>
                       <h4 className={`text-xl font-black tracking-tighter mb-1 ${stat.color === 'amber' ? 'text-amber-600' : 'text-slate-900'}`}>{stat.value}</h4>
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${stat.change.includes('↑') ? 'bg-emerald-50 text-emerald-600' : stat.change.includes('itens') ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>{stat.change}</span>
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${stat.change.includes('↑') ? 'bg-emerald-50 text-emerald-600' : stat.change.includes('↓') ? 'bg-red-50 text-red-600' : stat.change.includes('itens') || stat.change.includes('avaliaç') ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>{stat.change}</span>
                     </div>
                   ))}
                 </div>
@@ -5870,8 +5956,8 @@ ${items.map((it, i) => `        <Line>
                   </div>
                 </div>
 
-                {/* ── STAFF + REVIEWS + ISLAND ROW ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ── STAFF + MUSIC ROW ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Staff Quick */}
                   <div className="bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Equipa em Serviço</p>
@@ -5901,51 +5987,95 @@ ${items.map((it, i) => `        <Line>
                     </div>
                   </div>
 
-                  {/* Reviews Card */}
-                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col items-center justify-between">
-                    <div className="w-full">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Avaliações</h3>
-                        <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500"><Star size={20} /></div>
+                  {/* Music Player Card */}
+                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Música Ambiente</h3>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Pesquisa e toca via YouTube</p>
                       </div>
-                      <div className="flex items-end gap-3 mb-4">
-                        <p className="text-6xl font-black text-slate-900 tracking-tighter">{averageRating}</p>
-                        <div className="pb-2">
-                          <div className="flex gap-0.5 mb-1">
-                            {[1,2,3,4,5].map(s => <span key={s} className={`text-lg ${s <= Math.round(Number(averageRating)) ? 'text-amber-400' : 'text-slate-200'}`}>★</span>)}
-                          </div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{uniqueReviews.length} avaliações</p>
-                        </div>
-                      </div>
-                      {/* Mini list */}
-                      <div className="space-y-2 mb-6">
-                        {uniqueReviews.slice(0,2).map((r, i) => (
-                          <div key={i} className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-black text-[10px]">{(r.customerName || 'A').charAt(0)}</div>
-                              <p className="text-[10px] font-black text-slate-700">{r.customerName}</p>
-                              <div className="ml-auto flex gap-0.5">{[1,2,3,4,5].map(s => <span key={s} className={`text-[10px] ${s <= r.rating ? 'text-amber-400' : 'text-slate-200'}`}>★</span>)}</div>
-                            </div>
-                            {r.reviewNote && <p className="text-[10px] text-slate-500 truncate">{r.reviewNote}</p>}
-                          </div>
-                        ))}
-                        {uniqueReviews.length === 0 && <p className="text-[11px] text-slate-400 text-center py-2">Ainda sem avaliações</p>}
-                      </div>
+                      <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-500"><Play size={20} /></div>
                     </div>
-                    <button onClick={() => setActiveTab('reviews')} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 active:scale-95">
-                      Ver Todas as Avaliações
-                    </button>
-                  </div>
 
-                  {/* Island Card */}
-                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 flex flex-col items-center text-center shadow-sm">
-                    <div className="w-16 h-16 bg-blue-50 rounded-[2rem] flex items-center justify-center mb-5 text-blue-600"><MapPin size={32} /></div>
-                    <h4 className="text-xl font-black text-slate-900 tracking-tighter uppercase mb-1">{business.island}</h4>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Localização do Negócio</p>
-                    <div className="flex flex-col w-full gap-3 mt-auto">
-                      <button onClick={() => setActiveTab('reservations')} className="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20">Gerir Reservas</button>
-                      <button onClick={() => setActiveTab('dishes')} className="w-full py-3.5 bg-white border border-slate-100 text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">{isBeauty ? 'Ver Serviços' : 'Ver Ementa'}</button>
-                    </div>
+                    <form onSubmit={handleMusicSearch} className="flex items-center gap-2 mb-4">
+                      <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3">
+                        <Search size={16} className="text-slate-400 flex-shrink-0" />
+                        <input
+                          type="text"
+                          value={musicQuery}
+                          onChange={(e) => setMusicQuery(e.target.value)}
+                          placeholder="Nome da música ou artista..."
+                          className="flex-1 bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none min-w-0"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={!musicQuery.trim() || musicLoading}
+                        className="px-5 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer flex-shrink-0"
+                      >
+                        {musicLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                      </button>
+                    </form>
+
+                    {musicError && (
+                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-3 text-center">{musicError}</p>
+                    )}
+
+                    {activeVideoId && (
+                      <div className="relative rounded-2xl overflow-hidden bg-slate-900 aspect-video mb-4">
+                        <div ref={ytPlayerDivRef} className="w-full h-full" />
+                        <button
+                          onClick={stopMusic}
+                          className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all cursor-pointer z-10"
+                          title="Parar"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
+
+                    {activeVideoId && (
+                      <div className="flex items-center gap-3 mb-4 px-1">
+                        {musicVolume > 0 ? <Volume2 size={16} className="text-slate-400 flex-shrink-0" /> : <VolumeX size={16} className="text-slate-400 flex-shrink-0" />}
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={musicVolume}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setMusicVolume(v);
+                            ytPlayerRef.current?.setVolume?.(v);
+                          }}
+                          className="flex-1 accent-slate-900 cursor-pointer"
+                        />
+                        <span className="text-[9px] font-black text-slate-400 w-7 text-right">{musicVolume}%</span>
+                      </div>
+                    )}
+
+                    {musicResults.length > 0 ? (
+                      <div className="flex-1 space-y-2 overflow-y-auto max-h-64 pr-1">
+                        {musicResults.map(track => (
+                          <button
+                            key={track.videoId}
+                            onClick={() => setActiveVideoId(track.videoId)}
+                            className={`w-full flex items-center gap-3 p-2 rounded-2xl border text-left transition-all cursor-pointer ${activeVideoId === track.videoId ? 'bg-slate-900 border-slate-900' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+                          >
+                            <img src={track.thumbnail} alt={track.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-[11px] font-black truncate ${activeVideoId === track.videoId ? 'text-white' : 'text-slate-800'}`}>{track.title}</p>
+                              <p className={`text-[9px] font-bold truncate ${activeVideoId === track.videoId ? 'text-slate-400' : 'text-slate-400'}`}>{track.channelTitle}</p>
+                            </div>
+                            <Play size={14} className={activeVideoId === track.videoId ? 'text-white flex-shrink-0' : 'text-slate-400 flex-shrink-0'} />
+                          </button>
+                        ))}
+                      </div>
+                    ) : !activeVideoId && (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <Play size={28} className="text-slate-300 mb-2" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pesquisa uma música para tocar</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -10466,12 +10596,29 @@ isBeauty ? (
         )}
 
         {showCalendarOverlay && (() => {
-          const augustDaysCount = 31;
-          const offsetDays = 6; 
+          const pad = (n: number) => String(n).padStart(2, '0');
+          const viewYear = calendarViewDate.getFullYear();
+          const viewMonth = calendarViewDate.getMonth(); // 0-indexed
+          const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+          const offsetDays = new Date(viewYear, viewMonth, 1).getDay(); // 0 = Domingo
+          const monthLabel = calendarViewDate.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+          const todayRealDate = new Date();
+          const isViewingCurrentMonth = viewYear === todayRealDate.getFullYear() && viewMonth === todayRealDate.getMonth();
+          const clampedSelectedDay = Math.min(selectedCalendarDay, daysInMonth);
           const blockedDates = business.blockedDates || [];
 
+          const goPrevMonth = () => {
+            if (isViewingCurrentMonth) return;
+            setCalendarViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+            setSelectedCalendarDay(1);
+          };
+          const goNextMonth = () => {
+            setCalendarViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+            setSelectedCalendarDay(1);
+          };
+
           const getReservationsForDay = (day: number) => {
-            const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
+            const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
             return (reservations || []).filter(r => {
               if (!r.date) return false;
               const rDateStr = r.date.includes('/') ? r.date.split('/').reverse().join('-') : r.date;
@@ -10479,8 +10626,8 @@ isBeauty ? (
             });
           };
 
-          const dayReservations = getReservationsForDay(selectedCalendarDay);
-          const currentDayStr = `2026-08-${String(selectedCalendarDay).padStart(2, '0')}`;
+          const dayReservations = getReservationsForDay(clampedSelectedDay);
+          const currentDayStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(clampedSelectedDay)}`;
           const isCurrentDayBlocked = blockedDates.includes(currentDayStr);
 
           const handleToggleBlockDay = () => {
@@ -10491,6 +10638,17 @@ isBeauty ? (
               updated = [...blockedDates, currentDayStr];
             }
             handleUpdate({ blockedDates: updated });
+          };
+
+          const TIME_SLOTS = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
+          const blockedSlots = business.blockedSlots || {};
+          const currentDaySlots = blockedSlots[currentDayStr] || [];
+
+          const handleToggleBlockSlot = (time: string) => {
+            const updatedDaySlots = currentDaySlots.includes(time)
+              ? currentDaySlots.filter((t: string) => t !== time)
+              : [...currentDaySlots, time];
+            handleUpdate({ blockedSlots: { ...blockedSlots, [currentDayStr]: updatedDaySlots } });
           };
 
           return (
@@ -10515,9 +10673,28 @@ isBeauty ? (
 
                 {/* Left side: Calendar Grid */}
                 <div className="flex-1 flex flex-col">
-                  <div className="mb-6 text-left">
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Calendário de Reservas</p>
-                    <h3 className="text-2xl font-black tracking-tight uppercase mt-1">Agosto 2026</h3>
+                  <div className="mb-6 flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Calendário de Reservas</p>
+                      <h3 className="text-2xl font-black tracking-tight uppercase mt-1">{monthLabel}</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={goPrevMonth}
+                        disabled={isViewingCurrentMonth}
+                        title={isViewingCurrentMonth ? 'Não é possível ver meses passados' : 'Mês anterior'}
+                        className={`p-2.5 rounded-xl border transition-all ${isViewingCurrentMonth ? 'border-white/5 text-slate-700 cursor-not-allowed opacity-40' : 'border-white/10 text-slate-300 hover:bg-white/10 hover:text-white cursor-pointer'}`}
+                      >
+                        <ChevronRight size={16} className="rotate-180" />
+                      </button>
+                      <button
+                        onClick={goNextMonth}
+                        title="Mês seguinte"
+                        className="p-2.5 rounded-xl border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Calendar Grid */}
@@ -10525,18 +10702,18 @@ isBeauty ? (
                     {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
                       <div key={d} className="text-center text-[10px] font-black text-slate-500 py-1 uppercase">{d}</div>
                     ))}
-                    
+
                     {/* Empty slots for offset */}
                     {Array.from({ length: offsetDays }).map((_, i) => (
                       <div key={`offset-${i}`} />
                     ))}
 
-                    {/* August Days */}
-                    {Array.from({ length: augustDaysCount }).map((_, i) => {
+                    {/* Days of the viewed month */}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
                       const day = i + 1;
-                      const dateStr = `2026-08-${String(day).padStart(2, '0')}`;
+                      const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
                       const isBlocked = blockedDates.includes(dateStr);
-                      const isSelected = selectedCalendarDay === day;
+                      const isSelected = clampedSelectedDay === day;
                       const dayRes = getReservationsForDay(day);
                       const hasRes = dayRes.length > 0;
 
@@ -10572,7 +10749,7 @@ isBeauty ? (
                   <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4 flex-shrink-0">
                     <div className="text-left">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Detalhes do Dia</p>
-                      <h4 className="text-lg font-black text-white">{selectedCalendarDay} de Agosto</h4>
+                      <h4 className="text-lg font-black text-white">{clampedSelectedDay} de {calendarViewDate.toLocaleDateString('pt-PT', { month: 'long' })}</h4>
                     </div>
                     {/* Day Block Toggle Button */}
                     <button
@@ -10593,6 +10770,29 @@ isBeauty ? (
                       🚫 Este dia está BLOQUEADO na App
                     </div>
                   )}
+
+                  {/* Time Slot Blocking */}
+                  <div className={`mb-4 flex-shrink-0 ${isCurrentDayBlocked ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Bloquear Horários</p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {TIME_SLOTS.map(time => {
+                        const isSlotBlocked = currentDaySlots.includes(time);
+                        return (
+                          <button
+                            key={time}
+                            onClick={() => handleToggleBlockSlot(time)}
+                            className={`py-1.5 rounded-lg text-[9px] font-black tracking-widest transition-all cursor-pointer border ${
+                              isSlotBlocked
+                                ? 'bg-red-600/25 border-red-500/30 text-red-400 hover:bg-red-600 hover:text-white line-through'
+                                : 'bg-white/5 border-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   {/* List of reservations for the day */}
                   <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">

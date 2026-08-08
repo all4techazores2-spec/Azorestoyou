@@ -109,6 +109,38 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
 
+app.get('/api/youtube-search', async (req, res) => {
+    const query = (req.query.q || '').toString().trim();
+    if (!query) return res.status(400).json({ error: 'Parâmetro "q" em falta.' });
+
+    const apiKey = process.env.YOUTUBE_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'YOUTUBE_API_KEY não configurada no servidor.' });
+
+    try {
+        const { data } = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+            params: {
+                key: apiKey,
+                q: query,
+                part: 'snippet',
+                type: 'video',
+                videoCategoryId: '10', // Música
+                maxResults: 10,
+                safeSearch: 'moderate',
+            },
+        });
+        const results = (data.items || []).map(item => ({
+            videoId: item.id.videoId,
+            title: item.snippet.title,
+            channelTitle: item.snippet.channelTitle,
+            thumbnail: item.snippet.thumbnails?.default?.url || item.snippet.thumbnails?.medium?.url,
+        }));
+        res.json({ results });
+    } catch (err) {
+        console.error('❌ YouTube search error:', err.response?.data || err.message);
+        res.status(502).json({ error: 'Falha ao pesquisar no YouTube.' });
+    }
+});
+
 app.get('/api/db-diagnostics', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {

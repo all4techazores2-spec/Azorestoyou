@@ -298,6 +298,8 @@ export interface Restaurant {
   featuredVehicles?: Car[];
   status?: 'draft' | 'published';
   isDraft?: boolean;
+  blockedDates?: string[];
+  blockedSlots?: Record<string, string[]>;
 }
 
 export interface Activity {
