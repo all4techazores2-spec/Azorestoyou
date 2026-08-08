@@ -1268,8 +1268,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       const endpoint = categoryMap[activeTab];
       if (endpoint) {
-        const res = await fetch(`${API_BASE_URL}/api/${endpoint}/${updatedItem.id}`, {
-          method: 'PUT',
+        if (isAddingNew && !updatedItem.id) {
+          updatedItem.id = `${activeTab.substring(0,3).toUpperCase()}${Date.now()}`;
+        }
+        const url = isAddingNew
+          ? `${API_BASE_URL}/api/${endpoint}`
+          : `${API_BASE_URL}/api/${endpoint}/${updatedItem.id}`;
+        const res = await fetch(url, {
+          method: isAddingNew ? 'POST' : 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedItem)
         });
