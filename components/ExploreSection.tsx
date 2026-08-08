@@ -2091,9 +2091,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
         </button>
       </div>
 
-      {/* Featured Slider & Search Bar Overlay — on mobile: full bleed at very top; on desktop: after breadcrumb */}
+      {/* Featured Slider — on mobile: full bleed at very top; on desktop: after breadcrumb */}
       {featuredItems && featuredItems.length > 0 && (
-        <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${category === 'bars' || category === 'gyms' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-8 md:my-8 -mt-0 md:mt-0'
+        <div className={`relative -mx-6 md:mx-0 w-[calc(100%+3rem)] md:w-full rounded-none md:rounded-[2rem] overflow-hidden shadow-xl ${category === 'bars' || category === 'gyms' ? 'mb-4 md:mb-6 -mt-10 md:-mt-6' : 'mb-6 md:mb-8 -mt-0 md:mt-0'
           }`}>
           {/* Slider */}
           <MostRequestedSlider
@@ -2113,44 +2113,36 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
             }}
           />
 
-          {/* Overlay Content */}
-          <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 pointer-events-none ${category === 'bars' || category === 'gyms' ? 'bg-black/45 max-md:bg-transparent' : 'bg-black/45'
-            }`}>
-            {/* Mobile-only floating back button — top-left corner of slider */}
-            {category !== 'bars' && category !== 'gyms' && (
-              <button
-                onClick={onClose}
-                className="md:hidden absolute top-4 left-4 flex items-center gap-1.5 pointer-events-auto bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
-              >
-                <ArrowLeft size={13} /> Voltar
-              </button>
-            )}
+          {/* Mobile-only floating back button — top-left corner of slider */}
+          {category !== 'bars' && category !== 'gyms' && (
+            <button
+              onClick={onClose}
+              className="md:hidden absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm text-white border border-white/20 py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
+            >
+              <ArrowLeft size={13} /> Voltar
+            </button>
+          )}
+        </div>
+      )}
 
-            {/* Centered Category Header inside Slider */}
-            {category !== 'bars' && category !== 'gyms' && (
-              <div className="flex flex-col items-center text-center mb-6 pointer-events-auto text-white">
-                <div
-                  className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-2xl transition-transform hover:scale-105 mb-3 bg-white"
-                  style={{ color: COLORS[category] || '#1A75BB' }}
-                >
-                  {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
-                </div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-white shadow-sm drop-shadow">{getCategoryTitle(category)}</h2>
-                <div className="flex items-center gap-2 justify-center">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-100 shadow-sm drop-shadow">
-                    {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Centered Search Card inside Slider */}
-            {category !== 'bars' && category !== 'gyms' && (
-              <div className="w-full lg:max-w-2xl xl:max-w-3xl pointer-events-auto">
-                {renderCategoryFilterBar()}
-              </div>
-            )}
+      {/* Category Header + Search Bar — abaixo do slider, não sobreposto às fotos */}
+      {featuredItems && featuredItems.length > 0 && category !== 'bars' && category !== 'gyms' && (
+        <div className="flex flex-col items-center text-center mb-8">
+          <div
+            className="w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-xl transition-transform hover:scale-105 mb-3 bg-white"
+            style={{ color: COLORS[category] || '#1A75BB' }}
+          >
+            {React.cloneElement(getCategoryIcon(category) as React.ReactElement, { size: 32 })}
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 text-slate-800">{getCategoryTitle(category)}</h2>
+          <div className="flex items-center gap-2 justify-center mb-6">
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {isAllIslands ? 'Explorando todo o arquipélago' : `Melhor de ${destinationIsland}`}
+            </p>
+          </div>
+          <div className="w-full lg:max-w-2xl xl:max-w-3xl">
+            {renderCategoryFilterBar()}
           </div>
         </div>
       )}
