@@ -5639,6 +5639,8 @@ return t;
 
             // Filter active reservations
             const activeReservations = (reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada');
+            const confirmedReservationsCount = activeReservations.filter(r => r.status === 'accepted' || r.status === 'confirmado' || r.status === 'seated' || r.status === 'ocupado').length;
+            const pendingReservationsCount = activeReservations.filter(r => r.status === 'pending' || r.status === 'pendente' || !r.status).length;
 
             // Category donut
             const catMap: Record<string, number> = {};
@@ -5921,11 +5923,11 @@ ${items.map((it, i) => `        <Line>
                 <div className="flex flex-wrap justify-center gap-4 w-full">
                   {[
                     { 
-                      label: isBeauty ? 'Marcações Hoje' : 'Reservas Hoje', 
-                      value: activeReservations.length, 
-                      icon: <Calendar size={22} />, 
-                      color: 'blue', 
-                      change: '↑ 12% vs ontem',
+                      label: isBeauty ? 'Marcações Hoje' : 'Reservas Hoje',
+                      value: activeReservations.length,
+                      icon: <Calendar size={22} />,
+                      color: 'blue',
+                      change: `${confirmedReservationsCount} confirmadas · ${pendingReservationsCount} pendentes`,
                       onClick: () => {
                         if (!isBeauty) setShowReservationsListModal(true);
                       }
@@ -5937,7 +5939,7 @@ ${items.map((it, i) => `        <Line>
                     ] : []),
                     { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2).replace('.', ',')}` : '€ 0,00', icon: <Euro size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
                     { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2).replace('.', ',')}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsForPayout} itens × €0,05 · Pag. ${partnerPayoutFrequency === 'daily' ? 'Diário' : 'Semanal'}`, onClick: () => setShowPartnerPayoutModal(true) },
-                    { label: 'Calendário', value: (reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada').length, icon: <Calendar size={22} />, color: 'blue', change: 'Ver reservas', onClick: () => setShowCalendarOverlay(true) },
+                    { label: 'Calendário', value: activeReservations.length, icon: <Calendar size={22} />, color: 'blue', change: `${confirmedReservationsCount} confirmadas · ${pendingReservationsCount} pendentes`, onClick: () => setShowCalendarOverlay(true) },
                     { label: 'Avaliações', value: averageRating, icon: <Star size={22} />, color: 'amber', change: `${uniqueReviews.length} avaliações`, onClick: () => setActiveTab('reviews') },
                   ].map((stat, i) => (
                     <div
@@ -10701,6 +10703,20 @@ isBeauty ? (
           const currentDayStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(clampedSelectedDay)}`;
           const isCurrentDayBlocked = blockedDates.includes(currentDayStr);
 
+          const monthReservations = (reservations || []).filter(r => {
+            if (!r.date) return false;
+            const rDateStr = r.date.includes('/') ? r.date.split('/').reverse().join('-') : r.date;
+            return rDateStr.startsWith(`${viewYear}-${pad(viewMonth + 1)}`) && r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada';
+          });
+          const monthConfirmedCount = monthReservations.filter(r => r.status === 'accepted' || r.status === 'confirmado' || r.status === 'seated' || r.status === 'ocupado').length;
+          const monthPendingCount = monthReservations.filter(r => r.status === 'pending' || r.status === 'pendente' || !r.status).length;
+
+          const handleConfirmReservation = (resId: string) => {
+            const updated = reservations.map((r: any) => r.id === resId ? { ...r, status: 'accepted' } : r);
+            setReservations(updated);
+            handleUpdate({ reservations: updated });
+          };
+
           const handleToggleBlockDay = () => {
             let updated: string[];
             if (isCurrentDayBlocked) {
@@ -10813,6 +10829,22 @@ isBeauty ? (
                       );
                     })}
                   </div>
+
+                  {/* Resumo do mês: total de reservas confirmadas e pendentes */}
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    <div className="bg-[#0D1218] border border-white/5 rounded-2xl p-4 text-center">
+                      <p className="text-xl font-black text-white leading-none">{monthReservations.length}</p>
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1.5">Reservas no Mês</p>
+                    </div>
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center">
+                      <p className="text-xl font-black text-emerald-400 leading-none">{monthConfirmedCount}</p>
+                      <p className="text-[8px] font-black text-emerald-500/70 uppercase tracking-widest mt-1.5">Confirmadas</p>
+                    </div>
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-center">
+                      <p className="text-xl font-black text-amber-400 leading-none">{monthPendingCount}</p>
+                      <p className="text-[8px] font-black text-amber-500/70 uppercase tracking-widest mt-1.5">Pendentes</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right side: Day Details */}
@@ -10865,36 +10897,47 @@ isBeauty ? (
                     </div>
                   </div>
 
-                  {/* List of reservations for the day */}
-                  <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
+                  {/* List of reservations for the day — scroll a partir da 3ª reserva */}
+                  <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left max-h-[23rem]">
                     {dayReservations.length === 0 ? (
                       <div className="text-center py-12 text-slate-500">
                         <Calendar className="w-8 h-8 mx-auto mb-2 opacity-30" />
                         <p className="text-[10px] font-black uppercase tracking-widest">Sem reservas para este dia.</p>
                       </div>
                     ) : (
-                      dayReservations.map(res => (
-                        <div key={res.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
-                          <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
-                            <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[9px] font-mono font-bold">
-                              🕒 {res.time || '--:--'}
-                            </span>
-                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                              res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-500/20 text-blue-400' :
-                              res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-500/20 text-emerald-400' :
-                              'bg-amber-500/20 text-amber-400'
-                            }`}>
-                              {res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado' :
-                               res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
-                            </span>
+                      dayReservations.map(res => {
+                        const isPending = res.status === 'pending' || res.status === 'pendente' || !res.status;
+                        return (
+                          <div key={res.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
+                            <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                              <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[9px] font-mono font-bold">
+                                🕒 {res.time || '--:--'}
+                              </span>
+                              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                res.status === 'seated' || res.status === 'ocupado' ? 'bg-blue-500/20 text-blue-400' :
+                                res.status === 'accepted' || res.status === 'confirmado' ? 'bg-emerald-500/20 text-emerald-400' :
+                                'bg-amber-500/20 text-amber-400'
+                              }`}>
+                                {res.status === 'seated' || res.status === 'ocupado' ? 'Ocupado' :
+                                 res.status === 'accepted' || res.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs font-black text-white leading-none">{res.customerName}</p>
+                              <p className="text-[9px] text-slate-400 leading-none">📞 {res.customerPhone || 'Sem telefone'}</p>
+                              <p className="text-[9px] text-slate-400 leading-none">✉️ {res.customerEmail || 'Sem email'}</p>
+                            </div>
+                            {isPending && (
+                              <button
+                                onClick={() => handleConfirmReservation(res.id)}
+                                className="w-full mt-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                              >
+                                Confirmar Reserva
+                              </button>
+                            )}
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-black text-white leading-none">{res.customerName}</p>
-                            <p className="text-[9px] text-slate-400 leading-none">📞 {res.customerPhone || 'Sem telefone'}</p>
-                            <p className="text-[9px] text-slate-400 leading-none">✉️ {res.customerEmail || 'Sem email'}</p>
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
