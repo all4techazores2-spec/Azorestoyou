@@ -24,6 +24,16 @@ const dbSchema = new mongoose.Schema({
 
 const DBModel = mongoose.models.Data || mongoose.model('Data', dbSchema);
 
+// --- BACKUP SCHEMA: guarda uma cópia dos dados antes de qualquer substituição total ---
+const dbBackupSchema = new mongoose.Schema({
+    key: { type: String },
+    data: mongoose.Schema.Types.Mixed,
+    reason: String,
+}, { timestamps: true });
+
+const DBBackupModel = mongoose.models.DataBackup || mongoose.model('DataBackup', dbBackupSchema);
+const MAX_BACKUPS_KEPT = 15;
+
 export const connectDB = async () => {
     // GUARD: Se já está ligado, não reconectar
     if (mongoose.connection.readyState === 1) {
@@ -253,6 +263,37 @@ export const writeDB = async (data) => {
     }
 };
 
+// Guarda uma cópia do documento atual da cloud antes de o substituir, e mantém só as últimas MAX_BACKUPS_KEPT.
+const backupCurrentCloudData = async (reason) => {
+    try {
+        const current = await DBModel.collection.findOne({ key: 'master_db' });
+        if (!current) return; // nada para salvaguardar (primeira publicação)
+
+        await DBBackupModel.create({ key: 'master_db', data: current.data, reason });
+
+        // Rotação: manter só os backups mais recentes para não esgotar o espaço do tier gratuito.
+        const excess = await DBBackupModel.find({ key: 'master_db' }).sort({ createdAt: -1 }).skip(MAX_BACKUPS_KEPT).select('_id');
+        if (excess.length > 0) {
+            await DBBackupModel.deleteMany({ _id: { $in: excess.map(d => d._id) } });
+        }
+
+        // Cópia local best-effort, redundante à da cloud (funciona tanto localmente como no Render).
+        try {
+            const backupsDir = path.join(__dirname, 'backups');
+            if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            fs.writeFileSync(path.join(backupsDir, `pre_publish_${timestamp}.json`), JSON.stringify(current.data, null, 2));
+        } catch (fileErr) {
+            console.warn("⚠️ Backup local (ficheiro) falhou, mas o backup na cloud foi criado:", fileErr.message);
+        }
+
+        console.log(`🛟 Backup de segurança criado antes de "${reason}".`);
+    } catch (err) {
+        // Um backup falhado NÃO deve impedir a operação principal, mas fica registado.
+        console.error("⚠️ Falha ao criar backup de segurança:", err.message);
+    }
+};
+
 export const publishLocalToCloud = async () => {
     try {
         console.log("☁️ Preparing manual publish to MongoDB Cloud...");
@@ -277,13 +318,16 @@ export const publishLocalToCloud = async () => {
             mongoError = null;
         }
 
-        // 3. Forçar gravação direta
+        // 3. Salvaguardar o que está atualmente na cloud ANTES de o substituir.
+        await backupCurrentCloudData('publish-to-cloud');
+
+        // 4. Forçar gravação direta
         await DBModel.collection.updateOne(
             { key: 'master_db' },
             { $set: { data: localData, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
             { upsert: true }
         );
-        
+
         isMongoConnected = true;
         mongoError = null;
         console.log("✅ Manual publish completed! MongoDB Cloud is fully updated.");
@@ -292,6 +336,24 @@ export const publishLocalToCloud = async () => {
         console.error("❌ Manual publish to Cloud failed:", err.message);
         throw err;
     }
+};
+
+export const restoreLatestBackup = async () => {
+    const latest = await DBBackupModel.findOne({ key: 'master_db' }).sort({ createdAt: -1 });
+    if (!latest) throw new Error("Não existe nenhum backup de segurança guardado.");
+    await DBModel.collection.updateOne(
+        { key: 'master_db' },
+        { $set: { data: latest.data, updatedAt: new Date() } },
+        { upsert: true }
+    );
+    memoryCache = latest.data;
+    lastCacheTime = Date.now();
+    return { success: true, restoredFrom: latest.createdAt };
+};
+
+export const listBackups = async () => {
+    const backups = await DBBackupModel.find({ key: 'master_db' }).sort({ createdAt: -1 }).select('createdAt reason');
+    return backups.map(b => ({ id: b._id, createdAt: b.createdAt, reason: b.reason }));
 };
 
 export const updateCollection = async (key, data, mode = 'overwrite') => {

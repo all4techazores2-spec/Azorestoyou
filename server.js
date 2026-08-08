@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
 import { exec } from 'child_process';
-import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData, publishLocalToCloud } from './db.js';
+import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData, publishLocalToCloud, listBackups, restoreLatestBackup } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -499,6 +499,27 @@ app.post('/api/publish-to-cloud', async (req, res) => {
         res.json(result);
     } catch (err) {
         console.error("❌ publish-to-cloud failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- SAFETY-NET BACKUPS: lista e restauro dos backups criados automaticamente antes de cada "publish" ---
+app.get('/api/db-backups', async (req, res) => {
+    try {
+        const backups = await listBackups();
+        res.json({ backups });
+    } catch (err) {
+        console.error("❌ list backups failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/restore-latest-backup', async (req, res) => {
+    try {
+        const result = await restoreLatestBackup();
+        res.json(result);
+    } catch (err) {
+        console.error("❌ restore-latest-backup failed:", err);
         res.status(500).json({ error: err.message });
     }
 });
