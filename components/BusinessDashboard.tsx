@@ -414,6 +414,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const [musicError, setMusicError] = useState<string | null>(null);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [musicVolume, setMusicVolume] = useState(80);
+  const [musicWidgetOpen, setMusicWidgetOpen] = useState(false);
+  const [showPartnerPayoutModal, setShowPartnerPayoutModal] = useState(false);
+  const [showTopSalesModal, setShowTopSalesModal] = useState(false);
+  const [topSalesPeriod, setTopSalesPeriod] = useState<'semana' | 'mes'>('semana');
   const ytPlayerDivRef = React.useRef<HTMLDivElement>(null);
   const ytPlayerRef = React.useRef<any>(null);
 
@@ -5520,7 +5524,79 @@ return t;
 
             const totalItemsToday = allItemsToday.reduce((acc, it) => acc + (it.quantity || 1), 0);
             const revenueToday = allItemsToday.reduce((acc, it) => acc + ((it.price || 0) * (it.quantity || 1)), 0);
-            const partnerRevenue = totalItemsToday * 0.05;
+
+            // ── RECEITA PARCEIRO: somatório das micro-comissões (€0,05/item) do período de pagamento escolhido ──
+            const partnerPayoutFrequency: 'weekly' | 'daily' = (business as any).partnerPayoutFrequency || 'weekly';
+            const weekCutoff = new Date();
+            weekCutoff.setDate(weekCutoff.getDate() - 7);
+            const itemsForPayoutPeriod = partnerPayoutFrequency === 'daily'
+              ? allItemsToday
+              : salesHistory
+                  .filter((s: any) => new Date(s.date || '') >= weekCutoff && !(s.date || '').startsWith(today))
+                  .flatMap((s: any) => s.items || [])
+                  .concat(allItemsToday);
+            const totalItemsForPayout = itemsForPayoutPeriod.reduce((acc: number, it: any) => acc + (it.quantity || 1), 0);
+            const partnerRevenue = totalItemsForPayout * 0.05;
+
+            // ── TOP VENDAS DETALHADO: agregado por prato, comparado com o stock atual ──
+            const topSalesCutoff = new Date();
+            topSalesCutoff.setDate(topSalesCutoff.getDate() - (topSalesPeriod === 'mes' ? 30 : 7));
+            const topSalesItems = salesHistory
+              .filter((s: any) => new Date(s.date || '') >= topSalesCutoff)
+              .flatMap((s: any) => s.items || [])
+              .concat(allItemsToday);
+            const topSalesAggregated = Object.values(
+              topSalesItems.reduce((acc: any, it: any) => {
+                const name = it.name || 'Item';
+                if (!acc[name]) acc[name] = { name, qty: 0, revenue: 0 };
+                acc[name].qty += it.quantity || 1;
+                acc[name].revenue += (it.price || 0) * (it.quantity || 1);
+                return acc;
+              }, {})
+            ).map((row: any) => {
+              const stockItem = (business.dishes || []).find((d: any) => d.name === row.name) || (business.products || []).find((d: any) => d.name === row.name);
+              return { ...row, stock: stockItem?.stock ?? 0 };
+            }).sort((a: any, b: any) => b.qty - a.qty);
+
+            const exportTopSalesWord = () => {
+              const periodLabel = topSalesPeriod === 'mes' ? 'Mensal' : 'Semanal';
+              const rowsHtml = topSalesAggregated.map((r: any) =>
+                `<tr><td>${r.name}</td><td>${r.qty}</td><td>€${r.revenue.toFixed(2)}</td><td>${r.stock}</td></tr>`
+              ).join('');
+              const html = `<html><head><meta charset="utf-8"></head><body>
+                <h2>Top Vendas — ${periodLabel} — ${business.name}</h2>
+                <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;">
+                  <tr><th>Prato</th><th>Qtd. Vendida</th><th>Receita</th><th>Stock Atual</th></tr>
+                  ${rowsHtml}
+                </table>
+              </body></html>`;
+              const blob = new Blob(['﻿' + html], { type: 'application/msword' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `top_vendas_${topSalesPeriod}_${today}.doc`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+
+            const exportTopSalesPDF = () => {
+              const periodLabel = topSalesPeriod === 'mes' ? 'Mensal' : 'Semanal';
+              const rowsHtml = topSalesAggregated.map((r: any) =>
+                `<tr><td>${r.name}</td><td>${r.qty}</td><td>€${r.revenue.toFixed(2)}</td><td>${r.stock}</td></tr>`
+              ).join('');
+              const win = window.open('', '_blank');
+              if (!win) return;
+              win.document.write(`<html><head><title>Top Vendas ${periodLabel}</title><style>
+                body{font-family:sans-serif;padding:24px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:13px;} th{background:#f1f5f9;}
+              </style></head><body>
+                <h2>Top Vendas — ${periodLabel} — ${business.name}</h2>
+                <p>Gerado em ${new Date().toLocaleDateString('pt-PT')}</p>
+                <table><tr><th>Prato</th><th>Qtd. Vendida</th><th>Receita</th><th>Stock Atual</th></tr>${rowsHtml}</table>
+              </body></html>`);
+              win.document.close();
+              win.focus();
+              win.print();
+            };
 
             // Sales map for charts
             const salesMap: Record<string, { name: string; count: number; revenue: number; category: string }> = {};
@@ -5860,7 +5936,7 @@ ${items.map((it, i) => `        <Line>
                       { label: 'Hóspedes', value: '42', icon: <Users size={22} />, color: 'indigo', change: '↑ 8% vs ontem' }
                     ] : []),
                     { label: 'Receita Hoje', value: revenueToday > 0 ? `€ ${revenueToday.toFixed(2).replace('.', ',')}` : '€ 0,00', icon: <Euro size={22} />, color: 'purple', change: '↑ 15% vs ontem' },
-                    { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2).replace('.', ',')}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsToday} itens × €0,05` },
+                    { label: 'Receita Parceiro', value: `€ ${partnerRevenue.toFixed(2).replace('.', ',')}`, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>, color: 'amber', change: `${totalItemsForPayout} itens × €0,05 · Pag. ${partnerPayoutFrequency === 'daily' ? 'Diário' : 'Semanal'}`, onClick: () => setShowPartnerPayoutModal(true) },
                     { label: 'Calendário', value: (reservations || []).filter(r => r.status !== 'cancelled' && r.status !== 'rejected' && r.status !== 'rejeitada' && r.status !== 'cancelada').length, icon: <Calendar size={22} />, color: 'blue', change: 'Ver reservas', onClick: () => setShowCalendarOverlay(true) },
                     { label: 'Avaliações', value: averageRating, icon: <Star size={22} />, color: 'amber', change: `${uniqueReviews.length} avaliações`, onClick: () => setActiveTab('reviews') },
                   ].map((stat, i) => (
@@ -5877,6 +5953,86 @@ ${items.map((it, i) => `        <Line>
                   ))}
                 </div>
 
+                {/* ── MODAL: Frequência de Pagamento da Receita Parceiro ── */}
+                {showPartnerPayoutModal && (
+                  <div className="fixed inset-0 z-[300] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowPartnerPayoutModal(false)}>
+                    <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                      <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter mb-2">Receita Parceiro</h3>
+                      <p className="text-xs text-slate-500 font-bold mb-6 leading-relaxed">
+                        O pagamento da receita parceiro é o somatório de todas as micro-comissões (€0,05 por item vendido) do período. Escolhe se preferes receber ao fim da semana ou todos os dias:
+                      </p>
+                      <div className="space-y-3">
+                        <button
+                          onClick={() => { handleUpdate({ partnerPayoutFrequency: 'weekly' } as any); setShowPartnerPayoutModal(false); }}
+                          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${((business as any).partnerPayoutFrequency || 'weekly') === 'weekly' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        >
+                          Semanal — pago ao fim da semana
+                        </button>
+                        <button
+                          onClick={() => { handleUpdate({ partnerPayoutFrequency: 'daily' } as any); setShowPartnerPayoutModal(false); }}
+                          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${(business as any).partnerPayoutFrequency === 'daily' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                        >
+                          Diário — pago todos os dias
+                        </button>
+                      </div>
+                      <button onClick={() => setShowPartnerPayoutModal(false)} className="w-full mt-4 py-3 text-slate-400 font-black text-[10px] uppercase tracking-widest cursor-pointer">Fechar</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── MODAL: Top Vendas Detalhado ── */}
+                {showTopSalesModal && (
+                  <div className="fixed inset-0 z-[300] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowTopSalesModal(false)}>
+                    <div className="bg-white rounded-[2.5rem] p-8 max-w-2xl w-full shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Top Vendas Detalhado</h3>
+                          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Comparação com o stock atual</p>
+                        </div>
+                        <button onClick={() => setShowTopSalesModal(false)} className="p-2 text-slate-400 hover:text-slate-800 cursor-pointer"><X size={18} /></button>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-4">
+                        <button onClick={() => setTopSalesPeriod('semana')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${topSalesPeriod === 'semana' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>Semanal</button>
+                        <button onClick={() => setTopSalesPeriod('mes')} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${topSalesPeriod === 'mes' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}>Mensal</button>
+                        <div className="flex-1" />
+                        <button onClick={exportTopSalesPDF} className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-all cursor-pointer">Exportar PDF</button>
+                        <button onClick={exportTopSalesWord} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all cursor-pointer">Exportar Word</button>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto">
+                        {topSalesAggregated.length === 0 ? (
+                          <div className="text-center py-12 text-slate-400">
+                            <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">Sem vendas neste período.</p>
+                          </div>
+                        ) : (
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th className="pb-3">Prato</th>
+                                <th className="pb-3 text-right">Qtd. Vendida</th>
+                                <th className="pb-3 text-right">Receita</th>
+                                <th className="pb-3 text-right">Stock Atual</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {topSalesAggregated.map((row: any, i: number) => (
+                                <tr key={i} className="border-b border-slate-50">
+                                  <td className="py-3 text-xs font-black text-slate-800">{row.name}</td>
+                                  <td className="py-3 text-xs font-bold text-slate-600 text-right">{row.qty}</td>
+                                  <td className="py-3 text-xs font-bold text-emerald-600 text-right">€{row.revenue.toFixed(2)}</td>
+                                  <td className={`py-3 text-xs font-black text-right ${row.stock === 0 ? 'text-red-500' : 'text-slate-800'}`}>{row.stock}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* ── ANALYTICS ROW: Bar + Donut Charts ── */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Bar Chart - Top Selling */}
@@ -5886,7 +6042,13 @@ ${items.map((it, i) => `        <Line>
                         <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Top Vendas</h3>
                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Pratos com maior volume</p>
                       </div>
-                      <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><BarChart3 size={20} /></div>
+                      <button
+                        onClick={() => setShowTopSalesModal(true)}
+                        title="Ver detalhe de vendas"
+                        className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 hover:bg-blue-100 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <BarChart3 size={20} />
+                      </button>
                     </div>
                     <div className="space-y-5">
                       {topSales.map((item, i) => (
@@ -5956,10 +6118,10 @@ ${items.map((it, i) => `        <Line>
                   </div>
                 </div>
 
-                {/* ── STAFF + MUSIC ROW ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* ── STAFF ROW ── */}
+                <div className="grid grid-cols-1 gap-6">
                   {/* Staff Quick */}
-                  <div className="bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
+                  <div className="max-w-xl bg-[#1e293b] text-white rounded-[3rem] p-8 shadow-2xl shadow-slate-900/20">
                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-6">Equipa em Serviço</p>
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="bg-white/5 border border-white/10 rounded-[2rem] p-5 text-center">
@@ -5985,97 +6147,6 @@ ${items.map((it, i) => `        <Line>
                         </div>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Music Player Card */}
-                  <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-base">Música Ambiente</h3>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Pesquisa e toca via YouTube</p>
-                      </div>
-                      <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-500"><Play size={20} /></div>
-                    </div>
-
-                    <form onSubmit={handleMusicSearch} className="flex items-center gap-2 mb-4">
-                      <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3">
-                        <Search size={16} className="text-slate-400 flex-shrink-0" />
-                        <input
-                          type="text"
-                          value={musicQuery}
-                          onChange={(e) => setMusicQuery(e.target.value)}
-                          placeholder="Nome da música ou artista..."
-                          className="flex-1 bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none min-w-0"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={!musicQuery.trim() || musicLoading}
-                        className="px-5 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer flex-shrink-0"
-                      >
-                        {musicLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
-                      </button>
-                    </form>
-
-                    {musicError && (
-                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-3 text-center">{musicError}</p>
-                    )}
-
-                    {activeVideoId && (
-                      <div className="relative rounded-2xl overflow-hidden bg-slate-900 aspect-video mb-4">
-                        <div ref={ytPlayerDivRef} className="w-full h-full" />
-                        <button
-                          onClick={stopMusic}
-                          className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all cursor-pointer z-10"
-                          title="Parar"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    )}
-
-                    {activeVideoId && (
-                      <div className="flex items-center gap-3 mb-4 px-1">
-                        {musicVolume > 0 ? <Volume2 size={16} className="text-slate-400 flex-shrink-0" /> : <VolumeX size={16} className="text-slate-400 flex-shrink-0" />}
-                        <input
-                          type="range"
-                          min={0}
-                          max={100}
-                          value={musicVolume}
-                          onChange={(e) => {
-                            const v = Number(e.target.value);
-                            setMusicVolume(v);
-                            ytPlayerRef.current?.setVolume?.(v);
-                          }}
-                          className="flex-1 accent-slate-900 cursor-pointer"
-                        />
-                        <span className="text-[9px] font-black text-slate-400 w-7 text-right">{musicVolume}%</span>
-                      </div>
-                    )}
-
-                    {musicResults.length > 0 ? (
-                      <div className="flex-1 space-y-2 overflow-y-auto max-h-64 pr-1">
-                        {musicResults.map(track => (
-                          <button
-                            key={track.videoId}
-                            onClick={() => setActiveVideoId(track.videoId)}
-                            className={`w-full flex items-center gap-3 p-2 rounded-2xl border text-left transition-all cursor-pointer ${activeVideoId === track.videoId ? 'bg-slate-900 border-slate-900' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
-                          >
-                            <img src={track.thumbnail} alt={track.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-[11px] font-black truncate ${activeVideoId === track.videoId ? 'text-white' : 'text-slate-800'}`}>{track.title}</p>
-                              <p className={`text-[9px] font-bold truncate ${activeVideoId === track.videoId ? 'text-slate-400' : 'text-slate-400'}`}>{track.channelTitle}</p>
-                            </div>
-                            <Play size={14} className={activeVideoId === track.videoId ? 'text-white flex-shrink-0' : 'text-slate-400 flex-shrink-0'} />
-                          </button>
-                        ))}
-                      </div>
-                    ) : !activeVideoId && (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        <Play size={28} className="text-slate-300 mb-2" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pesquisa uma música para tocar</p>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -10832,6 +10903,111 @@ isBeauty ? (
           );
         })()}
       </AnimatePresence>
+
+      {/* ── MÚSICA AMBIENTE: widget flutuante persistente, montado sempre (não para ao mudar de separador) ── */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+        <div className={`w-80 bg-white border border-slate-100 rounded-[2rem] shadow-2xl p-6 flex flex-col max-h-[70vh] ${musicWidgetOpen ? '' : 'hidden'}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-black text-slate-900 uppercase tracking-tighter text-sm">Música Ambiente</h3>
+              <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mt-0.5">Pesquisa e toca via YouTube</p>
+            </div>
+            <button onClick={() => setMusicWidgetOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-800 transition-all cursor-pointer flex-shrink-0">
+              <X size={16} />
+            </button>
+          </div>
+
+          <form onSubmit={handleMusicSearch} className="flex items-center gap-2 mb-3">
+            <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2.5">
+              <Search size={14} className="text-slate-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={musicQuery}
+                onChange={(e) => setMusicQuery(e.target.value)}
+                placeholder="Nome da música ou artista..."
+                className="flex-1 bg-transparent text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none min-w-0"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!musicQuery.trim() || musicLoading}
+              className="px-4 py-2.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer flex-shrink-0"
+            >
+              {musicLoading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+            </button>
+          </form>
+
+          {musicError && (
+            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-3 text-center">{musicError}</p>
+          )}
+
+          {/* O contentor do player nunca desmonta — só muda de tamanho — para a música não parar ao fechar/abrir o widget */}
+          <div className={`relative rounded-2xl overflow-hidden bg-slate-900 mb-3 ${activeVideoId ? 'aspect-video' : 'h-0'}`}>
+            <div ref={ytPlayerDivRef} className="w-full h-full" />
+            {activeVideoId && (
+              <button
+                onClick={stopMusic}
+                className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all cursor-pointer z-10"
+                title="Parar"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {activeVideoId && (
+            <div className="flex items-center gap-3 mb-3 px-1">
+              {musicVolume > 0 ? <Volume2 size={16} className="text-slate-400 flex-shrink-0" /> : <VolumeX size={16} className="text-slate-400 flex-shrink-0" />}
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={musicVolume}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setMusicVolume(v);
+                  ytPlayerRef.current?.setVolume?.(v);
+                }}
+                className="flex-1 accent-slate-900 cursor-pointer"
+              />
+              <span className="text-[9px] font-black text-slate-400 w-7 text-right">{musicVolume}%</span>
+            </div>
+          )}
+
+          {musicResults.length > 0 ? (
+            <div className="flex-1 space-y-2 overflow-y-auto max-h-56 pr-1">
+              {musicResults.map(track => (
+                <button
+                  key={track.videoId}
+                  onClick={() => setActiveVideoId(track.videoId)}
+                  className={`w-full flex items-center gap-3 p-2 rounded-2xl border text-left transition-all cursor-pointer ${activeVideoId === track.videoId ? 'bg-slate-900 border-slate-900' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+                >
+                  <img src={track.thumbnail} alt={track.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-[11px] font-black truncate ${activeVideoId === track.videoId ? 'text-white' : 'text-slate-800'}`}>{track.title}</p>
+                    <p className="text-[9px] font-bold truncate text-slate-400">{track.channelTitle}</p>
+                  </div>
+                  <Play size={14} className={activeVideoId === track.videoId ? 'text-white flex-shrink-0' : 'text-slate-400 flex-shrink-0'} />
+                </button>
+              ))}
+            </div>
+          ) : !activeVideoId && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <Play size={24} className="text-slate-300 mb-2" />
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pesquisa uma música para tocar</p>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => setMusicWidgetOpen(o => !o)}
+          className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all cursor-pointer relative flex-shrink-0"
+          title="Música Ambiente"
+        >
+          {activeVideoId && <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />}
+          {musicWidgetOpen ? <X size={20} /> : <Play size={20} />}
+        </button>
+      </div>
     </div>
   );
 };

@@ -300,6 +300,7 @@ export interface Restaurant {
   isDraft?: boolean;
   blockedDates?: string[];
   blockedSlots?: Record<string, string[]>;
+  partnerPayoutFrequency?: 'weekly' | 'daily';
 }
 
 export interface Activity {
