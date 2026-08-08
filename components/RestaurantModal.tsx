@@ -507,13 +507,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     }
 
     const activeReservations = restaurant.reservations.filter((r: any) =>
-      (r.status === 'accepted' || r.status === 'pending') &&
+      (r.status === 'accepted' || r.status === 'pending' || r.status === 'confirmado' || r.status === 'pendente' || r.status === 'occupied' || r.status === 'seated' || r.status === 'ocupado') &&
       (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
     );
 
     const totalDuration = selectedServices.length > 0
       ? selectedServices.reduce((sum, s) => sum + (s.duration || 30), 0)
       : 30;
+
+    // Nº de mesas do restaurante — cai para 12 se não houver mesas configuradas (array vazio ou inexistente)
+    const totalTablesForFilter = (restaurant.tables && restaurant.tables.length > 0) ? restaurant.tables.length : 12;
 
     return slots.filter(slot => {
       const slotStart = timeToMinutes(slot);
@@ -531,10 +534,25 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       });
       if (!fallsWithinHours) return false;
 
-      // Check overlap with existing active reservations
-      const overlaps = activeReservations.some((r: any) => {
-        const rStart = timeToMinutes(r.time);
+      // Beleza: mantém o comportamento anterior (qualquer sobreposição bloqueia, é 1 profissional/vaga de cada vez)
+      if (isBeauty) {
+        const overlaps = activeReservations.some((r: any) => {
+          const rStart = timeToMinutes(r.time);
+          let rDuration = 30;
+          if (r.preOrder && r.preOrder.length > 0) {
+            rDuration = r.preOrder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+          } else if (r.preorder && r.preorder.length > 0) {
+            rDuration = r.preorder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
+          }
+          const rEnd = rStart + rDuration;
+          return slotStart < rEnd && slotEnd > rStart;
+        });
+        return !overlaps;
+      }
 
+      // Restaurante: só bloqueia o horário quando o nº de reservas sobrepostas atinge o total de mesas
+      const overlappingCount = activeReservations.filter((r: any) => {
+        const rStart = timeToMinutes(r.time);
         let rDuration = 30;
         if (r.preOrder && r.preOrder.length > 0) {
           rDuration = r.preOrder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
@@ -542,11 +560,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
           rDuration = r.preorder.reduce((sum: number, item: any) => sum + ((item.dish?.duration || item.duration || 30) * (item.quantity || 1)), 0);
         }
         const rEnd = rStart + rDuration;
-
         return slotStart < rEnd && slotEnd > rStart;
-      });
+      }).length;
 
-      return !overlaps;
+      return overlappingCount < totalTablesForFilter;
     });
   };
 
@@ -560,11 +577,11 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
     }
 
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
-    const total = restaurant.tables ? restaurant.tables.length : 12;
+    const total = (restaurant.tables && restaurant.tables.length > 0) ? restaurant.tables.length : 12;
 
-    // Count confirmed bookings at this exact date and time
+    // Count active bookings (confirmadas, pendentes ou já sentadas) at this exact date and time
     const occupiedCount = (restaurant.reservations || []).filter((r: any) =>
-      (r.status === 'accepted' || r.status === 'occupied') &&
+      (r.status === 'accepted' || r.status === 'pending' || r.status === 'confirmado' || r.status === 'pendente' || r.status === 'occupied' || r.status === 'seated' || r.status === 'ocupado') &&
       r.time === selectedTime &&
       (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
     ).length;
@@ -578,6 +595,23 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
   };
 
   const { total: totalChairs, available: availableChairs, isFull: isTimeFull } = getChairsAvailability();
+
+  // Verifica se TODOS os horários do dia selecionado estão esgotados (sem nenhuma mesa livre em nenhum horário)
+  const isSelectedDayFullyBooked = (() => {
+    if (isBeauty || !selectedDate) return false;
+    const rawSlots = timeSlots; // já filtrados por horário de funcionamento + dia bloqueado
+    if (rawSlots.length === 0) return false; // sem horários = fora de funcionamento / dia bloqueado, não "esgotado"
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    const totalTablesForDay = (restaurant.tables && restaurant.tables.length > 0) ? restaurant.tables.length : 12;
+    return rawSlots.every(slot => {
+      const occupiedAtSlot = (restaurant.reservations || []).filter((r: any) =>
+        (r.status === 'accepted' || r.status === 'pending' || r.status === 'confirmado' || r.status === 'pendente' || r.status === 'occupied' || r.status === 'seated' || r.status === 'ocupado') &&
+        r.time === slot &&
+        (r.date === selectedDateStr || (r.date.includes('/') && r.date.split('/').reverse().join('-') === selectedDateStr))
+      ).length;
+      return occupiedAtSlot >= totalTablesForDay;
+    });
+  })();
 
   // Simple Calendar Logic
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -980,20 +1014,38 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                       <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
                         <Clock className="w-5 h-5 text-red-500" /> Horários Disponíveis
                       </h4>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                        {timeSlots.map(time => (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={`py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all active:scale-95
-                            ${selectedTime === time
-                                ? 'border-red-500 bg-red-50 text-red-700 shadow-md'
-                                : 'border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50'}`}
-                          >
-                            {time}
-                          </button>
-                        ))}
-                      </div>
+
+                      {isSelectedDayFullyBooked ? (
+                        <div className="bg-red-50 border border-red-100 p-4 rounded-2xl text-xs text-red-600 font-bold leading-relaxed text-center">
+                          ⚠️ Este dia está totalmente esgotado — todas as mesas já estão reservadas em todos os horários. Por favor, escolha outro dia.
+                        </div>
+                      ) : timeSlots.length === 0 ? (
+                        <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs text-slate-500 font-bold leading-relaxed text-center">
+                          Este restaurante não tem horários disponíveis neste dia.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            {timeSlots.map(time => (
+                              <button
+                                key={time}
+                                onClick={() => setSelectedTime(time)}
+                                className={`py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all active:scale-95
+                                ${selectedTime === time
+                                    ? 'border-red-500 bg-red-50 text-red-700 shadow-md'
+                                    : 'border-slate-100 text-slate-400 hover:border-slate-200 hover:bg-slate-50'}`}
+                              >
+                                {time}
+                              </button>
+                            ))}
+                          </div>
+                          {!isBeauty && selectedTime && (
+                            <p className={`text-[10px] font-black uppercase tracking-widest text-center ${isTimeFull ? 'text-red-500' : 'text-emerald-600'}`}>
+                              {isTimeFull ? `Sem mesas disponíveis às ${selectedTime}` : `${availableChairs} de ${totalChairs} mesas disponíveis às ${selectedTime}`}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -1046,6 +1098,12 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                               <span>{selectedTime}</span>
                             </div>
                           </div>
+
+                          {!isBeauty && (
+                            <div className={`rounded-2xl p-3 text-center text-[10px] font-black uppercase tracking-widest ${isTimeFull ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                              {isTimeFull ? `⚠️ Sem mesas disponíveis às ${selectedTime}` : `${availableChairs} de ${totalChairs} mesas disponíveis`}
+                            </div>
+                          )}
 
                           {guestStep === 'details' ? (
                             <div className="space-y-4">
@@ -1211,6 +1269,12 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                                 </div>
                               )}
 
+                              {!isBeauty && isTimeFull && (
+                                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl text-xs text-red-400 font-bold leading-relaxed text-center">
+                                  ⚠️ Lamento, mas já não temos mesas disponíveis para este horário ({selectedTime}). Por favor, escolha outra hora.
+                                </div>
+                              )}
+
                               <div>
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 block">Alguma nota ou restrição?</label>
                                 <textarea
@@ -1222,16 +1286,16 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
                               </div>
 
                               <button
-                                disabled={isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0)}
+                                disabled={isProcessing || isTimeFull || (isBeauty && selectedServices.length === 0)}
                                 onClick={handleFinalize}
                                 className={`w-full py-5 rounded-[1.5rem] font-black uppercase text-[11px] tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4
-                                ${(isProcessing || (isBeauty && isTimeFull) || (isBeauty && selectedServices.length === 0))
+                                ${(isProcessing || isTimeFull || (isBeauty && selectedServices.length === 0))
                                     ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                                     : 'bg-red-600 text-white shadow-red-900/40 hover:bg-red-700'}`}
                               >
                                 {isProcessing
                                   ? 'A processar...'
-                                  : (isBeauty && isTimeFull)
+                                  : isTimeFull
                                     ? 'Sem vagas disponíveis'
                                     : (isBeauty && selectedServices.length === 0)
                                       ? 'Selecione pelo menos 1 serviço'
