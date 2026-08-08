@@ -10623,35 +10623,65 @@ isBeauty ? (
                           {(res.status === 'pending' || res.status === 'pendente') && (
                             <button
                               onClick={() => {
-                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'accepted' } : r);
-                                setReservations(updated);
-                                handleUpdate({ reservations: updated });
+                                if (isBeauty || isShop || isHotel || isRentCar) {
+                                  const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'accepted' } : r);
+                                  setReservations(updated);
+                                  handleUpdate({ reservations: updated });
+                                } else {
+                                  setShowReservationsListModal(false);
+                                  setAcceptingReservation(res);
+                                  setActiveTab('tables');
+                                }
                               }}
                               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
                             >
-                              Confirmar
+                              {isBeauty || isShop || isHotel || isRentCar ? 'Confirmar' : 'Confirmar e Escolher Mesa'}
                             </button>
                           )}
 
                           {(res.status === 'accepted' || res.status === 'confirmado') && (
                             <button
-                              onClick={() => {
-                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'seated' } : r);
+                              onClick={async () => {
+                                if (isBeauty) {
+                                  setCheckingInRes(res);
+                                  return;
+                                }
+                                lastLocalUpdateRef.current = Date.now();
+                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'occupied' as const } : r);
                                 setReservations(updated);
-                                handleUpdate({ reservations: updated });
+                                if (res.tableId) {
+                                  const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'occupied' as const } : t);
+                                  setTables(updatedTables);
+                                }
+                                try {
+                                  const response = await fetch(`${API_BASE_URL}/api/reservations/${res.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ status: 'occupied' })
+                                  });
+                                  if (response.ok && onForceRefresh) onForceRefresh();
+                                } catch (err) {
+                                  console.error(err);
+                                }
                               }}
                               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
                             >
-                              Sentar Cliente
+                              Check-In (Cliente Chegou)
                             </button>
                           )}
 
-                          {(res.status === 'seated' || res.status === 'ocupado') && (
+                          {(res.status === 'seated' || res.status === 'ocupado' || res.status === 'occupied') && (
                             <button
                               onClick={() => {
-                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'completed' } : r);
+                                const updated = reservations.map(r => r.id === res.id ? { ...r, status: 'finished' as const } : r);
                                 setReservations(updated);
-                                handleUpdate({ reservations: updated });
+                                if (res.tableId) {
+                                  const updatedTables = tables.map(t => t.id === res.tableId ? { ...t, status: 'available' as const, customerName: undefined, reservationTime: undefined } : t);
+                                  setTables(updatedTables);
+                                  handleUpdate({ reservations: updated, tables: updatedTables });
+                                } else {
+                                  handleUpdate({ reservations: updated });
+                                }
                               }}
                               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
                             >
@@ -10711,10 +10741,16 @@ isBeauty ? (
           const monthConfirmedCount = monthReservations.filter(r => r.status === 'accepted' || r.status === 'confirmado' || r.status === 'seated' || r.status === 'ocupado').length;
           const monthPendingCount = monthReservations.filter(r => r.status === 'pending' || r.status === 'pendente' || !r.status).length;
 
-          const handleConfirmReservation = (resId: string) => {
-            const updated = reservations.map((r: any) => r.id === resId ? { ...r, status: 'accepted' } : r);
-            setReservations(updated);
-            handleUpdate({ reservations: updated });
+          const handleConfirmReservation = (res: any) => {
+            if (isBeauty || isShop || isHotel || isRentCar) {
+              const updated = reservations.map((r: any) => r.id === res.id ? { ...r, status: 'accepted' } : r);
+              setReservations(updated);
+              handleUpdate({ reservations: updated });
+            } else {
+              setShowCalendarOverlay(false);
+              setAcceptingReservation(res);
+              setActiveTab('tables');
+            }
           };
 
           const handleToggleBlockDay = () => {
@@ -10929,10 +10965,10 @@ isBeauty ? (
                             </div>
                             {isPending && (
                               <button
-                                onClick={() => handleConfirmReservation(res.id)}
+                                onClick={() => handleConfirmReservation(res)}
                                 className="w-full mt-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
                               >
-                                Confirmar Reserva
+                                {isBeauty || isShop || isHotel || isRentCar ? 'Confirmar Reserva' : 'Confirmar e Escolher Mesa'}
                               </button>
                             )}
                           </div>

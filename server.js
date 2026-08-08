@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import axios from 'axios';
 import { exec } from 'child_process';
+import crypto from 'crypto';
+import { XMLParser } from 'fast-xml-parser';
 import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData, publishLocalToCloud, listBackups, restoreLatestBackup } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,6 +32,65 @@ const minutesToTime = (min) => {
     const h = Math.floor(min / 60);
     const m = min % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
+// --- REGIONAL NEWS RSS SYNC (Açoriano Oriental) ---
+const NEWS_RSS_SOURCES = [
+    { name: 'Açoriano Oriental', url: 'https://www.acorianooriental.pt/feed/rss.xml' }
+];
+const NEWS_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop';
+const stripHtml = (str = '') => String(str).replace(/<[^>]*>/g, '').trim();
+
+const syncRegionalNews = async () => {
+    const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
+    const fetchedItems = [];
+
+    for (const source of NEWS_RSS_SOURCES) {
+        try {
+            const { data } = await axios.get(source.url, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+            const parsed = xmlParser.parse(data);
+            const rawItems = parsed?.rss?.channel?.item || [];
+            const items = Array.isArray(rawItems) ? rawItems : [rawItems];
+
+            items.forEach(item => {
+                if (!item?.title || !item?.link) return;
+                const link = String(item.link).trim();
+                const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
+                const description = stripHtml(item.description);
+                const image = item['media:content']?.['@_url'] || NEWS_FALLBACK_IMAGE;
+
+                fetchedItems.push({
+                    id: `rss_${crypto.createHash('md5').update(link).digest('hex').slice(0, 12)}`,
+                    title: stripHtml(item.title),
+                    description,
+                    content: description,
+                    date: pubDate.toLocaleDateString('pt-PT', { timeZone: 'Atlantic/Azores' }),
+                    time: pubDate.toLocaleTimeString('pt-PT', { timeZone: 'Atlantic/Azores', hour: '2-digit', minute: '2-digit' }),
+                    image,
+                    sliderImages: [],
+                    island: 'Açores',
+                    source: source.name,
+                    sourceUrl: link,
+                    isRss: true,
+                    _pubDateMs: pubDate.getTime()
+                });
+            });
+        } catch (err) {
+            console.error(`⚠️ Falha ao sincronizar RSS de ${source.name}:`, err.message);
+        }
+    }
+
+    if (fetchedItems.length === 0) return 0;
+
+    fetchedItems.sort((a, b) => b._pubDateMs - a._pubDateMs);
+    fetchedItems.forEach(item => delete item._pubDateMs);
+
+    const db = await readDB();
+    const manualNews = (db.news || []).filter(n => !n.isRss);
+    db.news = [...fetchedItems.slice(0, 20), ...manualNews];
+    await writeDB(db);
+    console.log(`📰 Notícias regionais sincronizadas: ${fetchedItems.length} itens.`);
+    return fetchedItems.length;
 };
 
 // Multer Memory Storage (For Base64 storage in MongoDB)
@@ -959,6 +1020,18 @@ app.post('/api/clear-reservations', async (req, res) => {
         });
     } catch (err) {
         console.error("❌ Clear reservations failed:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Manual trigger to refresh regional news from RSS sources (used by Admin Dashboard "refresh" and cron)
+app.post('/api/news/sync-rss', async (req, res) => {
+    try {
+        const count = await syncRegionalNews();
+        const db = await readDB();
+        res.json({ success: true, fetched: count, total: (db.news || []).length });
+    } catch (err) {
+        console.error("❌ News RSS sync failed:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2268,6 +2341,10 @@ const startServer = () => {
         }).catch(err => {
             console.error("🚨 Critical database connection error:", err.message);
         });
+
+        // Regional news: sync real articles from RSS shortly after boot, then keep refreshing periodically
+        setTimeout(() => { syncRegionalNews().catch(err => console.error('⚠️ Initial news sync failed:', err.message)); }, 8000);
+        setInterval(() => { syncRegionalNews().catch(err => console.error('⚠️ Periodic news sync failed:', err.message)); }, 30 * 60 * 1000);
 
         // Force fresh deploy trigger to Render: 2026-06-07T21:52:50Z active
         const selfPing = () => {
