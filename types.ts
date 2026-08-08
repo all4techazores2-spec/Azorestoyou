@@ -301,6 +301,22 @@ export interface Restaurant {
   blockedDates?: string[];
   blockedSlots?: Record<string, string[]>;
   partnerPayoutFrequency?: 'weekly' | 'daily';
+  integrations?: {
+    whatsapp?: { phoneNumberId?: string; accessToken?: string; verifyToken?: string };
+    instagram?: { pageId?: string; accessToken?: string };
+    facebook?: { pageId?: string; accessToken?: string };
+  };
+  inboxMessages?: InboxMessage[];
+}
+
+export interface InboxMessage {
+  id: string;
+  source: 'WhatsApp' | 'Instagram' | 'Facebook' | 'Google';
+  direction: 'in' | 'out';
+  sender: string;
+  senderPhone?: string;
+  text: string;
+  time: string;
 }
 
 export interface Activity {
@@ -339,6 +355,20 @@ export interface TourGuide {
 export interface BusStop {
   id: string;
   name: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface BusLine {
+  id: string;
+  name: string;
+  company: string;
+  color: string;
+  origin: string;
+  destination: string;
+  scheduleIds: string[];
+  stopIds: string[];
+  path: [number, number][];
 }
 
 export interface BusSchedule {

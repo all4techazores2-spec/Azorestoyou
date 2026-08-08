@@ -170,6 +170,47 @@ app.get('/api/health', async (req, res) => {
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
 
+// --- BUS TRACKING (crowdsourced, in-memory only — no persistence/backup) ---
+// Riders opt in per trip; the client computes progress along the line's path and
+// pings this. Entries expire on their own so a dropped/closed app just disappears.
+const BUS_TRACKING_TTL_MS = 90 * 1000;
+const busTrackingStore = new Map(); // sessionId -> { lineId, direction, lat, lng, progress, updatedAt }
+
+const pruneBusTracking = () => {
+    const now = Date.now();
+    for (const [sessionId, entry] of busTrackingStore) {
+        if (now - entry.updatedAt > BUS_TRACKING_TTL_MS) busTrackingStore.delete(sessionId);
+    }
+};
+
+app.post('/api/bus-tracking/ping', (req, res) => {
+    const { sessionId, lineId, direction, lat, lng, progress } = req.body || {};
+    if (!sessionId || !lineId || typeof lat !== 'number' || typeof lng !== 'number') {
+        return res.status(400).json({ error: 'sessionId, lineId, lat e lng são obrigatórios.' });
+    }
+    busTrackingStore.set(sessionId, {
+        lineId, direction: direction === 'inbound' ? 'inbound' : 'outbound',
+        lat, lng, progress: typeof progress === 'number' ? Math.max(0, Math.min(1, progress)) : null,
+        updatedAt: Date.now(),
+    });
+    pruneBusTracking();
+    res.json({ success: true });
+});
+
+app.delete('/api/bus-tracking/ping/:sessionId', (req, res) => {
+    busTrackingStore.delete(req.params.sessionId);
+    res.json({ success: true });
+});
+
+app.get('/api/bus-tracking/active', (req, res) => {
+    pruneBusTracking();
+    const { lineId } = req.query;
+    const entries = [...busTrackingStore.entries()]
+        .filter(([, e]) => !lineId || e.lineId === lineId)
+        .map(([sessionId, e]) => ({ sessionId, ...e }));
+    res.json({ entries });
+});
+
 app.get('/api/youtube-search', async (req, res) => {
     const query = (req.query.q || '').toString().trim();
     if (!query) return res.status(400).json({ error: 'Parâmetro "q" em falta.' });

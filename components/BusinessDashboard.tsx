@@ -10,8 +10,24 @@ import {
   ChevronRight, Calendar, Table as TableIcon, 
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Euro, Bell, RefreshCw, Eye, ChefHat,
-  ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud, Volume2, VolumeX
+  ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud, Volume2, VolumeX,
+  Facebook, Instagram
 } from 'lucide-react';
+
+// Ícones de marca não disponíveis no lucide-react (WhatsApp, Google)
+const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className={className}>
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.79.47 3.48 1.32 4.94L2 22l5.29-1.39c1.41.77 3.02 1.21 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm0 1.67c2.24 0 4.35.87 5.93 2.46a8.23 8.23 0 012.42 5.86c0 4.57-3.72 8.29-8.35 8.29a8.3 8.3 0 01-4.22-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.23 8.23 0 01-1.27-4.4c0-4.57 3.73-8.32 8.29-8.32zm-4.52 4.71c-.17 0-.44.06-.67.32-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.02 2.6.13.17 1.75 2.67 4.25 3.74.6.26 1.06.41 1.43.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.14-1.18-.06-.1-.23-.16-.48-.28-.25-.13-1.47-.72-1.7-.81-.23-.08-.4-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.44-.06-.13-.56-1.36-.78-1.86-.2-.49-.41-.42-.56-.43h-.48z"/>
+  </svg>
+);
+const GoogleIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <svg viewBox="0 0 48 48" width={size} height={size} className={className}>
+    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
+    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.5 26.7 36 24 36c-5.2 0-9.6-3.1-11.3-7.5l-6.5 5C9.6 39.6 16.2 44 24 44z"/>
+    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.2 5.2C39.9 36.6 44 31 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+  </svg>
+);
 import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
@@ -1356,6 +1372,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [showMessagesInbox, setShowMessagesInbox] = useState(false);
+  const [inboxReplyDrafts, setInboxReplyDrafts] = useState<Record<string, string>>({});
+  const [sendingInboxReplyId, setSendingInboxReplyId] = useState<string | null>(null);
   const [showReservationsListModal, setShowReservationsListModal] = useState(false);
   const [showCalendarOverlay, setShowCalendarOverlay] = useState(false);
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<number>(new Date().getMonth() === 7 ? new Date().getDate() : 1);
@@ -1403,7 +1421,10 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     creditValue: (business as any).creditValue ?? 0.30,
     creditsPerReservation: (business as any).creditsPerReservation ?? 0,
     openingHours: business.openingHours || '09:00-13:00, 14:00-19:00',
-    clockPhotos: (business as any).clockPhotos || []
+    clockPhotos: (business as any).clockPhotos || [],
+    whatsappPhoneNumberId: business.integrations?.whatsapp?.phoneNumberId || '',
+    whatsappAccessToken: business.integrations?.whatsapp?.accessToken || '',
+    whatsappVerifyToken: business.integrations?.whatsapp?.verifyToken || ''
   });
 
   // Staff Management State
@@ -1829,7 +1850,18 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const saveSettings = (e: React.FormEvent) => {
     e.preventDefault();
-    handleUpdate({ ...settingsForm });
+    const { whatsappPhoneNumberId, whatsappAccessToken, whatsappVerifyToken, ...rest } = settingsForm;
+    handleUpdate({
+      ...rest,
+      integrations: {
+        ...business.integrations,
+        whatsapp: {
+          phoneNumberId: whatsappPhoneNumberId,
+          accessToken: whatsappAccessToken,
+          verifyToken: whatsappVerifyToken
+        }
+      }
+    });
     alert('Configurações salvas com sucesso!');
   };
 
@@ -1848,6 +1880,39 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const handleUpdate = (updated: Partial<Restaurant>) => {
     lastLocalUpdateRef.current = Date.now();
     onUpdateBusiness({ ...business, ...updated });
+  };
+
+  const sendInboxReply = async (msg: { id: string; source: string; senderPhone?: string }) => {
+    const text = (inboxReplyDrafts[msg.id] || '').trim();
+    if (!text) return;
+
+    if (msg.source !== 'WhatsApp') {
+      alert('O envio de respostas para esta rede ainda não está disponível.');
+      return;
+    }
+    if (!msg.senderPhone) {
+      alert('Não foi possível identificar o destinatário desta mensagem.');
+      return;
+    }
+
+    setSendingInboxReplyId(msg.id);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/restaurants/${business.id}/inbox/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: msg.senderPhone, text })
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Falha ao enviar mensagem.');
+      }
+      setInboxReplyDrafts(prev => ({ ...prev, [msg.id]: '' }));
+      if (onForceRefresh) onForceRefresh();
+    } catch (err: any) {
+      alert(`⚠️ ${err.message || 'Erro ao enviar mensagem.'}`);
+    } finally {
+      setSendingInboxReplyId(null);
+    }
   };
 
   const addTable = () => {
@@ -7879,6 +7944,62 @@ isBeauty ? (
                     </div>
                   </div>
 
+                  {/* INTEGRAÇÃO WHATSAPP */}
+                  <div className="border-t border-slate-100 pt-6 mt-2">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center">
+                        <WhatsAppIcon size={16} className="text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Integração WhatsApp</p>
+                        <p className="text-xs text-slate-500 font-medium">Ligue o seu número de WhatsApp Business para receber pedidos diretamente no dashboard</p>
+                      </div>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4">
+                      <p className="text-xs text-emerald-700 font-bold leading-relaxed">
+                        💡 Estes dados obtêm-se na app criada em <strong>developers.facebook.com</strong> (produto WhatsApp Cloud API). Configure o webhook para <strong>https://azorestoyou-nyvy.onrender.com/webhook/whatsapp</strong> usando o "Verify Token" definido abaixo.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                          Phone Number ID
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
+                          value={settingsForm.whatsappPhoneNumberId}
+                          onChange={e => setSettingsForm({...settingsForm, whatsappPhoneNumberId: e.target.value})}
+                          placeholder="Ex: 123456789012345"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                          Verify Token
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
+                          value={settingsForm.whatsappVerifyToken}
+                          onChange={e => setSettingsForm({...settingsForm, whatsappVerifyToken: e.target.value})}
+                          placeholder="Uma palavra-passe à sua escolha"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-6">
+                      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-2">
+                        Access Token
+                      </label>
+                      <input
+                        type="password"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
+                        value={settingsForm.whatsappAccessToken}
+                        onChange={e => setSettingsForm({...settingsForm, whatsappAccessToken: e.target.value})}
+                        placeholder="Token permanente gerado na Meta"
+                      />
+                    </div>
+                  </div>
+
                   <div className="pt-4 flex justify-end">
                      <button type="submit" className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
                         <Save className="w-4 h-4" /> Guardar Alterações
@@ -10533,38 +10654,108 @@ isBeauty ? (
               </div>
 
               {/* Message List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {[
-                  { id: 'msg-1', source: 'Instagram', sender: 'Gustavo Pereira', text: 'Olá! Têm mesa livre para hoje às 21h30 para 4 pessoas?', time: 'Há 5m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Gustavo' },
-                  { id: 'msg-2', source: 'Facebook', sender: 'Ana Silva', text: 'Boa tarde, queria encomendar um caril de frango para take-away.', time: 'Há 12m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana' },
-                  { id: 'msg-3', source: 'Google', sender: 'Domingos Madeira', text: 'Tem opções vegetarianas ou sem glúten na vossa ementa?', time: 'Há 25m', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Domingos' },
-                  { id: 'msg-4', source: 'Instagram', sender: 'Beatriz Costa', text: 'Fiz uma reserva na app, mas preciso de alterar para 6 pessoas, é possível?', time: 'Há 1h', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Beatriz' }
-                ].map(msg => (
-                  <div key={msg.id} className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 shrink-0">
-                      <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${
-                          msg.source === 'Instagram' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30' :
-                          msg.source === 'Facebook' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                          'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        }`}>{msg.source}</span>
-                        <span className="text-[10px] text-slate-400 font-bold">{msg.time}</span>
-                      </div>
-                      <p className="font-bold text-sm mt-1">{msg.sender}</p>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">{msg.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <div className="flex-1 overflow-y-auto pr-1">
+                {(() => {
+                  const DEMO_MESSAGES = [
+                    { id: 'msg-1', source: 'Instagram', direction: 'in', sender: 'Gustavo Pereira', text: 'Olá! Têm mesa livre para hoje às 21h30 para 4 pessoas?', time: 'Há 5m' },
+                    { id: 'msg-2', source: 'Facebook', direction: 'in', sender: 'Ana Silva', text: 'Boa tarde, queria encomendar um caril de frango para take-away.', time: 'Há 12m' },
+                    { id: 'msg-3', source: 'Google', direction: 'in', sender: 'Domingos Madeira', text: 'Tem opções vegetarianas ou sem glúten na vossa ementa?', time: 'Há 25m' },
+                    { id: 'msg-4', source: 'Instagram', direction: 'in', sender: 'Beatriz Costa', text: 'Fiz uma reserva na app, mas preciso de alterar para 6 pessoas, é possível?', time: 'Há 1h' },
+                    { id: 'msg-5', source: 'WhatsApp', direction: 'in', sender: 'Ricardo Melo', text: 'Boa noite, ainda estão a aceitar reservas para amanhã ao almoço?', time: 'Há 2h' }
+                  ];
 
-              {/* Bottom message */}
-              <div className="border-t border-white/5 pt-4 mt-4 text-center">
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                  * Este é um modo visual de demonstração. Integração de API em desenvolvimento.
-                </p>
+                  const realMessages = business.inboxMessages || [];
+                  const usingDemoData = realMessages.length === 0;
+                  const inboxMessages = (usingDemoData ? DEMO_MESSAGES : realMessages).map(m => ({
+                    ...m,
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(m.sender)}`
+                  }));
+
+                  const networks: { key: string; label: string; color: string; bg: string; border: string; Icon: React.FC<{ size?: number; className?: string }> }[] = [
+                    { key: 'WhatsApp', label: 'WhatsApp', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', Icon: WhatsAppIcon },
+                    { key: 'Instagram', label: 'Instagram', color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/30', Icon: Instagram },
+                    { key: 'Facebook', label: 'Facebook', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', Icon: Facebook },
+                    { key: 'Google', label: 'Google', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', Icon: GoogleIcon },
+                  ];
+
+                  return (
+                    <>
+                      {/* Cartões por rede, com numeração de pedidos */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        {networks.map(net => {
+                          const count = inboxMessages.filter(m => m.source === net.key && m.direction !== 'out').length;
+                          return (
+                            <div key={net.key} className={`p-3 rounded-2xl border ${net.bg} ${net.border} flex flex-col items-center gap-1.5 text-center`}>
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-black/20 ${net.color}`}>
+                                <net.Icon size={18} />
+                              </div>
+                              <p className={`text-[8px] font-black uppercase tracking-widest ${net.color}`}>{net.label}</p>
+                              <p className="text-lg font-black text-white leading-none">{count}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Lista de mensagens */}
+                      <div className="space-y-3">
+                        {inboxMessages.map(msg => {
+                          const net = networks.find(n => n.key === msg.source)!;
+                          const canReply = !usingDemoData && msg.direction !== 'out';
+                          return (
+                            <div key={msg.id} className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all flex items-start gap-4">
+                              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-800 shrink-0">
+                                <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
+                                <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-md flex items-center justify-center bg-slate-900 border ${net.border} ${net.color}`}>
+                                  <net.Icon size={11} />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${net.bg} ${net.color} ${net.border}`}>
+                                    <net.Icon size={10} />
+                                    {msg.source}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-bold">{msg.time}</span>
+                                </div>
+                                <p className="font-bold text-sm mt-1">{msg.sender}</p>
+                                <p className="text-xs text-slate-300 mt-1 leading-relaxed">{msg.text}</p>
+
+                                {canReply && (
+                                  <div className="flex items-center gap-2 mt-3">
+                                    <input
+                                      type="text"
+                                      value={inboxReplyDrafts[msg.id] || ''}
+                                      onChange={e => setInboxReplyDrafts(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                                      onKeyDown={e => { if (e.key === 'Enter') sendInboxReply(msg); }}
+                                      placeholder="Responder..."
+                                      className="flex-1 bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-emerald-500/40"
+                                    />
+                                    <button
+                                      onClick={() => sendInboxReply(msg)}
+                                      disabled={sendingInboxReplyId === msg.id || !(inboxReplyDrafts[msg.id] || '').trim()}
+                                      className="p-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all active:scale-95 shrink-0"
+                                    >
+                                      <Send size={14} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Rodapé */}
+                      <div className="border-t border-white/5 pt-4 mt-4 text-center">
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                          {usingDemoData
+                            ? '* Exemplo visual. Ligue as suas redes em Configurações > Integração WhatsApp.'
+                            : '* Mensagens reais. Respostas disponíveis para WhatsApp.'}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </motion.div>
           </motion.div>

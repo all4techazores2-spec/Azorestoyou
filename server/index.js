@@ -251,7 +251,7 @@ app.post('/api/users/:email/notifications', (req, res) => {
   const notification = req.body;
   const users = readUsers();
   const index = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
-  
+
   if (index !== -1) {
     if (!users[index].notifications) users[index].notifications = [];
     users[index].notifications.unshift(notification); // Adicionar no topo
@@ -260,6 +260,119 @@ app.post('/api/users/:email/notifications', (req, res) => {
     res.json({ success: true });
   } else {
     res.status(404).json({ error: 'Utilizador não encontrado' });
+  }
+});
+
+// ---------------------------------------------------------
+// INTEGRAÇÃO WHATSAPP (Meta Cloud API)
+// ---------------------------------------------------------
+
+// 10. Verificação do Webhook (handshake exigido pela Meta ao configurar o endpoint)
+app.get('/webhook/whatsapp', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  const restaurants = readData();
+  const isKnownVerifyToken = restaurants.some(r => r.integrations?.whatsapp?.verifyToken === token);
+
+  if (mode === 'subscribe' && isKnownVerifyToken) {
+    console.log('✅ Webhook WhatsApp verificado com sucesso.');
+    return res.status(200).send(challenge);
+  }
+  res.sendStatus(403);
+});
+
+// 11. Receção de Mensagens WhatsApp
+app.post('/webhook/whatsapp', (req, res) => {
+  try {
+    const entry = req.body?.entry?.[0];
+    const change = entry?.changes?.[0]?.value;
+    const phoneNumberId = change?.metadata?.phone_number_id;
+    const incoming = change?.messages?.[0];
+
+    if (phoneNumberId && incoming) {
+      const restaurants = readData();
+      const index = restaurants.findIndex(r => r.integrations?.whatsapp?.phoneNumberId === phoneNumberId);
+
+      if (index !== -1) {
+        const contact = change.contacts?.[0];
+        if (!restaurants[index].inboxMessages) restaurants[index].inboxMessages = [];
+
+        restaurants[index].inboxMessages.unshift({
+          id: incoming.id || ('wa_' + Date.now()),
+          source: 'WhatsApp',
+          direction: 'in',
+          sender: contact?.profile?.name || incoming.from,
+          senderPhone: incoming.from,
+          text: incoming.text?.body || '[Mensagem não suportada]',
+          time: new Date().toISOString()
+        });
+
+        writeData(restaurants);
+        console.log(`📩 Mensagem WhatsApp recebida para ${restaurants[index].name}: ${incoming.text?.body}`);
+      } else {
+        console.warn(`⚠️ Mensagem WhatsApp recebida para phoneNumberId desconhecido: ${phoneNumberId}`);
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Erro ao processar webhook WhatsApp:', error);
+    res.sendStatus(200); // Responder sempre 200 para a Meta não repetir o envio
+  }
+});
+
+// 12. Envio de Resposta via WhatsApp
+app.post('/api/restaurants/:id/inbox/send', async (req, res) => {
+  const { id } = req.params;
+  const { to, text } = req.body;
+  const restaurants = readData();
+  const index = restaurants.findIndex(r => r.id === id);
+
+  if (index === -1) return res.status(404).json({ error: 'Restaurante não encontrado' });
+
+  const whatsapp = restaurants[index].integrations?.whatsapp;
+  if (!whatsapp?.phoneNumberId || !whatsapp?.accessToken) {
+    return res.status(400).json({ error: 'Integração WhatsApp não configurada para este negócio.' });
+  }
+
+  try {
+    const metaRes = await fetch(`https://graph.facebook.com/v20.0/${whatsapp.phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${whatsapp.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to,
+        text: { body: text }
+      })
+    });
+
+    const metaData = await metaRes.json();
+    if (!metaRes.ok) {
+      console.error('Erro da API do WhatsApp:', metaData);
+      return res.status(502).json({ error: 'Falha ao enviar mensagem via WhatsApp', details: metaData });
+    }
+
+    if (!restaurants[index].inboxMessages) restaurants[index].inboxMessages = [];
+    restaurants[index].inboxMessages.unshift({
+      id: 'out_' + Date.now(),
+      source: 'WhatsApp',
+      direction: 'out',
+      sender: restaurants[index].name,
+      senderPhone: to,
+      text,
+      time: new Date().toISOString()
+    });
+    writeData(restaurants);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao enviar mensagem WhatsApp:', error);
+    res.status(500).json({ error: 'Erro interno ao enviar mensagem.' });
   }
 });
 

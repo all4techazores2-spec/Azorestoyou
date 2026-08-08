@@ -13,13 +13,14 @@ import {
   Wrench, Zap, Hammer, Droplets, Paintbrush, HardHat, PencilRuler, 
   ThermometerSnowflake, DraftingCompass, Settings, ShoppingCart, 
   MessageSquare, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Calendar, Database,
-  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera, Map, FileText
+  CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Wine, Landmark, SlidersHorizontal, Camera, Map, FileText, Percent
 } from 'lucide-react';
 
 import * as constants from '../constants';
 
 import { API_BASE_URL } from '../config';
 import { searchOpenStreetMapPlaces, searchWikidataTourism, checkDuplicates } from '../services/freeDataImportService';
+import { calculateMicrotaxa, MICROTAXA_CATEGORIES, MicrotaxaCategoryId } from '../utils/microtaxa';
 
 const TattooMachineIcon: React.FC<{ size?: number; className?: string }> = ({ size = 24, className = "" }) => (
   <svg 
@@ -115,7 +116,7 @@ interface AdminDashboardProps {
   onUpdateUsers?: (users: any[]) => void;
 }
 
-type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace' | 'news';
+type Tab = 'dashboard' | 'restaurants' | 'shops' | 'beauty' | 'services' | 'auto_repairs' | 'auto_electronics' | 'used_market' | 'animals' | 'real_estate' | 'gyms' | 'stands' | 'offices' | 'it_services' | 'perfumes' | 'bars' | 'events' | 'municipal' | 'activities' | 'trails' | 'poi' | 'flights' | 'hotels' | 'cars' | 'buses' | 'accounts' | 'suppliers' | 'customers' | 'marketplace' | 'news' | 'microtaxas';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   restaurants = [], shops = [], beauty = [], services = [], autoRepairs = [], autoElectronics = [], usedMarket = [], animals = [], realEstate = [], gyms = [], stands = [], offices = [], itServices = [], perfumes = [], bars = [], events = [], municipal = [], activities = [], flights = [], hotels = [], cars = [], busSchedules = [], users = [], marketplaceAds = [], marketplaceCategories = [],
@@ -708,6 +709,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const microtaxaCategoryMeta: { id: MicrotaxaCategoryId; label: string; endpoint: string; list: any[]; setter: (l: any[]) => void }[] = [
+    { id: 'restaurants', label: 'Restaurantes', endpoint: 'restaurants', list: restaurants, setter: onUpdateRestaurants },
+    { id: 'shops', label: 'Lojas', endpoint: 'shops', list: shops, setter: onUpdateShops },
+    { id: 'beauty', label: 'Beleza', endpoint: 'beauty', list: beauty, setter: onUpdateBeauty },
+    { id: 'services', label: 'Serviços', endpoint: 'services', list: services, setter: onUpdateServices },
+    { id: 'hotels', label: 'Alojamentos', endpoint: 'hotels', list: hotels, setter: onUpdateHotels },
+    { id: 'cars', label: 'Rentcar', endpoint: 'cars', list: cars, setter: onUpdateCars },
+    { id: 'activities', label: 'Atividades', endpoint: 'activities', list: activities, setter: onUpdateActivities },
+    { id: 'real_estate', label: 'Imobiliária', endpoint: 'real_estate', list: realEstate, setter: onUpdateRealEstate },
+    { id: 'stands', label: 'Stands', endpoint: 'stands', list: stands, setter: onUpdateStands },
+  ];
+
+  const saveMicrotaxaBusiness = async (meta: typeof microtaxaCategoryMeta[number], updatedBusiness: any) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/${meta.endpoint}/${updatedBusiness.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedBusiness)
+      });
+    } catch (e: any) {
+      alert('Erro ao gravar no servidor: ' + e.message);
+    }
+    meta.setter(meta.list.map((item: any) => item.id === updatedBusiness.id ? updatedBusiness : item));
+  };
+
+  const handleMarkFeePaid = (meta: typeof microtaxaCategoryMeta[number], business: any) => {
+    const { feeOwed } = calculateMicrotaxa(business, meta.id);
+    if (feeOwed <= 0.001) return;
+    if (!confirm(`Confirmar pagamento de ${feeOwed.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })} de "${business.name || business.title}"?`)) return;
+    const now = new Date().toISOString();
+    const updatedBusiness = {
+      ...business,
+      feePaidUpTo: now,
+      feePaymentHistory: [...(business.feePaymentHistory || []), { date: now, amount: feeOwed }]
+    };
+    saveMicrotaxaBusiness(meta, updatedBusiness);
+  };
+
+  const handleRegisterMicrotaxaSale = (meta: typeof microtaxaCategoryMeta[number], business: any) => {
+    const valueStr = prompt(`Valor da venda concluída para "${business.name || business.title}" (€):`);
+    if (!valueStr) return;
+    const value = parseFloat(valueStr.replace(',', '.'));
+    if (!value || value <= 0) { alert('Valor inválido.'); return; }
+    const saleRecord = {
+      id: `sale_${Date.now()}`,
+      date: new Date().toISOString(),
+      total: value,
+      items: [{ name: meta.id === 'real_estate' ? 'Venda de Imóvel' : 'Venda de Veículo', price: value, quantity: 1 }]
+    };
+    const updatedBusiness = { ...business, salesHistory: [...(business.salesHistory || []), saleRecord] };
+    saveMicrotaxaBusiness(meta, updatedBusiness);
   };
 
   const handleSaveSliderSettings = async (device: 'desktop' | 'mobile') => {
@@ -3546,14 +3600,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span className="font-black uppercase tracking-widest text-xs">Marketplace</span>
           </button>
 
-          <button 
-            onClick={() => { setActiveTab('news'); setEditingItem(null); setShowOtherTabs(false); }} 
+          <button
+            onClick={() => { setActiveTab('news'); setEditingItem(null); setShowOtherTabs(false); }}
             className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all mt-2 ${activeTab === 'news' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-xl shadow-rose-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
           >
-            <FileText className={`w-6 h-6 ${activeTab === 'news' ? 'text-white' : 'text-red-500'}`} /> 
+            <FileText className={`w-6 h-6 ${activeTab === 'news' ? 'text-white' : 'text-red-500'}`} />
             <span className="font-black uppercase tracking-widest text-xs">Notícias</span>
           </button>
-          
+
+          <button
+            onClick={() => { setActiveTab('microtaxas'); setEditingItem(null); setShowOtherTabs(false); }}
+            className={`w-full text-left p-4 rounded-2xl flex items-center gap-3 transition-all mt-2 ${activeTab === 'microtaxas' ? 'bg-gradient-to-r from-violet-600 to-purple-600 shadow-xl shadow-purple-900/40 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <Percent className={`w-6 h-6 ${activeTab === 'microtaxas' ? 'text-white' : 'text-violet-500'}`} />
+            <span className="font-black uppercase tracking-widest text-xs">Microtaxas</span>
+          </button>
+
           <div className="h-px bg-slate-800/50 my-4 mx-2"></div>
 
           {/* MAIN TABS */}
@@ -4041,55 +4103,96 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                           <div className="space-y-4">
-                              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Top Entidades por Reservas</h5>
-                              <div className="space-y-3">
-                                 {((dashboardCategoryDetail === 'restaurants' ? restaurants : 
-                                    dashboardCategoryDetail === 'hotels' ? hotels :
-                                    dashboardCategoryDetail === 'cars' ? cars :
-                                    dashboardCategoryDetail === 'activities' ? activities : []) as any[])
-                                    .sort((a, b) => (b.reservations?.length || 0) - (a.reservations?.length || 0))
-                                    .slice(0, 5)
-                                    .map((item, idx) => (
-                                      <div key={item.id} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
-                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-black text-slate-300 w-4">#{idx+1}</span>
-                                            <span className="text-xs font-bold text-slate-700">{item.name || item.title}</span>
-                                         </div>
-                                         <span className="text-xs font-black text-blue-600">{item.reservations?.length || 0} res.</span>
-                                      </div>
-                                   ))}
-                              </div>
-                           </div>
+                        {(() => {
+                           const catId = dashboardCategoryDetail;
+                           const list = ((
+                              catId === 'restaurants' ? restaurants :
+                              catId === 'hotels' ? hotels :
+                              catId === 'cars' ? cars :
+                              catId === 'activities' ? activities :
+                              catId === 'shops' ? shops :
+                              catId === 'beauty' ? beauty : []
+                           ) as any[]);
 
-                           <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white">
-                              <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Volume de Negócios</h5>
-                              <div className="space-y-6">
-                                 <div>
-                                    <p className="text-3xl font-black text-white">
-                                       {(((dashboardCategoryDetail === 'restaurants' ? restaurants : 
-                                          dashboardCategoryDetail === 'hotels' ? hotels :
-                                          dashboardCategoryDetail === 'cars' ? cars :
-                                          dashboardCategoryDetail === 'activities' ? activities : []) as any[])
-                                          .reduce((acc, biz) => acc + (biz.reservations?.reduce((sum: number, r: any) => sum + (parseFloat(r.totalPrice) || 0), 0) || 0), 0) + (dashboardCategoryDetail === 'hotels' ? 8200 : 2500))
-                                          .toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
-                                    </p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Acumulado Total</p>
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white/5 p-4 rounded-2xl">
-                                       <p className="text-lg font-black text-emerald-400">+ €450</p>
-                                       <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Hoje</p>
-                                    </div>
-                                    <div className="bg-white/5 p-4 rounded-2xl">
-                                       <p className="text-lg font-black text-blue-400">+ €2,840</p>
-                                       <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Este Mês</p>
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
+                           const getTransactions = (biz: any): { date: string; amount: number }[] => {
+                              const txs: { date: string; amount: number }[] = [];
+                              (biz.reservations || []).forEach((r: any) => {
+                                 const amount = parseFloat(r.totalPrice) || 0;
+                                 if (amount > 0) txs.push({ date: r.createdAt || r.date, amount });
+                              });
+                              (biz.salesHistory || []).forEach((s: any) => {
+                                 txs.push({ date: s.date, amount: parseFloat(s.total) || 0 });
+                              });
+                              return txs;
+                           };
+
+                           const bizWithStats = list.map(biz => {
+                              const txs = getTransactions(biz);
+                              const revenue = txs.reduce((s, t) => s + t.amount, 0);
+                              const count = (biz.reservations?.length || 0) + (biz.salesHistory?.length || 0);
+                              return { biz, txs, revenue, count };
+                           });
+
+                           const totalVolume = bizWithStats.reduce((s, b) => s + b.revenue, 0);
+                           const now = new Date();
+                           const todayStr = now.toISOString().slice(0, 10);
+                           const monthStr = now.toISOString().slice(0, 7);
+                           let todayTotal = 0, monthTotal = 0;
+                           bizWithStats.forEach(b => b.txs.forEach(t => {
+                              if (!t.date) return;
+                              const d = new Date(t.date);
+                              if (isNaN(d.getTime())) return;
+                              const iso = d.toISOString();
+                              if (iso.slice(0, 10) === todayStr) todayTotal += t.amount;
+                              if (iso.slice(0, 7) === monthStr) monthTotal += t.amount;
+                           }));
+
+                           const topEntities = [...bizWithStats].sort((a, b) => b.count - a.count).slice(0, 5);
+
+                           return (
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                   <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Top Entidades por Movimento</h5>
+                                   <div className="space-y-3">
+                                      {topEntities.map(({ biz, count }, idx) => (
+                                        <div key={biz.id} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                                           <div className="flex items-center gap-3">
+                                              <span className="text-xs font-black text-slate-300 w-4">#{idx+1}</span>
+                                              <span className="text-xs font-bold text-slate-700">{biz.name || biz.title}</span>
+                                           </div>
+                                           <span className="text-xs font-black text-blue-600">{count} mov.</span>
+                                        </div>
+                                      ))}
+                                      {topEntities.length === 0 && (
+                                        <p className="text-xs font-bold text-slate-400 italic">Sem dados de momento.</p>
+                                      )}
+                                   </div>
+                                </div>
+
+                                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white">
+                                   <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Volume de Negócios</h5>
+                                   <div className="space-y-6">
+                                      <div>
+                                         <p className="text-3xl font-black text-white">
+                                            {totalVolume.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                                         </p>
+                                         <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Acumulado Total</p>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                         <div className="bg-white/5 p-4 rounded-2xl">
+                                            <p className="text-lg font-black text-emerald-400">{todayTotal.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Hoje</p>
+                                         </div>
+                                         <div className="bg-white/5 p-4 rounded-2xl">
+                                            <p className="text-lg font-black text-blue-400">{monthTotal.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase mt-1">Este Mês</p>
+                                         </div>
+                                      </div>
+                                   </div>
+                                </div>
+                             </div>
+                           );
+                        })()}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -4179,6 +4282,110 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                      </tbody>
                   </table>
                </div>
+            </div>
+          )}
+
+          {/* MICROTAXAS VIEW */}
+          {activeTab === 'microtaxas' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+               {(() => {
+                  const rows = microtaxaCategoryMeta.flatMap(meta =>
+                    meta.list.map((biz: any) => ({ meta, biz, ...calculateMicrotaxa(biz, meta.id) }))
+                  ).sort((a, b) => b.feeOwed - a.feeOwed);
+
+                  const totalPending = rows.reduce((s, r) => s + r.feeOwed, 0);
+                  const totalPaid = microtaxaCategoryMeta.reduce((s, meta) => s + meta.list.reduce(
+                    (s2: number, biz: any) => s2 + ((biz.feePaymentHistory || []).reduce((s3: number, p: any) => s3 + (parseFloat(p.amount) || 0), 0)), 0
+                  ), 0);
+
+                  return (
+                    <>
+                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+                          <div>
+                            <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Microtaxas</h2>
+                            <p className="text-slate-400 font-medium italic">Valor devido por cada negócio à plataforma e estado de pagamento</p>
+                          </div>
+                          <div className="flex gap-4">
+                             <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 text-right">
+                                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Pendente</p>
+                                <p className="text-2xl font-black text-amber-600">{totalPending.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                             </div>
+                             <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 text-right">
+                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Já Recebido</p>
+                                <p className="text-2xl font-black text-emerald-600">{totalPaid.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+                          <table className="w-full text-left border-collapse">
+                             <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Negócio</th>
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoria</th>
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Faturação</th>
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Microtaxa Devida</th>
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                                   <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                </tr>
+                             </thead>
+                             <tbody className="divide-y divide-slate-50">
+                                {rows.map(({ meta, biz, revenue, feeOwed }) => {
+                                  const isPending = feeOwed > 0.001;
+                                  return (
+                                    <tr key={`${meta.id}_${biz.id}`} className="hover:bg-slate-50/50 transition-colors">
+                                       <td className="px-8 py-6">
+                                          <p className="font-black text-slate-800 text-sm">{biz.name || biz.title || 'Sem nome'}</p>
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{meta.label}</span>
+                                       </td>
+                                       <td className="px-8 py-6 text-right">
+                                          <p className="text-xs font-bold text-slate-600">{revenue.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                                       </td>
+                                       <td className="px-8 py-6 text-right">
+                                          <p className="text-sm font-black text-slate-800">{feeOwed.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</p>
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border ${isPending ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                                             {isPending ? 'Pendente' : 'Pago'}
+                                          </span>
+                                       </td>
+                                       <td className="px-8 py-6 text-right">
+                                          <div className="flex justify-end gap-2">
+                                             {(meta.id === 'real_estate' || meta.id === 'stands') && (
+                                               <button
+                                                 onClick={() => handleRegisterMicrotaxaSale(meta, biz)}
+                                                 className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all shadow-sm"
+                                               >
+                                                  + Venda
+                                               </button>
+                                             )}
+                                             <button
+                                               onClick={() => handleMarkFeePaid(meta, biz)}
+                                               disabled={!isPending}
+                                               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${isPending ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}
+                                             >
+                                                Marcar Pago
+                                             </button>
+                                          </div>
+                                       </td>
+                                    </tr>
+                                  );
+                                })}
+                                {rows.length === 0 && (
+                                  <tr>
+                                    <td colSpan={6} className="px-8 py-20 text-center">
+                                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Nenhum negócio encontrado na base de dados.</p>
+                                    </td>
+                                  </tr>
+                                )}
+                             </tbody>
+                          </table>
+                       </div>
+                    </>
+                  );
+               })()}
             </div>
           )}
 
