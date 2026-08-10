@@ -276,15 +276,23 @@ const LiveClockCard: React.FC<{ businessName: string; island: string; photos?: s
 
           {/* Centralized weather and location with modern icons */}
           <div className="flex flex-wrap items-center justify-center gap-4 py-2 border-t border-white/5 w-full mt-2">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 text-white/80 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm shadow-inner transition-all hover:bg-white/10">
-              <MapPin size={12} className="text-[#D4AF37] animate-pulse" />
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 text-white/90 text-xs font-black uppercase tracking-widest pl-2 pr-4 py-2 rounded-full backdrop-blur-sm shadow-inner transition-all hover:bg-white/10">
+              <div className="w-8 h-8 rounded-full bg-[#D4AF37]/15 flex items-center justify-center shrink-0">
+                <MapPin size={18} className="text-[#D4AF37] animate-pulse" />
+              </div>
               <span>{island || 'Açores'}</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 text-white/80 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm shadow-inner transition-all hover:bg-white/10">
-              {weatherStr.includes('☀️') && <Sun size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '8s' }} />}
-              {weatherStr.includes('⛅') && <CloudSun size={12} className="text-amber-400" />}
-              {weatherStr.includes('🌦️') && <CloudRain size={12} className="text-blue-400 animate-bounce" style={{ animationDuration: '3s' }} />}
-              {weatherStr.includes('☁️') && <Cloud size={12} className="text-slate-400" />}
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 text-white/90 text-xs font-black uppercase tracking-widest pl-2 pr-4 py-2 rounded-full backdrop-blur-sm shadow-inner transition-all hover:bg-white/10">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                weatherStr.includes('☀️') ? 'bg-yellow-400/15' :
+                weatherStr.includes('⛅') ? 'bg-amber-400/15' :
+                weatherStr.includes('🌦️') ? 'bg-blue-400/15' : 'bg-slate-400/15'
+              }`}>
+                {weatherStr.includes('☀️') && <Sun size={18} className="text-yellow-400 animate-spin" style={{ animationDuration: '8s' }} />}
+                {weatherStr.includes('⛅') && <CloudSun size={18} className="text-amber-400" />}
+                {weatherStr.includes('🌦️') && <CloudRain size={18} className="text-blue-400 animate-bounce" style={{ animationDuration: '3s' }} />}
+                {weatherStr.includes('☁️') && <Cloud size={18} className="text-slate-300" />}
+              </div>
               <span>{weatherStr.replace(/[☀️⛅🌦️☁️]/g, '').trim()}</span>
             </div>
           </div>
