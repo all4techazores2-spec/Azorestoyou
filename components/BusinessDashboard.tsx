@@ -1662,6 +1662,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       tableName: invoiceData.tableName,
       customerName: invoiceData.nif,
       total: currentPersonToPay,
+      paymentMethod: invoiceData.paymentMethod,
       items: invoiceData.items.map(it => ({
         name: it.name,
         price: it.price,
