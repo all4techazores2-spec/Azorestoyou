@@ -1335,31 +1335,22 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       return;
     }
     // Apenas sincronizar dados em tempo real do servidor.
-    // Proteção contra falhas transitórias: se a nova lista vier vazia mas já tínhamos dados
-    // válidos, ignora-se a atualização em vez de apagar tudo (evita reservas/mesas a
-    // "aparecer e desaparecer" durante hiccups de sincronização).
-    if (Array.isArray(business.reservations)) {
-      setReservations(prev => (business.reservations.length === 0 && prev.length > 0) ? prev : business.reservations);
-    }
-    if (Array.isArray(business.kitchenOrders)) {
-      setKitchenOrders(prev => (business.kitchenOrders.length === 0 && prev.length > 0) ? prev : business.kitchenOrders);
-    }
-    if (Array.isArray(business.staff)) {
-      setStaff(prev => (business.staff.length === 0 && prev.length > 0) ? prev : business.staff);
-    }
+    // Nota: já não é preciso proteger contra "listas vazias" aqui — o db.js agora propaga
+    // erros de leitura em vez de devolver dados vazios como se fossem válidos, por isso uma
+    // atualização vazia vinda do servidor é sempre real (ex.: reservas foram mesmo limpas).
+    if (Array.isArray(business.reservations)) setReservations(business.reservations);
+    if (Array.isArray(business.kitchenOrders)) setKitchenOrders(business.kitchenOrders);
+    if (Array.isArray(business.staff)) setStaff(business.staff);
     // NÃO sobrescrever products, posCategories, dishes ou services via polling.
     // Esses dados só devem atualizar quando o utilizador guarda explicitamente via handleUpdate().
     if (Array.isArray(business.tables)) {
-      setTables(prev => {
-        if (business.tables.length === 0 && prev.length > 0) return prev;
-        return business.tables.map((bt: any) => {
-          const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
-          return {
-            ...bt,
-            qrCodeUrl: bt.qrCodeUrl !== undefined && bt.qrCodeUrl !== null ? bt.qrCodeUrl : (localTable?.qrCodeUrl || null)
-          };
-        });
-      });
+      setTables(prev => business.tables.map((bt: any) => {
+        const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
+        return {
+          ...bt,
+          qrCodeUrl: bt.qrCodeUrl !== undefined && bt.qrCodeUrl !== null ? bt.qrCodeUrl : (localTable?.qrCodeUrl || null)
+        };
+      }));
     }
   }, [business]);
 

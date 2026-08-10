@@ -500,22 +500,12 @@ const App: React.FC = () => {
                   setCache(`azores_cache_${key}`, merged);
                   try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
                 } else {
-                  // Proteção contra falhas transitórias: se o servidor devolver uma coleção
-                  // vazia mas já tínhamos dados válidos, ignora a resposta em vez de apagar
-                  // tudo (evita o dashboard "aparecer e desaparecer" durante hiccups do Atlas).
-                  let acceptedEmptyOverwrite = true;
-                  setter((prev: any[]) => {
-                    if (normalized.length === 0 && Array.isArray(prev) && prev.length > 0) {
-                      console.warn(`⚠️ Resposta vazia para [${key}] — a manter ${prev.length} itens já carregados.`);
-                      acceptedEmptyOverwrite = false;
-                      return prev;
-                    }
-                    return normalized;
-                  });
-                  if (acceptedEmptyOverwrite) {
-                    setCache(`azores_cache_${key}`, normalized);
-                    try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
-                  }
+                  // Nota: já não é preciso proteger contra "respostas vazias" aqui — o db.js
+                  // agora propaga erros de leitura em vez de devolver dados vazios como se
+                  // fossem válidos, por isso uma resposta 200 com array vazio é sempre real.
+                  setter(normalized);
+                  setCache(`azores_cache_${key}`, normalized);
+                  try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
                 }
               }
              if (completedCount === keysToFetch.length) {
