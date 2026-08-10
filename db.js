@@ -193,8 +193,12 @@ export const readDB = async (bypassCache = false) => {
         } catch (err) {
             activeFetchPromise = null; // Clear lock on error
             console.error("❌ CRITICAL DATABASE READ ERROR:", err.message);
-            // Return cache if available, otherwise empty default
-            return memoryCache || DEFAULT_DB;
+            // Se houver cache (mesmo desatualizado), devolve-o — é melhor que dados vazios.
+            if (memoryCache) return memoryCache;
+            // Sem cache disponível: propaga o erro em vez de devolver DEFAULT_DB (arrays vazios).
+            // Devolver DEFAULT_DB aqui mascarava falhas de leitura como "sem dados", o que fazia
+            // o frontend apagar coleções inteiras do estado (ex.: restaurantes a desaparecer).
+            throw err;
         }
     } else if (getMongoURI()) {
         // MongoDB URI exists but not yet connected - return cache or fallback to local JSON
@@ -292,6 +296,13 @@ const backupCurrentCloudData = async (reason) => {
         // Um backup falhado NÃO deve impedir a operação principal, mas fica registado.
         console.error("⚠️ Falha ao criar backup de segurança:", err.message);
     }
+};
+
+// Cria uma cópia de segurança do documento atual da cloud, sem alterar nada.
+// Reutiliza o mesmo mecanismo de backupCurrentCloudData usado antes de publish-to-cloud,
+// para que fique disponível para restauro via listBackups()/restoreLatestBackup().
+export const createSafetyBackup = async (reason) => {
+    await backupCurrentCloudData(reason);
 };
 
 export const publishLocalToCloud = async () => {

@@ -178,6 +178,10 @@ const App: React.FC = () => {
     } catch (e) { return fallback; }
   };
 
+  // Guarda o último negócio válido encontrado, para evitar desmontar o BusinessDashboard
+  // inteiro quando o array de negócios fica momentaneamente vazio (ex.: hiccup de sincronização).
+  const lastValidBizRef = React.useRef<any>(null);
+
   const [restaurants, setRestaurants] = useState<Restaurant[]>(() => loadFromCache('restaurants', []));
   const [activities, setActivities] = useState<Activity[]>(() => loadFromCache('activities', []));
   const [flights, setFlights] = useState<Flight[]>(() => loadFromCache('flights', []));
@@ -404,7 +408,7 @@ const App: React.FC = () => {
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   // Function to fetch data from Backend with Retry logic for Cold Starts
-  const fetchData = async (retries = 3, specificKeys?: string[]) => {
+  const fetchData = async (retries = 3, specificKeys?: string[], bypassCache: boolean = true) => {
     setIsSyncing(true);
     try {
       const normalizeBusiness = (b: any) => ({
@@ -456,7 +460,7 @@ const App: React.FC = () => {
       let completedCount = 0;
 
       keysToFetch.forEach(key => {
-        const bypass = (specificKeys && specificKeys.length > 0) ? '&bypassCache=true' : '';
+        const bypass = (specificKeys && specificKeys.length > 0 && bypassCache) ? '&bypassCache=true' : '';
         fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`)
           .then(r => {
             if (!r.ok) {
@@ -496,9 +500,22 @@ const App: React.FC = () => {
                   setCache(`azores_cache_${key}`, merged);
                   try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
                 } else {
-                  setter(normalized);
-                  setCache(`azores_cache_${key}`, normalized);
-                  try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+                  // Proteção contra falhas transitórias: se o servidor devolver uma coleção
+                  // vazia mas já tínhamos dados válidos, ignora a resposta em vez de apagar
+                  // tudo (evita o dashboard "aparecer e desaparecer" durante hiccups do Atlas).
+                  let acceptedEmptyOverwrite = true;
+                  setter((prev: any[]) => {
+                    if (normalized.length === 0 && Array.isArray(prev) && prev.length > 0) {
+                      console.warn(`⚠️ Resposta vazia para [${key}] — a manter ${prev.length} itens já carregados.`);
+                      acceptedEmptyOverwrite = false;
+                      return prev;
+                    }
+                    return normalized;
+                  });
+                  if (acceptedEmptyOverwrite) {
+                    setCache(`azores_cache_${key}`, normalized);
+                    try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+                  }
                 }
               }
              if (completedCount === keysToFetch.length) {
@@ -571,8 +588,10 @@ const App: React.FC = () => {
     let syncInterval: any;
     if (isDataLoaded) {
       syncInterval = setInterval(() => {
-        // Sincronização ultra-rápida (2s) limitada às categorias de reservas para máxima performance
-        fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services']);
+        // Sincronização ultra-rápida (2s) limitada às categorias de reservas para máxima performance.
+        // bypassCache=false: respeita a cache de 30s do servidor (db.js), que é invalidada
+        // instantaneamente sempre que há uma escrita — evita sobrecarregar o Atlas a cada 2s.
+        fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services'], false);
         console.log("🔄 Real-time sync (2s interval)...");
       }, 2000); // Reduzido para 2 segundos!
     }
@@ -2084,9 +2103,14 @@ const App: React.FC = () => {
     // Procurar o negócio nos estados sincronizados com o servidor
     const targetId = currentBusinessId.trim();
     let biz = [...restaurants, ...shops, ...beauty, ...hotels, ...services, ...offices, ...cars, ...municipal, ...realEstate].find(b => b.id === targetId);
-    
-    // Fallback: Se não encontrou no estado (sincronização pendente), apenas retornar erro amigável
-    if (!biz) {
+
+    if (biz) {
+      lastValidBizRef.current = biz;
+    } else if (lastValidBizRef.current && lastValidBizRef.current.id === targetId) {
+      // Falha transitória de sincronização (ex.: poll momentaneamente vazio): mantém o último
+      // negócio válido em vez de desmontar o dashboard inteiro para o ecrã "Negócio não encontrado".
+      biz = lastValidBizRef.current;
+    } else {
       // O estado é sincronizado periodicamente, se não está aqui, o ID pode ser inválido
       biz = null;
       // Se o ID começa com MUN, tentar carregar dados municipais do servidor

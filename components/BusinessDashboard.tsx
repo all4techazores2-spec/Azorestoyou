@@ -11,7 +11,7 @@ import {
   Check, AlertCircle, MapPin, Search, Star, Megaphone, CalendarPlus, Settings, Phone, Mail, Map as MapIcon, Lock, Receipt, Info,
   QrCode, Printer, ArrowRight, Send, Sparkles, Scissors, Flower, Store, Wrench, Hotel, Car, Package, Menu, BarChart3, DollarSign, Euro, Bell, RefreshCw, Eye, ChefHat,
   ScanLine, PackagePlus, Camera, ShoppingCart, Play, MessageSquare, CloudSun, Sun, CloudRain, Cloud, Volume2, VolumeX,
-  Facebook, Instagram
+  Facebook, Instagram, Download, FileText, FileSpreadsheet
 } from 'lucide-react';
 
 // Ícones de marca não disponíveis no lucide-react (WhatsApp, Google)
@@ -1334,41 +1334,40 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
       console.log("⏳ Edição local recente. Ignorando sincronização de fundo.");
       return;
     }
-    // Apenas sincronizar dados em tempo real do servidor
-    if (business.reservations) setReservations(business.reservations);
-    if (business.kitchenOrders) setKitchenOrders(business.kitchenOrders);
-    if (business.staff) setStaff(business.staff);
+    // Apenas sincronizar dados em tempo real do servidor.
+    // Proteção contra falhas transitórias: se a nova lista vier vazia mas já tínhamos dados
+    // válidos, ignora-se a atualização em vez de apagar tudo (evita reservas/mesas a
+    // "aparecer e desaparecer" durante hiccups de sincronização).
+    if (Array.isArray(business.reservations)) {
+      setReservations(prev => (business.reservations.length === 0 && prev.length > 0) ? prev : business.reservations);
+    }
+    if (Array.isArray(business.kitchenOrders)) {
+      setKitchenOrders(prev => (business.kitchenOrders.length === 0 && prev.length > 0) ? prev : business.kitchenOrders);
+    }
+    if (Array.isArray(business.staff)) {
+      setStaff(prev => (business.staff.length === 0 && prev.length > 0) ? prev : business.staff);
+    }
     // NÃO sobrescrever products, posCategories, dishes ou services via polling.
     // Esses dados só devem atualizar quando o utilizador guarda explicitamente via handleUpdate().
-    if (business.tables) {
-      setTables(prev => business.tables.map((bt: any) => {
-        const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
-        return {
-          ...bt,
-          qrCodeUrl: bt.qrCodeUrl !== undefined && bt.qrCodeUrl !== null ? bt.qrCodeUrl : (localTable?.qrCodeUrl || null)
-        };
-      }));
+    if (Array.isArray(business.tables)) {
+      setTables(prev => {
+        if (business.tables.length === 0 && prev.length > 0) return prev;
+        return business.tables.map((bt: any) => {
+          const localTable = prev.find((lt: any) => String(lt.id) === String(bt.id));
+          return {
+            ...bt,
+            qrCodeUrl: bt.qrCodeUrl !== undefined && bt.qrCodeUrl !== null ? bt.qrCodeUrl : (localTable?.qrCodeUrl || null)
+          };
+        });
+      });
     }
   }, [business]);
 
   const [isSyncingVisual, setIsSyncingVisual] = useState(false);
 
-  const onForceRefreshRef = React.useRef(onForceRefresh);
-  useEffect(() => {
-    onForceRefreshRef.current = onForceRefresh;
-  }, [onForceRefresh]);
-
-  // Auto-Refresh (15 segundos) para manter reservas e pedidos atualizados em tempo real.
-  // Intervalo aumentado para reduzir risco de sobrescrever edições locais.
-  useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      console.log("⏱️ Auto-refreshing dashboard data from server...");
-      setIsSyncingVisual(true);
-      if (onForceRefreshRef.current) onForceRefreshRef.current();
-      setTimeout(() => setIsSyncingVisual(false), 800);
-    }, 15000);
-    return () => clearInterval(refreshInterval);
-  }, []);
+  // Nota: o polling próprio de 15s foi removido — o App.tsx já mantém sincronização
+  // global em tempo real (polling de 2s) e chamar onForceRefresh aqui era redundante,
+  // sobrepondo-se a esse polling e contribuindo para o efeito de "aparece e desaparece".
 
   const [reservations, setReservations] = useState<Reservation[]>(business.reservations || []);
   const [showMessagesInbox, setShowMessagesInbox] = useState(false);
@@ -2609,6 +2608,60 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     }
   };
 
+  const handleMarkTableOccupied = (table: RestaurantTable) => {
+    lastLocalUpdateRef.current = Date.now();
+
+    const newTables = tables.map(t =>
+      t.id === table.id ? { ...t, status: 'occupied' as const } : t
+    );
+    setTables(newTables);
+    onUpdateBusiness({ ...business, tables: newTables });
+
+    const linkedRes = reservations.find(r => r.tableId === table.id && (r.status === 'accepted'));
+    if (linkedRes) {
+      const newReservations = reservations.map(r => r.id === linkedRes.id ? { ...r, status: 'occupied' as const } : r);
+      setReservations(newReservations);
+
+      fetch(`${API_BASE_URL}/api/reservations/${linkedRes.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'occupied' })
+      })
+      .then(() => { if (onForceRefresh) onForceRefresh(); })
+      .catch(err => console.error("Erro ao sincronizar reserva global:", err));
+    }
+  };
+
+  const handleCancelTableReservation = (table: RestaurantTable) => {
+    if (!window.confirm(`Cancelar a reserva da mesa #${table.number ?? table.id}?`)) return;
+
+    lastLocalUpdateRef.current = Date.now();
+
+    const newTables = tables.map(t =>
+      t.id === table.id ? { ...t, status: 'available' as const, customerName: undefined, reservationTime: undefined } : t
+    );
+    setTables(newTables);
+
+    const linkedRes = reservations.find(r => r.tableId === table.id && (r.status === 'accepted' || r.status === 'pending'));
+    let newReservations = reservations;
+    if (linkedRes) {
+      newReservations = reservations.map(r => r.id === linkedRes.id ? { ...r, status: 'cancelled' as const } : r);
+      setReservations(newReservations);
+    }
+
+    onUpdateBusiness({ ...business, tables: newTables, reservations: newReservations });
+
+    if (linkedRes) {
+      fetch(`${API_BASE_URL}/api/reservations/${linkedRes.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      })
+      .then(() => { if (onForceRefresh) onForceRefresh(); })
+      .catch(err => console.error("Erro ao sincronizar reserva global:", err));
+    }
+  };
+
   const deleteReservation = async (id: string) => {
     if (!window.confirm("⚠️ ELIMINAR PERMANENTEMENTE?\nEsta ação não pode ser desfeita e a reserva desaparecerá de todos os registos (Dashboard e Cliente).")) return;
 
@@ -2675,6 +2728,57 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
     setProducts(newProducts);
     handleUpdate({ products: newProducts });
     startProductEdit(newProducts.length - 1);
+  };
+
+  const buildProductsExportHtml = () => {
+    const baseCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : posCategories;
+    const currentCategories = Array.from(new Set(products.map(p => p.category)))
+      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
+    const displayCategories = Array.from(new Set([...baseCategories, ...currentCategories]))
+      .filter((c): c is string => typeof c === 'string' && c.trim() !== '' && c !== 'Stock Interno');
+
+    const sectionsHtml = displayCategories.map(cat => {
+      const catProducts = products.filter(p => p.category === cat);
+      if (catProducts.length === 0) return '';
+      const rowsHtml = catProducts.map(p => {
+        const stock = p.stock || 0;
+        const minStock = p.minStock || 0;
+        const isLowStock = stock <= minStock;
+        const rowStyle = isLowStock ? ' style="background:#fecaca;color:#991b1b;font-weight:bold;"' : '';
+        return `<tr${rowStyle}><td>${p.name}</td><td>${stock}</td><td>${minStock}</td><td>${isLowStock ? 'STOCK BAIXO' : 'OK'}</td></tr>`;
+      }).join('');
+      return `<h3>${cat} (${catProducts.length} produto${catProducts.length === 1 ? '' : 's'})</h3>
+        <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%;margin-bottom:24px;">
+          <tr style="background:#f1f5f9;"><th>Produto</th><th>Stock Atual</th><th>Stock Mínimo</th><th>Estado</th></tr>
+          ${rowsHtml}
+        </table>`;
+    }).join('');
+
+    return `<h2>Catálogo de Produtos — ${business.name}</h2>
+      <p>Gerado em ${new Date().toLocaleDateString('pt-PT')}</p>
+      ${sectionsHtml}`;
+  };
+
+  const exportProductsPDF = () => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<html><head><title>Catálogo de Produtos</title><style>
+      body{font-family:sans-serif;padding:24px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ccc;padding:8px;text-align:left;font-size:13px;} th{background:#f1f5f9;} h3{margin-top:24px;}
+    </style></head><body>${buildProductsExportHtml()}</body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
+
+  const exportProductsExcel = () => {
+    const html = `<html><head><meta charset="utf-8"></head><body>${buildProductsExportHtml()}</body></html>`;
+    const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `catalogo_produtos_${new Date().toISOString().split('T')[0]}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const updateProduct = (idx: number, field: keyof Product, value: any) => {
@@ -3732,7 +3836,35 @@ return t;
                                           </button>
                                         </div>
                                       );
-                                    })() : (
+                                    })() : table.status === 'reserved' ? (
+                                      <div className="w-full flex flex-col gap-1.5 justify-center h-full">
+                                        <div className="flex items-center justify-center gap-1 shrink-0 mb-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                                          <p className="text-[8px] font-black text-orange-500 uppercase tracking-widest leading-none">Mesa Reservada</p>
+                                        </div>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleMarkTableOccupied(table);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-md cursor-pointer"
+                                        >
+                                          <ShoppingBag size={10} />
+                                          Marcar Ocupada
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleCancelTableReservation(table);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2.5 bg-red-500/90 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 transition-all flex items-center justify-center cursor-pointer"
+                                        >
+                                          Cancelar Reserva
+                                        </button>
+                                      </div>
+                                    ) : (
                                       <div className="w-full flex flex-col gap-1.5 justify-center h-full">
                                         <div className="flex items-center justify-center gap-1 shrink-0 mb-1">
                                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -6422,8 +6554,12 @@ ${items.map((it, i) => `        <Line>
                     <h3 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Reservas de Pacotes</h3>
                     <p className="text-slate-400 text-sm font-bold mt-1 uppercase tracking-widest">Gestão de Pedidos Integrados (Hotel + Carro)</p>
                   </div>
-                  <button 
-                    onClick={() => onForceRefresh && onForceRefresh()}
+                  <button
+                    onClick={() => {
+                      setIsSyncingVisual(true);
+                      onForceRefresh && onForceRefresh();
+                      setTimeout(() => setIsSyncingVisual(false), 800);
+                    }}
                     className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-100 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm group"
                   >
                     <RefreshCw size={16} className={`text-blue-500 transition-transform duration-700 ${isUploading || isSyncingVisual ? 'animate-spin' : 'group-hover:rotate-180'}`} />
@@ -6539,6 +6675,20 @@ ${items.map((it, i) => `        <Line>
                      )}
                      <button onClick={addProduct} className="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
                        <Plus className="w-4 h-4" /> Novo Produto
+                     </button>
+                     <button
+                       onClick={exportProductsPDF}
+                       title="Exportar catálogo em PDF"
+                       className="px-5 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center gap-2 border bg-red-50 text-red-600 border-red-100 hover:bg-red-100 hover:scale-105 active:scale-95"
+                     >
+                       <FileText className="w-4 h-4" /> PDF
+                     </button>
+                     <button
+                       onClick={exportProductsExcel}
+                       title="Exportar catálogo em Excel"
+                       className="px-5 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center gap-2 border bg-green-50 text-green-700 border-green-100 hover:bg-green-100 hover:scale-105 active:scale-95"
+                     >
+                       <FileSpreadsheet className="w-4 h-4" /> Excel
                      </button>
                    </div>
                 </div>
