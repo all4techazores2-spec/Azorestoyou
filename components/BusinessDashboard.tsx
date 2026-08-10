@@ -3825,6 +3825,17 @@ return t;
                                             <ChefHat size={10} />
                                             Cozinha
                                           </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleDeleteTable(table.id);
+                                              setHoveredTableId(null);
+                                            }}
+                                            className="w-full py-2 mt-0.5 text-red-400 hover:text-white hover:bg-red-500/80 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 cursor-pointer"
+                                          >
+                                            <Trash2 size={10} />
+                                            Eliminar Mesa
+                                          </button>
                                         </div>
                                       );
                                     })() : table.status === 'reserved' ? (
@@ -3854,6 +3865,17 @@ return t;
                                         >
                                           Cancelar Reserva
                                         </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTable(table.id);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2 mt-0.5 text-red-400 hover:text-white hover:bg-red-500/80 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 cursor-pointer"
+                                        >
+                                          <Trash2 size={10} />
+                                          Eliminar Mesa
+                                        </button>
                                       </div>
                                     ) : (
                                       <div className="w-full flex flex-col gap-1.5 justify-center h-full">
@@ -3881,6 +3903,17 @@ return t;
                                           className="w-full py-2.5 bg-slate-800 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all flex items-center justify-center cursor-pointer"
                                         >
                                           Alterar Estado
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTable(table.id);
+                                            setHoveredTableId(null);
+                                          }}
+                                          className="w-full py-2 mt-0.5 text-red-400 hover:text-white hover:bg-red-500/80 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 cursor-pointer"
+                                        >
+                                          <Trash2 size={10} />
+                                          Eliminar Mesa
                                         </button>
                                       </div>
                                     )}
