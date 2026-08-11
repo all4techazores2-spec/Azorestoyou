@@ -10243,7 +10243,7 @@ isBeauty ? (
                       timestamp: new Date().toISOString(),
                     };
                     const updatedLogs = [...(business.cashDrawerLogs || []), newLog];
-                    
+
                     onUpdateBusiness({
                       ...business,
                       isDrawerOpen: false,
@@ -10251,6 +10251,9 @@ isBeauty ? (
                       cashDrawerLogs: updatedLogs
                     });
 
+                    setIsDrawerOpen(false);
+                    setDrawerAmount(0);
+                    setOpeningAmount('30');
                     setClosingDrawerOpen(false);
                     alert("🔒 Caixa de Turno Fechado com sucesso! Turno encerrado.");
                   }}
