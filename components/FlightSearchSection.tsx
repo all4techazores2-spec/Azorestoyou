@@ -47,15 +47,15 @@ const ALL_AIRPORTS = [...INTL_AIRPORTS, ...AZORES_AIRPORTS];
 
 // ─── Companhias ───────────────────────────────────────────────────────────────
 
-const AIRLINES: Record<string, { name: string; short: string; color: string; bg: string; textColor: string }> = {
-  'SATA': { name: 'SATA Azores', short: 'S4', color: '#005DA8', bg: '#dbeafe', textColor: '#1e3a8a' },
-  'Air Canada': { name: 'Air Canada', short: 'AC', color: '#cc0000', bg: '#fee2e2', textColor: '#991b1b' },
-  'TAP': { name: 'TAP Air Portugal', short: 'TP', color: '#004d1a', bg: '#d1fae5', textColor: '#065f46' },
-  'Air Transat': { name: 'Air Transat', short: 'TS', color: '#dc4e00', bg: '#ffedd5', textColor: '#9a3412' },
-  'United': { name: 'United Airlines', short: 'UA', color: '#1a1a6e', bg: '#ede9fe', textColor: '#4c1d95' },
-  'Ryanair': { name: 'Ryanair', short: 'FR', color: '#073590', bg: '#dbeafe', textColor: '#1e40af' },
-  'easyJet': { name: 'easyJet', short: 'U2', color: '#FF6600', bg: '#ffedd5', textColor: '#c2410c' },
-  'Lufthansa': { name: 'Lufthansa', short: 'LH', color: '#05164D', bg: '#e0e7ff', textColor: '#3730a3' },
+const AIRLINES: Record<string, { name: string; short: string; color: string; bg: string; textColor: string; logoUrl?: string }> = {
+  'SATA':       { name: 'Azores Airlines', short: 'S4', color: '#005DA8', bg: '#dbeafe', textColor: '#1e3a8a', logoUrl: 'https://images.kiwi.com/airlines/64/S4.png' },
+  'Air Canada': { name: 'Air Canada',      short: 'AC', color: '#cc0000', bg: '#fee2e2', textColor: '#991b1b', logoUrl: 'https://images.kiwi.com/airlines/64/AC.png' },
+  'TAP':        { name: 'TAP Air Portugal',short: 'TP', color: '#004d1a', bg: '#f0fdf4', textColor: '#065f46', logoUrl: 'https://images.kiwi.com/airlines/64/TP.png' },
+  'Air Transat':{ name: 'Air Transat',     short: 'TS', color: '#0082ca', bg: '#e0f2fe', textColor: '#0369a1', logoUrl: 'https://images.kiwi.com/airlines/64/TS.png' },
+  'United':     { name: 'United Airlines', short: 'UA', color: '#1554a0', bg: '#eff6ff', textColor: '#1d4ed8', logoUrl: 'https://images.kiwi.com/airlines/64/UA.png' },
+  'Ryanair':    { name: 'Ryanair',         short: 'FR', color: '#073590', bg: '#dbeafe', textColor: '#1e40af' },
+  'easyJet':    { name: 'easyJet',         short: 'U2', color: '#FF6600', bg: '#ffedd5', textColor: '#c2410c' },
+  'Lufthansa':  { name: 'Lufthansa',       short: 'LH', color: '#05164D', bg: '#e0e7ff', textColor: '#3730a3' },
 };
 
 // ─── Painel de voos (Estado de Voos) ─────────────────────────────────────────
@@ -116,9 +116,37 @@ function StatusBadge({ status }: { status: string }) {
 
 function AirlineLogo({ airline, size = 'md' }: { airline: string; size?: 'sm' | 'md' | 'lg' }) {
   const a = AIRLINES[airline] || { name: airline, short: airline.substring(0, 2).toUpperCase(), bg: '#f1f5f9', textColor: '#475569' };
-  const cls = size === 'lg' ? 'w-12 h-12 text-sm' : size === 'sm' ? 'w-7 h-7 text-[9px]' : 'w-10 h-10 text-xs';
+  const dim = size === 'lg' ? 'w-12 h-12' : size === 'sm' ? 'w-7 h-7' : 'w-10 h-10';
+  const txtCls = size === 'lg' ? 'text-sm' : size === 'sm' ? 'text-[9px]' : 'text-xs';
+
+  if (a.logoUrl) {
+    return (
+      <div className={`${dim} rounded-xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center shrink-0 p-0.5`}>
+        <img
+          src={a.logoUrl}
+          alt={a.name}
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            // Se a imagem falhar, mostra a abreviatura como fallback
+            const target = e.currentTarget as HTMLImageElement;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent) {
+              parent.style.background = a.bg;
+              parent.style.color = a.textColor;
+              parent.style.fontSize = size === 'sm' ? '9px' : size === 'lg' ? '14px' : '12px';
+              parent.style.fontWeight = '900';
+              parent.innerText = a.short;
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Fallback: abreviatura colorida
   return (
-    <div className={`${cls} rounded-xl flex items-center justify-center font-black shrink-0`}
+    <div className={`${dim} ${txtCls} rounded-xl flex items-center justify-center font-black shrink-0`}
       style={{ background: a.bg, color: a.textColor }}>
       {a.short}
     </div>

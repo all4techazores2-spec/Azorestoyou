@@ -436,7 +436,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                     <span className="text-xs text-slate-500 font-semibold">{r.date || 'Recente'}</span>
                   </div>
                   <div className="flex text-yellow-400 text-sm">
-                    {Array.from({ length: r.rating || 5 }).map((_, idx) => (
+                    {Array.from({ length: Math.max(0, Math.min(5, Math.round(r.rating || 5))) }).map((_, idx) => (
                       <span key={idx}>★</span>
                     ))}
                   </div>

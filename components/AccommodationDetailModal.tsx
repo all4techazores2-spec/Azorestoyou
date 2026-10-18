@@ -162,7 +162,7 @@ const AccommodationDetailModal: React.FC<AccommodationDetailModalProps> = ({
                 {accommodation.type === 'al' ? 'AL (Alojamento Local)' : 'Hotel'}
               </span>
               <div className="flex gap-0.5">
-                {[...Array(accommodation.stars)].map((_, i) => (
+                {Array.from({ length: Math.max(0, Math.min(5, Math.round(accommodation.stars || 0))) }).map((_, i) => (
                   <Star key={i} size={12} className="fill-yellow-400 text-yellow-400" />
                 ))}
               </div>

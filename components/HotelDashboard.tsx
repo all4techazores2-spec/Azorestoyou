@@ -1892,7 +1892,7 @@ export default function HotelDashboard({ business, onUpdateBusiness, onLogout, l
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm">{rev.customerName || 'Anónimo'}</span>
                           <div className="flex items-center gap-1 text-yellow-500">
-                            {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                            {Array.from({ length: Math.max(0, Math.min(5, Math.round(rev.rating || 5))) }).map((_, i) => (
                               <Star key={i} size={14} className="fill-current" />
                             ))}
                           </div>
