@@ -1269,7 +1269,7 @@ const App: React.FC = () => {
       category = 'shops';
     } else if (q.includes('beleza') || q.includes('cabeleireiro') || q.includes('barbeiro') || q.includes('estética') || q.includes('unhas') || q.includes('estetica') || q.includes('manicure')) {
       category = 'beauty';
-    } else if (q.includes('voo') || q.includes('voos') || q.includes('flight') || q.includes('flights') || q.includes('avião') || q.includes('aeroporto')) {
+    } else if (q.includes('voo') || q.includes('voos') || q.includes('viagem') || q.includes('viagens') || q.includes('flight') || q.includes('flights') || q.includes('avião') || q.includes('aeroporto')) {
       category = 'flights';
     } else if (q.includes('bar') || q.includes('bares') || q.includes('noite') || q.includes('discoteca')) {
       category = 'bars';

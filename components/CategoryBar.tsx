@@ -3,7 +3,8 @@ import React from 'react';
 import { ExploreCategory, Language } from '../types';
 import { translations } from '../translations';
 import { 
-  Plane, 
+  Plane,
+  PlaneTakeoff,
   Utensils, 
   Car, 
   Image as ImageIcon, 
@@ -47,7 +48,7 @@ export interface CategoryItem {
 export const getNavigationCategories = (lang: Language = 'pt'): CategoryItem[] => {
   const t = translations[lang];
   return [
-    { id: 'flights', label: t.nav_flights, icon: <Plane className="w-6 h-6" />, color: '#1A75BB' },
+    { id: 'flights', label: t.nav_flights, icon: <PlaneTakeoff className="w-6 h-6" />, color: '#1A75BB' },
     { id: 'restaurants', label: t.nav_restaurants, icon: <Utensils className="w-6 h-6" />, color: '#E44D26' },
     { id: 'trails', label: t.nav_trails, icon: <Map className="w-6 h-6" />, color: '#2C7A2E' },
     { id: 'rentcar', label: t.nav_cars, icon: <Car className="w-6 h-6" />, color: '#4CAF50' },
@@ -59,13 +60,13 @@ export const getNavigationCategories = (lang: Language = 'pt'): CategoryItem[] =
     { id: 'beauty', label: t.nav_beauty, icon: <Sparkles className="w-6 h-6" />, color: '#FF4081' },
     { id: 'services', label: t.nav_services, icon: <Wrench className="w-6 h-6" />, color: '#607D8B' },
     { id: 'auto_repair', label: t.nav_auto_repair, icon: <Car className="w-6 h-6" />, color: '#C62828' },
-    { id: 'animals', label: t.nav_animals, icon: <Dog className="w-6 h-6" />, color: '#795548' },
     { id: 'real_estate', label: t.nav_real_estate, icon: <Building2 className="w-6 h-6" />, color: '#3F51B5' },
     { id: 'gyms', label: t.nav_gyms, icon: <Dumbbell className="w-6 h-6" />, color: '#000000' },
     { id: 'stands', label: t.nav_stands, icon: <CarFront className="w-6 h-6" />, color: '#212121' },
     { id: 'offices', label: t.nav_offices, icon: <Briefcase className="w-6 h-6" />, color: '#455A64' },
     { id: 'it_services', label: t.nav_it_services, icon: <Laptop className="w-6 h-6" />, color: '#2196F3' },
     { id: 'perfumes', label: t.nav_perfumes, icon: <Pipette className="w-6 h-6" />, color: '#E91E63' },
+    { id: 'animals', label: t.nav_animals, icon: <Dog className="w-6 h-6" />, color: '#795548' },
   ];
 };
 

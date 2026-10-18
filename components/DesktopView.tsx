@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, Map, Heart, User, ChevronDown, ChevronLeft, ChevronRight, Play, 
-  Utensils, Bus, Car, Tent, LayoutGrid, Mountain, 
+  Utensils, Bus, Car, Tent, LayoutGrid, Mountain, PlaneTakeoff,
   Facebook, Instagram, Youtube, Send, ArrowRight,
   ShieldCheck, Globe, Clock, Tag, CreditCard, Apple, Scissors,
   MapPin, ShoppingBag, Sparkles, Wrench, Settings, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Wine, Calendar, Landmark, Check, Info, Headphones, Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning, X
@@ -596,13 +596,13 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     { id: 'rentcar', label: 'RENT-A-CAR', sub: 'Aluguer de viaturas', icon: <Car className="w-8 h-8 text-emerald-600" />, color: '#059669' },
     { id: 'accommodation', label: 'ALOJAMENTOS', sub: 'Onde ficar', icon: <Tent className="w-8 h-8 text-purple-600" />, color: '#9333ea' },
     { id: 'activities', label: 'ATIVIDADES', sub: 'Aventuras únicas', icon: <LayoutGrid className="w-8 h-8 text-blue-600" />, color: '#2563eb' },
+    { id: 'flights', label: 'VIAGEM', sub: 'Voos e conexões', icon: <PlaneTakeoff className="w-8 h-8 text-sky-500" />, color: '#0284c7' },
     { id: 'trails', label: 'TRILHOS', sub: 'Rotas incríveis', icon: <Mountain className="w-8 h-8 text-green-700" />, color: '#15803d' },
     { id: 'poi', label: 'ATRAÇÕES', sub: 'Pontos turísticos', icon: <MapPin className="w-8 h-8 text-green-600" />, color: '#22c55e' },
     { id: 'shops', label: 'COMÉRCIO', sub: 'Lojas e compras', icon: <ShoppingBag className="w-8 h-8 text-pink-600" />, color: '#db2777' },
     { id: 'beauty', label: 'BELEZA', sub: 'Estética e bem-estar', icon: <Sparkles className="w-8 h-8 text-rose-500" />, color: '#f43f5e' },
     { id: 'services', label: 'SERVIÇOS', sub: 'Profissionais', icon: <Wrench className="w-8 h-8 text-slate-600" />, color: '#475569' },
     { id: 'auto_repair', label: 'OFICINAS', sub: 'Manutenção auto', icon: <Settings className="w-8 h-8 text-red-600" />, color: '#dc2626' },
-    { id: 'animals', label: 'ANIMAIS', sub: 'Pet shops e veterinários', icon: <Dog className="w-8 h-8 text-orange-600" />, color: '#ea580c' },
     { id: 'real_estate', label: 'IMOBILIÁRIA', sub: 'Comprar e alugar', icon: <Building2 className="w-8 h-8 text-blue-800" />, color: '#1e40af' },
     { id: 'gyms', label: 'GINÁSIOS', sub: 'Saúde e fitness', icon: <Dumbbell className="w-8 h-8 text-slate-800" />, color: '#1e293b' },
     { id: 'stands', label: 'STANDS', sub: 'Venda de veículos', icon: <CarFront className="w-8 h-8 text-indigo-600" />, color: '#4f46e5' },
@@ -611,6 +611,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
     { id: 'bars', label: 'BARES/NOITE', sub: 'Diversão noturna', icon: <Wine className="w-8 h-8 text-purple-800" />, color: '#6b21a8' },
     { id: 'events', label: 'EVENTOS', sub: 'Espetáculos e festas', icon: <Calendar className="w-8 h-8 text-amber-600" />, color: '#d97706' },
     { id: 'municipal', label: 'SERVIÇOS PÚBLICOS', sub: 'Apoio municipal', icon: <Landmark className="w-8 h-8 text-sky-600" />, color: '#0284c7' },
+    { id: 'animals', label: 'ANIMAIS', sub: 'Pet shops e veterinários', icon: <Dog className="w-8 h-8 text-orange-600" />, color: '#ea580c' },
   ];
 
   const features = [

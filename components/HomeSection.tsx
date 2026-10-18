@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Wine, Calendar, Landmark } from 'lucide-react';
+import { Search, Map, Bell, Menu, MapPin, Heart, ArrowRight, Compass, Utensils, Mountain, Camera, Bus, Car, Plane, PlaneTakeoff, Tent, Palette, ShoppingBag, Sparkles, LayoutGrid, Wrench, Settings, Zap, ShoppingCart, Dog, Building2, Dumbbell, CarFront, Briefcase, Laptop, Pipette, Wine, Calendar, Landmark } from 'lucide-react';
 import { Language, Restaurant } from '../types';
 import { getTranslation } from '../translations';
 import AzoresLogo from './AzoresLogo';
@@ -193,13 +193,13 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'rentcar', label: 'Rent-a-car', icon: <Car className="w-6 h-6" />, color: 'bg-emerald-500' },
     { id: 'accommodation', label: 'Alojamentos', icon: <Tent className="w-6 h-6" />, color: 'bg-purple-600' },
     { id: 'activities', label: 'Atividades', icon: <LayoutGrid className="w-6 h-6" />, color: 'bg-blue-600' },
+    { id: 'flights', label: 'Viagem', icon: <PlaneTakeoff className="w-6 h-6" />, color: 'bg-sky-500' },
     { id: 'trails', label: 'Trilhos', icon: <Mountain className="w-6 h-6" />, color: 'bg-green-600' },
     { id: 'poi', label: 'Pontos Turísticos', icon: <MapPin className="w-6 h-6" />, color: 'bg-green-500' },
     { id: 'shops', label: 'Comércio', icon: <ShoppingBag className="w-6 h-6" />, color: 'bg-pink-500' },
     { id: 'beauty', label: 'Beleza e Barbearia', icon: <Sparkles className="w-6 h-6" />, color: 'bg-rose-400' },
     { id: 'services', label: 'Serviços', icon: <Wrench className="w-6 h-6" />, color: 'bg-slate-600' },
     { id: 'auto_repair', label: 'Oficinas', icon: <Settings className="w-6 h-6" />, color: 'bg-red-600' },
-    { id: 'animals', label: 'Animais', icon: <Dog className="w-6 h-6" />, color: 'bg-orange-600' },
     { id: 'real_estate', label: 'Imobiliária', icon: <Building2 className="w-6 h-6" />, color: 'bg-blue-800' },
     { id: 'gyms', label: 'Ginásios', icon: <Dumbbell className="w-6 h-6" />, color: 'bg-slate-800' },
     { id: 'stands', label: 'Stands', icon: <CarFront className="w-6 h-6" />, color: 'bg-indigo-600' },
@@ -208,6 +208,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({
     { id: 'bars', label: 'Bares/Noite', icon: <Wine className="w-6 h-6" />, color: 'bg-purple-800' },
     { id: 'events', label: 'Eventos', icon: <Calendar className="w-6 h-6" />, color: 'bg-amber-500' },
     { id: 'municipal', label: 'Serviços Municipais', icon: <Landmark className="w-6 h-6" />, color: 'bg-sky-600' },
+    { id: 'animals', label: 'Animais', icon: <Dog className="w-6 h-6" />, color: 'bg-orange-600' },
   ];
 
   const nearbyItems = restaurants.slice(0, 4).map((r, i) => ({
