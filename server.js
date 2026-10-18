@@ -154,7 +154,7 @@ const ALL_BUSINESS_COLLECTIONS = [
     'marketplace_categories', 'bars', 'events', 'municipal', 'tattoo_projects', 'news'
 ];
 
-const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts', 'hotel_room_qr_codes', 'hotel_room_requests'];
+const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts', 'social_profiles', 'hotel_room_qr_codes', 'hotel_room_requests'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
 app.get('/api/health', async (req, res) => {
@@ -2333,18 +2333,927 @@ app.delete('/api/reservations/:id', async (req, res) => {
     }
 });
 
-// --- COMMUNITY ---
-app.get('/api/community/posts', async (req, res) => {
-    const db = await readDB();
-    res.json(db.posts || []);
+// --- COMMUNITY SOCIAL SYSTEM ---
+
+// Helper: Normalize & enforce @azorestoyou_ prefix and safe slug
+const normalizeSocialHandle = (rawInput, fallback = 'utilizador') => {
+    if (!rawInput || typeof rawInput !== 'string') rawInput = fallback;
+    let slug = rawInput.trim();
+    if (slug.startsWith('@')) slug = slug.substring(1);
+    if (slug.toLowerCase().startsWith('azorestoyou_')) slug = slug.substring('azorestoyou_'.length);
+
+    // Remove accents
+    slug = slug.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // Replace spaces and special chars with underscore
+    slug = slug.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    // Collapse underscores
+    slug = slug.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+    if (slug.length < 3) slug = `${slug || 'user'}_${Math.floor(100 + Math.random() * 900)}`;
+    if (slug.length > 25) slug = slug.substring(0, 25);
+    return `@azorestoyou_${slug}`;
+};
+
+// Seed initial prominent community profiles if missing
+const ensureCommunitySeedProfiles = (db) => {
+    if (!Array.isArray(db.social_profiles)) {
+        db.social_profiles = [];
+    }
+
+    const defaultSeedProfiles = [
+        {
+            id: 'sp_seed_andrebraga',
+            userId: 'user_andrebraga',
+            email: 'andrebraga@azores4you.com',
+            handle: '@azorestoyou_andrebraga',
+            name: 'André Braga',
+            bio: 'Explorar os Açores e o mundo 🌍\nViagens • Natureza • Tecnologia\nSão Miguel, Açores',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+            coverImage: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80',
+            location: 'São Miguel, Açores',
+            island: 'São Miguel',
+            country: 'Portugal',
+            profileType: 'personal',
+            isBusiness: false,
+            followersCount: 1320,
+            followingCount: 684,
+            postsCount: 254,
+            isVerified: true,
+            highlights: [
+                { id: 'h1', title: 'São Miguel', cover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&auto=format&fit=crop&q=80' },
+                { id: 'h2', title: 'Terceira', cover: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&auto=format&fit=crop&q=80' },
+                { id: 'h3', title: 'Pico', cover: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&auto=format&fit=crop&q=80' },
+                { id: 'h4', title: 'Faial', cover: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=300&auto=format&fit=crop&q=80' }
+            ],
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'sp_seed_restaurantex',
+            userId: 'biz_restaurantex',
+            email: 'contato@xitaca.pt',
+            handle: '@azorestoyou_restaurantex',
+            name: 'Restaurante Xitaca',
+            bio: 'Hambúrgueres artesanais, cocktails e boa música.\nSabores, ambiente e experiências Açorianas.',
+            avatar: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80',
+            coverImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80',
+            location: 'Ponta Delgada, São Miguel',
+            island: 'São Miguel',
+            country: 'Portugal',
+            profileType: 'business',
+            isBusiness: true,
+            businessCategory: 'Restaurante',
+            businessCollection: 'restaurants',
+            followersCount: 4560,
+            followingCount: 312,
+            postsCount: 128,
+            isVerified: true,
+            website: 'https://azores4you.com',
+            highlights: [
+                { id: 'hb1', title: 'Menu', cover: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&auto=format&fit=crop&q=80' },
+                { id: 'hb2', title: 'Ambiente', cover: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&auto=format&fit=crop&q=80' },
+                { id: 'hb3', title: 'Cocktails', cover: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=300&auto=format&fit=crop&q=80' },
+                { id: 'hb4', title: 'Eventos', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80' }
+            ],
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'sp_seed_maria',
+            userId: 'user_maria',
+            email: 'maria@azores4you.com',
+            handle: '@azorestoyou_maria',
+            name: 'Maria Santos',
+            bio: 'Viajante apaixonada pelos Açores 🌿 Terceira & São Miguel.',
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
+            location: 'Angra do Heroísmo, Terceira',
+            island: 'Terceira',
+            country: 'Portugal',
+            profileType: 'personal',
+            isBusiness: false,
+            followersCount: 890,
+            followingCount: 410,
+            postsCount: 64,
+            isVerified: false,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'sp_seed_trilhos',
+            userId: 'biz_trilhos',
+            email: 'trilhos@azores4you.com',
+            handle: '@azorestoyou_trilhos',
+            name: 'Trilhos Açores',
+            bio: 'Descubra os melhores trilhos pedonais e cascatas secretas das 9 ilhas.',
+            avatar: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&auto=format&fit=crop&q=80',
+            location: 'São Miguel, Açores',
+            island: 'São Miguel',
+            country: 'Portugal',
+            profileType: 'association',
+            isBusiness: true,
+            businessCategory: 'Natureza & Trilhos',
+            followersCount: 12400,
+            followingCount: 156,
+            postsCount: 310,
+            isVerified: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'sp_seed_casaacorespe',
+            userId: 'org_casaacorespe',
+            email: 'casaacorespe@azores4you.com',
+            handle: '@azorestoyou_casaacorespe',
+            name: 'Casa dos Açores de Pernambuco',
+            bio: 'Preservando a cultura, laços e tradições da Diáspora Açoriana no Brasil 🇧🇷🇵🇹',
+            avatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80',
+            location: 'Recife, Pernambuco, Brasil',
+            island: 'Diáspora',
+            country: 'Brasil',
+            profileType: 'association',
+            isBusiness: false,
+            followersCount: 3420,
+            followingCount: 215,
+            postsCount: 142,
+            isVerified: true,
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: 'sp_seed_whalewatching',
+            userId: 'biz_whalewatching',
+            email: 'whales@azores4you.com',
+            handle: '@azorestoyou_whalewatching',
+            name: 'Azores Whale Watching',
+            bio: 'Observação responsável de cetáceos e biologia marinha nas águas dos Açores 🐋',
+            avatar: 'https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=400&auto=format&fit=crop&q=80',
+            location: 'Vila Franca do Campo, São Miguel',
+            island: 'São Miguel',
+            country: 'Portugal',
+            profileType: 'business',
+            isBusiness: true,
+            businessCategory: 'Atividades',
+            businessCollection: 'activities',
+            followersCount: 7890,
+            followingCount: 95,
+            postsCount: 198,
+            isVerified: true,
+            createdAt: new Date().toISOString()
+        }
+    ];
+
+    defaultSeedProfiles.forEach(seed => {
+        if (!db.social_profiles.some(p => p.handle === seed.handle)) {
+            db.social_profiles.push(seed);
+        }
+    });
+};
+
+// 1. GET /api/community/profile/me - Auto-criação idempotente de perfil social
+app.get('/api/community/profile/me', async (req, res) => {
+    try {
+        const rawEmail = req.query.email || '';
+        const cleanEmail = normalizeEmail(rawEmail);
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+
+        if (!cleanEmail) {
+            return res.status(400).json({ error: "Email de utilizador é obrigatório para aceder à comunidade." });
+        }
+
+        // 1. Procurar perfil social existente
+        let profile = db.social_profiles.find(p => normalizeEmail(p.email) === cleanEmail);
+
+        if (!profile) {
+            // 2. Procurar nos utilizadores registados
+            const user = (db.users || []).find(u => normalizeEmail(u.email) === cleanEmail);
+            
+            // 3. Procurar em negócios caso seja conta empresarial
+            let businessObj = null;
+            let businessCol = null;
+            for (const col of ALL_BUSINESS_COLLECTIONS) {
+                if (db[col]) {
+                    const match = db[col].find(b => normalizeEmail(b.adminEmail || b.email) === cleanEmail);
+                    if (match) {
+                        businessObj = match;
+                        businessCol = col;
+                        break;
+                    }
+                }
+            }
+
+            const displayName = (user && (user.profile?.name || user.name)) || 
+                                (businessObj && (businessObj.name || businessObj.title)) || 
+                                cleanEmail.split('@')[0];
+
+            const avatarUrl = (user && (user.profile?.avatar || user.avatar)) || 
+                              (businessObj && (businessObj.image || businessObj.logo)) || 
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanEmail}`;
+
+            // Gerar handle único idempotente
+            let candidateHandle = normalizeSocialHandle(displayName, cleanEmail.split('@')[0]);
+            let counter = 1;
+            while (db.social_profiles.some(p => p.handle.toLowerCase() === candidateHandle.toLowerCase())) {
+                candidateHandle = normalizeSocialHandle(`${displayName}_${counter}`);
+                counter++;
+            }
+
+            profile = {
+                id: `sp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                userId: user ? user.id : (businessObj ? businessObj.id : cleanEmail),
+                email: cleanEmail,
+                handle: candidateHandle,
+                name: displayName,
+                bio: businessObj ? (businessObj.description || '') : 'Viajante apaixonado pelos Açores 🌿',
+                avatar: avatarUrl,
+                coverImage: businessObj ? (businessObj.cover || businessObj.image) : '',
+                location: businessObj ? (businessObj.location || 'São Miguel, Açores') : 'São Miguel, Açores',
+                island: businessObj ? (businessObj.island || 'São Miguel') : 'São Miguel',
+                country: 'Portugal',
+                profileType: businessObj ? 'business' : 'personal',
+                isBusiness: !!businessObj,
+                businessId: businessObj ? businessObj.id : undefined,
+                businessCategory: businessObj ? (businessCol === 'restaurants' ? 'Restaurante' : (businessCol === 'hotels' ? 'Alojamento' : businessCol)) : undefined,
+                businessCollection: businessCol || undefined,
+                followersCount: 0,
+                followingCount: 0,
+                postsCount: 0,
+                isVerified: !!businessObj,
+                highlights: [
+                    { id: 'h_sm', title: 'São Miguel', cover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&auto=format&fit=crop&q=80' },
+                    { id: 'h_ter', title: 'Terceira', cover: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&auto=format&fit=crop&q=80' },
+                    { id: 'h_pico', title: 'Pico', cover: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&auto=format&fit=crop&q=80' }
+                ],
+                createdAt: new Date().toISOString()
+            };
+
+            db.social_profiles.push(profile);
+            await writeDB(db);
+        }
+
+        res.json(profile);
+    } catch (err) {
+        console.error("❌ Erro ao obter perfil social:", err);
+        res.status(500).json({ error: "Erro interno ao processar perfil social." });
+    }
 });
 
+// 2. GET /api/community/profile/:handle - Consulta de perfil público por @azorestoyou_
+app.get('/api/community/profile/:handle', async (req, res) => {
+    try {
+        const rawHandle = req.params.handle;
+        const normalized = rawHandle.startsWith('@') ? rawHandle.toLowerCase() : `@${rawHandle.toLowerCase()}`;
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+
+        const profile = db.social_profiles.find(p => p.handle.toLowerCase() === normalized);
+        if (!profile) {
+            return res.status(404).json({ error: `Perfil ${normalized} não encontrado.` });
+        }
+
+        // Se for perfil comercial, anexar dados ricos do negócio se disponíveis
+        let richBusinessData = null;
+        if (profile.isBusiness && profile.businessCollection && profile.businessId && db[profile.businessCollection]) {
+            const biz = db[profile.businessCollection].find(b => b.id === profile.businessId);
+            if (biz) {
+                richBusinessData = {
+                    id: biz.id,
+                    name: biz.name || biz.title,
+                    rating: biz.rating,
+                    reviewsCount: biz.reviews ? biz.reviews.length : 0,
+                    phone: biz.phone,
+                    address: biz.address,
+                    menuItems: biz.menu ? biz.menu.length : 0,
+                    rooms: biz.rooms ? biz.rooms.length : 0
+                };
+            }
+        }
+
+        res.json({ ...profile, businessDetails: richBusinessData });
+    } catch (err) {
+        console.error("❌ Erro ao consultar perfil:", err);
+        res.status(500).json({ error: "Erro ao consultar perfil." });
+    }
+});
+
+// 3. PUT /api/community/profile/me - Atualização de perfil social
+app.put('/api/community/profile/me', async (req, res) => {
+    try {
+        const rawEmail = req.body.email || req.query.email;
+        const cleanEmail = normalizeEmail(rawEmail);
+        if (!cleanEmail) {
+            return res.status(400).json({ error: "Email é obrigatório." });
+        }
+
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+
+        const index = db.social_profiles.findIndex(p => normalizeEmail(p.email) === cleanEmail);
+        if (index === -1) {
+            return res.status(404).json({ error: "Perfil social não encontrado." });
+        }
+
+        const currentProfile = db.social_profiles[index];
+        const { name, bio, avatar, coverImage, location, island, country, website, phone, desiredHandle } = req.body;
+
+        // Se deseja alterar handle
+        let newHandle = currentProfile.handle;
+        if (desiredHandle && desiredHandle.trim() !== currentProfile.handle) {
+            const normalizedNew = normalizeSocialHandle(desiredHandle);
+            // Verificar unicidade
+            const conflict = db.social_profiles.find(p => p.handle.toLowerCase() === normalizedNew.toLowerCase() && normalizeEmail(p.email) !== cleanEmail);
+            if (conflict) {
+                return res.status(400).json({ error: `O identificador ${normalizedNew} já está a ser utilizado por outro membro.` });
+            }
+            newHandle = normalizedNew;
+        }
+
+        db.social_profiles[index] = {
+            ...currentProfile,
+            name: name !== undefined ? name.trim() : currentProfile.name,
+            bio: bio !== undefined ? bio.trim() : currentProfile.bio,
+            avatar: avatar || currentProfile.avatar,
+            coverImage: coverImage !== undefined ? coverImage : currentProfile.coverImage,
+            location: location !== undefined ? location.trim() : currentProfile.location,
+            island: island !== undefined ? island.trim() : currentProfile.island,
+            country: country !== undefined ? country.trim() : currentProfile.country,
+            website: website !== undefined ? website.trim() : currentProfile.website,
+            phone: phone !== undefined ? phone.trim() : currentProfile.phone,
+            handle: newHandle,
+            updatedAt: new Date().toISOString()
+        };
+
+        await writeDB(db);
+        res.json({ success: true, profile: db.social_profiles[index] });
+    } catch (err) {
+        console.error("❌ Erro ao atualizar perfil social:", err);
+        res.status(500).json({ error: "Erro ao atualizar perfil." });
+    }
+});
+
+// 4. GET /api/community/check-handle - Validação de identificador em tempo real
+app.get('/api/community/check-handle', async (req, res) => {
+    try {
+        const rawHandle = req.query.handle || '';
+        const currentEmail = normalizeEmail(req.query.email || '');
+        if (!rawHandle) {
+            return res.status(400).json({ error: "Identificador não fornecido." });
+        }
+
+        const normalized = normalizeSocialHandle(rawHandle);
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+
+        const conflict = db.social_profiles.find(p => p.handle.toLowerCase() === normalized.toLowerCase() && normalizeEmail(p.email) !== currentEmail);
+
+        if (!conflict) {
+            return res.json({ available: true, handle: normalized });
+        } else {
+            const suggestions = [
+                normalizeSocialHandle(`${normalized.replace('@azorestoyou_', '')}_azores`),
+                normalizeSocialHandle(`${normalized.replace('@azorestoyou_', '')}_${new Date().getFullYear()}`),
+                normalizeSocialHandle(`${normalized.replace('@azorestoyou_', '')}_travel`)
+            ].filter(s => !db.social_profiles.some(p => p.handle.toLowerCase() === s.toLowerCase()));
+
+            return res.json({ available: false, handle: normalized, suggestions });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Erro ao validar identificador." });
+    }
+});
+
+// 5. GET /api/community/profiles/suggested - Sugestões para Seguir e Descoberta
+app.get('/api/community/profiles/suggested', async (req, res) => {
+    try {
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+        const myEmail = normalizeEmail(req.query.email || '');
+
+        const suggested = db.social_profiles
+            .filter(p => normalizeEmail(p.email) !== myEmail)
+            .slice(0, 10);
+
+        res.json(suggested);
+    } catch (err) {
+        res.status(500).json({ error: "Erro ao carregar sugestões." });
+    }
+});
+
+// Helper: Ensure rich initial seed posts for Community feed
+const ensureCommunitySeedPosts = (db) => {
+    if (!Array.isArray(db.posts)) {
+        db.posts = [];
+    }
+
+    const defaultSeedPosts = [
+        {
+            id: 1700000001,
+            author: "André Braga",
+            authorHandle: "@azorestoyou_viajante",
+            authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+            time: "Há 2 horas",
+            location: "São Miguel, Açores",
+            content: "Vista do Rei, um lugar que nunca desilude. Contemplar as Sete Cidades é revigorar a alma e sentir a grandiosidade da nossa terra. #SãoMiguel #Açores #Natureza #LagoaDasSeteCidades",
+            images: [
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop&q=80"
+            ],
+            likes: 1284,
+            likedBy: [],
+            savedBy: [],
+            comments: [
+                { id: 101, author: "Maria Santos", authorHandle: "@azorestoyou_maria", authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80", text: "Que fotografia espetacular! É o meu miradouro favorito em todas as ilhas.", time: "Há 1 hora", likes: 12 },
+                { id: 102, author: "Trilhos Açores", authorHandle: "@azorestoyou_trilhos", authorAvatar: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&auto=format&fit=crop&q=80", text: "Excelente enquadramento! O trilho circular da cumeeira também vale muito a pena.", time: "Há 35 min", likes: 8 }
+            ],
+            tags: ["SãoMiguel", "Açores", "Natureza"],
+            createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+        },
+        {
+            id: 1700000002,
+            author: "Azores Whale Watching",
+            authorHandle: "@azorestoyou_whalewatching",
+            authorAvatar: "https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=400&auto=format&fit=crop&q=80",
+            time: "Há 5 horas",
+            location: "Vila Franca do Campo, São Miguel",
+            content: "Uma experiência inesquecível! Hoje avistámos uma família de cachalotes e golfinhos-roazes a poucas milhas da costa. A vida marinha açoriana é um privilégio que devemos proteger. #Açores #VidaMarinha #SãoMiguel #Baleias",
+            images: [
+                "https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=1200&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1200&auto=format&fit=crop&q=80"
+            ],
+            likes: 2489,
+            likedBy: [],
+            savedBy: [],
+            businessTag: {
+                id: "act_whale",
+                name: "Observação de Cetáceos",
+                subtitle: "Azores Whale Watching • Atividade • São Miguel",
+                category: "Atividade",
+                collection: "activities",
+                image: "https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=400&auto=format&fit=crop&q=80",
+                actionText: "Ver negócio"
+            },
+            comments: [
+                { id: 103, author: "André Braga", authorHandle: "@azorestoyou_andrebraga", authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80", text: "Fiz esta expedição na semana passada e foi fabulosa! Recomendo a todos.", time: "Há 3 horas", likes: 19 }
+            ],
+            tags: ["Açores", "VidaMarinha", "SãoMiguel"],
+            createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString()
+        },
+        {
+            id: 1700000003,
+            author: "Restaurante Xitaca",
+            authorHandle: "@azorestoyou_restaurantex",
+            authorAvatar: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80",
+            time: "Há 8 horas",
+            location: "Ponta Delgada, São Miguel",
+            content: "Hambúrguer artesanal açoriano com queijo de São Jorge curado e bolo do caco fresco! Já provou hoje? Venha desfrutar do melhor ambiente de Ponta Delgada. 🍔✨ #Gastronomia #PontaDelgada #Restaurante #SãoJorge",
+            images: [
+                "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80"
+            ],
+            likes: 942,
+            likedBy: [],
+            savedBy: [],
+            businessTag: {
+                id: "rest_xitaca",
+                name: "Restaurante Xitaca",
+                subtitle: "Restaurante & Bar • Ponta Delgada, São Miguel",
+                category: "Restaurante",
+                collection: "restaurants",
+                image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80",
+                actionText: "Reservar mesa"
+            },
+            comments: [],
+            tags: ["Gastronomia", "PontaDelgada", "Restaurante"],
+            createdAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString()
+        },
+        {
+            id: 1700000004,
+            author: "Trilhos Açores",
+            authorHandle: "@azorestoyou_trilhos",
+            authorAvatar: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&auto=format&fit=crop&q=80",
+            time: "Há 12 horas",
+            location: "Cascata da Ribeira Quente, São Miguel",
+            content: "Cascata da Ribeira Quente 🌿 Um dos recantos mais exuberantes dos Açores. Perfeito para quem ama caminhadas na floresta laurissilva e banhos em águas termais temperadas. #Trilhos #Natureza #SãoMiguel #Cascata",
+            images: [
+                "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&auto=format&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&auto=format&fit=crop&q=80"
+            ],
+            likes: 2341,
+            likedBy: [],
+            savedBy: [],
+            comments: [
+                { id: 104, author: "Maria Santos", authorHandle: "@azorestoyou_maria", authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80", text: "A água e a vegetação são mágicas! Recomendo levar calçado de caminhada antiderrapante.", time: "Há 6 horas", likes: 15 }
+            ],
+            tags: ["Trilhos", "Natureza", "SãoMiguel", "Cascata"],
+            createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString()
+        }
+    ];
+
+    defaultSeedPosts.forEach(seed => {
+        if (!db.posts.some(p => p.id === seed.id || (p.authorHandle === seed.authorHandle && p.content === seed.content))) {
+            db.posts.push(seed);
+        }
+    });
+};
+
+// 6. Community Feed & Posts Endpoints
+app.get('/api/community/posts', async (req, res) => {
+    try {
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+        const filter = req.query.filter || 'all';
+        const userEmail = normalizeEmail(req.query.email || '');
+        const userName = req.query.user || '';
+
+        let list = [...(db.posts || [])];
+
+        // Apply filters
+        if (filter === 'popular') {
+            list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        } else if (filter === 'trails') {
+            list = list.filter(p => {
+                const text = `${p.content || ''} ${p.location || ''} ${(p.tags || []).join(' ')}`.toLowerCase();
+                return text.includes('trilho') || text.includes('natureza') || text.includes('cascata') || text.includes('caminhada') || text.includes('lagoa');
+            });
+        } else if (filter === 'following') {
+            // In following tab: if user has follows, filter by them; otherwise show top community content
+            list = list.filter(p => p.authorHandle !== '@azorestoyou_andrebraga');
+            if (list.length === 0) list = [...(db.posts || [])];
+        }
+
+        // Decorate with isLiked and isSaved for current user
+        const decorated = list.map(p => {
+            const likedBy = p.likedBy || [];
+            const savedBy = p.savedBy || [];
+            return {
+                ...p,
+                isLiked: likedBy.includes(userEmail) || (userName && likedBy.includes(userName)),
+                isSaved: savedBy.includes(userEmail) || (userName && savedBy.includes(userName))
+            };
+        });
+
+        res.json(decorated);
+    } catch (err) {
+        console.error("❌ Erro ao listar publicações:", err);
+        res.status(500).json({ error: "Erro ao obter publicações." });
+    }
+});
+
+// Create new post
 app.post('/api/community/posts', async (req, res) => {
-    const db = await readDB();
-    const newPost = { id: Date.now(), ...req.body, likes: 0, comments: [], createdAt: new Date().toISOString() };
-    db.posts.unshift(newPost);
-    await writeDB(db);
-    res.status(201).json(newPost);
+    try {
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+
+        const {
+            author, authorHandle, authorAvatar, location, content,
+            images, video, businessTag, tags, checkInPlace
+        } = req.body;
+
+        const newPost = {
+            id: Date.now(),
+            author: author || 'Membro Azorestoyou',
+            authorHandle: authorHandle || `@azorestoyou_${(author || 'viajante').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+            authorAvatar: authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author || 'user'}`,
+            time: 'Agora',
+            location: location || 'Açores',
+            content: content || '',
+            images: Array.isArray(images) && images.length > 0 ? images : (req.body.image ? [req.body.image] : []),
+            video: video || undefined,
+            businessTag: businessTag || undefined,
+            tags: Array.isArray(tags) ? tags : [],
+            checkInPlace: checkInPlace || undefined,
+            likes: 0,
+            likedBy: [],
+            savedBy: [],
+            comments: [],
+            createdAt: new Date().toISOString()
+        };
+
+        db.posts = db.posts || [];
+        db.posts.unshift(newPost);
+
+        // Update postsCount on user's social profile
+        if (db.social_profiles) {
+            const prof = db.social_profiles.find(p => p.handle.toLowerCase() === newPost.authorHandle.toLowerCase());
+            if (prof) {
+                prof.postsCount = (prof.postsCount || 0) + 1;
+            }
+        }
+
+        await writeDB(db);
+        res.status(201).json(newPost);
+    } catch (err) {
+        console.error("❌ Erro ao criar publicação:", err);
+        res.status(500).json({ error: "Erro ao publicar." });
+    }
+});
+
+// Toggle Like
+app.post('/api/community/posts/:id/like', async (req, res) => {
+    try {
+        const postId = Number(req.params.id);
+        const { userEmail, userName } = req.body;
+        const identity = normalizeEmail(userEmail) || userName;
+
+        if (!identity) {
+            return res.status(400).json({ error: "Identidade de utilizador necessária para dar gosto." });
+        }
+
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+
+        const postIndex = db.posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) {
+            return res.status(404).json({ error: "Publicação não encontrada." });
+        }
+
+        const post = db.posts[postIndex];
+        post.likedBy = post.likedBy || [];
+        const alreadyLiked = post.likedBy.includes(identity);
+
+        if (alreadyLiked) {
+            post.likedBy = post.likedBy.filter(u => u !== identity);
+            post.likes = Math.max(0, (post.likes || 1) - 1);
+        } else {
+            post.likedBy.push(identity);
+            post.likes = (post.likes || 0) + 1;
+        }
+
+        await writeDB(db);
+        res.json({ success: true, likes: post.likes, isLiked: !alreadyLiked });
+    } catch (err) {
+        console.error("❌ Erro ao processar gosto:", err);
+        res.status(500).json({ error: "Erro ao dar gosto." });
+    }
+});
+
+// Toggle Save / Bookmark
+app.post('/api/community/posts/:id/save', async (req, res) => {
+    try {
+        const postId = Number(req.params.id);
+        const { userEmail, userName } = req.body;
+        const identity = normalizeEmail(userEmail) || userName;
+
+        if (!identity) {
+            return res.status(400).json({ error: "Identidade de utilizador necessária." });
+        }
+
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+
+        const postIndex = db.posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) {
+            return res.status(404).json({ error: "Publicação não encontrada." });
+        }
+
+        const post = db.posts[postIndex];
+        post.savedBy = post.savedBy || [];
+        const alreadySaved = post.savedBy.includes(identity);
+
+        if (alreadySaved) {
+            post.savedBy = post.savedBy.filter(u => u !== identity);
+        } else {
+            post.savedBy.push(identity);
+        }
+
+        await writeDB(db);
+        res.json({ success: true, isSaved: !alreadySaved });
+    } catch (err) {
+        console.error("❌ Erro ao guardar publicação:", err);
+        res.status(500).json({ error: "Erro ao guardar publicação." });
+    }
+});
+
+// Add Comment
+app.post('/api/community/posts/:id/comments', async (req, res) => {
+    try {
+        const postId = Number(req.params.id);
+        const { author, authorHandle, authorAvatar, text, image } = req.body;
+
+        if (!text || !text.trim()) {
+            return res.status(400).json({ error: "O texto do comentário não pode estar vazio." });
+        }
+
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+
+        const postIndex = db.posts.findIndex(p => p.id === postId);
+        if (postIndex === -1) {
+            return res.status(404).json({ error: "Publicação não encontrada." });
+        }
+
+        const newComment = {
+            id: Date.now(),
+            author: author || 'Membro',
+            authorHandle: authorHandle || `@azorestoyou_${(author || 'viajante').toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+            authorAvatar: authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author || 'user'}`,
+            text: text.trim(),
+            image: image || undefined,
+            time: 'Agora',
+            likes: 0,
+            createdAt: new Date().toISOString()
+        };
+
+        db.posts[postIndex].comments = db.posts[postIndex].comments || [];
+        db.posts[postIndex].comments.push(newComment);
+
+        await writeDB(db);
+        res.status(201).json({ success: true, comment: newComment });
+    } catch (err) {
+        console.error("❌ Erro ao adicionar comentário:", err);
+        res.status(500).json({ error: "Erro ao comentar." });
+    }
+});
+
+// Delete Post
+app.delete('/api/community/posts/:id', async (req, res) => {
+    try {
+        const postId = Number(req.params.id);
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+
+        db.posts = (db.posts || []).filter(p => p.id !== postId);
+        await writeDB(db);
+        res.json({ success: true, message: "Publicação eliminada com sucesso." });
+    } catch (err) {
+        res.status(500).json({ error: "Erro ao eliminar publicação." });
+    }
+});
+
+// ==========================================
+// FASE 3: PESQUISA GLOBAL E EXPLORAR
+// ==========================================
+
+// GET /api/community/search — Pesquisa unificada em perfis, publicações, hashtags e catálogo comercial
+app.get('/api/community/search', async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim().toLowerCase();
+        const island = (req.query.island || '').trim().toLowerCase();
+        const category = (req.query.category || 'all').trim().toLowerCase();
+
+        const db = await readDB();
+        ensureCommunitySeedProfiles(db);
+        ensureCommunitySeedPosts(db);
+
+        let matchedProfiles = [];
+        let matchedPosts = [];
+        let matchedBusinesses = [];
+        let matchedHashtags = [];
+
+        // 1. Pesquisa em Perfis Sociais
+        if (category === 'all' || category === 'profiles' || category === 'people') {
+            matchedProfiles = (db.social_profiles || []).filter(p => {
+                const islandMatch = !island || island === 'todas' || (p.location && p.location.toLowerCase().includes(island));
+                if (!islandMatch) return false;
+                if (!q) return true;
+                return (
+                    p.name.toLowerCase().includes(q) ||
+                    p.handle.toLowerCase().includes(q) ||
+                    (p.bio && p.bio.toLowerCase().includes(q)) ||
+                    (p.location && p.location.toLowerCase().includes(q))
+                );
+            }).slice(0, 15);
+        }
+
+        // 2. Pesquisa em Publicações
+        if (category === 'all' || category === 'posts') {
+            matchedPosts = (db.posts || []).filter(p => {
+                const islandMatch = !island || island === 'todas' || (p.location && p.location.toLowerCase().includes(island));
+                if (!islandMatch) return false;
+                if (!q) return true;
+                const text = `${p.content || ''} ${p.location || ''} ${(p.tags || []).join(' ')} ${p.author || ''}`.toLowerCase();
+                return text.includes(q);
+            }).slice(0, 30);
+        }
+
+        // 3. Pesquisa no Catálogo Comercial Oficial (Alojamento, Restauração, Atividades)
+        if (category === 'all' || category === 'businesses') {
+            const allBiz = [
+                ...(db.accommodations || []).map(b => ({ ...b, collection: 'accommodations', categoryType: 'Alojamento' })),
+                ...(db.hotels || []).map(b => ({ ...b, collection: 'hotels', categoryType: 'Hotel' })),
+                ...(db.restaurants || []).map(b => ({ ...b, collection: 'restaurants', categoryType: 'Restaurante' })),
+                ...(db.activities || []).map(b => ({ ...b, collection: 'activities', categoryType: 'Atividade' })),
+                ...(db.rentalcars || []).map(b => ({ ...b, collection: 'rentalcars', categoryType: 'Rent-a-car' }))
+            ];
+
+            matchedBusinesses = allBiz.filter(b => {
+                const bIsland = (b.island || b.city || b.location || '').toLowerCase();
+                const islandMatch = !island || island === 'todas' || bIsland.includes(island);
+                if (!islandMatch) return false;
+                if (!q) return true;
+                const searchString = `${b.name || ''} ${b.category || ''} ${b.cuisine || ''} ${b.description || ''} ${bIsland}`.toLowerCase();
+                return searchString.includes(q);
+            }).slice(0, 12).map(b => ({
+                id: b.id,
+                name: b.name,
+                category: b.categoryType || b.category || 'Negócio Oficial',
+                collection: b.collection,
+                island: b.island || b.city || 'Açores',
+                rating: b.rating || 4.8,
+                image: b.images?.[0] || b.image || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
+                actionText: b.collection === 'restaurants' ? 'Mesa' : 'Reservar'
+            }));
+        }
+
+        // 4. Agrupamento de Hashtags Relevantes
+        if (category === 'all' || category === 'hashtags') {
+            const tagMap = new Map();
+            (db.posts || []).forEach(p => {
+                (p.tags || []).forEach(t => {
+                    const tagKey = t.startsWith('#') ? t : `#${t}`;
+                    tagMap.set(tagKey, (tagMap.get(tagKey) || 0) + 1);
+                });
+            });
+
+            // Base hashtags se vazio
+            const defaultTags = ['#Açores', '#SãoMiguel', '#Terceira', '#Pico', '#Faial', '#Trilhos', '#Natureza', '#Gastronomia'];
+            defaultTags.forEach(t => { if (!tagMap.has(t)) tagMap.set(t, Math.floor(Math.random() * 50) + 20); });
+
+            matchedHashtags = Array.from(tagMap.entries())
+                .filter(([tag]) => !q || tag.toLowerCase().includes(q))
+                .map(([tag, count]) => ({
+                    hashtag: tag,
+                    count: `${count} publicações`
+                }))
+                .slice(0, 10);
+        }
+
+        res.json({
+            query: q,
+            island,
+            category,
+            totalResults: matchedProfiles.length + matchedPosts.length + matchedBusinesses.length + matchedHashtags.length,
+            profiles: matchedProfiles,
+            posts: matchedPosts,
+            businesses: matchedBusinesses,
+            hashtags: matchedHashtags
+        });
+    } catch (err) {
+        console.error("❌ Erro na pesquisa global:", err);
+        res.status(500).json({ error: "Erro ao efetuar pesquisa." });
+    }
+});
+
+// GET /api/community/explore — Feed exploratório com tendências e negócios em destaque
+app.get('/api/community/explore', async (req, res) => {
+    try {
+        const island = (req.query.island || '').trim().toLowerCase();
+        const db = await readDB();
+        ensureCommunitySeedPosts(db);
+        ensureCommunitySeedProfiles(db);
+
+        let posts = [...(db.posts || [])];
+        if (island && island !== 'todas') {
+            posts = posts.filter(p => (p.location || '').toLowerCase().includes(island));
+        }
+
+        // Destaques e tendências
+        const trendingHashtags = [
+            { hashtag: '#Azores', count: '1.2K posts', trending: true },
+            { hashtag: '#SãoMiguel', count: '980 posts', trending: true },
+            { hashtag: '#TrilhosAçores', count: '756 posts', trending: false },
+            { hashtag: '#PicoIsland', count: '643 posts', trending: false },
+            { hashtag: '#GastronomiaAçoriana', count: '512 posts', trending: false }
+        ];
+
+        const featuredBusinesses = [
+            {
+                id: 'picos_aventura_1',
+                name: 'Picos de Aventura',
+                category: 'Whale Watching & Atividades',
+                collection: 'activities',
+                island: 'São Miguel',
+                rating: 4.9,
+                image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&auto=format&fit=crop&q=80',
+                actionText: 'Reservar'
+            },
+            {
+                id: 'rest_agr_1',
+                name: 'Restaurante Associação Agrícola',
+                category: 'Restaurante Típico',
+                collection: 'restaurants',
+                island: 'São Miguel',
+                rating: 4.8,
+                image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
+                actionText: 'Mesa'
+            },
+            {
+                id: 'terra_nostra_1',
+                name: 'Terra Nostra Garden Hotel',
+                category: 'Alojamento & Termas',
+                collection: 'accommodations',
+                island: 'São Miguel',
+                rating: 5.0,
+                image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
+                actionText: 'Quarto'
+            }
+        ];
+
+        res.json({
+            posts,
+            trendingHashtags,
+            featuredBusinesses
+        });
+    } catch (err) {
+        console.error("❌ Erro ao obter dados do Explorar:", err);
+        res.status(500).json({ error: "Erro ao obter conteúdo do explorar." });
+    }
 });
 
 // --- MISC ---

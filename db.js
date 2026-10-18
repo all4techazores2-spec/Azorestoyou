@@ -142,7 +142,8 @@ const DEFAULT_DB = {
     sales: [],
     chairs: [],
     chairBlocks: [],
-    slider: []
+    slider: [],
+    social_profiles: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests

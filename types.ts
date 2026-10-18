@@ -452,3 +452,40 @@ export interface Itinerary {
   selectedExtras?: ExtraOption[];
   taxi?: { destination: string, price: number } | null;
 }
+
+export type SocialProfileType = 'personal' | 'business' | 'association' | 'poi';
+
+export interface SocialHighlight {
+  id: string;
+  title: string;
+  cover: string;
+}
+
+export interface SocialProfile {
+  id: string;
+  userId: string;
+  email: string;
+  handle: string; // e.g. "@azorestoyou_andrebraga"
+  name: string;
+  bio?: string;
+  avatar: string;
+  coverImage?: string;
+  location?: string;
+  island?: string;
+  country?: string;
+  profileType: SocialProfileType;
+  isBusiness?: boolean;
+  businessId?: string;
+  businessCategory?: string;
+  businessCollection?: string;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  isVerified?: boolean;
+  isPrivate?: boolean;
+  allowDiscovery?: boolean;
+  highlights?: SocialHighlight[];
+  website?: string;
+  phone?: string;
+  createdAt?: string;
+}

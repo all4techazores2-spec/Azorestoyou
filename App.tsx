@@ -2994,14 +2994,31 @@ const App: React.FC = () => {
                 {exploreCategory === 'community' && (
                   <CommunitySection 
                     isAuthenticated={isAuthenticated}
-                    userName={userProfile.name}
+                    userName={userProfile?.name || 'Viajante'}
+                    userProfile={userProfile}
                     posts={posts}
                     onSyncPosts={async () => {
-                       const updated = await fetch(`${API_BASE_URL}/api/posts`).then(r => r.json());
-                       setPosts(updated);
+                       const email = userProfile?.email || '';
+                       const updated = await fetch(`${API_BASE_URL}/api/community/posts?email=${encodeURIComponent(email)}&user=${encodeURIComponent(userProfile?.name || '')}`).then(r => r.json());
+                       if (Array.isArray(updated)) setPosts(updated);
                     }}
                     onShowAuth={() => setShowAuthModal(true)}
                     onClose={() => setExploreCategory(null)}
+                    onOpenReservations={() => setShowMyReservationsModal(true)}
+                    onOpenProfile={() => setShowProfileModal(true)}
+                    onBookBusiness={(bizType, bizId) => {
+                      if (bizType === 'restaurants') {
+                        const targetRest = restaurants.find(r => r.id === bizId);
+                        if (targetRest) {
+                          setSelectedRestaurant(targetRest);
+                        }
+                      } else if (bizType === 'hotels') {
+                        const targetHotel = hotels.find(h => h.id === bizId);
+                        if (targetHotel) {
+                          setSelectedHotel(targetHotel);
+                        }
+                      }
+                    }}
                   />
                 )}
                 {exploreCategory === 'marketplace' && (
@@ -3302,6 +3319,7 @@ const App: React.FC = () => {
           isAuthenticated={isAuthenticated}
           isCommunity={exploreCategory === 'community'}
           isMarketplace={exploreCategory === 'marketplace'}
+          onCommunityHome={() => setExploreCategory('community')}
         />
       </div>
 

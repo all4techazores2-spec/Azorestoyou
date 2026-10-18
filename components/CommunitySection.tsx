@@ -6,23 +6,39 @@ import {
   CheckCircle2, X, Camera, Type, Palette, Filter, Music, Radio, Bookmark,
   ThumbsUp, User as UserIcon, MapPin, Compass, Trophy, Users, Star, Sparkles,
   Play, Pause, Mic, Paperclip, SendHorizonal, Calendar, Check, HelpCircle,
-  Hash, ChevronLeft, ChevronRight, MessageCircleCode, CheckSquare, Bell, Menu as MenuIcon, Plus, Settings
+  Hash, ChevronLeft, ChevronRight, MessageCircleCode, CheckSquare, Bell, Menu as MenuIcon, Plus, Settings,
+  Building2
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
+import { SocialProfile } from '../types';
+import CommunityProfileView from './CommunityProfileView';
+import CommunityEditProfileModal from './CommunityEditProfileModal';
+import CommunityCreatePostModal from './CommunityCreatePostModal';
+import CommunityPostDetailModal from './CommunityPostDetailModal';
+import CommunityExploreSection from './CommunityExploreSection';
+import CommunityStoriesViewer from './CommunityStoriesViewer';
+import CommunityDirectChatModal from './CommunityDirectChatModal';
+import CommunityNotificationsModal from './CommunityNotificationsModal';
+import CommunityDirectBookingModal from './CommunityDirectBookingModal';
 
 interface CommunitySectionProps {
   isAuthenticated: boolean;
   userName: string;
+  userProfile?: any;
   posts: Post[];
   onSyncPosts: () => void;
   onShowAuth: () => void;
   onClose: () => void;
+  onOpenReservations?: () => void;
+  onOpenProfile?: () => void;
+  onBookBusiness?: (businessType: string, businessId: string) => void;
 }
 
 interface Post {
   id: number;
   author: string;
+  authorHandle?: string;
   avatar: string;
   time: string;
   location: string;
@@ -36,6 +52,16 @@ interface Post {
   images?: string[];
   checkInPlace?: string;
   likedBy?: string[];
+  savedBy?: string[];
+  businessTag?: {
+    id: string;
+    name: string;
+    category: string;
+    collection: string;
+    image?: string;
+    actionText?: string;
+  };
+  tags?: string[];
 }
 
 interface Comment {
@@ -109,11 +135,20 @@ interface ChatMessage {
 const CommunitySection: React.FC<CommunitySectionProps> = ({ 
   isAuthenticated, 
   userName, 
+  userProfile,
   posts, 
   onSyncPosts, 
   onShowAuth, 
-  onClose 
+  onClose,
+  onOpenReservations,
+  onOpenProfile,
+  onBookBusiness
 }) => {
+  // Social Profile & Identity state
+  const [myProfile, setMyProfile] = useState<SocialProfile | null>(null);
+  const [viewingProfile, setViewingProfile] = useState<SocialProfile | null>(null);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+
   // Mobile Tab bar navigation: 'feed' | 'explore' | 'favorites' | 'profile'
   const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile'>('feed');
   const [selectedExploreCategory, setSelectedExploreCategory] = useState<string>('Para ti');
@@ -126,6 +161,78 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [activeChatUser, setActiveChatUser] = useState<string | null>(null);
   const [showAISidebar, setShowAISidebar] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [activeDirectBooking, setActiveDirectBooking] = useState<any | null>(null);
+
+  // Auto-load or create social profile on mount
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const fetchProfile = async () => {
+      try {
+        const email = userProfile?.email || `${(userName || 'viajante').toLowerCase().replace(/\s+/g, '')}@azores4you.com`;
+        const res = await fetch(`${API_BASE_URL}/api/community/profile/me?email=${encodeURIComponent(email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMyProfile(data);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar perfil social:", err);
+      }
+    };
+    fetchProfile();
+  }, [isAuthenticated, userProfile?.email, userName]);
+
+  // Handle saving edited social profile
+  const handleSaveProfile = async (updated: Partial<SocialProfile>): Promise<boolean> => {
+    try {
+      const email = userProfile?.email || myProfile?.email || '';
+      const res = await fetch(`${API_BASE_URL}/api/community/profile/me`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, desiredHandle: updated.handle, ...updated })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMyProfile(data.profile);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Erro ao atualizar perfil:", err);
+      return false;
+    }
+  };
+
+  // Open any member or business social profile
+  const openUserProfile = async (handleOrName: string) => {
+    try {
+      let target = handleOrName.trim();
+      if (!target.startsWith('@')) {
+        target = `@azorestoyou_${target.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+      }
+      const res = await fetch(`${API_BASE_URL}/api/community/profile/${encodeURIComponent(target)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setViewingProfile(data);
+        return;
+      }
+    } catch (err) {}
+
+    // Synthetic fallback profile
+    setViewingProfile({
+      id: `temp_${Date.now()}`,
+      userId: handleOrName,
+      email: `${handleOrName}@azores4you.com`,
+      handle: `@azorestoyou_${handleOrName.toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+      name: handleOrName,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${handleOrName}`,
+      profileType: 'personal',
+      followersCount: 140,
+      followingCount: 95,
+      postsCount: 18,
+      location: 'São Miguel, Açores',
+      bio: 'Membro entusiasta da Comunidade Azorestoyou 🌿'
+    });
+  };
 
   // Form Composer State
   const [postText, setPostText] = useState('');
@@ -313,56 +420,50 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   };
 
   const handlePostLike = async (post: Post) => {
-    const updated = posts.map(p => {
-      if (p.id === post.id) {
-        const isLiked = !p.isLiked;
-        const likedBy = p.likedBy || [];
-        const likes = isLiked ? p.likes + 1 : p.likes - 1;
-        const finalLikedBy = isLiked ? [...likedBy, userName] : likedBy.filter(u => u !== userName);
-        const newP = { ...p, isLiked, likes, likedBy: finalLikedBy };
-        
-        // Update local state if opened in details
-        if (activePostDetail?.id === post.id) {
-          setActivePostDetail(newP);
-        }
-        return newP;
-      }
-      return p;
-    });
-
     try {
-      await fetch(`${API_BASE_URL}/api/posts`, {
+      const email = userProfile?.email || myProfile?.email || '';
+      const res = await fetch(`${API_BASE_URL}/api/community/posts/${post.id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
+        body: JSON.stringify({ userEmail: email, userName })
       });
-      onSyncPosts();
-      addCredits(5);
+      if (res.ok) {
+        const data = await res.json();
+        if (activePostDetail?.id === post.id) {
+          setActivePostDetail({
+            ...activePostDetail,
+            likes: data.likes,
+            isLiked: data.isLiked
+          });
+        }
+        onSyncPosts();
+        if (data.isLiked) addCredits(5);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Erro ao dar gosto:", e);
     }
   };
 
   const handlePostSave = async (post: Post) => {
-    const updated = posts.map(p => {
-      if (p.id === post.id) {
-        const newP = { ...p, isSaved: !p.isSaved };
-        if (activePostDetail?.id === post.id) {
-          setActivePostDetail(newP);
-        }
-        return newP;
-      }
-      return p;
-    });
     try {
-      await fetch(`${API_BASE_URL}/api/posts`, {
+      const email = userProfile?.email || myProfile?.email || '';
+      const res = await fetch(`${API_BASE_URL}/api/community/posts/${post.id}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
+        body: JSON.stringify({ userEmail: email, userName })
       });
-      onSyncPosts();
+      if (res.ok) {
+        const data = await res.json();
+        if (activePostDetail?.id === post.id) {
+          setActivePostDetail({
+            ...activePostDetail,
+            isSaved: data.isSaved
+          });
+        }
+        onSyncPosts();
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Erro ao guardar publicação:", e);
     }
   };
 
@@ -420,6 +521,62 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     return true;
   });
 
+  // Authentication Guard: community is private to logged-in members
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100 flex flex-col items-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-100">
+            <Users size={36} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Comunidade Azorestoyou</h2>
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+              A rede social privada e exclusiva dos Açores. Para consultar publicações, histórias, perfis de membros e negócios, inicie sessão na sua conta da Super-App.
+            </p>
+          </div>
+          <button
+            onClick={onShowAuth}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
+          >
+            Iniciar Sessão com Conta Azorestoyou
+          </button>
+          <button
+            onClick={onClose}
+            className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider"
+          >
+            Voltar a Explorar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If viewing another user's profile
+  if (viewingProfile) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FA] text-[#071A3D] font-sans antialiased pb-24 relative select-none">
+        <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col border-x border-slate-100">
+          <CommunityProfileView 
+            profile={viewingProfile}
+            isMyProfile={viewingProfile.handle?.toLowerCase() === myProfile?.handle?.toLowerCase()}
+            onBack={() => setViewingProfile(null)}
+            onEditProfile={() => setShowEditProfileModal(true)}
+            onBookBusiness={onBookBusiness}
+            onSendMessage={(targetHandle) => setActiveChatUser(targetHandle)}
+            userPosts={posts.filter(p => p.author === viewingProfile.name || p.author === viewingProfile.handle)}
+          />
+          <CommunityEditProfileModal 
+            isOpen={showEditProfileModal}
+            onClose={() => setShowEditProfileModal(false)}
+            profile={myProfile}
+            onSaveProfile={handleSaveProfile}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F7FA] text-[#071A3D] font-sans antialiased pb-24 relative select-none">
       
@@ -456,8 +613,12 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
             </button>
-            <button onClick={() => setActiveMobileTab('profile')} className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden ml-1">
-              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
+            <button 
+              onClick={() => setActiveMobileTab('profile')} 
+              className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden ml-1 active:scale-95 transition-transform"
+              title="O Meu Perfil"
+            >
+              <img src={myProfile?.avatar || userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
             </button>
           </div>
         </header>
@@ -540,10 +701,13 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       
                       {/* Card Header */}
                       <div className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <img src={post.avatar} alt="Avatar" className="w-10 h-10 rounded-full border border-slate-100" />
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer group"
+                          onClick={() => openUserProfile(post.authorHandle || post.author)}
+                        >
+                          <img src={post.avatar} alt="Avatar" className="w-10 h-10 rounded-full border border-slate-100 group-hover:scale-105 transition-transform object-cover" />
                           <div>
-                            <h4 className="text-xs font-black text-[#071A3D] leading-none flex items-center gap-1.5">
+                            <h4 className="text-xs font-black text-[#071A3D] leading-none flex items-center gap-1.5 group-hover:text-emerald-600 transition-colors">
                               <span>{post.author}</span>
                               {post.checkInPlace && (
                                 <span className="text-[10px] text-slate-450 font-semibold lowercase">
@@ -551,8 +715,9 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                                 </span>
                               )}
                             </h4>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-1">
-                              {post.location} • {post.time}
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight mt-1 flex items-center gap-1">
+                              {post.authorHandle && <span className="text-[#0066FF] font-semibold lowercase">{post.authorHandle} •</span>}
+                              <span>{post.location} • {post.time}</span>
                             </p>
                           </div>
                         </div>
@@ -561,26 +726,95 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                         </button>
                       </div>
 
-                      {/* Text content */}
+                      {/* Text content with hashtag & mention highlights */}
                       {post.content && (
                         <div 
                           className="px-4 pb-3 cursor-pointer"
                           onClick={() => setActivePostDetail(post)}
                         >
-                          <p className="text-xs font-semibold text-slate-700 leading-relaxed">{post.content}</p>
+                          <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">
+                            {post.content.split(' ').map((word, wIdx) => {
+                              if (word.startsWith('#')) {
+                                return (
+                                  <span 
+                                    key={wIdx} 
+                                    className="text-[#00B857] font-black hover:underline mr-1 cursor-pointer" 
+                                    onClick={(e) => { e.stopPropagation(); setSearchQuery(word); setActiveMobileTab('explore'); }}
+                                  >
+                                    {word}{' '}
+                                  </span>
+                                );
+                              }
+                              if (word.startsWith('@')) {
+                                return (
+                                  <span 
+                                    key={wIdx} 
+                                    className="text-[#0066FF] font-black hover:underline mr-1 cursor-pointer" 
+                                    onClick={(e) => { e.stopPropagation(); openUserProfile(word); }}
+                                  >
+                                    {word}{' '}
+                                  </span>
+                                );
+                              }
+                              return word + ' ';
+                            })}
+                          </p>
                         </div>
                       )}
 
-                      {/* Media */}
+                      {/* Media Carousel */}
                       {postImages.length > 0 && (
-                        <div className="relative aspect-square bg-slate-50 overflow-hidden cursor-pointer" onClick={() => setActivePostDetail(post)}>
-                          <img src={postImages[currentIdx]} alt="Media" className="w-full h-full object-cover" />
+                        <div className="relative aspect-square bg-slate-50 overflow-hidden select-none">
+                          <img 
+                            src={postImages[currentIdx]} 
+                            alt="Media" 
+                            className="w-full h-full object-cover cursor-pointer" 
+                            onClick={() => setActivePostDetail(post)} 
+                          />
                           
-                          {/* Indicator label */}
+                          {/* Indicator badge */}
                           {hasCarousel && (
-                            <div className="absolute top-3 right-3 bg-black/60 text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
                               {currentIdx + 1}/{postImages.length}
                             </div>
+                          )}
+
+                          {/* Controls */}
+                          {hasCarousel && (
+                            <>
+                              {currentIdx > 0 && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCarouselIndex(prev => ({ ...prev, [post.id]: currentIdx - 1 }));
+                                  }}
+                                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all shadow-md"
+                                >
+                                  <ChevronLeft size={16} />
+                                </button>
+                              )}
+                              {currentIdx < postImages.length - 1 && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCarouselIndex(prev => ({ ...prev, [post.id]: currentIdx + 1 }));
+                                  }}
+                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all shadow-md"
+                                >
+                                  <ChevronRight size={16} />
+                                </button>
+                              )}
+
+                              {/* Carousel dots */}
+                              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+                                {postImages.map((_, dotIdx) => (
+                                  <span 
+                                    key={dotIdx} 
+                                    className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentIdx ? 'bg-white scale-125' : 'bg-white/50'}`}
+                                  />
+                                ))}
+                              </div>
+                            </>
                           )}
                         </div>
                       )}
@@ -591,41 +825,73 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                         </div>
                       )}
 
+                      {/* Tagged Commercial Card (Direct Booking Integration) */}
+                      {post.businessTag && (
+                        <div className="m-3 p-3 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-white border border-emerald-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-emerald-600 font-black">
+                              {post.businessTag.image ? (
+                                <img src={post.businessTag.image} alt={post.businessTag.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Building2 size={18} />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-black uppercase text-emerald-600 tracking-wider truncate">
+                                {post.businessTag.category || 'Negócio Oficial'}
+                              </p>
+                              <h5 className="text-xs font-black text-slate-800 truncate">
+                                {post.businessTag.name}
+                              </h5>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => onBookBusiness ? onBookBusiness(post.businessTag!.collection || post.businessTag!.category, post.businessTag!.id) : alert(`Reservar em ${post.businessTag!.name}`)}
+                            className="px-3 py-1.5 bg-[#00B857] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex-shrink-0"
+                          >
+                            {post.businessTag.actionText || 'Reservar'}
+                          </button>
+                        </div>
+                      )}
+
                       {/* Action Bar */}
-                      <div className="p-4 space-y-3">
+                      <div className="p-4 space-y-2.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <button onClick={() => handlePostLike(post)} className={`flex items-center gap-1 ${post.isLiked ? 'text-rose-500' : 'text-[#071A3D]'}`}>
-                              <Heart size={18} className={post.isLiked ? 'fill-current' : ''} />
-                              <span className="text-[10px] font-black">{post.likes}</span>
+                            <button onClick={() => handlePostLike(post)} className={`flex items-center gap-1.5 transition-transform active:scale-125 ${post.isLiked ? 'text-rose-500' : 'text-[#071A3D]'}`}>
+                              <Heart size={20} className={post.isLiked ? 'fill-current' : ''} />
                             </button>
 
-                            <button onClick={() => setActivePostDetail(post)} className="flex items-center gap-1 text-[#071A3D]">
-                              <MessageCircle size={18} />
-                              <span className="text-[10px] font-black">{post.comments.length}</span>
+                            <button onClick={() => setActivePostDetail(post)} className="flex items-center gap-1.5 text-[#071A3D]">
+                              <MessageCircle size={20} />
                             </button>
 
-                            <button onClick={() => alert('Link copiado!')} className="text-[#071A3D]">
-                              <Share2 size={18} />
+                            <button onClick={() => alert('Link copiado para a área de transferência!')} className="text-[#071A3D]">
+                              <Share2 size={20} />
                             </button>
                           </div>
 
-                          <button onClick={() => handlePostSave(post)} className={post.isSaved ? 'text-[#00B857]' : 'text-[#071A3D]'}>
-                            <Bookmark size={18} className={post.isSaved ? 'fill-current' : ''} />
+                          <button onClick={() => handlePostSave(post)} className={`transition-transform active:scale-125 ${post.isSaved ? 'text-[#00B857]' : 'text-[#071A3D]'}`}>
+                            <Bookmark size={20} className={post.isSaved ? 'fill-current' : ''} />
                           </button>
                         </div>
+
+                        {/* Likes counter in Portuguese */}
+                        <p className="text-[11px] font-black text-[#071A3D]">
+                          {(post.likes || 0).toLocaleString('pt-PT')} gostos
+                        </p>
 
                         {/* Liked list summary */}
                         {post.likedBy && post.likedBy.length > 0 && (
                           <p className="text-[9px] text-slate-500 font-bold">
-                            Gostos de <strong className="text-[#071A3D]">{post.likedBy[0]}</strong> e {post.likes - 1} outras pessoas
+                            Gostos de <strong className="text-[#071A3D]">{post.likedBy[0]}</strong> {post.likes > 1 ? `e ${post.likes - 1} outros` : ''}
                           </p>
                         )}
 
-                        {post.comments.length > 0 && (
+                        {post.comments && post.comments.length > 0 && (
                           <button 
                             onClick={() => setActivePostDetail(post)}
-                            className="text-[10px] text-slate-400 font-bold hover:underline"
+                            className="text-[10px] text-slate-400 font-bold hover:underline block pt-1"
                           >
                             Ver todos os {post.comments.length} comentários
                           </button>
@@ -642,112 +908,12 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 
           {/* ================= TABS: EXPLORAR TAB ================= */}
           {activeMobileTab === 'explore' && (
-            <div className="space-y-4 py-4 px-3">
-              
-              {/* Search input field */}
-              <div className="relative">
-                <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Pesquisar pessoas, trilhos, locais..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold focus:ring-1 focus:ring-[#00B857] text-[#071A3D]"
-                />
-              </div>
-
-              {/* Tag filters */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {['Para ti', 'Trilhos', 'Natureza', 'Praias', 'Restaurantes'].map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedExploreCategory(tag)}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex-shrink-0 ${
-                      selectedExploreCategory === tag 
-                        ? 'bg-[#00B857] text-white' 
-                        : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tendências */}
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Tendências</h4>
-                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todas</button>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { hashtag: '#Azores', count: '1.2K posts' },
-                    { hashtag: '#SãoMiguel', count: '980 posts' },
-                    { hashtag: '#Trilhos', count: '756 posts' },
-                    { hashtag: '#Natureza', count: '643 posts' }
-                  ].map((trend, i) => (
-                    <div key={i} className="p-3 bg-slate-50 rounded-xl flex flex-col justify-between cursor-pointer" onClick={() => { setSearchQuery(trend.hashtag); setActiveMobileTab('feed'); }}>
-                      <span className="text-xs font-black text-[#071A3D]">{trend.hashtag}</span>
-                      <span className="text-[9px] text-slate-400 font-bold mt-1">{trend.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Suggested Users */}
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Pessoas sugeridas</h4>
-                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todas</button>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Ana Ferreira', island: 'São Miguel' },
-                    { name: 'Diogo C.', island: 'Terceira' },
-                    { name: 'Explora Açores', island: 'Faial' }
-                  ].map((user, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5" onClick={() => setActiveChatUser(user.name)}>
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} alt="Avatar" className="w-8 h-8 rounded-full border border-slate-150" />
-                        <div>
-                          <p className="text-xs font-black text-[#071A3D] leading-none">{user.name}</p>
-                          <p className="text-[9px] text-slate-450 font-bold mt-1 uppercase tracking-tight">{user.island}</p>
-                        </div>
-                      </div>
-                      <button onClick={() => { alert(`Seguiu: ${user.name}`); addCredits(10); }} className="px-3.5 py-1 bg-slate-50 hover:bg-slate-100 text-[#00B857] border border-slate-100 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all">
-                        Seguir
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Eventos em Destaque */}
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Eventos em destaque</h4>
-                  <button className="text-[10px] text-[#00B857] font-black uppercase">Ver todos</button>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { title: 'Festas do Senhor Santo Cristo', date: '02 - 05 Jun • Ponta Delgada', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800' },
-                    { title: 'Festival Maré de Agosto', date: '15 - 18 Ago • Horta', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800' }
-                  ].map((evt, i) => (
-                    <div key={i} className="flex gap-3 items-center border-b border-slate-50 pb-3 last:border-0 last:pb-0">
-                      <img src={evt.img} alt={evt.title} className="w-14 h-14 rounded-xl object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <h5 className="text-xs font-black text-[#071A3D] truncate">{evt.title}</h5>
-                        <p className="text-[9px] text-slate-400 font-bold mt-1">{evt.date}</p>
-                      </div>
-                      <button onClick={() => { alert(`Ir ao evento: ${evt.title}`); addCredits(15); }} className="px-3 py-1.5 bg-[#00B857] text-white text-[9px] font-black uppercase tracking-wider rounded-lg">
-                        Participar
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+            <CommunityExploreSection 
+              onSelectPost={(post) => setActivePostDetail(post)}
+              onSelectProfile={(handle) => openUserProfile(handle)}
+              onBookBusiness={onBookBusiness}
+              onStartChatWith={(u) => setActiveChatUser(u)}
+            />
           )}
 
           {/* ================= TABS: FAVORITOS TAB ================= */}
@@ -770,84 +936,34 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 
           {/* ================= TABS: PERFIL TAB ================= */}
           {activeMobileTab === 'profile' && (
-            <div className="space-y-6 py-4 px-3">
-              {/* Profile Card Header */}
-              <div className="flex items-center gap-4">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Profile" className="w-16 h-16 rounded-full border-2 border-slate-200" />
-                <div className="space-y-1">
-                  <h3 className="text-base font-black text-[#071A3D]">{userName}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">@braga.azt</p>
-                  <span className="bg-[#00B857]/15 text-[#00B857] text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded inline-block">
-                    {userCredits} CRÉDITOS
-                  </span>
-                </div>
-              </div>
-
-              {/* Bio details */}
-              <div className="bg-slate-50 p-4 rounded-2xl space-y-1 text-xs">
-                <p className="font-bold text-[#071A3D]">📍 São Miguel, Açores</p>
-                <p className="text-slate-500 font-semibold leading-relaxed mt-1">Explorador profissional de lagoas, caminhadas e da autêntica gastronomia açoriana. 🥾🌊</p>
-              </div>
-
-              {/* Statistics rows */}
-              <div className="grid grid-cols-3 gap-2 text-center py-2 border-y border-slate-100">
-                <div>
-                  <h4 className="text-xs font-black text-[#071A3D]">23</h4>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Posts</p>
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#071A3D]">128</h4>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Seguidores</p>
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#071A3D]">94</h4>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">A seguir</p>
-                </div>
-              </div>
-
-              {/* Profile sub-tabs grid preview */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Minhas publicações</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {posts.filter(p => p.author === userName).map(post => (
-                    <div key={post.id} className="aspect-square rounded-lg overflow-hidden border border-slate-100 cursor-pointer" onClick={() => setActivePostDetail(post)}>
-                      <img src={post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'} alt="My post" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+            <CommunityProfileView 
+              profile={myProfile || {
+                id: 'me',
+                userId: userProfile?.id || userName,
+                email: userProfile?.email || `${userName}@azores4you.com`,
+                handle: `@azorestoyou_${(userProfile?.name || userName).toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
+                name: userProfile?.name || userName,
+                avatar: userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
+                profileType: 'personal',
+                followersCount: 0,
+                followingCount: 0,
+                postsCount: posts.filter(p => p.author === userName).length,
+                location: 'São Miguel, Açores',
+                island: 'São Miguel',
+                country: 'Portugal',
+                bio: 'Explorador da Comunidade Azorestoyou 🌿'
+              }}
+              isMyProfile={true}
+              onBack={() => setActiveMobileTab('feed')}
+              onEditProfile={() => setShowEditProfileModal(true)}
+              onSendMessage={(targetHandle) => setActiveChatUser(targetHandle)}
+              userPosts={posts.filter(p => p.author === userName || p.author === myProfile?.handle)}
+            />
           )}
 
         </main>
 
-        {/* ================= FIXED BOTTOM NAVIGATION ================= */}
-        <footer className="sticky bottom-0 z-[100] bg-white border-t border-slate-100 h-16 flex items-center justify-around px-4">
-          <button onClick={() => setActiveMobileTab('feed')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'feed' ? 'text-[#00B857]' : 'text-slate-400'}`}>
-            <span className="text-lg">🏠</span>
-            <span className="text-[8px] font-black uppercase">Feed</span>
-          </button>
-          
-          <button onClick={() => setActiveMobileTab('explore')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'explore' ? 'text-[#00B857]' : 'text-slate-400'}`}>
-            <span className="text-lg">🔍</span>
-            <span className="text-[8px] font-black uppercase">Explorar</span>
-          </button>
-
-          <button onClick={() => setShowCreateModal(true)} className="w-11 h-11 bg-[#00B857] hover:bg-[#00a34b] text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-100 select-none">
-            <Plus size={22} className="font-black" />
-          </button>
-
-          <button onClick={() => setActiveMobileTab('favorites')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'favorites' ? 'text-[#00B857]' : 'text-slate-400'}`}>
-            <span className="text-lg">❤️</span>
-            <span className="text-[8px] font-black uppercase">Favoritos</span>
-          </button>
-
-          <button onClick={() => setActiveMobileTab('profile')} className={`flex flex-col items-center gap-1 ${activeMobileTab === 'profile' ? 'text-[#00B857]' : 'text-slate-400'}`}>
-            <span className="text-lg">👤</span>
-            <span className="text-[8px] font-black uppercase">Perfil</span>
-          </button>
-        </footer>
+        {/* Removed duplicate internal bottom nav - preserved super-app bottom bar */}
 
         {/* ================= HAMBURGER MENU SLIDE DRAWER ================= */}
         <AnimatePresence>
@@ -928,287 +1044,81 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         </AnimatePresence>
 
         {/* ================= STORY FULLSCREEN VIEWER ================= */}
-        <AnimatePresence>
-          {activeStoryView && (
-            <div className="absolute inset-0 z-[300] bg-black flex flex-col justify-between">
-              
-              {/* Top progress timer bars */}
-              <div className="p-4 bg-gradient-to-b from-black/60 to-transparent absolute top-0 inset-x-0 z-10 space-y-3">
-                <div className="w-full h-[3px] bg-white/20 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 5 }}
-                    onAnimationComplete={() => setActiveStoryView(null)}
-                    className="h-full bg-white rounded-full"
-                  />
-                </div>
-                
-                {/* Header author details */}
-                <div className="flex items-center justify-between text-white">
-                  <div className="flex items-center gap-2.5">
-                    <img src={activeStoryView.avatar} alt="Avatar" className="w-7 h-7 rounded-full border border-white/20" />
-                    <span className="text-xs font-black">{activeStoryView.userName}</span>
-                    <span className="text-[10px] text-white/50">2h</span>
-                  </div>
-                  <button onClick={() => setActiveStoryView(null)} className="text-white hover:opacity-75">
-                    <X size={18} />
-                  </button>
-                </div>
-              </div>
+        <CommunityStoriesViewer 
+          isOpen={!!activeStoryView}
+          onClose={() => setActiveStoryView(null)}
+          stories={stories}
+          initialIndex={stories.findIndex(s => s.id === activeStoryView?.id) >= 0 ? stories.findIndex(s => s.id === activeStoryView?.id) : 0}
+          onSendReply={(story, text) => {
+            alert(`Mensagem enviada a ${story.userName}: "${text}"`);
+          }}
+        />
 
-              {/* Background media image */}
-              <div className="flex-1 flex items-center justify-center">
-                <img src={activeStoryView.mediaUrl} alt="Story" className="w-full max-h-screen object-contain" />
-              </div>
+        {/* ================= NOVA PUBLICAÇÃO MODAL ================= */}
+        <CommunityCreatePostModal 
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          myProfile={myProfile}
+          onPostCreated={() => {
+            onSyncPosts();
+            addCredits(100);
+          }}
+        />
 
-              {/* Bottom message overlay */}
-              <div className="p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center gap-3 z-10">
-                <input
-                  type="text"
-                  placeholder="Enviar mensagem..."
-                  className="flex-1 bg-white/20 border-none rounded-xl px-4 py-2 text-xs text-white placeholder-white/50 focus:ring-1 focus:ring-white"
-                />
-                <button onClick={() => { alert('Gosto enviado!'); setActiveStoryView(null); }} className="text-white hover:scale-110">
-                  <Heart size={20} />
-                </button>
-              </div>
+        {/* ================= POST DETAILS MODAL ================= */}
+        <CommunityPostDetailModal 
+          isOpen={!!activePostDetail}
+          onClose={() => setActivePostDetail(null)}
+          post={activePostDetail}
+          myProfile={myProfile}
+          onLikeToggle={handlePostLike}
+          onSaveToggle={handlePostSave}
+          onBookBusiness={onBookBusiness}
+          onAuthorClick={(handle) => openUserProfile(handle)}
+          onCommentAdded={() => onSyncPosts()}
+        />
 
-            </div>
-          )}
-        </AnimatePresence>
+        {/* ================= PRIVATE CHAT WINDOW MODAL ================= */}
+        <CommunityDirectChatModal 
+          isOpen={!!activeChatUser}
+          onClose={() => setActiveChatUser(null)}
+          targetUser={activeChatUser ? { name: activeChatUser } : null}
+          myProfile={myProfile}
+          onBookBusiness={onBookBusiness}
+          onViewProfile={(handle) => openUserProfile(handle)}
+        />
 
-        {/* ================= NOVA PUBLICAÇÃO OVERLAY MODAL ================= */}
-        <AnimatePresence>
-          {showCreateModal && (
-            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
-              
-              {/* Header */}
-              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Nova Publicação</span>
-                <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-slate-50 rounded-full">
-                  <X size={18} />
-                </button>
-              </header>
+        {/* ================= EDIT PROFILE MODAL ================= */}
+        <CommunityEditProfileModal 
+          isOpen={showEditProfileModal}
+          onClose={() => setShowEditProfileModal(false)}
+          profile={myProfile}
+          onSaveProfile={handleSaveProfile}
+        />
 
-              {/* Form text input composer */}
-              <div className="flex-1 p-5 space-y-4 overflow-y-auto">
-                <div className="flex gap-3">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-9 h-9 rounded-full border" />
-                  <textarea
-                    value={postText}
-                    onChange={(e) => setPostText(e.target.value)}
-                    placeholder={`No que estás a pensar, ${userName}?`}
-                    className="flex-1 border-none focus:ring-0 text-xs p-1 resize-none h-24 text-[#071A3D]"
-                  />
-                </div>
+        {/* ================= NOTIFICATIONS MODAL ================= */}
+        <CommunityNotificationsModal 
+          isOpen={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          onSelectProfile={(handle) => openUserProfile(handle)}
+          onSelectPost={(postId) => {
+            const p = posts.find(post => post.id === postId);
+            if (p) setActivePostDetail(p);
+          }}
+          onOpenReservations={onOpenReservations}
+        />
 
-                {checkInPlace && (
-                  <div className="bg-emerald-50 text-[#00B857] text-[10px] px-3 py-1 rounded-full font-black flex items-center gap-1.5 border border-emerald-100 w-max">
-                    <MapPin size={10} />
-                    <span>em {checkInPlace}</span>
-                  </div>
-                )}
-
-                {/* Grid selection buttons */}
-                <div className="grid grid-cols-2 gap-3 pt-4">
-                  <label className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all border border-slate-100">
-                    <ImageIcon size={20} className="text-[#00C853]" />
-                    <span className="text-[10px] font-black uppercase text-[#071A3D]">Foto</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => e.target.files && setSelectedPhotos(Array.from(e.target.files))}
-                    />
-                  </label>
-                  
-                  <label className="p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all border border-slate-100">
-                    <Video size={20} className="text-[#0066FF]" />
-                    <span className="text-[10px] font-black uppercase text-[#071A3D]">Vídeo</span>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="hidden"
-                      onChange={(e) => e.target.files?.[0] && setSelectedVideo(e.target.files[0])}
-                    />
-                  </label>
-                </div>
-
-                {/* Previews */}
-                {(selectedPhotos.length > 0 || selectedVideo) && (
-                  <div className="p-3 bg-slate-50 rounded-xl flex gap-2 border">
-                    {selectedPhotos.map((p, i) => (
-                      <img key={i} src={URL.createObjectURL(p)} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
-                    ))}
-                    {selectedVideo && (
-                      <div className="w-12 h-12 bg-black flex items-center justify-center rounded-lg text-white text-xs">V</div>
-                    )}
-                  </div>
-                )}
-
-                {/* Additional option rows */}
-                <div className="space-y-1 pt-2">
-                  <button onClick={() => setCheckInPlace('Lagoa do Fogo')} className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 border-b border-slate-50 text-left text-xs font-semibold">
-                    <span className="flex items-center gap-2.5">📍 <span>Localização</span></span>
-                    <span className="text-[10px] text-slate-400 font-bold">Lagoa do Fogo</span>
-                  </button>
-                  <button className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 border-b border-slate-50 text-left text-xs font-semibold">
-                    <span className="flex items-center gap-2.5">🥾 <span>Trilho</span></span>
-                    <ChevronRight size={14} className="text-slate-450" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Publish button */}
-              <div className="p-4 border-t border-slate-100">
-                <button
-                  onClick={handlePublish}
-                  disabled={isUploadingMedia || (!postText.trim() && selectedPhotos.length === 0 && !selectedVideo)}
-                  className="w-full py-3.5 bg-[#00B857] hover:bg-[#00a14b] disabled:bg-slate-100 text-white font-black rounded-xl text-xs uppercase tracking-widest transition-all text-center shadow-lg"
-                >
-                  {isUploadingMedia ? 'A enviar...' : 'Publicar'}
-                </button>
-              </div>
-
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* ================= POST DETAILS OVERLAY ================= */}
-        <AnimatePresence>
-          {activePostDetail && (
-            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
-              
-              {/* Header */}
-              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
-                <button onClick={() => setActivePostDetail(null)} className="p-2 hover:bg-slate-50 rounded-full">
-                  <ArrowLeft size={18} />
-                </button>
-                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">Publicação</span>
-                <button className="p-2 hover:bg-slate-50 rounded-full">
-                  <MoreHorizontal size={18} />
-                </button>
-              </header>
-
-              {/* Scrollable details contents */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <img src={activePostDetail.avatar} alt="Avatar" className="w-9 h-9 rounded-full" />
-                  <div>
-                    <h4 className="text-xs font-black text-[#071A3D] leading-none">{activePostDetail.author}</h4>
-                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{activePostDetail.location}</p>
-                  </div>
-                </div>
-
-                <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">{activePostDetail.content}</p>
-
-                {/* Media */}
-                {activePostDetail.image && (
-                  <img src={activePostDetail.image} alt="Media" className="w-full rounded-2xl object-cover" />
-                )}
-
-                {/* Stats indicators */}
-                <div className="flex items-center justify-between border-y border-slate-100 py-3 text-[#071A3D]">
-                  <div className="flex gap-5 text-xs font-black">
-                    <button onClick={() => handlePostLike(activePostDetail)} className="flex items-center gap-1">
-                      <Heart size={18} className={activePostDetail.isLiked ? 'text-rose-500 fill-current' : ''} />
-                      <span>{activePostDetail.likes}</span>
-                    </button>
-                    <span className="flex items-center gap-1">
-                      <MessageCircle size={18} />
-                      <span>{activePostDetail.comments.length}</span>
-                    </span>
-                  </div>
-                  <button onClick={() => handlePostSave(activePostDetail)} className={activePostDetail.isSaved ? 'text-[#00B857]' : ''}>
-                    <Bookmark size={18} className={activePostDetail.isSaved ? 'fill-current' : ''} />
-                  </button>
-                </div>
-
-                {/* Comments List */}
-                <div className="space-y-4">
-                  <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Comentários</h5>
-                  {activePostDetail.comments.map(c => (
-                    <div key={c.id} className="flex gap-3 text-xs">
-                      <img src={c.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`} alt="Avatar" className="w-7 h-7 rounded-full border" />
-                      <div className="flex-1 bg-slate-50 p-3 rounded-2xl">
-                        <p className="text-[10px] font-black text-[#071A3D]">{c.author}</p>
-                        <p className="text-slate-650 font-semibold mt-1 leading-relaxed">{c.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Footer comment compose input */}
-              <div className="p-3 border-t border-slate-100 bg-white flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Escreve um comentário..."
-                  value={newCommentText}
-                  onChange={(e) => setNewCommentText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
-                  className="flex-1 bg-slate-55 border-none rounded-xl px-4 py-2 text-xs text-[#071A3D] focus:ring-1 focus:ring-[#00B857]"
-                />
-                <button onClick={handleCommentSubmit} className="p-2.5 bg-[#00B857] text-white rounded-xl shadow-lg">
-                  <Send size={16} />
-                </button>
-              </div>
-
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* ================= PRIVATE CHAT WINDOW OVERLAY ================= */}
-        <AnimatePresence>
-          {activeChatUser && (
-            <div className="absolute inset-0 z-[200] bg-white flex flex-col justify-between">
-              
-              {/* Header */}
-              <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between">
-                <button onClick={() => setActiveChatUser(null)} className="p-2 hover:bg-slate-50 rounded-full">
-                  <ArrowLeft size={18} />
-                </button>
-                <span className="text-xs font-black uppercase tracking-wider text-[#071A3D]">{activeChatUser}</span>
-                <span className="w-8 h-8 rounded-full border bg-slate-50" />
-              </header>
-
-              {/* History */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-                {(dmHistory[activeChatUser] || []).map((msg, i) => {
-                  const isMe = msg.sender === userName;
-                  return (
-                    <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[75%] p-3.5 rounded-2xl shadow-sm text-xs ${
-                        isMe ? 'bg-[#00B857] text-white rounded-tr-none' : 'bg-white text-[#071A3D] rounded-tl-none'
-                      }`}>
-                        <p className="font-semibold leading-relaxed">{msg.text}</p>
-                        <span className="block text-[8px] text-right mt-1 opacity-70">{msg.timestamp}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Chat composer input */}
-              <div className="p-3 border-t border-slate-100 bg-white flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Escreve uma mensagem..."
-                  value={chatTextInput}
-                  onChange={(e) => setChatTextInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
-                  className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-2 text-xs focus:ring-1 focus:ring-[#00B857] text-[#071A3D]"
-                />
-                <button onClick={sendChatMessage} className="p-2.5 bg-[#00B857] text-white rounded-xl shadow-lg">
-                  <Send size={16} />
-                </button>
-              </div>
-
-            </div>
-          )}
-        </AnimatePresence>
+        {/* ================= DIRECT BOOKING SHEET ================= */}
+        <CommunityDirectBookingModal 
+          isOpen={!!activeDirectBooking}
+          onClose={() => setActiveDirectBooking(null)}
+          business={activeDirectBooking}
+          userName={userName}
+          userEmail={userProfile?.email || `${(userName || 'viajante').toLowerCase().replace(/\s+/g, '')}@azores4you.com`}
+          onBookingSuccess={() => {
+            addCredits(50);
+          }}
+        />
 
       </div>
     </div>
