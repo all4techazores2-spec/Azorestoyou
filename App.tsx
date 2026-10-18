@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
 import { getAirports, COLORS, BUS_SCHEDULES } from './constants';
 import FlightBoard from './components/FlightBoard';
+import FlightSearchSection from './components/FlightSearchSection';
 import BookingWizard from './components/BookingWizard';
 import SummaryView from './components/SummaryView';
 import ExploreSection from './components/ExploreSection';
@@ -2938,8 +2939,8 @@ const App: React.FC = () => {
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
                 {/* Specialized Views */}
                 {exploreCategory === 'flights' && (
-                  // Uses FlightBoard with DYNAMIC flights from App State
-                  <FlightBoard airports={airports} flights={flights} onSelectFlight={handleFlightSelect} language={language} />
+                  // Full flight search module (demo institucional)
+                  <FlightSearchSection language={language} onClose={() => setExploreCategory(null)} />
                 )}
 
                 {(exploreCategory === 'accommodation' || currentStep === 'checkout') && (
