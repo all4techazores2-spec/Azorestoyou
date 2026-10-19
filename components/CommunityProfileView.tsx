@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   ArrowLeft, MoreHorizontal, Grid, Film, Tag, Calendar, MessageCircle, 
@@ -6,9 +6,13 @@ import {
   ExternalLink, Sparkles, Plus, Bookmark
 } from 'lucide-react';
 import { SocialProfile } from '../types';
+import CommunityFollowButton from './CommunityFollowButton';
+import { CommunityReel, socialMediaUrl, socialRequest } from '../services/communitySocial';
 
 interface CommunityProfileViewProps {
   profile: SocialProfile;
+  currentProfile?: SocialProfile | null;
+  onOpenReel?: (id: string) => void;
   isMyProfile: boolean;
   onBack: () => void;
   onEditProfile: () => void;
@@ -20,6 +24,8 @@ interface CommunityProfileViewProps {
 const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
   profile,
   isMyProfile,
+  currentProfile,
+  onOpenReel,
   onBack,
   onEditProfile,
   onBookBusiness,
@@ -27,9 +33,20 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
   userPosts = []
 }) => {
   const [activeTab, setActiveTab] = useState<'grid' | 'reels' | 'tagged'>('grid');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState<number | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [profileReels, setProfileReels] = useState<CommunityReel[]>([]);
+  const [reelsError, setReelsError] = useState('');
+  useEffect(() => { setFollowersCount(null); }, [profile.id]);
+  useEffect(() => {
+    if (activeTab !== 'reels' || !currentProfile?.email) return;
+    const controller = new AbortController();
+    setReelsError(''); setProfileReels([]);
+    socialRequest<{items: CommunityReel[]}>(`reels?authorId=${encodeURIComponent(profile.id)}`, currentProfile.email, undefined, undefined, controller.signal)
+      .then(data => setProfileReels(data.items)).catch(e => { if(e.name !== 'AbortError') setReelsError(e.message); });
+    return () => controller.abort();
+  }, [activeTab, profile.id, currentProfile?.email]);
 
   const handleShare = () => {
     navigator.clipboard?.writeText?.(window.location.origin + `#community/${profile.handle}`);
@@ -133,7 +150,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
             </div>
             <div>
               <span className="block text-base font-semibold text-slate-800 leading-none">
-                {profile.followersCount ?? 1320}
+                {followersCount ?? profile.followersCount ?? 0}
               </span>
               <span className="text-[11px] font-bold text-slate-400">seguidores</span>
             </div>
@@ -211,27 +228,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
             </>
           ) : (
             <>
-              {/* Follow Button */}
-              <button 
-                onClick={() => setIsFollowing(!isFollowing)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold  transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm ${
-                  isFollowing 
-                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                }`}
-              >
-                {isFollowing ? (
-                  <>
-                    <UserCheck size={14} />
-                    <span>A seguir</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={14} />
-                    <span>Seguir</span>
-                  </>
-                )}
-              </button>
+              <CommunityFollowButton key={profile.id} email={currentProfile?.email || ''} ownId={currentProfile?.id} targetId={profile.id} onChange={state => setFollowersCount(state.target?.followersCount ?? 0)}/>
 
               {/* If Business: Book button connects to Super-App */}
               {profile.isBusiness && (
@@ -319,7 +316,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
         </div>
 
         {/* 3x3 Media Grid */}
-        <div className="grid grid-cols-3 gap-1 pt-1">
+        {activeTab === 'reels' ? <div className="profile-reels-grid">{profileReels.map(reel => <button key={reel.id} aria-label={`Ver reel de ${profile.name}`} onClick={() => onOpenReel?.(reel.id)}><video src={socialMediaUrl(reel.videoUrl)} muted playsInline preload="metadata"/><Film size={19}/></button>)}{!profileReels.length && <p>{reelsError || 'Ainda não há reels publicados.'}</p>}</div> : <div className="grid grid-cols-3 gap-1 pt-1">
           {(userPosts.length > 0 ? userPosts.map(p => p.images?.[0] || p.image || defaultMediaGrid[0]) : defaultMediaGrid).map((imgUrl, i) => (
             <div 
               key={i} 
@@ -328,7 +325,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
               <img src={imgUrl} alt={`post_${i}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             </div>
           ))}
-        </div>
+        </div>}
 
       </div>
     </div>

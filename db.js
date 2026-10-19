@@ -143,7 +143,10 @@ const DEFAULT_DB = {
     chairs: [],
     chairBlocks: [],
     slider: [],
-    social_profiles: []
+    social_profiles: [],
+    community_reels: [],
+    community_follows: [],
+    community_notifications: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests

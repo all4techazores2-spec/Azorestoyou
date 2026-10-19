@@ -641,6 +641,7 @@ const App: React.FC = () => {
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreCategory, setExploreCategory] = useState<ExploreCategory>(null);
+  useEffect(() => { if (new URLSearchParams(window.location.search).has('communityReel')) { setHasEnteredApp(true); setExploreCategory('community'); } }, []);
 
   useEffect(() => {
     if (exploreCategory !== 'marketplace') {
@@ -2993,6 +2994,7 @@ const App: React.FC = () => {
                 {/* Discovery Views */}
                 {exploreCategory === 'community' && (
                   <CommunitySection 
+                    onLogout={handleLogout}
                     isAuthenticated={isAuthenticated}
                     userName={userProfile?.name || 'Viajante'}
                     userProfile={userProfile}

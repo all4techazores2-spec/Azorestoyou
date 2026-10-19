@@ -7,11 +7,14 @@ import {
   ThumbsUp, User as UserIcon, MapPin, Compass, Trophy, Users, Star, Sparkles,
   Play, Pause, Mic, Paperclip, SendHorizonal, Calendar, Check, HelpCircle,
   Hash, ChevronLeft, ChevronRight, MessageCircleCode, CheckSquare, Bell, Menu as MenuIcon, Plus, Settings,
-  Building2
+  Building2, Clapperboard, LogOut, Coins
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
 import './community.css';
+import CommunityReels from './CommunityReels';
+import CommunitySavedReels from './CommunitySavedReels';
+import { socialRequest } from '../services/communitySocial';
 import { SocialProfile } from '../types';
 import CommunityProfileView from './CommunityProfileView';
 import CommunityEditProfileModal from './CommunityEditProfileModal';
@@ -31,6 +34,7 @@ interface CommunitySectionProps {
   onSyncPosts: () => void;
   onShowAuth: () => void;
   onClose: () => void;
+  onLogout?: () => void;
   onOpenReservations?: () => void;
   onOpenProfile?: () => void;
   onBookBusiness?: (businessType: string, businessId: string) => void;
@@ -142,6 +146,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   onSyncPosts, 
   onShowAuth, 
   onClose,
+  onLogout,
   onOpenReservations,
   onOpenProfile,
   onBookBusiness
@@ -152,7 +157,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
   // Mobile Tab bar navigation: 'feed' | 'explore' | 'favorites' | 'profile'
-  const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile' | 'messages'>('feed');
+  const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile' | 'messages' | 'reels'>('feed');
   const [selectedExploreCategory, setSelectedExploreCategory] = useState<string>('Para ti');
   
   // Overlays / Drawers
@@ -164,6 +169,22 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [showAISidebar, setShowAISidebar] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeDirectBooking, setActiveDirectBooking] = useState<any | null>(null);
+
+  const [reelComposeRequest, setReelComposeRequest] = useState(0);
+  const [selectedReelId, setSelectedReelId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('communityReel'));
+  const [unreadActivity, setUnreadActivity] = useState(0);
+  useEffect(() => { if (selectedReelId) setActiveMobileTab('reels'); }, [selectedReelId]);
+  useEffect(() => {
+    if (!myProfile?.email) return;
+    let cancelled = false;
+    const refresh = async () => {
+      if (document.hidden) return;
+      try { const data = await socialRequest<{unreadCount:number}>('notifications', myProfile.email); if (!cancelled) setUnreadActivity(data.unreadCount); } catch {}
+    };
+    refresh(); const timer = setInterval(refresh, 30000);
+    window.addEventListener('community-notifications-changed', refresh);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener('community-notifications-changed', refresh); };
+  }, [myProfile?.email]);
 
   // Auto-load or create social profile on mount
   useEffect(() => {
@@ -567,31 +588,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     );
   }
 
-  // If viewing another user's profile
-  if (viewingProfile) {
-    return (
-      <div className="community-app fixed inset-0 z-[120] bg-white text-[#071A3D] font-sans antialiased">
-        <div className="community-shell w-full h-full bg-white relative flex flex-col">
-          <CommunityProfileView 
-            profile={viewingProfile}
-            isMyProfile={viewingProfile.handle?.toLowerCase() === myProfile?.handle?.toLowerCase()}
-            onBack={() => setViewingProfile(null)}
-            onEditProfile={() => setShowEditProfileModal(true)}
-            onBookBusiness={onBookBusiness}
-            onSendMessage={(targetHandle) => setActiveChatUser(targetHandle)}
-            userPosts={posts.filter(p => p.author === viewingProfile.name || p.author === viewingProfile.handle)}
-          />
-          <CommunityEditProfileModal 
-            isOpen={showEditProfileModal}
-            onClose={() => setShowEditProfileModal(false)}
-            profile={myProfile}
-            onSaveProfile={handleSaveProfile}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="community-app fixed inset-0 z-[120] bg-white text-[#071A3D] font-sans antialiased">
       
@@ -608,7 +604,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
       <div className="community-shell w-full h-full bg-white relative flex flex-col">
         
         {/* ================= FIXED HEADER ================= */}
-        <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
+        {!viewingProfile && activeMobileTab !== 'reels' && <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
           <button onClick={() => setShowHamburgerDrawer(true)} aria-label="Abrir menu da comunidade" className="p-2 hover:bg-slate-50 rounded-full transition-all text-[#071A3D]">
             <MenuIcon size={20} />
           </button>
@@ -626,7 +622,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             </button>
             <button aria-label="Notificações" onClick={() => setShowNotifications(!showNotifications)} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D] relative">
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+              {unreadActivity > 0 && <span className="community-activity-badge">{unreadActivity > 9 ? '9+' : unreadActivity}</span>}
             </button>
             <button 
               onClick={() => setActiveMobileTab('profile')} 
@@ -636,13 +632,15 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               <img src={myProfile?.avatar || userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" onError={handleAvatarError} className="w-full h-full object-cover" />
             </button>
           </div>
-        </header>
+        </header>}
 
         {/* ================= MAIN SCROLL CONTAINER ================= */}
-        <main className="community-main flex-1 min-h-0 overflow-y-auto">
+        <main className={`community-main flex-1 min-h-0 overflow-y-auto ${activeMobileTab === 'reels' && !viewingProfile ? 'community-reels-main' : ''}`}>
+          {viewingProfile && <CommunityProfileView profile={viewingProfile} currentProfile={myProfile} onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }} isMyProfile={viewingProfile.id === myProfile?.id} onBack={() => setViewingProfile(null)} onEditProfile={() => setShowEditProfileModal(true)} onBookBusiness={onBookBusiness} onSendMessage={setActiveChatUser} userPosts={posts.filter(p => p.authorHandle === viewingProfile.handle || p.author === viewingProfile.name)} />}
+          {!viewingProfile && activeMobileTab === 'reels' && <CommunityReels profile={myProfile} onBack={() => setActiveMobileTab('feed')} onViewProfile={openUserProfile} composeRequest={reelComposeRequest} onComposeConsumed={() => setReelComposeRequest(0)} initialReelId={selectedReelId}/>}
           
           {/* ================= TABS: FEED TAB ================= */}
-          {activeMobileTab === 'feed' && (
+          {!viewingProfile && activeMobileTab === 'feed' && (
             <div className="community-feed">
               
               {/* Categories Navigation scroll */}
@@ -915,7 +913,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           )}
 
           {/* ================= TABS: EXPLORAR TAB ================= */}
-          {activeMobileTab === 'explore' && (
+          {!viewingProfile && activeMobileTab === 'explore' && (
             <CommunityExploreSection 
               onSelectPost={(post) => setActivePostDetail(post)}
               onSelectProfile={(handle) => openUserProfile(handle)}
@@ -924,8 +922,9 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             />
           )}
 
+          {!viewingProfile && activeMobileTab === 'favorites' && <CommunitySavedReels email={myProfile?.email || ''} onOpenReel={(id) => { setSelectedReelId(id); setActiveMobileTab('reels'); }}/>}
           {/* ================= TABS: FAVORITOS TAB ================= */}
-          {activeMobileTab === 'favorites' && (
+          {!viewingProfile && activeMobileTab === 'favorites' && (
             <div className="space-y-4 py-4 px-3">
               <h2 className="text-sm font-semibold  text-[#071A3D]">Favoritos e Guardados</h2>
               <div className="grid grid-cols-2 gap-3">
@@ -943,7 +942,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           )}
 
           {/* ================= TABS: PERFIL TAB ================= */}
-          {activeMobileTab === 'profile' && (
+          {!viewingProfile && activeMobileTab === 'profile' && (
             <CommunityProfileView 
               profile={myProfile || {
                 id: 'me',
@@ -961,6 +960,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                 country: 'Portugal',
                 bio: 'Explorador da Comunidade Azorestoyou 🌿'
               }}
+              currentProfile={myProfile} onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }}
               isMyProfile={true}
               onBack={() => setActiveMobileTab('feed')}
               onEditProfile={() => setShowEditProfileModal(true)}
@@ -969,14 +969,14 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             />
           )}
 
-          {activeMobileTab === 'messages' && <section className="community-messages"><h2>Mensagens</h2><label className="community-search"><Search size={17}/><input placeholder="Pesquisar mensagens" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/></label><div className="community-filters"><span className="selected">Todas</span></div>{Object.entries(dmHistory).filter(([name]) => name.toLowerCase().includes(searchQuery.toLowerCase())).map(([name, messages]) => <button className="community-message-row" key={name} onClick={() => setActiveChatUser(name)}><img src={avatarFallback} alt=""/><span><strong>{name}</strong><small>{messages[messages.length - 1]?.text || 'Iniciar conversa'}</small></span><Camera size={18}/></button>)}</section>}
+          {!viewingProfile && activeMobileTab === 'messages' && <section className="community-messages"><h2>Mensagens</h2><label className="community-search"><Search size={17}/><input placeholder="Pesquisar mensagens" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/></label><div className="community-filters"><span className="selected">Todas</span></div>{Object.entries<ChatMessage[]>(dmHistory).filter(([name]) => name.toLowerCase().includes(searchQuery.toLowerCase())).map(([name, messages]) => <button className="community-message-row" key={name} onClick={() => setActiveChatUser(name)}><img src={avatarFallback} alt=""/><span><strong>{name}</strong><small>{messages[messages.length - 1]?.text || 'Iniciar conversa'}</small></span><Camera size={18}/></button>)}</section>}
         </main>
         <nav className="community-bottom" aria-label="Navegação da comunidade">
           <button onClick={onClose}><Compass/><span>Explorar</span></button>
-          <button className={activeMobileTab === 'feed' ? 'active' : ''} onClick={() => setActiveMobileTab('feed')}><Users/><span>Comunidade</span></button>
-          <button className="community-create" aria-label="Nova publicação" onClick={() => setShowCreateModal(true)}><Plus/></button>
-          <button onClick={onOpenReservations}><Calendar/><span>Reservas</span></button>
-          <button className={activeMobileTab === 'profile' ? 'active' : ''} onClick={() => setActiveMobileTab('profile')}><UserIcon/><span>Perfil</span></button>
+          <button className={activeMobileTab === 'feed' ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('feed'); }}><Users/><span>Comunidade</span></button>
+          <button className="community-create" aria-label={activeMobileTab === 'reels' ? 'Novo reel' : 'Nova publicação'} onClick={() => { setViewingProfile(null); if (activeMobileTab === 'reels') setReelComposeRequest(n => n + 1); else setShowCreateModal(true); }}><Plus/></button>
+          <button className={activeMobileTab === 'reels' && !viewingProfile ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('reels'); }}><Clapperboard/><span>Reels</span></button>
+          <button className={activeMobileTab === 'profile' ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('profile'); }}><UserIcon/><span>Perfil</span></button>
         </nav>
 
         {/* Removed duplicate internal bottom nav - preserved super-app bottom bar */}
@@ -1000,60 +1000,23 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="relative bg-white w-4/5 h-full shadow-2xl z-10 flex flex-col p-6 space-y-6"
+                className="community-drawer relative bg-white h-full z-10 flex flex-col"
               >
-                {/* Header title close */}
-                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                  <span className="text-sm font-semibold  text-[#071A3D]">Menu</span>
-                  <button onClick={() => setShowHamburgerDrawer(false)} className="p-1.5 bg-slate-55 hover:bg-slate-100 rounded-full">
-                    <X size={16} />
-                  </button>
-                </div>
-
-                {/* User Info details */}
-                <div className="flex items-center gap-3">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" onError={handleAvatarError} className="w-11 h-11 rounded-full border border-slate-150" />
-                  <div>
-                    <h4 className="text-xs font-semibold text-[#071A3D]">{userName}</h4>
-                    <p className="text-[9px] text-slate-400 font-bold">@braga.azt</p>
-                  </div>
-                  <span className="ml-auto bg-amber-50 text-amber-600 text-[8px] px-2 py-0.5 rounded font-semibold border border-amber-100">
-                    {userCredits} CRÉDITOS
-                  </span>
-                </div>
-
-                {/* Navigation links grid list */}
-                <nav className="flex-1 space-y-1.5 overflow-y-auto">
+                <div className="community-drawer-top"><button aria-label="Fechar menu" onClick={() => setShowHamburgerDrawer(false)}><X size={22}/></button></div>
+                <h2 className="community-drawer-title">A tua comunidade</h2>
+                <div className="community-drawer-identity"><img src={myProfile?.avatar || userProfile?.avatar || avatarFallback} onError={handleAvatarError} alt=""/><div><strong>{myProfile?.name || userName}</strong><p>{myProfile?.handle || ''}</p><span><Coins size={15}/>{userCredits} créditos</span></div></div>
+                <p className="community-drawer-label">CONTA</p>
+                <nav className="community-drawer-nav" aria-label="Menu da comunidade">
                   {[
-                    { label: 'Perfil', icon: '👤', tab: 'profile' },
-                    { label: 'Minhas Reservas', icon: '📅', modal: 'reservations' },
-                    { label: 'Mensagens', icon: '💬', chat: true },
-                    { label: 'Favoritos', icon: '❤️', tab: 'favorites' },
-                    { label: 'Conquistas', icon: '🏆', gamification: true },
-                    { label: 'Definições', icon: '⚙', settings: true }
-                  ].map((item, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setShowHamburgerDrawer(false);
-                        if (item.tab) setActiveMobileTab(item.tab as any);
-                        if (item.chat) { setSearchQuery(''); setActiveMobileTab('messages'); }
-                        if (item.gamification) alert('Conquistas do utilizador!');
-                      }}
-                      className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-left text-xs font-bold text-[#071A3D]"
-                    >
-                      <span className="flex items-center gap-3">
-                        <span className="text-sm">{item.icon}</span>
-                        <span>{item.label}</span>
-                      </span>
-                      <ChevronRight size={14} className="text-slate-400" />
-                    </button>
-                  ))}
+                    {label:'Perfil', Icon:UserIcon, action:() => setActiveMobileTab('profile')},
+                    {label:'Reels', Icon:Clapperboard, action:() => setActiveMobileTab('reels')},
+                    {label:'Mensagens', Icon:Send, action:() => {setSearchQuery('');setActiveMobileTab('messages');}},
+                    {label:'Guardados', Icon:Bookmark, action:() => setActiveMobileTab('favorites')},
+                    {label:'Atividade', Icon:Bell, action:() => setShowNotifications(true)},
+                    {label:'Definições', Icon:Settings, action:() => setShowEditProfileModal(true)}
+                  ].map(({label,Icon,action}) => <button key={label} onClick={() => {setShowHamburgerDrawer(false);setViewingProfile(null);action();}}><Icon size={23} strokeWidth={1.5}/><span>{label}</span><ChevronRight size={18} strokeWidth={1.5}/></button>)}
                 </nav>
-
-                <button onClick={onClose} className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl text-[10px] font-semibold  flex items-center justify-center gap-2 border border-rose-100">
-                  <span>Sair da aplicação</span>
-                </button>
+                <button className="community-drawer-logout" onClick={() => {setShowHamburgerDrawer(false);if(onLogout)onLogout();onClose();}}><LogOut size={21} strokeWidth={1.5}/><span>Terminar sessão</span></button>
               </motion.div>
             </div>
           )}
@@ -1115,6 +1078,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         {/* ================= NOTIFICATIONS MODAL ================= */}
         <CommunityNotificationsModal 
           isOpen={showNotifications}
+          profile={myProfile}
+          onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }}
           onClose={() => setShowNotifications(false)}
           onSelectProfile={(handle) => openUserProfile(handle)}
           onSelectPost={(postId) => {

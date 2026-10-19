@@ -1,220 +1,41 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ArrowLeft, Heart, MessageCircle, UserPlus, Calendar, Trophy, 
-  Sparkles, CheckCircle2, ChevronRight, X, Bell
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Bell, Loader2, Play } from 'lucide-react';
+import { SocialProfile } from '../types';
+import { avatarError, communityAvatar, CommunityNotification, socialMediaUrl, socialRequest, socialTime } from '../services/communitySocial';
+import CommunityFollowButton from './CommunityFollowButton';
 
-interface NotificationItem {
-  id: string;
-  type: 'like' | 'comment' | 'follow' | 'booking' | 'credits';
-  user?: {
-    name: string;
-    handle: string;
-    avatar: string;
+interface Props {
+  isOpen: boolean; onClose: () => void; profile?: SocialProfile | null;
+  onSelectProfile?: (handle: string) => void; onSelectPost?: (id: number) => void;
+  onOpenReel?: (id: string) => void; onOpenReservations?: () => void;
+}
+export default function CommunityNotificationsModal({isOpen,onClose,profile,onSelectProfile,onOpenReel}: Props) {
+  const [filter,setFilter]=useState('Todas');
+  const [items,setItems]=useState<CommunityNotification[]>([]);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState('');
+  const [marking,setMarking]=useState(false);
+  const email=profile?.email || '';
+  useEffect(()=>{
+    if(!isOpen || !email)return;
+    const controller=new AbortController();
+    setLoading(true);setError('');
+    const load=()=>socialRequest<{items:CommunityNotification[]}>('notifications',email,undefined,undefined,controller.signal).then(data=>setItems(data.items)).catch(e=>{if(e.name!=='AbortError')setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
+    load(); const timer=setInterval(()=>{if(!document.hidden)load();},30000);
+    return ()=>{controller.abort();clearInterval(timer);};
+  },[isOpen,email]);
+  if(!isOpen)return null;
+  const visible=items.filter(n=>filter==='Todas'||(filter==='Seguidores'?n.type==='follow':n.type==='reel'));
+  const read=async(id?:string)=>{
+    if(!email)return;
+    setMarking(true);
+    try{await socialRequest('notifications/read',email,id?{id}:{},'PUT');setItems(prev=>prev.map(n=>(!id||n.id===id)?{...n,read:true}:n));window.dispatchEvent(new Event('community-notifications-changed'));}
+    catch(e){setError(e.message);}finally{setMarking(false);}
   };
-  text: string;
-  targetThumbnail?: string;
-  timestamp: string;
-  read: boolean;
-  actionText?: string;
+  return <section className="community-overlay community-activity" role="dialog" aria-modal="true" aria-label="Notificações"><header><button aria-label="Voltar" onClick={onClose}><ArrowLeft size={21}/></button><h2>Notificações</h2><button className="activity-mark-read" disabled={marking||!items.some(n=>!n.read)} onClick={()=>read()}>{marking?<Loader2 size={16} className="animate-spin"/>:'Marcar lidas'}</button></header><div className="community-filters">{['Todas','Seguidores','Reels'].map(tab=><button key={tab} className={filter===tab?'selected':'bg-slate-100'} onClick={()=>setFilter(tab)}>{tab}</button>)}</div><div className="activity-list">
+    {error&&<p className="reel-form-error" role="alert">{error}</p>}
+    {loading&&<div className="community-empty"><Loader2 className="animate-spin"/></div>}
+    {!loading&&!visible.length&&<div className="community-empty"><Bell size={32} strokeWidth={1.3}/><h3>Estás em dia</h3><p>Os novos seguidores e os reels de quem te segue de volta aparecem aqui.</p></div>}
+    {visible.map(n=><article className={`activity-row ${n.read?'':'unread'}`} key={n.id}><button aria-label={`Ver perfil de ${n.actor.name}`} onClick={()=>{onClose();onSelectProfile?.(n.actor.handle);}}><img src={socialMediaUrl(n.actor.avatar)||communityAvatar} onError={avatarError} alt=""/></button><button className="activity-text" onClick={()=>{read(n.id);if(n.type==='reel'&&n.reelId){onClose();onOpenReel?.(n.reelId);}else{onClose();onSelectProfile?.(n.actor.handle);}}}><p><strong>{n.actor.name}</strong> {n.type==='reel'?'publicou um reel':'começou a seguir-te'}</p><small>{n.type==='reel'?'Seguiam-se mutuamente · ':''}{socialTime(n.createdAt)}</small></button>{n.type==='follow'?<CommunityFollowButton email={email} ownId={profile?.id} targetId={n.actor.id}/>:<button className="activity-reel-thumb" aria-label={`Ver reel de ${n.actor.name}`} onClick={()=>{read(n.id);onClose();if(n.reelId)onOpenReel?.(n.reelId);}}><video src={socialMediaUrl(n.videoUrl)} muted preload="metadata" playsInline/><Play size={17} fill="white"/></button>}</article>)}
+  </div></section>;
 }
-
-interface CommunityNotificationsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectProfile?: (handle: string) => void;
-  onSelectPost?: (postId: number) => void;
-  onOpenReservations?: () => void;
-}
-
-const SAMPLE_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    type: 'booking',
-    text: 'A sua reserva na Picos de Aventura (Whale Watching) foi confirmada!',
-    timestamp: 'Há 10 min',
-    read: false,
-    actionText: 'Ver Reserva'
-  },
-  {
-    id: '2',
-    type: 'like',
-    user: {
-      name: 'Mariana Silva',
-      handle: '@azorestoyou_marianasilva',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-    },
-    text: 'gostou da tua foto em Ponta da Ferraria.',
-    targetThumbnail: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150',
-    timestamp: 'Há 45 min',
-    read: false
-  },
-  {
-    id: '3',
-    type: 'follow',
-    user: {
-      name: 'Diogo Cabral',
-      handle: '@azorestoyou_diogocabral',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    },
-    text: 'começou a seguir-te.',
-    timestamp: 'Há 2 h',
-    read: true,
-    actionText: 'Seguir'
-  },
-  {
-    id: '4',
-    type: 'credits',
-    text: 'Ganhaste +100 CRÉDITOS por publicar na Comunidade!',
-    timestamp: 'Ontem',
-    read: true
-  },
-  {
-    id: '5',
-    type: 'comment',
-    user: {
-      name: 'Pedro Sousa',
-      handle: '@azorestoyou_pedrosousa',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
-    },
-    text: 'comentou: "Que ângulo incrível da Lagoa do Fogo! 👏"',
-    targetThumbnail: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=150',
-    timestamp: 'Há 2 dias',
-    read: true
-  }
-];
-
-const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = ({
-  isOpen,
-  onClose,
-  onSelectProfile,
-  onSelectPost,
-  onOpenReservations
-}) => {
-  const [filter, setFilter] = useState('Todas');
-  if (!isOpen) return null;
-
-  return (
-    <div className="community-overlay fixed inset-0 z-[500] bg-white flex flex-col justify-between w-full  select-none animate-in fade-in duration-200">
-      
-      {/* 1. Header */}
-      <header className="h-14 px-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onClose} 
-            className="p-2 hover:bg-slate-50 text-[#071A3D] rounded-full active:scale-95 transition-all"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h3 className="text-sm font-semibold  text-[#071A3D]">Notificações</h3>
-        </div>
-        <span className="text-[10px] text-emerald-600 font-bold uppercase">Marcar como lidas</span>
-      </header>
-
-<div className="community-filters">{['Todas', 'Seguidores', 'Interações', 'Reservas'].map(tab => <button key={tab} className={filter === tab ? 'selected' : 'bg-slate-100'} onClick={() => setFilter(tab)}>{tab}</button>)}</div>
-      {/* 2. Notifications List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        
-        {/* Section: Novas */}
-        <div className="space-y-3">
-          <h5 className="text-[10px] font-semibold  text-slate-400">Recentes</h5>
-          
-          <div className="space-y-2.5">
-            {SAMPLE_NOTIFICATIONS.filter(item => filter === 'Todas' || (filter === 'Seguidores' ? item.type === 'follow' : filter === 'Reservas' ? item.type === 'booking' : ['like', 'comment'].includes(item.type))).map(item => (
-              <div 
-                key={item.id} 
-                className={`p-3 rounded-2xl flex items-center justify-between gap-3 transition-colors ${
-                  item.read ? 'bg-slate-50/60' : 'bg-emerald-50/50 border border-emerald-100/60'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  {/* Icon badge or avatar */}
-                  <div className="relative flex-shrink-0">
-                    {item.user ? (
-                      <img 
-                        src={item.user.avatar} 
-                        alt={item.user.name} 
-                        className="w-10 h-10 rounded-full object-cover border border-slate-150 cursor-pointer"
-                        onClick={() => item.user && onSelectProfile && onSelectProfile(item.user.handle)}
-                      />
-                    ) : item.type === 'booking' ? (
-                      <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
-                        <Calendar size={18} />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-                        <Trophy size={18} />
-                      </div>
-                    )}
-
-                    {/* Mini icon badge */}
-                    {item.type === 'like' && (
-                      <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center border border-white">
-                        <Heart size={8} className="fill-current" />
-                      </span>
-                    )}
-                    {item.type === 'comment' && (
-                      <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center border border-white">
-                        <MessageCircle size={8} className="fill-current" />
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Text details */}
-                  <div className="min-w-0">
-                    <p className="text-xs text-slate-700 leading-snug">
-                      {item.user && (
-                        <strong 
-                          className="font-semibold text-[#071A3D] cursor-pointer hover:underline mr-1"
-                          onClick={() => item.user && onSelectProfile && onSelectProfile(item.user.handle)}
-                        >
-                          {item.user.name}
-                        </strong>
-                      )}
-                      <span>{item.text}</span>
-                    </p>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight block mt-0.5">
-                      {item.timestamp}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Action: thumbnail or button */}
-                {item.targetThumbnail && (
-                  <img 
-                    src={item.targetThumbnail} 
-                    alt="Thumbnail" 
-                    className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-slate-100" 
-                  />
-                )}
-
-                {item.actionText && item.type === 'follow' && (
-                  <button 
-                    onClick={() => alert(`A seguir ${item.user?.name}`)}
-                    className="px-3 py-1.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
-                  >
-                    {item.actionText}
-                  </button>
-                )}
-
-                {item.actionText && item.type === 'booking' && (
-                  <button 
-                    onClick={() => { onClose(); onOpenReservations && onOpenReservations(); }}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
-                  >
-                    {item.actionText}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  );
-};
-
-export default CommunityNotificationsModal;

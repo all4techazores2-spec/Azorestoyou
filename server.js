@@ -10,6 +10,7 @@ import axios from 'axios';
 import { exec } from 'child_process';
 import crypto from 'crypto';
 import { XMLParser } from 'fast-xml-parser';
+import { registerCommunitySocial } from './server/community-social.js';
 import { readDB, writeDB, connectDB, getDbStatus, updateCollection, normalizeTrailData, publishLocalToCloud, listBackups, restoreLatestBackup } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -3277,6 +3278,8 @@ app.get('/api/cars', async (req, res) => {
     const db = await readDB();
     res.json(db.cars || []);
 });
+
+registerCommunitySocial(app, { readDB, writeDB, multer, cloudinary });
 
 // Start Server and then Database
 const startServer = () => {
