@@ -338,6 +338,7 @@
 }
 
 /* Real community profiles, conversations and photo highlights. */
+.reel-transfer-status{font-size:11px;line-height:1.5;color:#627e99;padding:9px 2px;margin:0;min-height:34px}
 .community-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;background:#edf7ff;color:#24527b;font-size:12px}.community-notice button{background:none;border:0;color:inherit;padding:4px}.community-nav-icon{position:relative;display:flex;align-items:center;justify-content:center}.community-nav-icon>b{position:absolute;top:-6px;right:-12px;min-width:16px;padding:2px 4px;border:2px solid white;border-radius:12px;background:#0078f6;color:white;font-size:8px;line-height:1.1}
 .community-inbox,.profile-real{width:100%;max-width:760px;margin:auto;background:#fff;min-height:100%;color:#102443}
 .community-inbox{padding:24px 18px 90px}

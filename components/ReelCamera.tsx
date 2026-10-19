@@ -53,7 +53,7 @@ export default function ReelCamera({onClose,onSelect,musicLabel,onMusic}:Props) 
     if(typeof MediaRecorder==='undefined'){useNativeCamera();return;}
     try{
       const mime=['video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-      const next=new MediaRecorder(live.current,mime?{mimeType:mime}:undefined);const chunks:Blob[]=[];let bytes=0;let failed=false;
+      const next=new MediaRecorder(live.current,{...(mime?{mimeType:mime}:{}),videoBitsPerSecond:3500000,audioBitsPerSecond:128000});const chunks:Blob[]=[];let bytes=0;let failed=false;
       recorder.current=next;
       next.ondataavailable=e=>{if(e.data.size){chunks.push(e.data);bytes+=e.data.size;if(bytes>100*1024*1024)stopRecording();}};
       next.onstop=()=>{if(clock.current)clearInterval(clock.current);if(disposed.current)return;setRecording(false);setElapsed(0);if(failed)return;if(bytes>100*1024*1024){setError('O vídeo ultrapassou 100 MB. Grava um trecho mais curto.');return;}if(!chunks.length){setError('Não foi possível guardar a gravação. Tenta novamente.');return;}const type=next.mimeType.includes('mp4')?'video/mp4':'video/webm';onSelect(new File(chunks,`video-${Date.now()}.${type==='video/mp4'?'mp4':'webm'}`,{type}));};
