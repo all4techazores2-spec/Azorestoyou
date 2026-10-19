@@ -1,6 +1,7 @@
 import type { SyntheticEvent } from 'react';
 import { API_BASE_URL } from '../config';
 import { getCommunityToken } from './communitySession';
+import { cloudinaryDeliveryUrl } from './cloudinaryDelivery.js';
 
 export interface CommunityIdentity {
   id: string; name: string; handle: string; avatar: string; isBusiness?: boolean;
@@ -27,7 +28,7 @@ export interface CommunityNotification {
   imageUrl?: string;
 }
 export const communityAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#e9f2ff"/><circle cx="40" cy="30" r="14" fill="#6d8db5"/><path d="M14 76c0-30 52-30 52 0" fill="#6d8db5"/></svg>');
-export const socialMediaUrl = (url = '') => url.startsWith('/') ? API_BASE_URL + url : url;
+export const socialMediaUrl = (url = '') => url.startsWith('/') ? API_BASE_URL + url : cloudinaryDeliveryUrl(url);
 export const profileAvatar = (url = '') => url && !url.includes('dicebear.com') ? socialMediaUrl(url) : communityAvatar;
 export const avatarError = (e: SyntheticEvent<HTMLImageElement>) => { e.currentTarget.onerror = null; e.currentTarget.src = communityAvatar; };
 export async function socialRequest<T>(path: string, email: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal): Promise<T> {

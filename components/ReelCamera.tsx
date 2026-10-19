@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, CameraOff, Check, FlipHorizontal2, Images, Loader2, Music2, Timer, X, Zap, ZapOff } from 'lucide-react';
+import { openNormalCamera } from '../services/reelCameraDevices.js';
 
 interface Props { onClose:()=>void; onSelect:(file:File)=>void; musicLabel?:string; onMusic:()=>void; }
 export default function ReelCamera({onClose,onSelect,musicLabel,onMusic}:Props) {
@@ -21,23 +22,25 @@ export default function ReelCamera({onClose,onSelect,musicLabel,onMusic}:Props) 
   const clock=useRef<ReturnType<typeof setInterval>|null>(null);
   const delay=useRef<ReturnType<typeof setInterval>|null>(null);
   const disposed=useRef(false);
+  const cameraRequest=useRef(0);
   const gallery=useRef<HTMLInputElement>(null);
   const nativeCamera=useRef<HTMLInputElement>(null);
-  const endStream=()=>{live.current?.getTracks().forEach(track=>track.stop());live.current=null;};
-  const useNativeCamera=()=>{endStream();setStream(null);nativeCamera.current?.click();};
+  const endStream=()=>{cameraRequest.current++;live.current?.getTracks().forEach(track=>track.stop());live.current=null;};
+  const useNativeCamera=()=>{endStream();setStream(null);setOpening(false);nativeCamera.current?.click();};
   useEffect(()=>{disposed.current=false;return()=>{disposed.current=true;if(clock.current)clearInterval(clock.current);if(delay.current)clearInterval(delay.current);if(recorder.current?.state==='recording')recorder.current.stop();endStream();};},[]);
   useEffect(()=>{if(camera.current&&stream){camera.current.srcObject=stream;camera.current.play().catch(()=>{});}},[stream]);
   const open=async(nextFacing=facing,nextMode=mode)=>{
     if(opening||recording)return;
     if(!navigator.mediaDevices?.getUserMedia){useNativeCamera();return;}
     endStream();setStream(null);setOpening(true);setError('');
+    const requestId=cameraRequest.current;
     try{
-      const media=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:nextFacing},width:{ideal:1080},height:{ideal:1920}},audio:nextMode==='video'});
+      const media=await openNormalCamera(navigator.mediaDevices,nextFacing,nextMode==='video',()=>disposed.current||cameraRequest.current!==requestId);
       if(disposed.current){media.getTracks().forEach(t=>t.stop());return;}
       live.current=media;setStream(media);setFacing(nextFacing);setTorch(false);
       setHasTorch(!!(media.getVideoTracks()[0]?.getCapabilities?.() as {torch?:boolean})?.torch);
-    }catch(e){if(!disposed.current)setError(e.name==='NotAllowedError'?'Permite o acesso à câmara e ao microfone, ou usa a câmara do telemóvel abaixo.':'Não foi possível abrir a câmara. Podes usar a câmara do telemóvel ou a galeria.');}
-    finally{if(!disposed.current)setOpening(false);}
+    }catch(e){if(!disposed.current&&cameraRequest.current===requestId&&e.name!=='AbortError')setError(e.name==='NotAllowedError'?'Permite o acesso à câmara e ao microfone, ou usa a câmara do telemóvel abaixo.':'Não foi possível abrir a câmara. Podes usar a câmara do telemóvel ou a galeria.');}
+    finally{if(!disposed.current&&cameraRequest.current===requestId)setOpening(false);}
   };
   const stopRecording=()=>{if(recorder.current?.state==='recording')recorder.current.stop();if(clock.current)clearInterval(clock.current);};
   const capture=async()=>{

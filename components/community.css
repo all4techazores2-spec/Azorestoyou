@@ -196,7 +196,7 @@
 .reel-create-flow { position:fixed;inset:0;z-index:400;background:#fff;color:#071a3d;overflow:hidden; }
 .reel-camera { position:absolute;inset:0;background:radial-gradient(ellipse at 50% 28%,#15455a,#071a3d 75%);color:white;overflow:hidden; }
 .reel-camera::after { content:'';position:absolute;inset:0;background:linear-gradient(#071a3d66,transparent 30%,transparent 50%,#071a3ddd);pointer-events:none; }
-.reel-camera > video { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
+.reel-camera > video { position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#07111e; }
 .reel-camera > video.mirrored { transform:scaleX(-1); }
 .reel-camera > header { position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;height:70px;padding:14px 20px; }
 .reel-camera > header button { width:36px;height:36px;display:grid;place-items:center; }

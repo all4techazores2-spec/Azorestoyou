@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import { SocialProfile } from '../types';
+import { uploadCommunityMedia } from '../services/communityUpload';
 
 interface CommunityCreatePostModalProps {
   isOpen: boolean;
@@ -66,23 +67,11 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const formData = new FormData();
-      formData.append('userEmail',myProfile?.email||'');
-      formData.append('video', file);
-
       try {
-        const res = await fetch(`${API_BASE_URL}/api/community/reel-upload`, {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.url) {
-            setImages(prev => [...prev, data.url]);
-          }
-        } else throw new Error('Não foi possível carregar a fotografia.');
+        const url=await uploadCommunityMedia(file,myProfile?.email||'');
+        setImages(prev=>[...prev,url]);
       } catch (err) {
-        setErrorMsg('Não foi possível carregar a fotografia. Tenta novamente.');
+        setErrorMsg(err.message||'Não foi possível carregar a fotografia. Tenta novamente.');
       }
     }
   };

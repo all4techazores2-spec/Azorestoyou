@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import { communityWrite } from './community-store.js';
 import { registerCommunityMusic, resolveMusic } from './community-music.js';
+import { sessionEmail } from './community-session.js';
+import { validateCommunityFile } from '../services/cloudinaryTransfer.js';
 
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const collections = db => {
@@ -101,6 +103,16 @@ export function registerCommunitySocial(app, { readDB, writeDB, multer, cloudina
     };
     const mutate = fn => communityWrite(readDB, writeDB, db => fn(collections(db)));
     const emailOf = req => req.body?.userEmail || req.query.email;
+    app.post('/api/community/upload-signature', route(async (req, res) => {
+        getActor(await readDB(), sessionEmail(req));
+        let resourceType;
+        try { resourceType=validateCommunityFile({type:req.body.fileType,size:Number(req.body.fileSize)}); } catch(error) { throw fail(error.message); }
+        const config=cloudinary.config();
+        if(!config.cloud_name||!config.api_key||!config.api_secret)throw fail('O armazenamento ainda não está configurado no servidor.',503);
+        const params={timestamp:Math.floor(Date.now()/1000),folder:'community/reels',public_id:crypto.randomUUID(),overwrite:'false',allowed_formats:resourceType==='image'?'jpg,jpeg,png,webp':'mp4,webm,mov'};
+        res.setHeader?.('Cache-Control','no-store');
+        res.json({cloudName:config.cloud_name,apiKey:config.api_key,params,signature:cloudinary.utils.api_sign_request(params,config.api_secret)});
+    }));
     app.get('/api/community/relationships/:targetId', route(async (req, res) => {
         const db = await readDB(); const actor = getActor(db, emailOf(req));
         const target = (db.social_profiles || []).find(p => p.id === req.params.targetId);

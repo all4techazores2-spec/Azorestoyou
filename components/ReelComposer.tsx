@@ -5,6 +5,7 @@ import { SocialProfile } from '../types';
 import { avatarError, communityAvatar, CommunityIdentity, CommunityReel, ReelMusic, musicPlaybackUrl, socialMediaUrl, socialRequest } from '../services/communitySocial';
 import { readReelDraft, ReelDraft, writeReelDraft } from '../services/reelDrafts';
 import { useReelSoundtrack } from '../services/useReelSoundtrack';
+import { uploadCommunityMedia } from '../services/communityUpload';
 import ReelCamera from './ReelCamera';
 import ReelMusicPicker, { musicTime } from './ReelMusicPicker';
 
@@ -17,7 +18,7 @@ export default function ReelComposer({profile,onClose,onPublished}:{profile:Soci
   const [busy,setBusy]=useState(false);const [stage,setStage]=useState('');const [error,setError]=useState('');
   const [playing,setPlaying]=useState(false);const [duration,setDuration]=useState(0);const [draft,setDraft]=useState<ReelDraft|null>(null);const [saving,setSaving]=useState(false);const [notice,setNotice]=useState('');
   const video=useRef<HTMLVideoElement>(null);const coverInput=useRef<HTMLInputElement>(null);
-  const transfers=useRef(new WeakMap<File,Promise<string>>());const requests=useRef(new Set<XMLHttpRequest>());
+  const transfers=useRef(new WeakMap<File,Promise<string>>());const requests=useRef(new Set<AbortController>());
   const selectedMedia=useRef(file);selectedMedia.current=file;
   const [uploadProgress,setUploadProgress]=useState<number|null>(null);const [mediaReady,setMediaReady]=useState(false);
   useEffect(()=>()=>{for(const request of requests.current)request.abort();},[]);
@@ -35,17 +36,8 @@ export default function ReelComposer({profile,onClose,onPublished}:{profile:Soci
   const save=async()=>{if(!file||!profile?.id||busy||saving)return;setSaving(true);setNotice('');try{await writeReelDraft(profile.id,{file,fileName:file.name,fileType:file.type,caption,location,mentions,music,muteOriginal,coverFile:cover||undefined,coverName:cover?.name,savedAt:new Date().toISOString()});setNotice('Rascunho guardado neste dispositivo.');}catch{setError('Não foi possível guardar o rascunho neste dispositivo.');}finally{setSaving(false);}};
   const upload=(media:File):Promise<string>=>{
     const existing=transfers.current.get(media);if(existing)return existing;
-    const promise=new Promise<string>((resolve,reject)=>{
-      const request=new XMLHttpRequest();requests.current.add(request);
-      const finish=()=>requests.current.delete(request);
-      request.open('POST',`${API_BASE_URL}/api/community/reel-upload`);request.timeout=10*60*1000;
-      request.upload.onprogress=event=>{if(selectedMedia.current===media&&event.lengthComputable)setUploadProgress(Math.round(event.loaded/event.total*100));};
-      request.onload=()=>{finish();try{const data=JSON.parse(request.responseText);if(request.status<200||request.status>=300||!data.url)throw new Error(data.error||'Não foi possível carregar o ficheiro.');resolve(data.url);}catch(e){reject(e);}};
-      request.onerror=()=>{finish();reject(new Error('O envio foi interrompido. Verifica a ligação e tenta novamente.'));};
-      request.ontimeout=()=>{finish();reject(new Error('O envio demorou demasiado. Tenta novamente com uma ligação mais rápida.'));};
-      request.onabort=()=>{finish();reject(new Error('Envio cancelado.'));};
-      const form=new FormData();form.append('userEmail',profile!.email);form.append('video',media);request.send(form);
-    });
+    const controller=new AbortController();requests.current.add(controller);
+    const promise=uploadCommunityMedia(media,profile!.email,{signal:controller.signal,onProgress:percent=>{if(selectedMedia.current===media)setUploadProgress(percent);}}).finally(()=>requests.current.delete(controller));
     transfers.current.set(media,promise);promise.catch(()=>transfers.current.delete(media));return promise;
   };
   // Start transferring during editing. Publishing reuses the same transfer or its completed URL.
@@ -64,7 +56,7 @@ export default function ReelComposer({profile,onClose,onPublished}:{profile:Soci
       const [url,coverUrl]=await Promise.all([upload(file),cover?upload(cover):Promise.resolve('')]);
       setMediaReady(true);setStage('A publicar…');
       const reel=await socialRequest<CommunityReel>('reels',profile.email,{mediaType:isPhoto?'photo':'video',imageUrl:isPhoto?url:undefined,videoUrl:isPhoto?undefined:url,coverUrl:coverUrl||undefined,caption,location,mentions:mentions.map(p=>p.id),music:music?{id:music.id,start:music.start,duration:music.duration,volume:music.volume}:null,muteOriginal,duration:isPhoto?(music?.duration||15):duration});
-      await writeReelDraft(profile.id,null).catch(()=>{});onPublished(reel);
+      writeReelDraft(profile.id,null).catch(()=>{});onPublished(reel);
     }catch(e){setError(e.message);}finally{setBusy(false);setStage('');}
   };
   return <section className="community-overlay reel-create-flow" role="dialog" aria-modal="true" aria-label="Criar publicação">

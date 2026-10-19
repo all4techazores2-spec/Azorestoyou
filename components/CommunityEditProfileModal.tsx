@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { SocialProfile } from '../types';
 import { API_BASE_URL } from '../config';
+import { uploadCommunityMedia } from '../services/communityUpload';
 
 interface CommunityEditProfileModalProps {
   isOpen: boolean;
@@ -48,6 +49,8 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
   const [handleSuggestions, setHandleSuggestions] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [uploadingAvatar,setUploadingAvatar]=useState(false);
+  const [uploadError,setUploadError]=useState('');
 
   // Sanitize handle slug
   const handleSlugChange = (raw: string) => {
@@ -97,6 +100,7 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
   }, [handleSlug, profile.handle, profile.email]);
 
   const handleSave = async () => {
+    if(uploadingAvatar)return;
     if (handleAvailable === false || handleSlug.length < 3) return;
     setIsSaving(true);
     const fullHandle = `@azorestoyou_${handleSlug}`;
@@ -123,16 +127,13 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setAvatar(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      setUploadingAvatar(true);setUploadError('');
+      try{setAvatar(await uploadCommunityMedia(file,profile.email));}
+      catch(error){setUploadError(error.message||'Não foi possível carregar a fotografia.');}
+      finally{setUploadingAvatar(false);}
     }
   };
 
@@ -156,7 +157,7 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
             <h3 className="text-base font-semibold text-slate-800 tracking-tight">Editar Perfil Social</h3>
           </div>
           <button 
-            disabled={isSaving || handleAvailable === false}
+            disabled={isSaving || uploadingAvatar || handleAvailable === false}
             onClick={handleSave}
             className={`px-4 py-2 rounded-xl text-xs font-semibold  transition-all flex items-center gap-1.5 ${
               isSaving || handleAvailable === false
@@ -171,6 +172,8 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
 
         {/* Form Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {uploadingAvatar&&<p role="status" className="text-xs text-slate-500">A guardar a fotografia no Cloudinary…</p>}
+          {uploadError&&<p role="alert" className="reel-form-error">{uploadError}</p>}
           
           {saveSuccess && (
             <motion.div 
@@ -200,6 +203,7 @@ const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
                 type="file" 
                 id="avatar-upload-file" 
                 accept="image/*" 
+                disabled={uploadingAvatar||isSaving}
                 className="hidden" 
                 onChange={handleFileUpload}
               />

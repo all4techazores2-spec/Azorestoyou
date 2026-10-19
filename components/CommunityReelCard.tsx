@@ -3,12 +3,14 @@ import { Bookmark, Heart, MapPin, MessageCircle, Music2, Pause, Play, Send, Volu
 import { avatarError, communityAvatar, CommunityReel, musicPlaybackUrl, socialMediaUrl } from '../services/communitySocial';
 import { useReelSoundtrack } from '../services/useReelSoundtrack';
 import CommunityFollowButton from './CommunityFollowButton';
+import { cloudinaryVideoPoster } from '../services/cloudinaryDelivery.js';
 
 interface Props {key?:string;reel:CommunityReel;email:string;ownId?:string;active:boolean;onViewProfile:(handle:string)=>void;onLike:()=>void;onSave:()=>void;onComment:()=>void;}
 export default function CommunityReelCard({reel,email,ownId,active,onViewProfile,onLike,onSave,onComment}:Props) {
   const video=useRef<HTMLVideoElement>(null);const [muted,setMuted]=useState(true);const [playing,setPlaying]=useState(false);const [mediaError,setMediaError]=useState(false);const [shared,setShared]=useState(false);const [shareError,setShareError]=useState('');
   const photo=reel.mediaType==='photo';const soundtrack=useReelSoundtrack(video,reel.music,active,playing,muted);
   useEffect(()=>{
+    if(active)setMediaError(false);
     const el=video.current;
     if(photo)setPlaying(active&&!document.hidden);else if(el){if(active&&!document.hidden)el.play().catch(()=>setPlaying(false));else el.pause();}
     const visibility=()=>{if(document.hidden){el?.pause();if(photo)setPlaying(false);}else if(active){if(photo)setPlaying(true);else el?.play().catch(()=>setPlaying(false));}};
@@ -16,7 +18,7 @@ export default function CommunityReelCard({reel,email,ownId,active,onViewProfile
   },[active,photo]);
   const toggle=()=>{if(photo){if(reel.music){setPlaying(!playing);if(!playing)soundtrack.start();}}else if(video.current){playing?video.current.pause():video.current.play().catch(()=>setPlaying(false));}};
   return <article className="reel-card" data-reel-id={reel.id}>
-    {photo?<img className="reel-photo" src={socialMediaUrl(reel.imageUrl)} alt={reel.caption||`Fotografia de ${reel.author.name}`} onError={()=>setMediaError(true)} onClick={toggle}/>:<video ref={video} src={socialMediaUrl(reel.videoUrl)} poster={socialMediaUrl(reel.coverUrl)||undefined} playsInline loop muted={muted||reel.muteOriginal} preload="metadata" onPlay={()=>{setPlaying(true);soundtrack.start();}} onPause={()=>setPlaying(false)} onTimeUpdate={soundtrack.sync} onError={()=>setMediaError(true)} onClick={toggle} aria-label={`Reel de ${reel.author.name}`}/>}
+    {photo?<img className="reel-photo" src={socialMediaUrl(reel.imageUrl)} loading={active?'eager':'lazy'} decoding="async" alt={reel.caption||`Fotografia de ${reel.author.name}`} onError={()=>setMediaError(true)} onClick={toggle}/>:<video ref={video} src={active?socialMediaUrl(reel.videoUrl):undefined} poster={reel.coverUrl?socialMediaUrl(reel.coverUrl):cloudinaryVideoPoster(reel.videoUrl)||undefined} playsInline loop muted={muted||reel.muteOriginal} preload={active?'auto':'none'} onPlay={()=>{setPlaying(true);soundtrack.start();}} onPause={()=>setPlaying(false)} onTimeUpdate={soundtrack.sync} onError={()=>setMediaError(true)} onClick={toggle} aria-label={`Reel de ${reel.author.name}`}/>}
     {reel.music&&<audio ref={soundtrack.audio} src={musicPlaybackUrl(reel.music)} preload="none" onLoadedMetadata={soundtrack.sync} onTimeUpdate={soundtrack.onTimeUpdate} onError={soundtrack.onError}/>}
     {mediaError?<p className="reel-media-error">Não foi possível carregar esta publicação.</p>:!playing&&(!photo||reel.music)&&<button className="reel-play" aria-label="Reproduzir reel" onClick={toggle}><Play fill="currentColor" size={30}/></button>}
     {((!photo&&!reel.muteOriginal)||reel.music)&&<button className="reel-audio" aria-label={muted?'Ativar som':'Silenciar'} onClick={()=>{if(muted){if(photo)setPlaying(true);else video.current?.play().catch(()=>{});soundtrack.start(true);}setMuted(!muted);}}>{muted?<VolumeX size={19}/>:<Volume2 size={19}/>}</button>}

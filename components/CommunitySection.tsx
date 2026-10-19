@@ -10,13 +10,14 @@ import {
   Building2, Clapperboard, LogOut, Coins
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { uploadCommunityMedia } from '../services/communityUpload';
 import AzoresLogo from './AzoresLogo';
 import './community.css';
 import CommunityReels from './CommunityReels';
 import CommunityMessages from './CommunityMessages';
 import { useCommunityLive } from '../services/useCommunityLive';
 import CommunitySavedReels from './CommunitySavedReels';
-import { socialRequest, communityAvatar, profileAvatar } from '../services/communitySocial';
+import { socialRequest, communityAvatar, profileAvatar, socialMediaUrl } from '../services/communitySocial';
 import { SocialProfile } from '../types';
 import CommunityProfileView from './CommunityProfileView';
 import CommunityEditProfileModal from './CommunityEditProfileModal';
@@ -283,18 +284,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   // Cloudinary Uploader Helper
   const uploadFileToCloudinary = async (file: File, folder: string): Promise<string> => {
     setIsUploadingMedia(true);
-    const formData = new FormData();
-    formData.append('userEmail', myProfile?.email || userProfile?.email || '');
-    formData.append('video', file);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/community/reel-upload`, {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) throw new Error('Upload error');
-      const data = await res.json();
+      const url=await uploadCommunityMedia(file,myProfile?.email||userProfile?.email||'');
       setIsUploadingMedia(false);
-      return data.url;
+      return url;
     } catch (e) {
       setIsUploadingMedia(false);
       console.error(e);
@@ -409,7 +402,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     time: p.time || '',
     comments: Array.isArray(p.comments) ? p.comments : [],
     images: (Array.isArray(p.images) && p.images.length ? p.images : p.image ? [p.image] : []).filter(Boolean)
-      .map(url => url.startsWith('/imagens/') ? API_BASE_URL + url : url),
+      .map(url => socialMediaUrl(url)),
   }));
   const avatarFallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#e9f2ff"/><circle cx="40" cy="30" r="14" fill="#6d8db5"/><path d="M14 76c0-30 52-30 52 0" fill="#6d8db5"/></svg>');
   const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.onerror = null; e.currentTarget.src = avatarFallback; };
@@ -606,7 +599,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       {postImages.length > 0 && (
                         <div className="relative aspect-square bg-slate-50 overflow-hidden select-none">
                           <img 
-                            src={postImages[currentIdx]} 
+                            src={postImages[currentIdx]} loading="lazy" decoding="async"
                             alt="Media" 
                             className="w-full h-full object-cover cursor-pointer" 
                             onClick={() => setActivePostDetail(post)} 
