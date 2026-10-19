@@ -40,7 +40,6 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
   onPostCreated,
   availableBusinesses = []
 }) => {
-  if (!isOpen) return null;
 
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([
@@ -56,6 +55,8 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
 
   // Sub-drawers / Popovers for configuration items
   const [activeDrawer, setActiveDrawer] = useState<'none' | 'location' | 'business' | 'hashtags'>('none');
+
+  if (!isOpen) return null;
 
   // Handle uploading photos/videos
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,12 +157,12 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
+    <div className="community-overlay community-composer fixed inset-0 z-[220] flex items-center justify-center bg-white">
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 30 }}
-        className="w-full max-w-lg bg-white h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
+        className="w-full max-w-none bg-white h-full   flex flex-col overflow-hidden relative"
       >
         {/* Top App Bar */}
         <header className="px-4 h-14 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
@@ -172,12 +173,12 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
             <ArrowLeft size={20} />
           </button>
           
-          <h2 className="text-base font-black text-slate-800 tracking-tight">Nova publicação</h2>
+          <h2 className="text-base font-semibold text-slate-800 tracking-tight">Nova publicação</h2>
 
           <button 
             disabled={isSubmitting || (images.length === 0 && !content.trim())}
             onClick={handleSubmit}
-            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold  transition-all flex items-center gap-1.5 ${
               isSubmitting || (images.length === 0 && !content.trim())
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 active:scale-95'
@@ -213,7 +214,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
               >
                 <X size={16} />
               </button>
-              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-black px-2.5 py-1 rounded-full backdrop-blur-sm">
+              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
                 {activeImageIdx + 1}/{images.length}
               </div>
             </div>
@@ -276,7 +277,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
                 </div>
                 <span className="text-xs font-bold text-slate-800">Adicionar fotos/vídeos</span>
               </div>
-              <span className="text-[10px] font-black text-slate-400">{images.length} selecionadas</span>
+              <span className="text-[10px] font-semibold text-slate-400">{images.length} selecionadas</span>
             </label>
 
             {/* 2. Identificar negócio */}
@@ -303,7 +304,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
             {/* Business selection panel */}
             {activeDrawer === 'business' && (
               <div className="p-3 bg-slate-50 rounded-2xl space-y-2 border border-slate-100">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                <p className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider">
                   Selecione um estabelecimento registado:
                 </p>
                 <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto">
@@ -405,7 +406,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
                       key={tag}
                       type="button"
                       onClick={() => toggleHashtag(tag)}
-                      className={`text-[10px] font-black px-2.5 py-1 rounded-lg border transition-all ${
+                      className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
                         hashtags.includes(tag)
                           ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'

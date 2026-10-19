@@ -55,7 +55,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
   ];
 
   return (
-    <div className="bg-white min-h-screen text-[#071A3D] flex flex-col pb-24">
+    <div className="community-profile bg-white min-h-screen text-[#071A3D] flex flex-col pb-24">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 h-14 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -65,11 +65,11 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
           >
             <ArrowLeft size={20} />
           </button>
-          <span className="text-sm font-black text-slate-800 tracking-tight">
+          <span className="text-sm font-semibold text-slate-800 tracking-tight">
             {profile.handle}
           </span>
           {profile.isVerified && (
-            <span className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black">
+            <span className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-semibold">
               ✓
             </span>
           )}
@@ -118,7 +118,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
               </div>
             </div>
             {profile.isBusiness && (
-              <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border border-white shadow-sm">
+              <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded-full border border-white shadow-sm">
                 Negócio
               </span>
             )}
@@ -126,19 +126,19 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
 
           <div className="flex-1 flex justify-around items-center text-center">
             <div>
-              <span className="block text-base font-black text-slate-800 leading-none">
+              <span className="block text-base font-semibold text-slate-800 leading-none">
                 {profile.postsCount ?? 24}
               </span>
               <span className="text-[11px] font-bold text-slate-400">publicações</span>
             </div>
             <div>
-              <span className="block text-base font-black text-slate-800 leading-none">
+              <span className="block text-base font-semibold text-slate-800 leading-none">
                 {profile.followersCount ?? 1320}
               </span>
               <span className="text-[11px] font-bold text-slate-400">seguidores</span>
             </div>
             <div>
-              <span className="block text-base font-black text-slate-800 leading-none">
+              <span className="block text-base font-semibold text-slate-800 leading-none">
                 {profile.followingCount ?? 684}
               </span>
               <span className="text-[11px] font-bold text-slate-400">a seguir</span>
@@ -149,9 +149,9 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
         {/* Bio, Identity & Location */}
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-sm font-black text-slate-900 leading-none">{profile.name}</h2>
+            <h2 className="text-sm font-semibold text-slate-900 leading-none">{profile.name}</h2>
             {profile.isVerified && (
-              <span className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-black">
+              <span className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-semibold">
                 ✓
               </span>
             )}
@@ -197,7 +197,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
             <>
               <button 
                 onClick={onEditProfile}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold  transition-all active:scale-95"
               >
                 Editar perfil
               </button>
@@ -214,7 +214,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
               {/* Follow Button */}
               <button 
                 onClick={() => setIsFollowing(!isFollowing)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm ${
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold  transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm ${
                   isFollowing 
                     ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' 
                     : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
@@ -237,7 +237,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
               {profile.isBusiness && (
                 <button 
                   onClick={() => onBookBusiness?.(profile.businessCollection || 'restaurants', profile.businessId || '')}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shadow-blue-600/20"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold  transition-all active:scale-95 flex items-center gap-1.5 shadow-sm shadow-blue-600/20"
                 >
                   <Calendar size={14} />
                   <span>Reservar</span>
@@ -320,7 +320,7 @@ const CommunityProfileView: React.FC<CommunityProfileViewProps> = ({
 
         {/* 3x3 Media Grid */}
         <div className="grid grid-cols-3 gap-1 pt-1">
-          {(userPosts.length > 0 ? userPosts.map(p => p.image || defaultMediaGrid[0]) : defaultMediaGrid).map((imgUrl, i) => (
+          {(userPosts.length > 0 ? userPosts.map(p => p.images?.[0] || p.image || defaultMediaGrid[0]) : defaultMediaGrid).map((imgUrl, i) => (
             <div 
               key={i} 
               className="aspect-square bg-slate-100 overflow-hidden relative group cursor-pointer"

@@ -1,0 +1,81 @@
+.community-app {
+  height: 100dvh;
+  color: #071a3d;
+  font-family: Inter, Arial, sans-serif;
+  --community-blue: #0075ed;
+}
+.community-app *, .community-overlay * { box-sizing: border-box; }
+.community-app button, .community-overlay button { -webkit-tap-highlight-color: transparent; }
+.community-app button:focus-visible, .community-overlay button:focus-visible { outline: 2px solid #0075ed; outline-offset: 3px; }
+.community-app .community-shell > header { height: 58px; flex-shrink: 0; padding: env(safe-area-inset-top, 0px) 14px 0; background: #fff; }
+.community-main { overscroll-behavior: contain; scrollbar-width: thin; }
+.community-feed { width: 100%; margin: 0 auto; }
+.community-filters { display: flex; align-items: center; gap: 6px; padding: 12px 14px; overflow-x: auto; scrollbar-width: none; }
+.community-filters button, .community-filters > span { border-radius: 999px; padding: 7px 15px; font-size: 11px; font-weight: 600; letter-spacing: 0; line-height: 1.25; white-space: nowrap; }
+.community-filters .selected { background: #0075ed; color: #fff; }
+.community-stories { gap: 14px; padding: 4px 14px 13px; }
+.community-stories > div { gap: 6px; }
+.community-stories > div > div { width: 64px; height: 64px; }
+.community-stories span { width: 66px; font-size: 10px; font-weight: 500; }
+.community-post { border-bottom: 1px solid #e8eef6; border-radius: 0; box-shadow: none; }
+.community-post-header { padding: 11px 14px; min-height: 62px; }
+.community-post-header img { width: 36px; height: 36px; }
+.community-post-header h4 { font-size: 12px; font-weight: 650; line-height: 1.35; }
+.community-post-header p { font-size: 10px; text-transform: none; letter-spacing: 0; font-weight: 400; margin-top: 3px; color: #607b9d; }
+.community-post > .aspect-square { aspect-ratio: 1 / 1; }
+.community-post-actions { padding: 11px 14px 15px; }
+.community-post-actions svg { stroke-width: 1.6; width: 23px; height: 23px; }
+.community-post-actions button.text-rose-500 { color: #ff3258; }
+.community-caption p { font-size: 12px; font-weight: 400; line-height: 1.6; }
+.community-post-time { font-size: 10px; color: #8a9fba; }
+.community-bottom { flex-shrink: 0; height: calc(62px + env(safe-area-inset-bottom, 0px)); padding: 5px 10px calc(5px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid #e7edf6; display: flex; align-items: center; justify-content: space-around; background: #fff; z-index: 110; }
+.community-bottom button { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; color: #7b94b5; background: transparent; border: 0; min-height: 44px; }
+.community-bottom svg { width: 21px; height: 21px; stroke-width: 1.5; }
+.community-bottom span { font-size: 9px; font-weight: 500; }
+.community-bottom .active { color: #0075ed; }
+.community-bottom .community-create { flex: 0 0 46px; min-height: 46px; height: 46px; border-radius: 50%; background: linear-gradient(145deg,#00ce78,#00ae60); color: white; box-shadow: 0 5px 14px #00b86a35; margin: -10px 15px 0; }
+.community-create svg { width: 27px; height: 27px; }
+.community-empty { min-height: 300px; padding: 55px 26px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; gap: 12px; color: #7b94b5; }
+.community-empty h3 { color: #071a3d; font-size: 16px; font-weight: 650; }
+.community-empty p { max-width: 310px; font-size: 12px; line-height: 1.7; }
+.community-empty button { margin-top: 8px; background: #0075ed; color: white; padding: 10px 18px; border-radius: 24px; font-size: 12px; }
+.community-messages { padding: 18px 14px; }
+.community-messages h2 { text-align: center; font-size: 16px; font-weight: 650; margin: 0 0 20px; }
+.community-search { display: flex; align-items: center; gap: 9px; background: #f1f5f9; border-radius: 12px; padding: 11px 13px; color: #597698; }
+.community-search input { background: transparent; width: 100%; font-size: 12px; outline: none; }
+.community-message-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 14px 0; text-align: left; }
+.community-message-row img { width: 46px; height: 46px; border-radius: 50%; }
+.community-message-row > span { flex: 1; min-width: 0; }
+.community-message-row strong, .community-message-row small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.community-message-row strong { font-size: 12px; font-weight: 600; }
+.community-message-row small { font-size: 11px; margin-top: 5px; color: #8095b2; }
+.community-overlay { font-family: Inter, Arial, sans-serif; height: 100dvh; }
+.community-overlay h2 { font-size: 15px; font-weight: 650; text-transform: none; letter-spacing: 0; }
+.community-overlay header { flex-shrink: 0; }
+.community-overlay header button { text-transform: none; letter-spacing: 0; }
+.community-profile { min-height: 100%; padding-bottom: 20px; }
+.community-profile > header { position: relative; height: 52px; }
+.community-profile h2 { font-weight: 650; }
+.community-profile .text-emerald-700 { color: #0075ed; }
+.community-profile .bg-emerald-600 { background-color: #0075ed; }
+.community-profile .border-emerald-600 { border-color: #0075ed; }
+.community-profile .text-emerald-600 { color: #0075ed; }
+.community-profile .grid-cols-3 { gap: 3px; }
+.community-composer > div > div { padding-top: 10px; }
+.community-composer header { border-bottom: 0; }
+.community-composer header button:last-child:not(:disabled) { color: #0075ed; background: transparent; box-shadow: none; }
+.community-composer .aspect-\[4\/3\] { border-radius: 8px; box-shadow: none; }
+.community-explore input { border-radius: 12px; font-weight: 400; }
+.community-explore h4 { font-weight: 650; text-transform: none; letter-spacing: 0; }
+.community-overlay > .community-filters { flex-shrink: 0; }
+@media (min-width: 768px) {
+  .community-main { background: #f5f8fc; }
+  .community-feed { max-width: 680px; background: white; min-height: 100%; border-inline: 1px solid #e8eef6; }
+  .community-shell > header { padding-inline: max(24px, calc((100vw - 1040px) / 2)) !important; }
+  .community-bottom { padding-inline: max(20px, calc((100vw - 680px) / 2)); }
+  .community-messages { max-width: 760px; margin: auto; background: white; min-height: 100%; padding: 24px; }
+  .community-main > div:not(.community-feed) { max-width: 960px; margin-inline: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .community-app *, .community-overlay * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}

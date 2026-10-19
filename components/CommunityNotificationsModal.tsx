@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, Heart, MessageCircle, UserPlus, Calendar, Trophy, 
@@ -92,10 +92,11 @@ const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = 
   onSelectPost,
   onOpenReservations
 }) => {
+  const [filter, setFilter] = useState('Todas');
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[500] bg-white flex flex-col justify-between max-w-[480px] mx-auto shadow-2xl select-none animate-in fade-in duration-200">
+    <div className="community-overlay fixed inset-0 z-[500] bg-white flex flex-col justify-between w-full  select-none animate-in fade-in duration-200">
       
       {/* 1. Header */}
       <header className="h-14 px-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
@@ -106,20 +107,21 @@ const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = 
           >
             <ArrowLeft size={18} />
           </button>
-          <h3 className="text-sm font-black uppercase tracking-wider text-[#071A3D]">Atividade</h3>
+          <h3 className="text-sm font-semibold  text-[#071A3D]">Notificações</h3>
         </div>
         <span className="text-[10px] text-emerald-600 font-bold uppercase">Marcar como lidas</span>
       </header>
 
+<div className="community-filters">{['Todas', 'Seguidores', 'Interações', 'Reservas'].map(tab => <button key={tab} className={filter === tab ? 'selected' : 'bg-slate-100'} onClick={() => setFilter(tab)}>{tab}</button>)}</div>
       {/* 2. Notifications List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         
         {/* Section: Novas */}
         <div className="space-y-3">
-          <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Recentes</h5>
+          <h5 className="text-[10px] font-semibold  text-slate-400">Recentes</h5>
           
           <div className="space-y-2.5">
-            {SAMPLE_NOTIFICATIONS.map(item => (
+            {SAMPLE_NOTIFICATIONS.filter(item => filter === 'Todas' || (filter === 'Seguidores' ? item.type === 'follow' : filter === 'Reservas' ? item.type === 'booking' : ['like', 'comment'].includes(item.type))).map(item => (
               <div 
                 key={item.id} 
                 className={`p-3 rounded-2xl flex items-center justify-between gap-3 transition-colors ${
@@ -164,7 +166,7 @@ const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = 
                     <p className="text-xs text-slate-700 leading-snug">
                       {item.user && (
                         <strong 
-                          className="font-black text-[#071A3D] cursor-pointer hover:underline mr-1"
+                          className="font-semibold text-[#071A3D] cursor-pointer hover:underline mr-1"
                           onClick={() => item.user && onSelectProfile && onSelectProfile(item.user.handle)}
                         >
                           {item.user.name}
@@ -190,7 +192,7 @@ const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = 
                 {item.actionText && item.type === 'follow' && (
                   <button 
                     onClick={() => alert(`A seguir ${item.user?.name}`)}
-                    className="px-3 py-1.5 bg-[#00B857] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex-shrink-0"
+                    className="px-3 py-1.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
                   >
                     {item.actionText}
                   </button>
@@ -199,7 +201,7 @@ const CommunityNotificationsModal: React.FC<CommunityNotificationsModalProps> = 
                 {item.actionText && item.type === 'booking' && (
                   <button 
                     onClick={() => { onClose(); onOpenReservations && onOpenReservations(); }}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex-shrink-0"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
                   >
                     {item.actionText}
                   </button>

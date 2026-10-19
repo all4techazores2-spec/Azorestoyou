@@ -80,12 +80,12 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[230] flex items-center justify-center bg-black/70 backdrop-blur-sm sm:p-4">
+    <div className="community-overlay fixed inset-0 z-[230] flex items-center justify-center bg-black/70 backdrop-blur-sm ">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-lg bg-white h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
+        className="w-full max-w-none bg-white h-full   flex flex-col overflow-hidden relative"
       >
         {/* Header */}
         <div className="px-4 h-14 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
@@ -95,7 +95,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
           >
             <img src={post.authorAvatar || post.avatar} alt={post.author} className="w-8 h-8 rounded-full object-cover border border-slate-100" />
             <div>
-              <h4 className="text-xs font-black text-slate-800 leading-none group-hover:text-emerald-600 transition-colors">
+              <h4 className="text-xs font-semibold text-slate-800 leading-none group-hover:text-emerald-600 transition-colors">
                 {post.author}
               </h4>
               <p className="text-[10px] text-slate-400 font-bold mt-0.5">{post.location}</p>
@@ -142,11 +142,11 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
                     size={22} 
                     className={post.isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-700'} 
                   />
-                  <span className="text-xs font-black">{post.likes ?? 0}</span>
+                  <span className="text-xs font-semibold">{post.likes ?? 0}</span>
                 </button>
                 <div className="flex items-center gap-1.5 text-slate-700">
                   <MessageCircle size={22} />
-                  <span className="text-xs font-black">{comments.length}</span>
+                  <span className="text-xs font-semibold">{comments.length}</span>
                 </div>
                 <button 
                   onClick={() => {
@@ -174,7 +174,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
             <div className="text-xs space-y-1">
               <p className="text-slate-800 font-medium leading-relaxed">
                 <strong 
-                  className="font-black mr-1.5 cursor-pointer hover:underline"
+                  className="font-semibold mr-1.5 cursor-pointer hover:underline"
                   onClick={() => { onAuthorClick?.(post.authorHandle || post.author); onClose(); }}
                 >
                   {post.authorHandle || post.author}
@@ -196,7 +196,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
                     />
                   )}
                   <div>
-                    <h5 className="text-xs font-black text-slate-800 leading-tight">
+                    <h5 className="text-xs font-semibold text-slate-800 leading-tight">
                       {post.businessTag.name}
                     </h5>
                     <p className="text-[10px] font-bold text-emerald-700">
@@ -210,7 +210,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
                     onBookBusiness?.(post.businessTag.collection || 'restaurants', post.businessTag.id);
                     onClose();
                   }}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm shadow-emerald-600/20 active:scale-95 transition-all"
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-semibold  shrink-0 shadow-sm shadow-emerald-600/20 active:scale-95 transition-all"
                 >
                   {post.businessTag.actionText || 'Ver negócio'}
                 </button>
@@ -219,7 +219,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
 
             {/* Comments List */}
             <div className="pt-2 border-t border-slate-100 space-y-3">
-              <h5 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Comentários</h5>
+              <h5 className="text-[11px] font-semibold  text-slate-400">Comentários</h5>
               {comments.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">Sê o primeiro a comentar esta publicação!</p>
               ) : (
@@ -232,7 +232,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
                     />
                     <div className="flex-1 text-xs">
                       <p className="text-slate-800 leading-snug">
-                        <strong className="font-black mr-1 text-slate-900">{c.author}</strong>
+                        <strong className="font-semibold mr-1 text-slate-900">{c.author}</strong>
                         <span>{c.text}</span>
                       </p>
                       <span className="text-[9px] font-bold text-slate-400 mt-0.5 block">{c.time}</span>

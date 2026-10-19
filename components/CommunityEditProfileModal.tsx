@@ -143,12 +143,12 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-md">
+    <div className="community-overlay fixed inset-0 z-[250] flex items-center justify-center p-3  bg-slate-900/60 backdrop-blur-md">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-slate-100"
+        className="w-full max-w-none bg-white rounded-[2rem]  overflow-hidden flex flex-col max-h-[92vh] border border-slate-100"
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
@@ -159,12 +159,12 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
             >
               <ArrowLeft size={18} />
             </button>
-            <h3 className="text-base font-black text-slate-800 tracking-tight">Editar Perfil Social</h3>
+            <h3 className="text-base font-semibold text-slate-800 tracking-tight">Editar Perfil Social</h3>
           </div>
           <button 
             disabled={isSaving || handleAvailable === false}
             onClick={handleSave}
-            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold  transition-all flex items-center gap-1.5 ${
               isSaving || handleAvailable === false
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95'
@@ -231,7 +231,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
 
           {/* Nome Público */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+            <label className="text-[11px] font-semibold  text-slate-400">
               Nome Público
             </label>
             <input 
@@ -246,7 +246,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
           {/* Identificador @azorestoyou_ */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <label className="text-[11px] font-semibold  text-slate-400">
                 Identificador Oficial
               </label>
               {checkingHandle ? (
@@ -254,18 +254,18 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
                   <Loader2 size={10} className="animate-spin" /> A verificar...
                 </span>
               ) : handleAvailable === true ? (
-                <span className="text-[10px] font-black text-emerald-600 flex items-center gap-1">
+                <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
                   <Check size={12} /> Disponível
                 </span>
               ) : handleAvailable === false ? (
-                <span className="text-[10px] font-black text-rose-500 flex items-center gap-1">
+                <span className="text-[10px] font-semibold text-rose-500 flex items-center gap-1">
                   <AlertCircle size={12} /> Não disponível
                 </span>
               ) : null}
             </div>
 
             <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
-              <span className="text-xs font-black text-emerald-700 select-none">@azorestoyou_</span>
+              <span className="text-xs font-semibold text-emerald-700 select-none">@azorestoyou_</span>
               <input 
                 type="text" 
                 value={handleSlug}
@@ -301,7 +301,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
           {/* Biografia */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <label className="text-[11px] font-semibold  text-slate-400">
                 Biografia
               </label>
               <span className="text-[9px] font-bold text-slate-400">{bio.length}/150</span>
@@ -319,7 +319,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
           {/* Ilha e Localização */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+              <label className="text-[11px] font-semibold  text-slate-400 flex items-center gap-1">
                 <MapPin size={12} /> Ilha
               </label>
               <select 
@@ -334,7 +334,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <label className="text-[11px] font-semibold  text-slate-400">
                 Localização / Freguesia
               </label>
               <input 
@@ -349,7 +349,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
 
           {/* Website / Redes */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+            <label className="text-[11px] font-semibold  text-slate-400 flex items-center gap-1">
               <Globe size={12} /> Website ou Link Pessoal
             </label>
             <input 
@@ -363,7 +363,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
 
           {/* Privacidade e Visibilidade */}
           <div className="pt-2 border-t border-slate-100 space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <h4 className="text-xs font-semibold  text-slate-700 flex items-center gap-1.5">
               <Shield size={14} className="text-emerald-600" />
               Privacidade da Conta
             </h4>

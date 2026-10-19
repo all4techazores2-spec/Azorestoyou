@@ -88,7 +88,7 @@ const CommunityStoriesViewer: React.FC<CommunityStoriesViewerProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[500] bg-black flex flex-col justify-between select-none max-w-[480px] mx-auto overflow-hidden"
+      className="community-overlay fixed inset-0 z-[500] bg-black flex flex-col justify-between select-none w-full overflow-hidden"
       onMouseDown={() => setIsPaused(true)}
       onMouseUp={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
@@ -195,7 +195,7 @@ const CommunityStoriesViewer: React.FC<CommunityStoriesViewerProps> = ({
               initial={{ scale: 0.5, opacity: 0, y: 50 }}
               animate={{ scale: 1.5, opacity: 1, y: 0 }}
               exit={{ scale: 2, opacity: 0, y: -60 }}
-              className="absolute z-40 text-7xl pointer-events-none select-none drop-shadow-2xl"
+              className="absolute z-40 text-7xl pointer-events-none select-none drop-"
             >
               {showReactionAnimation}
             </motion.div>

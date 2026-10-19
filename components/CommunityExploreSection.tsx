@@ -29,7 +29,7 @@ const AZORES_ISLANDS = [
 const SEARCH_TABS = [
   { id: 'all', label: 'Tudo' },
   { id: 'profiles', label: 'Pessoas' },
-  { id: 'businesses', label: 'Empresas' },
+  { id: 'businesses', label: 'Negócios' },
   { id: 'hashtags', label: 'Hashtags' },
   { id: 'posts', label: 'Publicações' }
 ];
@@ -115,7 +115,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
   }, [searchQuery, selectedIsland, activeSearchTab]);
 
   return (
-    <div className="space-y-4 py-4 px-3 select-none">
+    <div className="community-explore space-y-4 py-4 px-3 select-none">
       
       {/* 1. Search Bar */}
       <div className="relative">
@@ -145,9 +145,9 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
             <button
               key={island}
               onClick={() => setSelectedIsland(island)}
-              className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex-shrink-0 flex items-center gap-1 ${
+              className={`px-3.5 py-1.5 rounded-full text-[10px] font-semibold  transition-all flex-shrink-0 flex items-center gap-1 ${
                 isSelected
-                  ? 'bg-[#00B857] text-white shadow-md shadow-emerald-600/20'
+                  ? 'bg-[#0075ed] text-white shadow-md shadow-emerald-600/20'
                   : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
               }`}
             >
@@ -168,13 +168,13 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveSearchTab(tab.id)}
-                className={`text-xs font-black uppercase tracking-wider pb-1 px-1 transition-colors relative flex-shrink-0 ${
-                  activeSearchTab === tab.id ? 'text-[#00B857]' : 'text-slate-400 hover:text-slate-600'
+                className={`text-xs font-semibold  pb-1 px-1 transition-colors relative flex-shrink-0 ${
+                  activeSearchTab === tab.id ? 'text-[#0075ed]' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
                 {tab.label}
                 {activeSearchTab === tab.id && (
-                  <span className="absolute bottom-0 inset-x-0 h-0.5 bg-[#00B857] rounded-full" />
+                  <span className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0075ed] rounded-full" />
                 )}
               </button>
             ))}
@@ -184,7 +184,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
           {isSearching ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
               <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">A pesquisar nos Açores...</span>
+              <span className="text-[10px] font-bold ">A pesquisar nos Açores...</span>
             </div>
           ) : (
             <div className="space-y-4">
@@ -192,7 +192,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
               {/* Profiles Result */}
               {(activeSearchTab === 'all' || activeSearchTab === 'profiles') && searchResults.profiles.length > 0 && (
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <h4 className="text-[10px] font-semibold  text-slate-400 flex items-center gap-1.5">
                     <User size={12} />
                     <span>Contas & Membros</span>
                   </h4>
@@ -206,7 +206,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                         <div className="flex items-center gap-3 min-w-0">
                           <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full object-cover border border-slate-100" />
                           <div className="min-w-0">
-                            <h5 className="text-xs font-black text-[#071A3D] truncate flex items-center gap-1">
+                            <h5 className="text-xs font-semibold text-[#071A3D] truncate flex items-center gap-1">
                               <span>{p.name}</span>
                               {p.verified && <CheckCircle2 size={12} className="text-[#0066FF] fill-current" />}
                             </h5>
@@ -214,7 +214,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate">{p.location || 'Açores'}</p>
                           </div>
                         </div>
-                        <button className="px-3 py-1 bg-slate-100 hover:bg-[#00B857] hover:text-white text-[#071A3D] text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex-shrink-0">
+                        <button className="px-3 py-1 bg-slate-100 hover:bg-[#0075ed] hover:text-white text-[#071A3D] text-[9px] font-semibold  rounded-lg transition-all flex-shrink-0">
                           Ver perfil
                         </button>
                       </div>
@@ -226,7 +226,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
               {/* Businesses Result */}
               {(activeSearchTab === 'all' || activeSearchTab === 'businesses') && searchResults.businesses.length > 0 && (
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <h4 className="text-[10px] font-semibold  text-slate-400 flex items-center gap-1.5">
                     <Building2 size={12} />
                     <span>Empresas & Serviços Locais</span>
                   </h4>
@@ -239,16 +239,16 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                         <div className="flex items-center gap-3 min-w-0">
                           <img src={b.image} alt={b.name} className="w-11 h-11 rounded-xl object-cover border border-slate-100" />
                           <div className="min-w-0">
-                            <h5 className="text-xs font-black text-[#071A3D] truncate">{b.name}</h5>
-                            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">{b.category} • {b.island}</p>
-                            <span className="text-[9px] text-amber-500 font-black flex items-center gap-0.5">
+                            <h5 className="text-xs font-semibold text-[#071A3D] truncate">{b.name}</h5>
+                            <p className="text-[10px] text-emerald-600 font-bold ">{b.category} • {b.island}</p>
+                            <span className="text-[9px] text-amber-500 font-semibold flex items-center gap-0.5">
                               <Star size={10} className="fill-current" /> {b.rating}
                             </span>
                           </div>
                         </div>
                         <button 
                           onClick={() => onBookBusiness ? onBookBusiness(b.collection || b.category, b.id) : alert(`Reservar em ${b.name}`)}
-                          className="px-3.5 py-1.5 bg-[#00B857] hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex-shrink-0"
+                          className="px-3.5 py-1.5 bg-[#0075ed] hover:bg-emerald-600 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
                         >
                           {b.actionText || 'Reservar'}
                         </button>
@@ -261,7 +261,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
               {/* Hashtags Result */}
               {(activeSearchTab === 'all' || activeSearchTab === 'hashtags') && searchResults.hashtags.length > 0 && (
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <h4 className="text-[10px] font-semibold  text-slate-400 flex items-center gap-1.5">
                     <Hash size={12} />
                     <span>Etiquetas (#hashtags)</span>
                   </h4>
@@ -272,7 +272,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                         className="p-3 bg-slate-50 hover:bg-emerald-50/50 rounded-xl cursor-pointer border border-slate-100 transition-colors"
                         onClick={() => setSearchQuery(h.hashtag)}
                       >
-                        <p className="text-xs font-black text-[#071A3D]">{h.hashtag}</p>
+                        <p className="text-xs font-semibold text-[#071A3D]">{h.hashtag}</p>
                         <p className="text-[9px] text-slate-400 font-bold mt-0.5">{h.count}</p>
                       </div>
                     ))}
@@ -283,7 +283,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
               {/* Posts Result Grid */}
               {(activeSearchTab === 'all' || activeSearchTab === 'posts') && searchResults.posts.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">Publicações</h4>
+                  <h4 className="text-[10px] font-semibold  text-slate-400 px-1">Publicações</h4>
                   <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
                     {searchResults.posts.map(post => {
                       const img = post.images?.[0] || post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600';
@@ -295,7 +295,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                         >
                           <img src={img} alt="Post" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white transition-opacity">
-                            <span className="flex items-center gap-1 text-[10px] font-black">
+                            <span className="flex items-center gap-1 text-[10px] font-semibold">
                               <Heart size={12} className="fill-current" /> {post.likes || 0}
                             </span>
                           </div>
@@ -325,8 +325,8 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
           {/* Trending Hashtags Bar */}
           <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D] flex items-center gap-1.5">
-                <TrendingUp size={14} className="text-[#00B857]" />
+              <h4 className="text-xs font-semibold  text-[#071A3D] flex items-center gap-1.5">
+                <TrendingUp size={14} className="text-[#0075ed]" />
                 <span>Tendências nos Açores</span>
               </h4>
             </div>
@@ -337,7 +337,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                   className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl flex flex-col justify-between cursor-pointer border border-slate-100 transition-all"
                   onClick={() => setSearchQuery(t.hashtag)}
                 >
-                  <span className="text-xs font-black text-[#071A3D]">{t.hashtag}</span>
+                  <span className="text-xs font-semibold text-[#071A3D]">{t.hashtag}</span>
                   <span className="text-[9px] text-slate-400 font-bold mt-1">{t.count}</span>
                 </div>
               ))}
@@ -347,7 +347,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
           {/* Featured Commercial Businesses Carousel (Screen 4 of Mockup) */}
           <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs font-black uppercase tracking-wider text-[#071A3D] flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold  text-[#071A3D] flex items-center gap-1.5">
                 <Sparkles size={14} className="text-amber-500" />
                 <span>Negócios em Destaque</span>
               </h4>
@@ -358,8 +358,8 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                   <div className="flex items-center gap-3 min-w-0">
                     <img src={biz.image} alt={biz.name} className="w-12 h-12 rounded-xl object-cover" />
                     <div className="min-w-0">
-                      <h5 className="text-xs font-black text-[#071A3D] truncate">{biz.name}</h5>
-                      <p className="text-[9px] text-[#00B857] font-black uppercase tracking-wider truncate mt-0.5">{biz.category}</p>
+                      <h5 className="text-xs font-semibold text-[#071A3D] truncate">{biz.name}</h5>
+                      <p className="text-[9px] text-[#0075ed] font-semibold  truncate mt-0.5">{biz.category}</p>
                       <p className="text-[9px] text-slate-400 font-bold mt-0.5 flex items-center gap-1">
                         <Star size={10} className="text-amber-500 fill-current" />
                         <span>{biz.rating}</span> • <span>{biz.island}</span>
@@ -368,7 +368,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
                   </div>
                   <button 
                     onClick={() => onBookBusiness ? onBookBusiness(biz.collection || biz.category, biz.id) : alert(`Reservar ${biz.name}`)}
-                    className="px-3.5 py-1.5 bg-[#00B857] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 transition-all flex-shrink-0"
+                    className="px-3.5 py-1.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-md shadow-emerald-600/20 transition-all flex-shrink-0"
                   >
                     {biz.actionText || 'Reservar'}
                   </button>
@@ -379,7 +379,7 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
 
           {/* Instagram-style 3-Column Explore Mosaic Grid */}
           <div className="space-y-2">
-            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">Explorar Açores</h4>
+            <h4 className="text-[10px] font-semibold  text-slate-400 px-1">Explorar Açores</h4>
             <div className="grid grid-cols-3 gap-1 rounded-2xl overflow-hidden shadow-sm">
               {explorePosts.map((post, idx) => {
                 const img = post.images?.[0] || post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600';
@@ -403,11 +403,11 @@ const CommunityExploreSection: React.FC<CommunityExploreSectionProps> = ({
 
                     {/* Hover stats */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 text-white transition-opacity">
-                      <span className="flex items-center gap-1 text-[10px] font-black">
+                      <span className="flex items-center gap-1 text-[10px] font-semibold">
                         <Heart size={12} className="fill-current" /> {post.likes || 0}
                       </span>
                       {post.comments && post.comments.length > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] font-black">
+                        <span className="flex items-center gap-1 text-[10px] font-semibold">
                           <MessageCircle size={12} className="fill-current" /> {post.comments.length}
                         </span>
                       )}

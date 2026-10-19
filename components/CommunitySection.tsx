@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
+import './community.css';
 import { SocialProfile } from '../types';
 import CommunityProfileView from './CommunityProfileView';
 import CommunityEditProfileModal from './CommunityEditProfileModal';
@@ -40,6 +41,7 @@ interface Post {
   author: string;
   authorHandle?: string;
   avatar: string;
+  authorAvatar?: string;
   time: string;
   location: string;
   content: string;
@@ -150,7 +152,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
   // Mobile Tab bar navigation: 'feed' | 'explore' | 'favorites' | 'profile'
-  const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile'>('feed');
+  const [activeMobileTab, setActiveMobileTab] = useState<'feed' | 'explore' | 'favorites' | 'profile' | 'messages'>('feed');
   const [selectedExploreCategory, setSelectedExploreCategory] = useState<string>('Para ti');
   
   // Overlays / Drawers
@@ -296,9 +298,9 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   // Mock Stories (expired in 24h)
   const [stories, setStories] = useState<Story[]>(() => {
     const defaults: Story[] = [
-      { id: 1, userName: 'Marta Silva', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marta', mediaUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', mediaType: 'image', timestamp: Date.now() - 3600000 },
-      { id: 2, userName: 'João Melo', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Joao', mediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800', mediaType: 'image', timestamp: Date.now() - 7200000 },
-      { id: 3, userName: 'Explora Açores', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Explora', mediaUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800', mediaType: 'image', timestamp: Date.now() - 14400000 }
+      { id: 1, userName: 'São Miguel', avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', mediaType: 'image', timestamp: Date.now() - 3600000 },
+      { id: 2, userName: 'Terceira', avatar: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800', mediaType: 'image', timestamp: Date.now() - 7200000 },
+      { id: 3, userName: 'Pico', avatar: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800', mediaType: 'image', timestamp: Date.now() - 14400000 }
     ];
     return defaults;
   });
@@ -506,8 +508,21 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     }
   };
 
-  // Filter posts
-  const filteredPosts = posts.filter(p => {
+  // Ignore empty legacy records and adapt older post shapes without changing stored data.
+  const feedPosts: Post[] = posts.filter(p => p && (p.content || p.image || p.video || p.images?.length)).map(p => ({
+    ...p,
+    author: p.author || 'Membro da comunidade',
+    avatar: p.avatar || p.authorAvatar || '',
+    content: p.content || '',
+    location: p.location || '',
+    time: p.time || '',
+    comments: Array.isArray(p.comments) ? p.comments : [],
+    images: (Array.isArray(p.images) && p.images.length ? p.images : p.image ? [p.image] : []).filter(Boolean)
+      .map(url => url.startsWith('/imagens/') ? API_BASE_URL + url : url),
+  }));
+  const avatarFallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#e9f2ff"/><circle cx="40" cy="30" r="14" fill="#6d8db5"/><path d="M14 76c0-30 52-30 52 0" fill="#6d8db5"/></svg>');
+  const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.onerror = null; e.currentTarget.src = avatarFallback; };
+  const filteredPosts = feedPosts.filter(p => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return p.content.toLowerCase().includes(q) || p.author.toLowerCase().includes(q);
@@ -530,20 +545,20 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             <Users size={36} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Comunidade Azorestoyou</h2>
+            <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">Comunidade Azorestoyou</h2>
             <p className="text-xs text-slate-500 font-semibold leading-relaxed">
               A rede social privada e exclusiva dos Açores. Para consultar publicações, histórias, perfis de membros e negócios, inicie sessão na sua conta da Super-App.
             </p>
           </div>
           <button
             onClick={onShowAuth}
-            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-semibold text-xs  shadow-xl shadow-emerald-600/20 active:scale-95 transition-all"
           >
             Iniciar Sessão com Conta Azorestoyou
           </button>
           <button
             onClick={onClose}
-            className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider"
+            className="text-xs font-bold text-slate-400 hover:text-slate-600 "
           >
             Voltar a Explorar
           </button>
@@ -555,8 +570,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   // If viewing another user's profile
   if (viewingProfile) {
     return (
-      <div className="min-h-screen bg-[#F5F7FA] text-[#071A3D] font-sans antialiased pb-24 relative select-none">
-        <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col border-x border-slate-100">
+      <div className="community-app fixed inset-0 z-[120] bg-white text-[#071A3D] font-sans antialiased">
+        <div className="community-shell w-full h-full bg-white relative flex flex-col">
           <CommunityProfileView 
             profile={viewingProfile}
             isMyProfile={viewingProfile.handle?.toLowerCase() === myProfile?.handle?.toLowerCase()}
@@ -578,7 +593,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] text-[#071A3D] font-sans antialiased pb-24 relative select-none">
+    <div className="community-app fixed inset-0 z-[120] bg-white text-[#071A3D] font-sans antialiased">
       
       {/* Dynamic hidden input for stories */}
       <input 
@@ -590,26 +605,26 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
       />
 
       {/* Desktop Wrapper Frame - centered layout */}
-      <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-2xl relative flex flex-col border-x border-slate-100">
+      <div className="community-shell w-full h-full bg-white relative flex flex-col">
         
         {/* ================= FIXED HEADER ================= */}
         <header className="sticky top-0 z-[100] bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
-          <button onClick={() => setShowHamburgerDrawer(true)} className="p-2 hover:bg-slate-50 rounded-full transition-all text-[#071A3D]">
+          <button onClick={() => setShowHamburgerDrawer(true)} aria-label="Abrir menu da comunidade" className="p-2 hover:bg-slate-50 rounded-full transition-all text-[#071A3D]">
             <MenuIcon size={20} />
           </button>
           
           <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => setActiveMobileTab('feed')}>
             <AzoresLogo size={26} />
-            <span className="text-sm font-black tracking-tighter uppercase text-[#071A3D]">
-              Azores<span className="text-[#00B857]">Toyou</span>
+            <span className="text-sm font-semibold tracking-tighter uppercase text-[#071A3D]">
+              Azores<span className="text-[#0075ed]">Toyou</span>
             </span>
           </div>
 
           <div className="flex items-center gap-1">
-            <button onClick={() => { setSearchQuery(''); setActiveMobileTab('explore'); }} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D]">
+            <button aria-label="Pesquisar na comunidade" onClick={() => { setSearchQuery(''); setActiveMobileTab('explore'); }} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D]">
               <Search size={18} />
             </button>
-            <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D] relative">
+            <button aria-label="Notificações" onClick={() => setShowNotifications(!showNotifications)} className="p-2 hover:bg-slate-50 rounded-full text-[#071A3D] relative">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
             </button>
@@ -618,20 +633,37 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden ml-1 active:scale-95 transition-transform"
               title="O Meu Perfil"
             >
-              <img src={myProfile?.avatar || userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={myProfile?.avatar || userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" onError={handleAvatarError} className="w-full h-full object-cover" />
             </button>
           </div>
         </header>
 
         {/* ================= MAIN SCROLL CONTAINER ================= */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="community-main flex-1 min-h-0 overflow-y-auto">
           
           {/* ================= TABS: FEED TAB ================= */}
           {activeMobileTab === 'feed' && (
-            <div className="space-y-4 py-4 px-3">
+            <div className="community-feed">
               
+              {/* Categories Navigation scroll */}
+              <div className="community-filters flex items-center gap-2 overflow-x-auto scrollbar-none">
+                {feedCategories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setFeedCategoryFilter(cat)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex-shrink-0 ${
+                      feedCategoryFilter === cat 
+                        ? 'bg-[#0075ed] text-white' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               {/* Stories Bar */}
-              <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-none border-b border-slate-50">
+              <div className="community-stories flex items-center gap-4 overflow-x-auto scrollbar-none border-b border-slate-100">
                 {/* Create Story */}
                 <div 
                   className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
@@ -640,7 +672,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   <div className="relative w-14 h-14 rounded-full border border-slate-200 p-[2px] bg-slate-50 flex items-center justify-center overflow-hidden">
                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Minha" className="w-full h-full object-cover rounded-full" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
-                      <Plus size={16} className="text-white font-black" />
+                      <Plus size={16} className="text-white font-semibold" />
                     </div>
                   </div>
                   <span className="text-[9px] font-bold text-slate-550 truncate w-14 text-center">A tua história</span>
@@ -663,55 +695,30 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                 ))}
               </div>
 
-              {/* Publication Composer trigger button */}
-              <div 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-all"
-              >
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-9 h-9 rounded-full border border-slate-150" />
-                <span className="text-xs text-slate-450 font-semibold">No que estás a pensar, {userName}?</span>
-              </div>
-
-              {/* Categories Navigation scroll */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {feedCategories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setFeedCategoryFilter(cat)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all flex-shrink-0 ${
-                      feedCategoryFilter === cat 
-                        ? 'bg-[#00B857] text-white' 
-                        : 'bg-slate-100 hover:bg-slate-200 text-[#071A3D]'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
               {/* Feed posts list */}
-              <div className="space-y-4">
+              <div className="community-posts">
+                {filteredPosts.length === 0 && <div className="community-empty"><ImageIcon size={32} strokeWidth={1.3} /><h3>A tua comunidade começa aqui</h3><p>Partilha um momento dos Açores ou explora as publicações da comunidade.</p><button onClick={() => setShowCreateModal(true)}>Criar publicação</button></div>}
                 {filteredPosts.map(post => {
                   const currentIdx = activeCarouselIndex[post.id] || 0;
                   const postImages = post.images || (post.image ? [post.image] : []);
                   const hasCarousel = postImages.length > 1;
 
                   return (
-                    <div key={post.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                    <div key={post.id} className="community-post bg-white overflow-hidden flex flex-col">
                       
                       {/* Card Header */}
-                      <div className="p-4 flex items-center justify-between">
+                      <div className="community-post-header flex items-center justify-between">
                         <div 
                           className="flex items-center gap-3 cursor-pointer group"
                           onClick={() => openUserProfile(post.authorHandle || post.author)}
                         >
-                          <img src={post.avatar} alt="Avatar" className="w-10 h-10 rounded-full border border-slate-100 group-hover:scale-105 transition-transform object-cover" />
+                          <img src={post.avatar || avatarFallback} onError={handleAvatarError} alt={post.author} className="w-10 h-10 rounded-full border border-slate-100 group-hover:scale-105 transition-transform object-cover" />
                           <div>
-                            <h4 className="text-xs font-black text-[#071A3D] leading-none flex items-center gap-1.5 group-hover:text-emerald-600 transition-colors">
+                            <h4 className="text-xs font-semibold text-[#071A3D] leading-none flex items-center gap-1.5 group-hover:text-emerald-600 transition-colors">
                               <span>{post.author}</span>
                               {post.checkInPlace && (
                                 <span className="text-[10px] text-slate-450 font-semibold lowercase">
-                                  está em <strong className="text-[#00B857]">{post.checkInPlace}</strong>
+                                  está em <strong className="text-[#0075ed]">{post.checkInPlace}</strong>
                                 </span>
                               )}
                             </h4>
@@ -726,42 +733,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                         </button>
                       </div>
 
-                      {/* Text content with hashtag & mention highlights */}
-                      {post.content && (
-                        <div 
-                          className="px-4 pb-3 cursor-pointer"
-                          onClick={() => setActivePostDetail(post)}
-                        >
-                          <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">
-                            {post.content.split(' ').map((word, wIdx) => {
-                              if (word.startsWith('#')) {
-                                return (
-                                  <span 
-                                    key={wIdx} 
-                                    className="text-[#00B857] font-black hover:underline mr-1 cursor-pointer" 
-                                    onClick={(e) => { e.stopPropagation(); setSearchQuery(word); setActiveMobileTab('explore'); }}
-                                  >
-                                    {word}{' '}
-                                  </span>
-                                );
-                              }
-                              if (word.startsWith('@')) {
-                                return (
-                                  <span 
-                                    key={wIdx} 
-                                    className="text-[#0066FF] font-black hover:underline mr-1 cursor-pointer" 
-                                    onClick={(e) => { e.stopPropagation(); openUserProfile(word); }}
-                                  >
-                                    {word}{' '}
-                                  </span>
-                                );
-                              }
-                              return word + ' ';
-                            })}
-                          </p>
-                        </div>
-                      )}
-
                       {/* Media Carousel */}
                       {postImages.length > 0 && (
                         <div className="relative aspect-square bg-slate-50 overflow-hidden select-none">
@@ -774,7 +745,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                           
                           {/* Indicator badge */}
                           {hasCarousel && (
-                            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-semibold  px-2 py-0.5 rounded-full">
                               {currentIdx + 1}/{postImages.length}
                             </div>
                           )}
@@ -829,7 +800,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       {post.businessTag && (
                         <div className="m-3 p-3 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-white border border-emerald-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-emerald-600 font-black">
+                            <div className="w-10 h-10 rounded-xl bg-white border border-emerald-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-emerald-600 font-semibold">
                               {post.businessTag.image ? (
                                 <img src={post.businessTag.image} alt={post.businessTag.name} className="w-full h-full object-cover" />
                               ) : (
@@ -837,17 +808,17 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[9px] font-black uppercase text-emerald-600 tracking-wider truncate">
+                              <p className="text-[9px] font-semibold uppercase text-emerald-600 tracking-wider truncate">
                                 {post.businessTag.category || 'Negócio Oficial'}
                               </p>
-                              <h5 className="text-xs font-black text-slate-800 truncate">
+                              <h5 className="text-xs font-semibold text-slate-800 truncate">
                                 {post.businessTag.name}
                               </h5>
                             </div>
                           </div>
                           <button 
                             onClick={() => onBookBusiness ? onBookBusiness(post.businessTag!.collection || post.businessTag!.category, post.businessTag!.id) : alert(`Reservar em ${post.businessTag!.name}`)}
-                            className="px-3 py-1.5 bg-[#00B857] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all flex-shrink-0"
+                            className="px-3 py-1.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white text-[10px] font-semibold  rounded-xl shadow-sm transition-all flex-shrink-0"
                           >
                             {post.businessTag.actionText || 'Reservar'}
                           </button>
@@ -855,7 +826,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       )}
 
                       {/* Action Bar */}
-                      <div className="p-4 space-y-2.5">
+                      <div className="community-post-actions space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <button onClick={() => handlePostLike(post)} className={`flex items-center gap-1.5 transition-transform active:scale-125 ${post.isLiked ? 'text-rose-500' : 'text-[#071A3D]'}`}>
@@ -866,20 +837,56 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                               <MessageCircle size={20} />
                             </button>
 
-                            <button onClick={() => alert('Link copiado para a área de transferência!')} className="text-[#071A3D]">
-                              <Share2 size={20} />
+                            <button onClick={async () => { const url = window.location.origin + '#community/post/' + post.id; if (navigator.share) { try { await navigator.share({ title: post.author, url }); } catch {} } else { await navigator.clipboard?.writeText(url); } }} className="text-[#071A3D]">
+                              <Send size={21} strokeWidth={1.6} />
                             </button>
                           </div>
 
-                          <button onClick={() => handlePostSave(post)} className={`transition-transform active:scale-125 ${post.isSaved ? 'text-[#00B857]' : 'text-[#071A3D]'}`}>
+                          <button onClick={() => handlePostSave(post)} className={`transition-transform active:scale-125 ${post.isSaved ? 'text-[#0075ed]' : 'text-[#071A3D]'}`}>
                             <Bookmark size={20} className={post.isSaved ? 'fill-current' : ''} />
                           </button>
                         </div>
 
                         {/* Likes counter in Portuguese */}
-                        <p className="text-[11px] font-black text-[#071A3D]">
+                        <p className="text-[11px] font-semibold text-[#071A3D]">
                           {(post.likes || 0).toLocaleString('pt-PT')} gostos
                         </p>
+
+                      {/* Text content with hashtag & mention highlights */}
+                      {post.content && (
+                        <div 
+                          className="community-caption cursor-pointer"
+                          onClick={() => setActivePostDetail(post)}
+                        >
+                          <p className="text-xs font-semibold text-slate-700 leading-relaxed whitespace-pre-line">
+                            <strong className="mr-1 text-[#071A3D]">{post.authorHandle || post.author}</strong>{post.content.split(' ').map((word, wIdx) => {
+                              if (word.startsWith('#')) {
+                                return (
+                                  <span 
+                                    key={wIdx} 
+                                    className="text-[#0075ed] font-semibold hover:underline mr-1 cursor-pointer" 
+                                    onClick={(e) => { e.stopPropagation(); setSearchQuery(word); setActiveMobileTab('explore'); }}
+                                  >
+                                    {word}{' '}
+                                  </span>
+                                );
+                              }
+                              if (word.startsWith('@')) {
+                                return (
+                                  <span 
+                                    key={wIdx} 
+                                    className="text-[#0066FF] font-semibold hover:underline mr-1 cursor-pointer" 
+                                    onClick={(e) => { e.stopPropagation(); openUserProfile(word); }}
+                                  >
+                                    {word}{' '}
+                                  </span>
+                                );
+                              }
+                              return word + ' ';
+                            })}
+                          </p>
+                        </div>
+                      )}
 
                         {/* Liked list summary */}
                         {post.likedBy && post.likedBy.length > 0 && (
@@ -888,6 +895,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                           </p>
                         )}
 
+                        <p className="community-post-time">{[post.time, post.location].filter(Boolean).join(" · ")}</p>
                         {post.comments && post.comments.length > 0 && (
                           <button 
                             onClick={() => setActivePostDetail(post)}
@@ -919,13 +927,13 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           {/* ================= TABS: FAVORITOS TAB ================= */}
           {activeMobileTab === 'favorites' && (
             <div className="space-y-4 py-4 px-3">
-              <h2 className="text-sm font-black uppercase tracking-wider text-[#071A3D]">Favoritos e Guardados</h2>
+              <h2 className="text-sm font-semibold  text-[#071A3D]">Favoritos e Guardados</h2>
               <div className="grid grid-cols-2 gap-3">
                 {posts.filter(p => p.isSaved).map(post => (
                   <div key={post.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden cursor-pointer shadow-sm" onClick={() => setActivePostDetail(post)}>
                     <img src={post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'} alt="Saved" className="w-full aspect-square object-cover" />
                     <div className="p-2">
-                      <p className="text-[10px] font-black text-[#071A3D] truncate">{post.author}</p>
+                      <p className="text-[10px] font-semibold text-[#071A3D] truncate">{post.author}</p>
                       <p className="text-[9px] text-slate-400 font-bold mt-0.5 truncate">{post.location}</p>
                     </div>
                   </div>
@@ -961,7 +969,15 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             />
           )}
 
+          {activeMobileTab === 'messages' && <section className="community-messages"><h2>Mensagens</h2><label className="community-search"><Search size={17}/><input placeholder="Pesquisar mensagens" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/></label><div className="community-filters"><span className="selected">Todas</span></div>{Object.entries(dmHistory).filter(([name]) => name.toLowerCase().includes(searchQuery.toLowerCase())).map(([name, messages]) => <button className="community-message-row" key={name} onClick={() => setActiveChatUser(name)}><img src={avatarFallback} alt=""/><span><strong>{name}</strong><small>{messages[messages.length - 1]?.text || 'Iniciar conversa'}</small></span><Camera size={18}/></button>)}</section>}
         </main>
+        <nav className="community-bottom" aria-label="Navegação da comunidade">
+          <button onClick={onClose}><Compass/><span>Explorar</span></button>
+          <button className={activeMobileTab === 'feed' ? 'active' : ''} onClick={() => setActiveMobileTab('feed')}><Users/><span>Comunidade</span></button>
+          <button className="community-create" aria-label="Nova publicação" onClick={() => setShowCreateModal(true)}><Plus/></button>
+          <button onClick={onOpenReservations}><Calendar/><span>Reservas</span></button>
+          <button className={activeMobileTab === 'profile' ? 'active' : ''} onClick={() => setActiveMobileTab('profile')}><UserIcon/><span>Perfil</span></button>
+        </nav>
 
         {/* Removed duplicate internal bottom nav - preserved super-app bottom bar */}
 
@@ -988,7 +1004,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               >
                 {/* Header title close */}
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                  <span className="text-sm font-black uppercase tracking-wider text-[#071A3D]">Menu</span>
+                  <span className="text-sm font-semibold  text-[#071A3D]">Menu</span>
                   <button onClick={() => setShowHamburgerDrawer(false)} className="p-1.5 bg-slate-55 hover:bg-slate-100 rounded-full">
                     <X size={16} />
                   </button>
@@ -996,12 +1012,12 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
 
                 {/* User Info details */}
                 <div className="flex items-center gap-3">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" className="w-11 h-11 rounded-full border border-slate-150" />
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" onError={handleAvatarError} className="w-11 h-11 rounded-full border border-slate-150" />
                   <div>
-                    <h4 className="text-xs font-black text-[#071A3D]">{userName}</h4>
+                    <h4 className="text-xs font-semibold text-[#071A3D]">{userName}</h4>
                     <p className="text-[9px] text-slate-400 font-bold">@braga.azt</p>
                   </div>
-                  <span className="ml-auto bg-amber-50 text-amber-600 text-[8px] px-2 py-0.5 rounded font-black border border-amber-100">
+                  <span className="ml-auto bg-amber-50 text-amber-600 text-[8px] px-2 py-0.5 rounded font-semibold border border-amber-100">
                     {userCredits} CRÉDITOS
                   </span>
                 </div>
@@ -1021,7 +1037,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                       onClick={() => {
                         setShowHamburgerDrawer(false);
                         if (item.tab) setActiveMobileTab(item.tab as any);
-                        if (item.chat) setActiveChatUser('Mariana Silva');
+                        if (item.chat) { setSearchQuery(''); setActiveMobileTab('messages'); }
                         if (item.gamification) alert('Conquistas do utilizador!');
                       }}
                       className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-left text-xs font-bold text-[#071A3D]"
@@ -1035,7 +1051,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   ))}
                 </nav>
 
-                <button onClick={onClose} className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 border border-rose-100">
+                <button onClick={onClose} className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl text-[10px] font-semibold  flex items-center justify-center gap-2 border border-rose-100">
                   <span>Sair da aplicação</span>
                 </button>
               </motion.div>

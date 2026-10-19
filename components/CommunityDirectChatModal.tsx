@@ -106,7 +106,7 @@ const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[500] bg-white flex flex-col justify-between max-w-[480px] mx-auto shadow-2xl select-none">
+    <div className="community-overlay fixed inset-0 z-[500] bg-white flex flex-col justify-between w-full  select-none">
       
       {/* 1. CHAT HEADER */}
       <header className="h-16 px-3 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-md sticky top-0 z-10">
@@ -131,7 +131,7 @@ const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
             </div>
             <div>
-              <h4 className="text-xs font-black text-[#071A3D] leading-none group-hover:text-emerald-600 transition-colors">
+              <h4 className="text-xs font-semibold text-[#071A3D] leading-none group-hover:text-emerald-600 transition-colors">
                 {targetUser.name}
               </h4>
               <p className="text-[10px] text-[#0066FF] font-semibold lowercase mt-0.5">
@@ -146,7 +146,7 @@ const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
           {targetUser.isBusiness && (
             <button 
               onClick={() => onBookBusiness && onBookBusiness(targetUser.businessCollection || 'activities', targetUser.businessId || '1')}
-              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#00B857] rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1"
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#0075ed] rounded-xl text-[10px] font-semibold  transition-all flex items-center gap-1"
             >
               <Building2 size={12} />
               <span>Reservar</span>
@@ -184,7 +184,7 @@ const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
             <div 
               className={`max-w-[78%] p-3.5 rounded-2xl shadow-sm text-xs leading-relaxed ${
                 msg.isMe 
-                  ? 'bg-[#00B857] text-white rounded-br-none' 
+                  ? 'bg-[#0075ed] text-white rounded-br-none' 
                   : 'bg-white text-[#071A3D] rounded-bl-none border border-slate-100'
               }`}
             >
@@ -222,7 +222,7 @@ const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
         {inputText.trim() ? (
           <button
             onClick={handleSendMessage}
-            className="p-2.5 bg-[#00B857] hover:bg-emerald-600 active:scale-95 text-white rounded-2xl shadow-md shadow-emerald-600/20 transition-all"
+            className="p-2.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white rounded-2xl shadow-md shadow-emerald-600/20 transition-all"
           >
             <Send size={15} />
           </button>
