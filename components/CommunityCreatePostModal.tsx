@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { communityAvatar, socialRequest } from '../services/communitySocial';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   ArrowLeft, Image, Video, Users, Building2, MapPin, Hash, 
@@ -42,13 +43,11 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
 }) => {
 
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80'
-  ]);
+  const [images, setImages] = useState<string[]>([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [location, setLocation] = useState('Ponta da Ferraria, São Miguel');
+  const [location, setLocation] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: string; name: string; category: string; collection: string; image?: string } | null>(null);
-  const [hashtags, setHashtags] = useState<string[]>(['#Açores', '#SãoMiguel', '#Natureza']);
+  const [hashtags, setHashtags] = useState<string[]>([]);
   const [shareToStories, setShareToStories] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -56,6 +55,8 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
   // Sub-drawers / Popovers for configuration items
   const [activeDrawer, setActiveDrawer] = useState<'none' | 'location' | 'business' | 'hashtags'>('none');
 
+  const [realBusinesses, setRealBusinesses] = useState(availableBusinesses);
+  useEffect(() => { if(isOpen) socialRequest<any[]>('businesses',myProfile?.email||'').then(setRealBusinesses).catch(()=>setRealBusinesses([])); }, [isOpen]);
   if (!isOpen) return null;
 
   // Handle uploading photos/videos
@@ -66,10 +67,11 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('userEmail',myProfile?.email||'');
+      formData.append('video', file);
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/upload?folder=community/posts`, {
+        const res = await fetch(`${API_BASE_URL}/api/community/reel-upload`, {
           method: 'POST',
           body: formData
         });
@@ -78,16 +80,9 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
           if (data.url) {
             setImages(prev => [...prev, data.url]);
           }
-        }
+        } else throw new Error('Não foi possível carregar a fotografia.');
       } catch (err) {
-        // Fallback local data URL
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            setImages(prev => [...prev, reader.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
+        setErrorMsg('Não foi possível carregar a fotografia. Tenta novamente.');
       }
     }
   };
@@ -120,8 +115,9 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
       const payload = {
         author: myProfile?.name || 'Membro Azorestoyou',
         authorHandle: myProfile?.handle || '@azorestoyou_viajante',
-        authorAvatar: myProfile?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+        authorAvatar: myProfile?.avatar || communityAvatar,
         location: location.trim(),
+        shareToStories,
         content: content.trim(),
         images,
         tags: hashtags.map(t => t.replace('#', '')),
@@ -136,11 +132,8 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
         } : undefined
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/community/posts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const created = await socialRequest('posts',myProfile?.email||'',payload);
+      const res = {ok:!!created};
 
       if (res.ok) {
         onPostCreated();
@@ -150,7 +143,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
       }
     } catch (err) {
       console.error('Erro na criação de publicação:', err);
-      setErrorMsg('Erro ao ligar ao servidor.');
+      setErrorMsg(err.message || 'Erro ao ligar ao servidor.');
     } finally {
       setIsSubmitting(false);
     }
@@ -246,7 +239,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
               type="file" 
               id="add-extra-media" 
               multiple 
-              accept="image/*,video/*" 
+              accept="image/jpeg,image/png,image/webp" 
               className="hidden" 
               onChange={handleFileUpload} 
             />
@@ -266,7 +259,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
           {/* Action List Items (matching mockup tela 2) */}
           <div className="space-y-1 pt-1 border-t border-slate-100">
             
-            {/* 1. Adicionar fotos/vídeos */}
+            {/* 1. Adicionar fotografias */}
             <label 
               htmlFor="add-extra-media" 
               className="flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-2xl cursor-pointer transition-colors"
@@ -275,7 +268,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
                 <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
                   <Image size={18} />
                 </div>
-                <span className="text-xs font-bold text-slate-800">Adicionar fotos/vídeos</span>
+                <span className="text-xs font-bold text-slate-800">Adicionar fotografias</span>
               </div>
               <span className="text-[10px] font-semibold text-slate-400">{images.length} selecionadas</span>
             </label>
@@ -308,11 +301,7 @@ const CommunityCreatePostModal: React.FC<CommunityCreatePostModalProps> = ({
                   Selecione um estabelecimento registado:
                 </p>
                 <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto">
-                  {[
-                    { id: 'rest_xitaca', name: 'Restaurante Xitaca', category: 'Restaurante', collection: 'restaurants', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200' },
-                    { id: 'act_whale', name: 'Azores Whale Watching', category: 'Atividade', collection: 'activities', image: 'https://images.unsplash.com/photo-1518877593221-1f28583780b4?w=200' },
-                    { id: 'hotel_terra_nostra', name: 'Terra Nostra Garden Hotel', category: 'Alojamento', collection: 'hotels', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200' }
-                  ].map(biz => (
+                  {realBusinesses.map(biz => (
                     <button
                       key={biz.id}
                       type="button"

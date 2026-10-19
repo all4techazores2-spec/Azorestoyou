@@ -146,7 +146,10 @@ const DEFAULT_DB = {
     social_profiles: [],
     community_reels: [],
     community_follows: [],
-    community_notifications: []
+    community_notifications: [],
+    community_conversations: [],
+    community_messages: [],
+    community_stories: []
 };
 
 // In-memory cache to prevent OOM from 19 parallel requests

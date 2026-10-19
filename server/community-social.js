@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import { communityWrite } from './community-store.js';
+import { registerCommunityMusic, resolveMusic } from './community-music.js';
 
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const collections = db => {
@@ -47,15 +49,21 @@ export function setFollowing(db, actor, targetId, following) {
     }
     return { ...relationship(db, actor.id, target.id), target: publicProfile(target) };
 }
-export function createReel(db, actor, body) {
+export function createReel(db, actor, body, verifiedMusic = null) {
     collections(db);
-    const videoUrl = String(body.videoUrl || '');
-    if (!/^https:\/\//i.test(videoUrl) && !/^\/imagens\/community-reels\/[a-f0-9-]+\.(mp4|webm|mov)$/.test(videoUrl)) {
-        throw fail('Carrega um vídeo antes de publicar.');
+    const mediaType = body.mediaType === 'photo' ? 'photo' : 'video';
+    const mediaUrl = String((mediaType === 'photo' ? body.imageUrl : body.videoUrl) || '');
+    if (!/^https:\/\//i.test(mediaUrl) && !/^\/imagens\/community-reels\/[a-f0-9-]+\.(mp4|webm|mov|jpg|jpeg|png|webp)$/.test(mediaUrl)) {
+        throw fail('Adiciona uma fotografia ou um vídeo antes de publicar.');
     }
     const ids = new Set(Array.isArray(body.mentions) ? body.mentions.slice(0, 20) : []);
     const mentions = db.social_profiles.filter(p => ids.has(p.id)).map(p => p.id);
-    const reel = { id: crypto.randomUUID(), authorId: actor.id, videoUrl,
+    const reel = { id: crypto.randomUUID(), authorId: actor.id, mediaType,
+        videoUrl: mediaType === 'video' ? mediaUrl : undefined,
+        imageUrl: mediaType === 'photo' ? mediaUrl : undefined,
+        coverUrl: /^https:\/\//i.test(String(body.coverUrl || '')) ? String(body.coverUrl) : undefined,
+        duration: Math.max(5, Math.min(60, Number(body.duration) || 15)),
+        music: verifiedMusic, muteOriginal: !!body.muteOriginal,
         caption: String(body.caption || '').trim().slice(0, 2200),
         location: String(body.location || '').trim().slice(0, 160),
         mentions, likedBy: [], savedBy: [], comments: [], createdAt: new Date().toISOString() };
@@ -73,7 +81,9 @@ export function decorateReel(db, reel, viewer) {
     const author = (db.social_profiles || []).find(p => p.id === reel.authorId);
     if (!author) return null;
     const mentionIds = new Set(reel.mentions || []);
-    return { id: reel.id, videoUrl: reel.videoUrl, caption: reel.caption, location: reel.location,
+    return { id: reel.id, videoUrl: reel.videoUrl, imageUrl: reel.imageUrl, mediaType: reel.mediaType || 'video',
+        coverUrl: reel.coverUrl, duration: reel.duration || 15, music: reel.music || null, muteOriginal: !!reel.muteOriginal,
+        caption: reel.caption, location: reel.location,
         createdAt: reel.createdAt, author: publicProfile(author),
         mentions: (db.social_profiles || []).filter(p => mentionIds.has(p.id)).map(publicProfile),
         likes: (reel.likedBy || []).length, isLiked: !!viewer && (reel.likedBy || []).includes(viewer.id),
@@ -84,21 +94,12 @@ export function decorateReel(db, reel, viewer) {
 
 // New social writes run sequentially so overlapping follow/publish requests don't lose each other.
 export function registerCommunitySocial(app, { readDB, writeDB, multer, cloudinary }) {
-    let writes = Promise.resolve();
+    registerCommunityMusic(app, { readDB, getActor });
     const route = fn => async (req, res) => {
         try { await fn(req, res); }
         catch (err) { console.error('Community social:', err.message); res.status(err.status || 500).json({ error: err.status ? err.message : 'Não foi possível concluir. Tenta novamente.' }); }
     };
-    const mutate = fn => {
-        const operation = writes.then(async () => {
-            const db = collections(await readDB());
-            const result = await fn(db);
-            await writeDB(db);
-            return result;
-        });
-        writes = operation.catch(() => {});
-        return operation;
-    };
+    const mutate = fn => communityWrite(readDB, writeDB, db => fn(collections(db)));
     const emailOf = req => req.body?.userEmail || req.query.email;
     app.get('/api/community/relationships/:targetId', route(async (req, res) => {
         const db = await readDB(); const actor = getActor(db, emailOf(req));
@@ -132,9 +133,11 @@ export function registerCommunitySocial(app, { readDB, writeDB, multer, cloudina
         res.json(decorateReel(db, reel, actor));
     }));
     app.post('/api/community/reels', route(async (req, res) => {
+        getActor(await readDB(), emailOf(req));
+        const music = await resolveMusic(req.body.music);
         const result = await mutate(db => {
             const actor = getActor(db, emailOf(req));
-            return decorateReel(db, createReel(db, actor, req.body), actor);
+            return decorateReel(db, createReel(db, actor, req.body, music), actor);
         });
         res.status(201).json(result);
     }));
@@ -167,6 +170,7 @@ export function registerCommunitySocial(app, { readDB, writeDB, multer, cloudina
             ...n, actor: publicProfile((db.social_profiles || []).find(p => p.id === n.actorId) || { id:n.actorId,name:'Membro',handle:'' }),
             mutual: relationship(db, actor.id, n.actorId).mutual,
             videoUrl: (db.community_reels || []).find(r => r.id === n.reelId)?.videoUrl,
+            imageUrl: (db.community_reels || []).find(r => r.id === n.reelId)?.imageUrl,
         })) });
     }));
     app.put('/api/community/notifications/read', route(async (req, res) => {
@@ -177,20 +181,22 @@ export function registerCommunitySocial(app, { readDB, writeDB, multer, cloudina
         res.json({ success: true });
     }));
     const videoUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 },
-        fileFilter: (req, file, cb) => cb(null, ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.mimetype)) }).single('video');
+        fileFilter: (req, file, cb) => cb(null, ['video/mp4', 'video/webm', 'video/quicktime', 'image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) }).single('video');
     app.post('/api/community/reel-upload', (req, res) => videoUpload(req, res, err => {
         if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'O vídeo deve ter no máximo 100 MB.' : 'Não foi possível carregar o vídeo.' });
         return route(async (request, response) => {
             const db = await readDB(); getActor(db, emailOf(request));
-            if (!request.file) throw fail('Escolhe um vídeo MP4, WebM ou MOV.');
+            if (!request.file) throw fail('Escolhe uma fotografia JPG, PNG ou WebP, ou um vídeo MP4, WebM ou MOV.');
+            const isPhoto = request.file.mimetype?.startsWith('image/');
+            if (isPhoto && request.file.size > 20 * 1024 * 1024) throw fail('A fotografia deve ter no máximo 20 MB.');
             if (!cloudinary.config().cloud_name || !cloudinary.config().api_key || !cloudinary.config().api_secret) {
                 throw fail('O armazenamento de vídeos ainda não está configurado no servidor.', 503);
             }
             const uploaded = await new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream({ resource_type: 'video', folder: 'community/reels' }, (error, result) => error ? reject(error) : resolve(result));
+                const stream = cloudinary.uploader.upload_stream({ resource_type: isPhoto ? 'image' : 'video', folder: 'community/reels' }, (error, result) => error ? reject(error) : resolve(result));
                 stream.end(request.file.buffer);
             });
-            response.json({ url: uploaded.secure_url });
+            response.json({ url: uploaded.secure_url, mediaType: isPhoto ? 'photo' : 'video' });
         })(req, res);
     }));
 }

@@ -13,8 +13,10 @@ import { API_BASE_URL } from '../config';
 import AzoresLogo from './AzoresLogo';
 import './community.css';
 import CommunityReels from './CommunityReels';
+import CommunityMessages from './CommunityMessages';
+import { useCommunityLive } from '../services/useCommunityLive';
 import CommunitySavedReels from './CommunitySavedReels';
-import { socialRequest } from '../services/communitySocial';
+import { socialRequest, communityAvatar, profileAvatar } from '../services/communitySocial';
 import { SocialProfile } from '../types';
 import CommunityProfileView from './CommunityProfileView';
 import CommunityEditProfileModal from './CommunityEditProfileModal';
@@ -85,7 +87,9 @@ interface Comment {
 }
 
 interface Story {
-  id: number;
+  id: string | number;
+  authorId?: string;
+  handle?: string;
   userName: string;
   avatar: string;
   mediaUrl: string;
@@ -169,6 +173,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [showAISidebar, setShowAISidebar] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeDirectBooking, setActiveDirectBooking] = useState<any | null>(null);
+  const [communityNotice, setCommunityNotice] = useState('');
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const [reelComposeRequest, setReelComposeRequest] = useState(0);
   const [selectedReelId, setSelectedReelId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('communityReel'));
@@ -186,6 +192,9 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     return () => { cancelled = true; clearInterval(timer); window.removeEventListener('community-notifications-changed', refresh); };
   }, [myProfile?.email]);
 
+  const refreshMessageCount = async () => { if (!myProfile?.email) return; try { const rows = await socialRequest<{unread:number}[]>('conversations',myProfile.email); setUnreadMessages(rows.reduce((n,c)=>n+c.unread,0)); } catch {} };
+  useCommunityLive(myProfile?.email || '', event => { if (['message','read','ready','resync'].includes(event.type)) refreshMessageCount(); });
+
   // Auto-load or create social profile on mount
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -202,6 +211,8 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
       }
     };
     fetchProfile();
+    window.addEventListener('community-follow-changed', fetchProfile);
+    return () => window.removeEventListener('community-follow-changed', fetchProfile);
   }, [isAuthenticated, userProfile?.email, userName]);
 
   // Handle saving edited social profile
@@ -240,22 +251,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
       }
     } catch (err) {}
 
-    // Synthetic fallback profile
-    setViewingProfile({
-      id: `temp_${Date.now()}`,
-      userId: handleOrName,
-      email: `${handleOrName}@azores4you.com`,
-      handle: `@azorestoyou_${handleOrName.toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-      name: handleOrName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${handleOrName}`,
-      profileType: 'personal',
-      followersCount: 140,
-      followingCount: 95,
-      postsCount: 18,
-      location: 'São Miguel, Açores',
-      bio: 'Membro entusiasta da Comunidade Azorestoyou 🌿'
-    });
+    setCommunityNotice('Não foi possível abrir este perfil. Tenta novamente.');
   };
+
+  useEffect(() => { const handle=new URLSearchParams(window.location.search).get('communityProfile');if(handle&&myProfile?.id)openUserProfile(handle); }, [myProfile?.id]);
 
   // Form Composer State
   const [postText, setPostText] = useState('');
@@ -276,20 +275,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [feedCategoryFilter, setFeedCategoryFilter] = useState<string>('Todos');
 
-  // Gamification credits
-  const [userCredits, setUserCredits] = useState(() => {
-    const saved = localStorage.getItem(`credits_${userName}`);
-    return saved ? parseInt(saved, 10) : 100;
-  });
-
-  const addCredits = (amount: number) => {
-    setUserCredits(prev => {
-      const next = prev + amount;
-      localStorage.setItem(`credits_${userName}`, next.toString());
-      return next;
-    });
-  };
-
   // Sync posts on load
   useEffect(() => {
     onSyncPosts();
@@ -299,9 +284,10 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
   const uploadFileToCloudinary = async (file: File, folder: string): Promise<string> => {
     setIsUploadingMedia(true);
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('userEmail', myProfile?.email || userProfile?.email || '');
+    formData.append('video', file);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/upload?folder=${encodeURIComponent(folder)}`, {
+      const res = await fetch(`${API_BASE_URL}/api/community/reel-upload`, {
         method: 'POST',
         body: formData
       });
@@ -312,135 +298,21 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     } catch (e) {
       setIsUploadingMedia(false);
       console.error(e);
-      return URL.createObjectURL(file);
+      throw new Error('Não foi possível carregar o ficheiro. Tenta novamente.');
     }
   };
 
-  // Mock Stories (expired in 24h)
-  const [stories, setStories] = useState<Story[]>(() => {
-    const defaults: Story[] = [
-      { id: 1, userName: 'São Miguel', avatar: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800', mediaType: 'image', timestamp: Date.now() - 3600000 },
-      { id: 2, userName: 'Terceira', avatar: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800', mediaType: 'image', timestamp: Date.now() - 7200000 },
-      { id: 3, userName: 'Pico', avatar: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=150&auto=format&fit=crop', mediaUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800', mediaType: 'image', timestamp: Date.now() - 14400000 }
-    ];
-    return defaults;
-  });
-
+  const [stories, setStories] = useState<Story[]>([]);
+  const refreshStories = async () => { try { setStories(await socialRequest<Story[]>('stories', myProfile?.email || '')); } catch {} };
+  useEffect(() => { refreshStories(); const timer=setInterval(refreshStories,60000); return()=>clearInterval(timer); }, [myProfile?.email]);
   const handleStoryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await uploadFileToCloudinary(file, 'community/stories');
-    const newStory: Story = {
-      id: Date.now(),
-      userName: userName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
-      mediaUrl: url,
-      mediaType: file.type.startsWith('video/') ? 'video' : 'image',
-      timestamp: Date.now()
-    };
-    setStories([newStory, ...stories]);
-    addCredits(50);
-    alert('História publicada! Ganhou +50 CRÉDITOS.');
-  };
-
-  // Chat message system
-  const [dmHistory, setDmHistory] = useState<{ [user: string]: ChatMessage[] }>({
-    'Mariana Silva': [
-      { id: '1', sender: 'Mariana Silva', text: 'Olá! Vais ao trilho da Lagoa do Fogo no Sábado?', timestamp: '14:20', read: true },
-      { id: '2', sender: userName, text: 'Olá Mariana! Sim, estou a pensar ir.', timestamp: '14:22', read: true }
-    ],
-    'Pedro Sousa': [
-      { id: '1', sender: 'Pedro Sousa', text: 'Consegues enviar-me a foto daquela vista de ontem?', timestamp: 'Ontem', read: true }
-    ]
-  });
-  const [chatTextInput, setChatTextInput] = useState('');
-
-  const sendChatMessage = () => {
-    if (!chatTextInput.trim() || !activeChatUser) return;
-    const msg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: userName,
-      text: chatTextInput,
-      timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-      read: false
-    };
-    setDmHistory(prev => ({
-      ...prev,
-      [activeChatUser]: [...(prev[activeChatUser] || []), msg]
-    }));
-    setChatTextInput('');
-
-    // Auto-reply
-    setTimeout(() => {
-      const reply: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: activeChatUser,
-        text: 'Obrigado! Falo contigo em breve.',
-        timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-        read: true
-      };
-      setDmHistory(prev => ({
-        ...prev,
-        [activeChatUser]: [...(prev[activeChatUser] || []), reply]
-      }));
-    }, 1500);
+    const file=e.target.files?.[0];if(!file||!myProfile)return;
+    try { const url=await uploadFileToCloudinary(file,'community/stories');await socialRequest('stories',myProfile.email,{mediaUrl:url,mediaType:file.type.startsWith('video/')?'video':'image'});await refreshStories();setCommunityNotice('História publicada.'); }
+    catch(error){setCommunityNotice(error.message);}finally{e.target.value='';}
   };
 
   // Filter categories
   const feedCategories = ['Todos', 'Seguidores', 'Populares', 'Trilhos'];
-
-  // Handle Publish Post
-  const handlePublish = async () => {
-    if (!postText.trim() && selectedPhotos.length === 0 && !selectedVideo) return;
-
-    let imageUrls: string[] = [];
-    let videoUrl = '';
-
-    if (selectedPhotos.length > 0) {
-      for (const photo of selectedPhotos) {
-        const url = await uploadFileToCloudinary(photo, 'community/posts');
-        imageUrls.push(url);
-      }
-    }
-
-    if (selectedVideo) {
-      videoUrl = await uploadFileToCloudinary(selectedVideo, 'community/videos');
-    }
-
-    const newPost: Post = {
-      id: Date.now(),
-      author: userName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
-      time: 'Agora',
-      location: checkInPlace ? `está em ${checkInPlace}` : 'Açores',
-      content: postText,
-      image: imageUrls[0] || undefined,
-      images: imageUrls.length > 1 ? imageUrls : undefined,
-      video: videoUrl || undefined,
-      likes: 0,
-      comments: [],
-      checkInPlace: checkInPlace || undefined,
-      likedBy: []
-    };
-
-    try {
-      await fetch(`${API_BASE_URL}/api/posts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPost)
-      });
-      onSyncPosts();
-      setPostText('');
-      setSelectedPhotos([]);
-      setSelectedVideo(null);
-      setCheckInPlace(null);
-      setShowCreateModal(false);
-      addCredits(100);
-      alert('Publicado com sucesso! Ganhou +100 CRÉDITOS.');
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handlePostLike = async (post: Post) => {
     try {
@@ -460,7 +332,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           });
         }
         onSyncPosts();
-        if (data.isLiked) addCredits(5);
       }
     } catch (e) {
       console.error("Erro ao dar gosto:", e);
@@ -502,7 +373,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
     const newComment: Comment = {
       id: Date.now(),
       author: userName,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
+      avatar: communityAvatar,
       text: newCommentText,
       time: 'Agora',
       likes: 0,
@@ -523,17 +394,16 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
       onSyncPosts();
       setNewCommentText('');
       setCommentFile(null);
-      addCredits(20);
     } catch (e) {
       console.error(e);
     }
   };
 
   // Ignore empty legacy records and adapt older post shapes without changing stored data.
-  const feedPosts: Post[] = posts.filter(p => p && (p.content || p.image || p.video || p.images?.length)).map(p => ({
+  const feedPosts: Post[] = posts.filter(p => p && !([1700000001,1700000002,1700000003,1700000004].includes(p.id) && ['@azorestoyou_andrebraga','@azorestoyou_restaurantex','@azorestoyou_maria','@azorestoyou_trilhos','@azorestoyou_casaacorespe','@azorestoyou_whalewatching'].includes(p.authorHandle)) && (p.content || p.image || p.video || p.images?.length)).map(p => ({
     ...p,
     author: p.author || 'Membro da comunidade',
-    avatar: p.avatar || p.authorAvatar || '',
+    avatar: profileAvatar(p.avatar || p.authorAvatar),
     content: p.content || '',
     location: p.location || '',
     time: p.time || '',
@@ -629,14 +499,15 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               className="w-8 h-8 rounded-full border border-slate-200 overflow-hidden ml-1 active:scale-95 transition-transform"
               title="O Meu Perfil"
             >
-              <img src={myProfile?.avatar || userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Avatar" onError={handleAvatarError} className="w-full h-full object-cover" />
+              <img src={profileAvatar(myProfile?.avatar || userProfile?.avatar)} alt="Avatar" onError={handleAvatarError} className="w-full h-full object-cover" />
             </button>
           </div>
         </header>}
 
+        {communityNotice && <div className="community-notice" role="status"><span>{communityNotice}</span><button aria-label="Fechar aviso" onClick={()=>setCommunityNotice('')}><X size={16}/></button></div>}
         {/* ================= MAIN SCROLL CONTAINER ================= */}
         <main className={`community-main flex-1 min-h-0 overflow-y-auto ${activeMobileTab === 'reels' && !viewingProfile ? 'community-reels-main' : ''}`}>
-          {viewingProfile && <CommunityProfileView profile={viewingProfile} currentProfile={myProfile} onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }} isMyProfile={viewingProfile.id === myProfile?.id} onBack={() => setViewingProfile(null)} onEditProfile={() => setShowEditProfileModal(true)} onBookBusiness={onBookBusiness} onSendMessage={setActiveChatUser} userPosts={posts.filter(p => p.authorHandle === viewingProfile.handle || p.author === viewingProfile.name)} />}
+          {viewingProfile && <CommunityProfileView profile={viewingProfile} currentProfile={myProfile} onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }} isMyProfile={viewingProfile.id === myProfile?.id} onBack={() => setViewingProfile(null)} onEditProfile={() => setShowEditProfileModal(true)} onBookBusiness={onBookBusiness} onViewProfile={openUserProfile} onOpenPost={setActivePostDetail} onSendMessage={setActiveChatUser} userPosts={posts.filter(p => p.authorHandle === viewingProfile.handle || p.author === viewingProfile.name)} />}
           {!viewingProfile && activeMobileTab === 'reels' && <CommunityReels profile={myProfile} onBack={() => setActiveMobileTab('feed')} onViewProfile={openUserProfile} composeRequest={reelComposeRequest} onComposeConsumed={() => setReelComposeRequest(0)} initialReelId={selectedReelId}/>}
           
           {/* ================= TABS: FEED TAB ================= */}
@@ -668,7 +539,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   onClick={() => document.getElementById('story-upload-file-mobile')?.click()}
                 >
                   <div className="relative w-14 h-14 rounded-full border border-slate-200 p-[2px] bg-slate-50 flex items-center justify-center overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} alt="Minha" className="w-full h-full object-cover rounded-full" />
+                    <img src={communityAvatar} alt="Minha" className="w-full h-full object-cover rounded-full" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
                       <Plus size={16} className="text-white font-semibold" />
                     </div>
@@ -685,7 +556,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
                   >
                     <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-[#0066FF] to-[#00B857]">
                       <div className="w-full h-full rounded-full border-2 border-white bg-white overflow-hidden">
-                        <img src={story.avatar} alt={story.userName} className="w-full h-full object-cover" />
+                        <img src={profileAvatar(story.avatar)} alt={story.userName} className="w-full h-full object-cover" />
                       </div>
                     </div>
                     <span className="text-[9px] font-bold text-slate-650 truncate w-14 text-center">{story.userName}</span>
@@ -930,7 +801,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 {posts.filter(p => p.isSaved).map(post => (
                   <div key={post.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden cursor-pointer shadow-sm" onClick={() => setActivePostDetail(post)}>
-                    <img src={post.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800'} alt="Saved" className="w-full aspect-square object-cover" />
+                    {(post.images?.[0] || post.image) && <img src={post.images?.[0] || post.image} alt="Publicação guardada" className="w-full aspect-square object-cover" />}
                     <div className="p-2">
                       <p className="text-[10px] font-semibold text-[#071A3D] truncate">{post.author}</p>
                       <p className="text-[9px] text-slate-400 font-bold mt-0.5 truncate">{post.location}</p>
@@ -941,42 +812,17 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
             </div>
           )}
 
-          {/* ================= TABS: PERFIL TAB ================= */}
-          {!viewingProfile && activeMobileTab === 'profile' && (
-            <CommunityProfileView 
-              profile={myProfile || {
-                id: 'me',
-                userId: userProfile?.id || userName,
-                email: userProfile?.email || `${userName}@azores4you.com`,
-                handle: `@azorestoyou_${(userProfile?.name || userName).toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-                name: userProfile?.name || userName,
-                avatar: userProfile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`,
-                profileType: 'personal',
-                followersCount: 0,
-                followingCount: 0,
-                postsCount: posts.filter(p => p.author === userName).length,
-                location: 'São Miguel, Açores',
-                island: 'São Miguel',
-                country: 'Portugal',
-                bio: 'Explorador da Comunidade Azorestoyou 🌿'
-              }}
-              currentProfile={myProfile} onOpenReel={(id) => { setViewingProfile(null); setSelectedReelId(id); setActiveMobileTab('reels'); }}
-              isMyProfile={true}
-              onBack={() => setActiveMobileTab('feed')}
-              onEditProfile={() => setShowEditProfileModal(true)}
-              onSendMessage={(targetHandle) => setActiveChatUser(targetHandle)}
-              userPosts={posts.filter(p => p.author === userName || p.author === myProfile?.handle)}
-            />
-          )}
+          {!viewingProfile && activeMobileTab === 'profile' && (myProfile ? <CommunityProfileView profile={myProfile} currentProfile={myProfile} isMyProfile onOpenPost={setActivePostDetail} onBack={()=>setActiveMobileTab('feed')} onEditProfile={()=>setShowEditProfileModal(true)} onViewProfile={openUserProfile} onOpenReel={id=>{setSelectedReelId(id);setActiveMobileTab('reels');}} onSendMessage={setActiveChatUser} userPosts={posts.filter(p=>p.authorHandle===myProfile.handle)}/> : <div className="community-empty">A carregar o perfil…</div>)}
 
-          {!viewingProfile && activeMobileTab === 'messages' && <section className="community-messages"><h2>Mensagens</h2><label className="community-search"><Search size={17}/><input placeholder="Pesquisar mensagens" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}/></label><div className="community-filters"><span className="selected">Todas</span></div>{Object.entries<ChatMessage[]>(dmHistory).filter(([name]) => name.toLowerCase().includes(searchQuery.toLowerCase())).map(([name, messages]) => <button className="community-message-row" key={name} onClick={() => setActiveChatUser(name)}><img src={avatarFallback} alt=""/><span><strong>{name}</strong><small>{messages[messages.length - 1]?.text || 'Iniciar conversa'}</small></span><Camera size={18}/></button>)}</section>}
+          {!viewingProfile && activeMobileTab === 'messages' && <CommunityMessages profile={myProfile} onOpen={setActiveChatUser}/>}
+
         </main>
         <nav className="community-bottom" aria-label="Navegação da comunidade">
           <button onClick={onClose}><Compass/><span>Explorar</span></button>
           <button className={activeMobileTab === 'feed' ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('feed'); }}><Users/><span>Comunidade</span></button>
           <button className="community-create" aria-label={activeMobileTab === 'reels' ? 'Novo reel' : 'Nova publicação'} onClick={() => { setViewingProfile(null); if (activeMobileTab === 'reels') setReelComposeRequest(n => n + 1); else setShowCreateModal(true); }}><Plus/></button>
           <button className={activeMobileTab === 'reels' && !viewingProfile ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('reels'); }}><Clapperboard/><span>Reels</span></button>
-          <button className={activeMobileTab === 'profile' ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('profile'); }}><UserIcon/><span>Perfil</span></button>
+          <button className={activeMobileTab === 'messages' && !viewingProfile ? 'active' : ''} onClick={() => { setViewingProfile(null); setActiveMobileTab('messages'); }}><span className="community-nav-icon"><MessageCircle/>{unreadMessages>0&&<b>{unreadMessages>99?'99+':unreadMessages}</b>}</span><span>Mensagens</span></button>
         </nav>
 
         {/* Removed duplicate internal bottom nav - preserved super-app bottom bar */}
@@ -1004,7 +850,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
               >
                 <div className="community-drawer-top"><button aria-label="Fechar menu" onClick={() => setShowHamburgerDrawer(false)}><X size={22}/></button></div>
                 <h2 className="community-drawer-title">A tua comunidade</h2>
-                <div className="community-drawer-identity"><img src={myProfile?.avatar || userProfile?.avatar || avatarFallback} onError={handleAvatarError} alt=""/><div><strong>{myProfile?.name || userName}</strong><p>{myProfile?.handle || ''}</p><span><Coins size={15}/>{userCredits} créditos</span></div></div>
+                <div className="community-drawer-identity"><img src={profileAvatar(myProfile?.avatar || userProfile?.avatar)} onError={handleAvatarError} alt=""/><div><strong>{myProfile?.name || userName}</strong><p>{myProfile?.handle || ''}</p></div></div>
                 <p className="community-drawer-label">CONTA</p>
                 <nav className="community-drawer-nav" aria-label="Menu da comunidade">
                   {[
@@ -1025,12 +871,11 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         {/* ================= STORY FULLSCREEN VIEWER ================= */}
         <CommunityStoriesViewer 
           isOpen={!!activeStoryView}
+          ownProfileId={myProfile?.id}
           onClose={() => setActiveStoryView(null)}
           stories={stories}
           initialIndex={stories.findIndex(s => s.id === activeStoryView?.id) >= 0 ? stories.findIndex(s => s.id === activeStoryView?.id) : 0}
-          onSendReply={(story, text) => {
-            alert(`Mensagem enviada a ${story.userName}: "${text}"`);
-          }}
+          onSendReply={async (story, text) => { if(!myProfile||!story.handle)return;try{const conversation=await socialRequest<{id:string}>('conversations',myProfile.email,{handle:story.handle});await socialRequest('conversations/'+conversation.id+'/messages',myProfile.email,{text,clientId:crypto.randomUUID()});setActiveStoryView(null);setActiveChatUser(story.handle);}catch(e){setCommunityNotice(e.message);throw e;} }}
         />
 
         {/* ================= NOVA PUBLICAÇÃO MODAL ================= */}
@@ -1040,7 +885,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           myProfile={myProfile}
           onPostCreated={() => {
             onSyncPosts();
-            addCredits(100);
+            refreshStories();
           }}
         />
 
@@ -1097,7 +942,6 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
           userName={userName}
           userEmail={userProfile?.email || `${(userName || 'viajante').toLowerCase().replace(/\s+/g, '')}@azores4you.com`}
           onBookingSuccess={() => {
-            addCredits(50);
           }}
         />
 

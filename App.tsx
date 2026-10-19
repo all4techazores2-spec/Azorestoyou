@@ -1,3 +1,4 @@
+import { clearCommunitySession, ensureCommunitySession } from './services/communitySession';
 // Azores4you - Main Application Entry - Build v1.2.7 - Stabilized Production
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
@@ -363,6 +364,7 @@ const App: React.FC = () => {
   
 
   const handleLogout = () => {
+    clearCommunitySession();
     setIsAuthenticated(false);
     setIsAdmin(false);
     setIsBusiness(false);
@@ -641,7 +643,7 @@ const App: React.FC = () => {
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [exploreCategory, setExploreCategory] = useState<ExploreCategory>(null);
-  useEffect(() => { if (new URLSearchParams(window.location.search).has('communityReel')) { setHasEnteredApp(true); setExploreCategory('community'); } }, []);
+  useEffect(() => { if ((new URLSearchParams(window.location.search).has('communityReel') || new URLSearchParams(window.location.search).has('communityProfile'))) { setHasEnteredApp(true); setExploreCategory('community'); } }, []);
 
   useEffect(() => {
     if (exploreCategory !== 'marketplace') {
@@ -941,6 +943,8 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
     setShowAuthModal(false);
     setMobileMenuOpen(false);
+
+    if(email && password) ensureCommunitySession(email,password).catch(()=>{});
 
     // Sync with DB to save password and phone for Admin access
     if (email && (password || phone)) {

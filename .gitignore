@@ -3,3 +3,4 @@ node_modules
 db.json
 backups
 scratch
+server/.community-session-key

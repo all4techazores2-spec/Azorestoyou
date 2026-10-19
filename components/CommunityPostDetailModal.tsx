@@ -1,3 +1,4 @@
+import { communityAvatar, profileAvatar } from '../services/communitySocial';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -63,7 +64,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
         body: JSON.stringify({
           author: myProfile?.name || 'Viajante',
           authorHandle: myProfile?.handle || '@azorestoyou_viajante',
-          authorAvatar: myProfile?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+          authorAvatar: myProfile?.avatar || communityAvatar,
           text: commentText.trim()
         })
       });
@@ -226,7 +227,7 @@ const CommunityPostDetailModal: React.FC<PostDetailModalProps> = ({
                 comments.map((c: Comment) => (
                   <div key={c.id} className="flex items-start gap-2.5">
                     <img 
-                      src={c.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.author}`} 
+                      src={profileAvatar(c.authorAvatar)} 
                       alt={c.author} 
                       className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5"
                     />

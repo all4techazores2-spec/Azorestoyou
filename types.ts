@@ -459,6 +459,7 @@ export interface SocialHighlight {
   id: string;
   title: string;
   cover: string;
+  media?: { id:string; url:string; type?:string }[];
 }
 
 export interface SocialProfile {

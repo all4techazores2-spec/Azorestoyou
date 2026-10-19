@@ -1,243 +1,47 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ArrowLeft, Send, Image, Mic, MoreVertical, Phone, Video, 
-  Paperclip, Building2, ExternalLink, Check, CheckCheck, Smile
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Check, CheckCheck, Clock3, Loader2, RotateCw, Send } from 'lucide-react';
 import { SocialProfile } from '../types';
-
-interface ChatMessage {
-  id: string;
-  sender: string;
-  senderAvatar?: string;
-  text?: string;
-  imageUrl?: string;
-  businessCard?: {
-    id: string;
-    name: string;
-    category: string;
-    collection: string;
-    image?: string;
-  };
-  audioDuration?: string;
-  timestamp: string;
-  isMe: boolean;
-}
-
-interface CommunityDirectChatModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  targetUser: {
-    name: string;
-    handle?: string;
-    avatar?: string;
-    isBusiness?: boolean;
-    businessCollection?: string;
-    businessId?: string;
-  } | null;
-  myProfile: SocialProfile | null;
-  onBookBusiness?: (category: string, businessId: string) => void;
-  onViewProfile?: (handle: string) => void;
-}
-
-const CommunityDirectChatModal: React.FC<CommunityDirectChatModalProps> = ({
-  isOpen,
-  onClose,
-  targetUser,
-  myProfile,
-  onBookBusiness,
-  onViewProfile
-}) => {
-  if (!isOpen || !targetUser) return null;
-
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: targetUser.name,
-      senderAvatar: targetUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.name}`,
-      text: targetUser.isBusiness 
-        ? `Olá! Bem-vindo à página oficial de ${targetUser.name}. Em que podemos ajudar hoje?`
-        : `Olá! Vais ao trilho da Lagoa do Fogo no próximo fim de semana?`,
-      timestamp: '11:20',
-      isMe: false
+import { avatarError, CommunityIdentity, profileAvatar, socialRequest } from '../services/communitySocial';
+import { useCommunityLive } from '../services/useCommunityLive';
+import type { DirectMessage } from './CommunityMessages';
+interface Props {isOpen:boolean;onClose:()=>void;targetUser:{name:string;handle?:string;avatar?:string}|null;myProfile:SocialProfile|null;onBookBusiness?:(category:string,id:string)=>void;onViewProfile?:(handle:string)=>void;}
+export default function CommunityDirectChatModal(props:Props){if(!props.isOpen||!props.targetUser||!props.myProfile)return null;return <LiveChat key={props.targetUser.handle||props.targetUser.name} {...props}/>;}
+function LiveChat({onClose,targetUser,myProfile,onViewProfile}:Props&{key?:string}){
+  const [thread,setThread]=useState<string|null>(null);const [peer,setPeer]=useState<CommunityIdentity|null>(null);const [messages,setMessages]=useState<DirectMessage[]>([]);const [text,setText]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(true);const [sending,setSending]=useState(false);const [hasMore,setHasMore]=useState(false);const [olderBusy,setOlderBusy]=useState(false);
+  const [pending,setPending]=useState<{id:string;text:string;failed:boolean}[]>([]);const scroll=useRef<HTMLDivElement>(null);const stick=useRef(true);const currentThread=useRef<string|null>(null);const email=myProfile?.email||'';
+  const read=async(id:string)=>{if(document.hidden||!document.hasFocus())return;await socialRequest(`conversations/${id}/read`,email,{},'PUT');};
+  const knownIds=useRef(new Set<string>());const historyInitialized=useRef(false);
+  const refresh=async(id=currentThread.current)=>{if(!id)return;try{
+    let page=await socialRequest<{items:DirectMessage[];hasMore:boolean;readThrough?:{createdAt:string;readAt:string}}>(`conversations/${id}/messages`,email);
+    const receipt=page.readThrough;
+    const collected=[...page.items];const initialMore=page.hasMore;
+    // Bridge every missed page after reconnecting, including gaps larger than 50 messages.
+    while(knownIds.current.size&&page.hasMore&&page.items.length&&!page.items.some(m=>knownIds.current.has(m.id))){
+      page=await socialRequest<{items:DirectMessage[];hasMore:boolean}>(`conversations/${id}/messages?before=${encodeURIComponent(page.items[0].id)}`,email);collected.unshift(...page.items);
     }
-  ]);
-
-  const [inputText, setInputText] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if(currentThread.current!==id)return;
+    collected.forEach(m=>knownIds.current.add(m.id));
+    setMessages(prev=>{const map=new Map<string,DirectMessage>(prev.map(m=>[m.id,m]));collected.forEach(m=>map.set(m.id,m));return [...map.values()].map(m=>receipt&&m.senderId===myProfile?.id&&m.createdAt<=receipt.createdAt?{...m,readAt:receipt.readAt}:m).sort((a,b)=>a.createdAt.localeCompare(b.createdAt));});
+    const confirmed=new Set(collected.map(m=>m.clientId));setPending(prev=>prev.filter(m=>!confirmed.has(m.id)));
+    if(!historyInitialized.current){setHasMore(initialMore);historyInitialized.current=true;}
+    setError('');if(collected.some(m=>m.senderId!==myProfile?.id&&!m.readAt))await read(id);
+  }catch(e){setError(e.message);}};
+  const status=useCommunityLive(email,event=>{if(!event.conversationId||event.conversationId===currentThread.current)refresh();});
+  useEffect(()=>{let cancelled=false;setBusy(true);const handle=targetUser?.handle||targetUser?.name||'';
+    socialRequest<{id:string;peer:CommunityIdentity}>('conversations',email,{handle}).then(async data=>{if(cancelled)return;currentThread.current=data.id;setThread(data.id);setPeer(data.peer);await refresh(data.id);}).catch(e=>{if(!cancelled)setError(e.message);}).finally(()=>{if(!cancelled)setBusy(false);});
+    const focus=()=>refresh();window.addEventListener('focus',focus);return()=>{cancelled=true;currentThread.current=null;window.removeEventListener('focus',focus);};
+  },[email,targetUser?.handle,targetUser?.name]);
+  useEffect(()=>{if(stick.current&&scroll.current)scroll.current.scrollTop=scroll.current.scrollHeight;},[messages.length,pending.length]);
+  const send=async(value:string,id=crypto.randomUUID())=>{if(!thread||sending||!value.trim())return;setSending(true);setError('');setText('');stick.current=true;setPending(prev=>prev.some(m=>m.id===id)?prev.map(m=>m.id===id?{...m,failed:false}:m):[...prev,{id,text:value,failed:false}]);
+    try{const message=await socialRequest<DirectMessage>(`conversations/${thread}/messages`,email,{text:value,clientId:id});setMessages(prev=>prev.some(m=>m.id===message.id)?prev:[...prev,message]);setPending(prev=>prev.filter(m=>m.id!==id));}
+    catch(e){setPending(prev=>prev.map(m=>m.id===id?{...m,failed:true}:m));setError(e.message);}finally{setSending(false);}
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
-
-    const myMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: myProfile?.name || 'Eu',
-      senderAvatar: myProfile?.avatar,
-      text: inputText.trim(),
-      timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-      isMe: true
-    };
-
-    setMessages(prev => [...prev, myMsg]);
-    setInputText('');
-
-    // Auto-reply simulation
-    setTimeout(() => {
-      const replyMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: targetUser.name,
-        senderAvatar: targetUser.avatar,
-        text: targetUser.isBusiness 
-          ? `Obrigado pelo seu contacto! O nosso horário de atendimento nos Açores é das 09:00 às 19:00. Para reservar mesa ou atividade use o botão no perfil!`
-          : `Perfeito! Vou levar a câmara fotográfica. Vemo-nos no miradouro! 📸`,
-        timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-        isMe: false
-      };
-      setMessages(prev => [...prev, replyMsg]);
-    }, 1500);
-  };
-
-  return (
-    <div className="community-overlay fixed inset-0 z-[500] bg-white flex flex-col justify-between w-full  select-none">
-      
-      {/* 1. CHAT HEADER */}
-      <header className="h-16 px-3 border-b border-slate-100 flex items-center justify-between bg-white/90 backdrop-blur-md sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onClose} 
-            className="p-2 hover:bg-slate-50 active:scale-95 text-[#071A3D] rounded-full transition-all"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          
-          <div 
-            className="flex items-center gap-2.5 cursor-pointer group"
-            onClick={() => targetUser.handle && onViewProfile && onViewProfile(targetUser.handle)}
-          >
-            <div className="relative">
-              <img 
-                src={targetUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.name}`} 
-                alt={targetUser.name} 
-                className="w-10 h-10 rounded-full object-cover border border-slate-150 group-hover:scale-105 transition-transform" 
-              />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
-            </div>
-            <div>
-              <h4 className="text-xs font-semibold text-[#071A3D] leading-none group-hover:text-emerald-600 transition-colors">
-                {targetUser.name}
-              </h4>
-              <p className="text-[10px] text-[#0066FF] font-semibold lowercase mt-0.5">
-                {targetUser.handle || `@azorestoyou_${targetUser.name.toLowerCase().replace(/[^a-z0-9_]/g, '')}`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action icons */}
-        <div className="flex items-center gap-1">
-          {targetUser.isBusiness && (
-            <button 
-              onClick={() => onBookBusiness && onBookBusiness(targetUser.businessCollection || 'activities', targetUser.businessId || '1')}
-              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#0075ed] rounded-xl text-[10px] font-semibold  transition-all flex items-center gap-1"
-            >
-              <Building2 size={12} />
-              <span>Reservar</span>
-            </button>
-          )}
-          <button className="p-2 hover:bg-slate-50 text-slate-400 rounded-full">
-            <MoreVertical size={16} />
-          </button>
-        </div>
-      </header>
-
-      {/* 2. CHAT MESSAGES LIST */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]">
-        
-        {/* Security / Privacy notice */}
-        <div className="text-center py-2">
-          <span className="inline-block px-3 py-1 bg-slate-200/60 rounded-full text-[9px] font-bold text-slate-500 uppercase tracking-tight">
-            Conversa privada na Comunidade Azorestoyou 🔒
-          </span>
-        </div>
-
-        {messages.map((msg) => (
-          <div 
-            key={msg.id} 
-            className={`flex items-end gap-2 ${msg.isMe ? 'justify-end' : 'justify-start'}`}
-          >
-            {!msg.isMe && (
-              <img 
-                src={msg.senderAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender}`} 
-                alt="Avatar" 
-                className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-1" 
-              />
-            )}
-
-            <div 
-              className={`max-w-[78%] p-3.5 rounded-2xl shadow-sm text-xs leading-relaxed ${
-                msg.isMe 
-                  ? 'bg-[#0075ed] text-white rounded-br-none' 
-                  : 'bg-white text-[#071A3D] rounded-bl-none border border-slate-100'
-              }`}
-            >
-              <p className="font-medium whitespace-pre-wrap">{msg.text}</p>
-              
-              <div className={`flex items-center justify-end gap-1 mt-1 text-[8px] ${msg.isMe ? 'text-white/80' : 'text-slate-400'}`}>
-                <span>{msg.timestamp}</span>
-                {msg.isMe && <CheckCheck size={10} />}
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* 3. INPUT COMPOSER */}
-      <div className="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
-        <button 
-          onClick={() => alert('Anexar foto ou vídeo')}
-          className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50"
-        >
-          <Image size={18} />
-        </button>
-
-        <input
-          type="text"
-          placeholder="Escreve uma mensagem..."
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-          className="flex-1 bg-slate-100 focus:bg-white border-none rounded-2xl px-4 py-2.5 text-xs text-[#071A3D] focus:ring-2 focus:ring-[#00B857] transition-all"
-        />
-
-        {inputText.trim() ? (
-          <button
-            onClick={handleSendMessage}
-            className="p-2.5 bg-[#0075ed] hover:bg-emerald-600 active:scale-95 text-white rounded-2xl shadow-md shadow-emerald-600/20 transition-all"
-          >
-            <Send size={15} />
-          </button>
-        ) : (
-          <button 
-            onClick={() => alert('Gravação de voz açoriana ativada')}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-all"
-          >
-            <Mic size={15} />
-          </button>
-        )}
-      </div>
-
-    </div>
-  );
-};
-
-export default CommunityDirectChatModal;
+  const stamp=(date:string)=>new Date(date).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  return <section className="community-live-chat" role="dialog" aria-modal="true" aria-label="Conversa"><header><button aria-label="Voltar às mensagens" onClick={onClose}><ArrowLeft size={22}/></button><button className="live-chat-peer" disabled={!peer} onClick={()=>{if(peer){onClose();onViewProfile?.(peer.handle);}}}><img src={profileAvatar(peer?.avatar)} onError={avatarError} alt=""/><span><strong>{peer?.name||'A abrir conversa…'}</strong><small>{peer?.handle||''}</small></span></button></header><div className={`chat-connection ${status==='live'?'connected':''}`}>{status==='live'?'Ligação em tempo real':status==='signin'?'Termina sessão e volta a entrar para continuar.':'A restabelecer ligação… As mensagens guardadas serão recuperadas.'}</div>
+    {error&&<p className="chat-error" role="alert">{error}</p>}
+    <div className="live-chat-history" ref={scroll} onScroll={()=>{if(scroll.current)stick.current=scroll.current.scrollHeight-scroll.current.scrollTop-scroll.current.clientHeight<100;}}>{busy&&<div className="community-empty"><Loader2 size={24} className="animate-spin"/></div>}{hasMore&&<button className="chat-load-older" disabled={olderBusy} onClick={async()=>{if(!thread||!messages[0])return;setOlderBusy(true);const height=scroll.current?.scrollHeight||0;try{const data=await socialRequest<{items:DirectMessage[];hasMore:boolean}>(`conversations/${thread}/messages?before=${encodeURIComponent(messages[0].id)}`,email);setMessages(prev=>[...data.items.filter(m=>!prev.some(p=>p.id===m.id)),...prev]);setHasMore(data.hasMore);stick.current=false;requestAnimationFrame(()=>{if(scroll.current)scroll.current.scrollTop=scroll.current.scrollHeight-height;});}catch(e){setError(e.message);}finally{setOlderBusy(false);}}}>{olderBusy?'A carregar…':'Ver mensagens anteriores'}</button>}
+      {messages.map(m=><article className={`chat-bubble ${m.senderId===myProfile?.id?'mine':''}`} key={m.id}><p>{m.text}</p><small>{stamp(m.createdAt)}{m.senderId===myProfile?.id&&(m.readAt?<CheckCheck size={14} aria-label="Lida"/>:<Check size={13} aria-label="Enviada"/>)}</small></article>)}{pending.map(m=><article className="chat-bubble mine pending" key={m.id}><p>{m.text}</p><small>{m.failed?<button onClick={()=>send(m.text,m.id)} disabled={sending}><RotateCw size={12}/>Tentar novamente</button>:<><Clock3 size={12}/>A enviar…</>}</small></article>)}
+      {!busy&&!messages.length&&!pending.length&&!error&&<p className="chat-first-message">Começa a conversa com {peer?.name}.</p>}
+    </div><form className="live-chat-compose" onSubmit={e=>{e.preventDefault();send(text);}}><textarea rows={1} maxLength={4000} aria-label="Mensagem" placeholder="Escreve uma mensagem…" value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();send(text);}}}/><button aria-label="Enviar mensagem" disabled={!thread||sending||!text.trim()}>{sending?<Loader2 size={19} className="animate-spin"/>:<Send size={20}/>}</button></form>
+  </section>;
+}

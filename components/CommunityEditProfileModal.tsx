@@ -1,3 +1,4 @@
+import { profileAvatar, avatarError } from '../services/communitySocial';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -19,22 +20,15 @@ const AZORES_ISLANDS = [
   'São Jorge', 'Pico', 'Faial', 'Flores', 'Corvo', 'Diáspora Açoriana'
 ];
 
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka'
-];
 
-const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
+
+const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = props => props.isOpen && props.profile ? <ProfileEditor key={props.profile.id} {...props}/> : null;
+const ProfileEditor: React.FC<CommunityEditProfileModalProps> = ({
   isOpen,
   onClose,
   profile,
   onSaveProfile
 }) => {
-  if (!isOpen || !profile) return null;
 
   const [name, setName] = useState(profile.name || '');
   const [handleSlug, setHandleSlug] = useState(
@@ -193,7 +187,7 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
           <div className="flex flex-col items-center gap-3">
             <div className="relative group">
               <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-100 shadow-md bg-slate-50">
-                <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                <img src={profileAvatar(avatar)} onError={avatarError} alt={name} className="w-full h-full object-cover" />
               </div>
               <label 
                 htmlFor="avatar-upload-file" 
@@ -211,21 +205,6 @@ const CommunityEditProfileModal: React.FC<CommunityEditProfileModalProps> = ({
               />
             </div>
 
-            {/* Quick avatar presets */}
-            <div className="flex items-center gap-1.5 pt-1">
-              {AVATAR_PRESETS.map((preset, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setAvatar(preset)}
-                  className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${
-                    avatar === preset ? 'border-emerald-600 scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img src={preset} alt="preset" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
             <p className="text-[10px] font-bold text-slate-400">Toque na câmara para carregar do seu dispositivo</p>
           </div>
 

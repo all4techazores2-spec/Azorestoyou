@@ -93,3 +93,21 @@ test('feed pagination and saved filters use the current viewer without leaking a
     assert.equal((await call({email:'biz@example.invalid',saved:'true'})).items.length,1);
     assert.equal((await call({email:'c@example.invalid',saved:'true'})).items.length,0);
 });
+test('photo reels retain the selected soundtrack, cover and original audio setting without trusting client music metadata',()=>{
+    const db=fixture();const actor=db.social_profiles[0];
+    const photo=createReel(db,actor,{mediaType:'photo',imageUrl:'https://res.cloudinary.com/test/image/upload/photo.jpg',caption:'Fotografia',music:{url:'https://evil.invalid/audio.mp3'},coverUrl:'javascript:alert(1)'});
+    assert.equal(photo.mediaType,'photo');assert.equal(photo.videoUrl,undefined);assert.ok(photo.imageUrl.endsWith('photo.jpg'));assert.equal(photo.coverUrl,undefined);assert.equal(photo.music,null);
+    const verified={id:'12345',title:'Ocean',url:'https://ccmixter.org/content/a/a.mp3',start:5,duration:15,volume:.7};
+    const video=createReel(db,actor,{...{videoUrl:'https://res.cloudinary.com/test/video/upload/a.mp4'},muteOriginal:true,coverUrl:'https://res.cloudinary.com/test/image/upload/cover.jpg'},verified);
+    assert.equal(decorateReel(db,video,actor).music.title,'Ocean');assert.equal(decorateReel(db,video,actor).muteOriginal,true);assert.ok(decorateReel(db,video,actor).coverUrl.endsWith('cover.jpg'));
+});
+test('photo uploads use image storage and reject images over the photo size limit',async()=>{
+    const db=fixture();const routes=new Map();let uploads=0;
+    const app=Object.fromEntries(['get','post','put'].map(method=>[method,(url,handler)=>routes.set(`${method} ${url}`,handler)]));
+    const multer=()=>({single:()=> (req,res,callback)=>callback(null)});multer.memoryStorage=()=>({});
+    const cloudinary={config:()=>({cloud_name:'test',api_key:'test',api_secret:'test'}),uploader:{upload_stream(options,callback){assert.equal(options.resource_type,'image');return{end(){uploads++;callback(null,{secure_url:'https://res.cloudinary.com/test/image/upload/photo.jpg'});}};}}};
+    registerCommunitySocial(app,{readDB:async()=>db,writeDB:async()=>{},multer,cloudinary});
+    const call=async size=>{let status=200,data;await routes.get('post /api/community/reel-upload')({body:{userEmail:'ana@example.invalid'},query:{},file:{mimetype:'image/jpeg',size,buffer:Buffer.from('photo')}},{status(n){status=n;return this;},json(value){data=value;}});return{status,data};};
+    assert.equal((await call(21*1024*1024)).status,400);assert.equal(uploads,0);
+    const result=await call(1024);assert.equal(result.status,200);assert.equal(result.data.mediaType,'photo');assert.equal(uploads,1);
+});

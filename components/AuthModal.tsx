@@ -1,3 +1,4 @@
+import { saveCommunitySession } from '../services/communitySession';
 
 import React, { useState } from 'react';
 import AzoresLogo from './AzoresLogo';
@@ -59,6 +60,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
           const data = await res.json();
           setIsLoading(false);
           if (data.success) {
+            if(data.communityToken)saveCommunitySession(data.email,data.communityToken);
             onSuccess(
               data.isAdmin, 
               data.businessId, 

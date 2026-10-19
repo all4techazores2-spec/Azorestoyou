@@ -1,0 +1,34 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Check, Loader2, Music2, Pause, Play, Search, Volume2, X } from 'lucide-react';
+import { MusicTrack, ReelMusic, musicPlaybackUrl, socialRequest } from '../services/communitySocial';
+
+const styles=[['all','Para ti'],['electronic','Eletrónica'],['pop','Pop'],['hip_hop','Hip-hop'],['ambient','Ambiente'],['acoustic','Acústica'],['rock','Rock'],['jazz','Jazz']];
+export const musicTime=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
+export default function ReelMusicPicker({email,selected,onSelect,onClose}:{email:string;selected:ReelMusic|null;onSelect:(music:ReelMusic|null)=>void;onClose:()=>void}) {
+  const [query,setQuery]=useState('');const [genre,setGenre]=useState('all');const [items,setItems]=useState<MusicTrack[]>([]);
+  const [chosen,setChosen]=useState<MusicTrack|null>(selected?{...selected,duration:selected.trackDuration||selected.duration}:null);
+  const [start,setStart]=useState(selected?.start||0);const [length,setLength]=useState(selected?.duration||15);const [volume,setVolume]=useState(selected?.volume??.7);
+  const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [page,setPage]=useState(1);const [more,setMore]=useState(false);const [retry,setRetry]=useState(0);
+  const [playing,setPlaying]=useState<string|null>(null);const audio=useRef<HTMLAudioElement>(null);const current=useRef<{id:string;start:number;end:number}|null>(null);
+  useEffect(()=>{
+    const controller=new AbortController();setBusy(true);setError('');
+    const timer=setTimeout(()=>socialRequest<{items:MusicTrack[];hasMore:boolean}>(`music?q=${encodeURIComponent(query)}&genre=${genre}&page=${page}`,email,undefined,undefined,controller.signal).then(data=>{setItems(prev=>page===1?data.items:[...prev,...data.items]);setMore(data.hasMore);}).catch(e=>{if(e.name!=='AbortError')setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);}),350);
+    return()=>{clearTimeout(timer);controller.abort();};
+  },[query,genre,page,email,retry]);
+  useEffect(()=>()=>{audio.current?.pause();},[]);
+  useEffect(()=>{if(audio.current)audio.current.volume=volume;},[volume]);
+  const play=(track:MusicTrack)=>{
+    const el=audio.current;if(!el)return;
+    if(playing===track.id){el.pause();setPlaying(null);return;}
+    const offset=chosen?.id===track.id?start:0;const duration=Math.min(length,track.duration-offset);
+    current.current={id:track.id,start:offset,end:offset+duration};el.src=musicPlaybackUrl(track);el.currentTime=offset;el.volume=volume;
+    el.play().catch(()=>{setError('Não foi possível ouvir esta faixa. Experimenta outra.');setPlaying(null);});
+  };
+  const choose=(track:MusicTrack)=>{setChosen(track);setStart(0);setLength(Math.min(15,track.duration));audio.current?.pause();setPlaying(null);};
+  const maxStart=Math.max(0,(chosen?.duration||0)-Math.min(length,chosen?.duration||length));
+  return <section className="music-picker" role="dialog" aria-modal="true" aria-label="Escolher música"><header><button aria-label="Voltar" onClick={onClose}><ArrowLeft size={22}/></button><h2>Adicionar música</h2><button aria-label="Sem música" onClick={()=>{onSelect(null);onClose();}}><X size={20}/></button></header><label className="music-search"><Search size={18}/><input value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}} placeholder="Pesquisar músicas e artistas" aria-label="Pesquisar músicas e artistas"/></label><div className="music-genres">{styles.map(([id,label])=><button className={genre===id?'active':''} key={id} onClick={()=>{setGenre(id);setPage(1);}}>{label}</button>)}</div>
+    <div className="music-results">{error&&<p role="alert" className="reel-form-error">{error}<button onClick={()=>setRetry(n=>n+1)}>Tentar novamente</button></p>}{items.map(track=><article key={track.id} className={chosen?.id===track.id?'selected':''}><button className="music-art" aria-label={playing===track.id?`Pausar ${track.title}`:`Ouvir ${track.title}`} onClick={()=>play(track)}>{playing===track.id?<Pause size={20}/>:<Play size={20}/>}</button><button className="music-track-info" onClick={()=>choose(track)}><strong>{track.title}</strong><span>{track.artist}</span><small>{musicTime(track.duration)} · {track.license}</small></button><button className="music-select" aria-label={`Selecionar ${track.title}`} onClick={()=>choose(track)}>{chosen?.id===track.id?<Check size={21}/>:<Music2 size={19}/>}</button></article>)}{busy&&<div className="music-loading"><Loader2 size={24} className="animate-spin"/>A procurar músicas…</div>}{!busy&&!items.length&&!error&&<p className="music-no-results">Não encontrámos músicas. Experimenta outro nome ou estilo.</p>}{more&&!busy&&<button className="music-load-more" onClick={()=>setPage(n=>n+1)}>Ver mais músicas</button>}</div>
+    {chosen&&<div className="music-excerpt"><div><strong>{chosen.title}</strong><button onClick={()=>play(chosen)}>{playing===chosen.id?<Pause size={17}/>:<Play size={17}/>}Ouvir trecho</button></div><label>Trecho · {musicTime(start)} — {musicTime(Math.min(chosen.duration,start+length))}<input type="range" min={0} max={maxStart} step={1} value={Math.min(start,maxStart)} aria-label="Início do trecho musical" onChange={e=>{const value=Number(e.target.value);setStart(value);if(current.current?.id===chosen.id){current.current={id:chosen.id,start:value,end:value+length};if(audio.current)audio.current.currentTime=value;}}}/></label><div className="music-lengths">{[15,30,60].map(n=><button className={length===Math.min(n,chosen.duration)?'active':''} key={n} onClick={()=>{const duration=Math.min(n,chosen.duration);setLength(duration);setStart(Math.min(start,Math.max(0,chosen.duration-duration)));audio.current?.pause();setPlaying(null);}}>{n} s</button>)}<Volume2 size={17}/><input type="range" aria-label="Volume da música" min={0} max={1} step={.05} value={volume} onChange={e=>setVolume(Number(e.target.value))}/></div><button className="music-use" onClick={()=>{onSelect({...chosen,trackDuration:chosen.duration,start:Math.min(start,maxStart),duration:Math.min(length,chosen.duration-start),volume});onClose();}}>Usar música</button></div>}
+    <footer>Biblioteca ccMixter · Créditos do artista incluídos</footer><audio ref={audio} preload="none" onPlay={()=>setPlaying(current.current?.id||null)} onPause={()=>setPlaying(null)} onLoadedMetadata={()=>{if(audio.current&&current.current)audio.current.currentTime=current.current.start;}} onError={()=>{setError('Esta faixa não está disponível para ouvir. Experimenta outra.');setPlaying(null);}} onTimeUpdate={()=>{if(audio.current&&current.current&&audio.current.currentTime>=current.current.end){audio.current.pause();audio.current.currentTime=current.current.start;}}}/>
+  </section>;
+}
