@@ -28,7 +28,7 @@ function LiveChat({onClose,targetUser,myProfile,onViewProfile}:Props&{key?:strin
   }catch(e){setError(e.message);}};
   const status=useCommunityLive(email,event=>{if(!event.conversationId||event.conversationId===currentThread.current)refresh();});
   useEffect(()=>{let cancelled=false;setBusy(true);const handle=targetUser?.handle||targetUser?.name||'';
-    socialRequest<{id:string;peer:CommunityIdentity}>('conversations',email,{handle}).then(async data=>{if(cancelled)return;currentThread.current=data.id;setThread(data.id);setPeer(data.peer);await refresh(data.id);}).catch(e=>{if(!cancelled)setError(e.message);}).finally(()=>{if(!cancelled)setBusy(false);});
+    socialRequest<{id:string;peer:CommunityIdentity}>('conversations',email,{handle}).then(async data=>{if(cancelled)return;currentThread.current=data.id;setThread(data.id);setPeer(data.peer);setBusy(false);await refresh(data.id);}).catch(e=>{if(!cancelled)setError(e.message);}).finally(()=>{if(!cancelled)setBusy(false);});
     const focus=()=>refresh();window.addEventListener('focus',focus);return()=>{cancelled=true;currentThread.current=null;window.removeEventListener('focus',focus);};
   },[email,targetUser?.handle,targetUser?.name]);
   useEffect(()=>{if(stick.current&&scroll.current)scroll.current.scrollTop=scroll.current.scrollHeight;},[messages.length,pending.length]);

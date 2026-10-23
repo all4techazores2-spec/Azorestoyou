@@ -43,7 +43,7 @@ export function registerCommunityCommunication(app,{readDB,writeDB}){
     const broadcast=(ids,event)=>{for(const id of new Set(ids))for(const response of streams.get(id)||[])if(!response.destroyed)response.write(`data: ${JSON.stringify(event)}\n\n`);};
     const watch=()=>{
         if(watcher)return;
-        watcher=setInterval(async()=>{if(checking||!streams.size)return;checking=true;try{const db=await readDB(true);for(const id of streams.keys()){const actor=db.social_profiles.find(p=>p.id===id);if(!actor)continue;const value=JSON.stringify(inbox(db,actor).map(c=>[c.id,c.lastMessage?.id,c.lastMessage?.readAt,c.unread]));if(snapshots.has(id)&&snapshots.get(id)!==value)broadcast([id],{type:'resync'});snapshots.set(id,value);}}catch{}finally{checking=false;}},2000);watcher.unref?.();
+        watcher=setInterval(async()=>{if(checking||!streams.size)return;checking=true;try{const db=await readDB();for(const id of streams.keys()){const actor=db.social_profiles.find(p=>p.id===id);if(!actor)continue;const value=JSON.stringify(inbox(db,actor).map(c=>[c.id,c.lastMessage?.id,c.lastMessage?.readAt,c.unread]));if(snapshots.has(id)&&snapshots.get(id)!==value)broadcast([id],{type:'resync'});snapshots.set(id,value);}}catch{}finally{checking=false;}},5000);watcher.unref?.();
     };
     const actorFor=(req,db)=>{const email=sessionEmail(req);const p=(db.social_profiles||[]).find(p=>String(p.email||'').toLowerCase()===email);if(!p)throw fail('Abre o teu perfil na comunidade antes de continuar.',401);return p;};
     const route=fn=>async(req,res)=>{try{await fn(req,res);}catch(e){res.status(e.status||500).json({error:e.status?e.message:'Não foi possível concluir. Tenta novamente.'});}};
@@ -56,12 +56,22 @@ export function registerCommunityCommunication(app,{readDB,writeDB}){
         const db=await readDB();const collections=['restaurants','hotels','cars','shops','beauty','services','activities','offices','animals','real_estate','gyms','stands','bars','events','municipal'];
         res.json(collections.flatMap(collection=>(db[collection]||[]).filter(b=>!b.isDraft&&b.status!=='draft').map(b=>({id:b.id,name:b.name||b.title,category:b.businessType||collection,collection,image:b.image||''}))).slice(0,200));
     }));
-    app.get('/api/community/conversations',route(async(req,res)=>{const db=await readDB(true);res.json(inbox(db,actorFor(req,db)));}));
+    app.get('/api/community/conversations',route(async(req,res)=>{const db=await readDB();res.json(inbox(db,actorFor(req,db)));}));
     app.post('/api/community/conversations',route(async(req,res)=>{
-        res.json(await write(db=>{const actor=actorFor(req,db);const lookup=String(req.body.handle||'').trim().toLowerCase();let target=db.social_profiles.find(p=>(req.body.targetId&&p.id===req.body.targetId)||(lookup&&String(p.handle).toLowerCase()===lookup));if(!target&&lookup){const matches=db.social_profiles.filter(p=>String(p.name).toLowerCase()===lookup);if(matches.length===1)target=matches[0];}if(!target)throw fail('Abre o perfil da pessoa ou negócio para iniciar a conversa.',404);return{...conversationFor(db,actor,target),peer:safeProfile(target)};}));
+        res.json(await write(db=>{
+            const actor=actorFor(req,db);
+            const rawLookup=String(req.body.handle||'').trim().toLowerCase();
+            const cleanLookup=rawLookup.replace(/^@/,'');
+            let target=db.social_profiles.find(p=>(req.body.targetId&&p.id===req.body.targetId)||(cleanLookup&&String(p.handle||'').toLowerCase().replace(/^@/,'')===cleanLookup));
+            if(!target&&cleanLookup){
+                target=db.social_profiles.find(p=>String(p.name||'').toLowerCase()===cleanLookup||String(p.name||'').toLowerCase()===rawLookup);
+            }
+            if(!target)throw fail('Abre o perfil da pessoa ou negócio para iniciar a conversa.',404);
+            return{...conversationFor(db,actor,target),peer:safeProfile(target)};
+        }));
     }));
     app.get('/api/community/conversations/:id/messages',route(async(req,res)=>{
-        const db=ensureCommunication(await readDB(true));const actor=actorFor(req,db);requireConversation(db,actor,req.params.id);
+        const db=ensureCommunication(await readDB());const actor=actorFor(req,db);requireConversation(db,actor,req.params.id);
         let rows=db.community_messages.filter(m=>m.conversationId===req.params.id);if(req.query.before){const index=rows.findIndex(m=>m.id===req.query.before);if(index<0)throw fail('Página de mensagens inválida.');rows=rows.slice(0,index);}
         const readThrough=db.community_messages.filter(m=>m.conversationId===req.params.id&&m.senderId===actor.id&&m.readAt).at(-1);
         res.json({items:rows.slice(-50),hasMore:rows.length>50,readThrough:readThrough?{createdAt:readThrough.createdAt,readAt:readThrough.readAt}:null});

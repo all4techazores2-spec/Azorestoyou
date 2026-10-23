@@ -899,7 +899,7 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         <CommunityDirectChatModal 
           isOpen={!!activeChatUser}
           onClose={() => setActiveChatUser(null)}
-          targetUser={activeChatUser ? { name: activeChatUser } : null}
+          targetUser={activeChatUser ? { name: activeChatUser, handle: activeChatUser } : null}
           myProfile={myProfile}
           onBookBusiness={onBookBusiness}
           onViewProfile={(handle) => openUserProfile(handle)}
