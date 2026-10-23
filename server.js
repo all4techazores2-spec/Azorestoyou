@@ -2443,7 +2443,7 @@ app.get('/api/community/profile/me', async (req, res) => {
             await writeDB(db);
         }
 
-        res.json(profile);
+        res.json({ ...profile, communityToken: createCommunitySession(cleanEmail) });
     } catch (err) {
         console.error("❌ Erro ao obter perfil social:", err);
         res.status(500).json({ error: "Erro interno ao processar perfil social." });

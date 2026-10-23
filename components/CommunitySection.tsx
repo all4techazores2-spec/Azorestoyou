@@ -10,6 +10,7 @@ import {
   Building2, Clapperboard, LogOut, Coins
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { saveCommunitySession } from '../services/communitySession';
 import { uploadCommunityMedia } from '../services/communityUpload';
 import AzoresLogo from './AzoresLogo';
 import './community.css';
@@ -205,6 +206,11 @@ const CommunitySection: React.FC<CommunitySectionProps> = ({
         const res = await fetch(`${API_BASE_URL}/api/community/profile/me?email=${encodeURIComponent(email)}`);
         if (res.ok) {
           const data = await res.json();
+          // Persist the session token returned by the server so API calls work
+          // immediately after page reload without requiring a new login.
+          if (data.communityToken) {
+            saveCommunitySession(email, data.communityToken);
+          }
           setMyProfile(data);
         }
       } catch (err) {
