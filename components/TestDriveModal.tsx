@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 
 import React, { useState } from 'react';
 import { Business, Language, Car } from '../types';
@@ -39,9 +40,7 @@ const TestDriveModal: React.FC<TestDriveModalProps> = ({
     }
     setIsSubmitting(true);
     try {
-      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:3001'
-        : 'https://azorestoyou-nyvy.onrender.com';
+      
 
       const resData = {
         id: `TD-${Math.random().toString(36).substr(2, 9)}`,

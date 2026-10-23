@@ -1,4 +1,5 @@
 import { clearCommunitySession, ensureCommunitySession } from './services/communitySession';
+import { cachedCollection,readCollectionResponse,createSyncGate } from './services/apiCollections.js';
 // Azores4you - Main Application Entry - Build v1.2.7 - Stabilized Production
 import React, { useState, useEffect } from 'react';
 import { BookingStep, ExploreCategory, Flight, Itinerary, Language, Restaurant, Activity, Hotel, Car, BusSchedule, KitchenOrder, OrderItem, Business } from './types';
@@ -176,7 +177,7 @@ const App: React.FC = () => {
   const loadFromCache = (key: string, fallback: any) => {
     try {
       const cached = localStorage.getItem(`azores_cache_${key}`);
-      return cached ? JSON.parse(cached) : fallback;
+      return cachedCollection(cached,fallback);
     } catch (e) { return fallback; }
   };
 
@@ -340,8 +341,8 @@ const App: React.FC = () => {
     if (isAdmin) {
       const fetchUsers = () => {
         fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`)
-          .then(r => r.json())
-          .then(allUsers => setUsers(allUsers || []))
+          .then(readCollectionResponse)
+          .then(setUsers)
           .catch(err => console.error("Error fetching users:", err));
       };
       fetchUsers();
@@ -410,9 +411,13 @@ const App: React.FC = () => {
   const [showMapUrl, setShowMapUrl] = useState<string | null>(null);
   const [selectedTrailId, setSelectedTrailId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncGate=React.useRef(createSyncGate());
+  const syncNeedsFullReload=React.useRef(false);
   // Function to fetch data from Backend with Retry logic for Cold Starts
   const fetchData = async (retries = 3, specificKeys?: string[], bypassCache: boolean = true) => {
+    if(!syncGate.current.begin())return;
     setIsSyncing(true);
+    let syncFailed=false;
     try {
       const normalizeBusiness = (b: any) => ({
         ...b,
@@ -435,7 +440,7 @@ const App: React.FC = () => {
         'activities', 'bus-schedules', 'flights', 'posts', 'marketplace_ads', 'marketplace_chats', 'marketplace_categories'
       ];
 
-      const keysToFetch = specificKeys || endpointKeys;
+      const keysToFetch = syncNeedsFullReload.current ? endpointKeys : (specificKeys || endpointKeys);
 
       const setterMap: Record<string, Function> = {
         'restaurants': setRestaurants, 'hotels': setHotels, 'cars': setCars, 'shops': setShops,
@@ -451,29 +456,20 @@ const App: React.FC = () => {
         keysToFetch.forEach(async key => {
           try {
             const cached = await getCache(`azores_cache_${key}`);
-            if (cached && setterMap[key]) {
+            if (Array.isArray(cached) && setterMap[key]) {
               setterMap[key](cached);
             }
           } catch (e) {}
         });
       }
 
-      let emptyCount = 0;
       let errorCount = 0;
-      let completedCount = 0;
 
-      keysToFetch.forEach(key => {
+      await Promise.all(keysToFetch.map(key => {
         const bypass = (specificKeys && specificKeys.length > 0 && bypassCache) ? '&bypassCache=true' : '';
-        fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`)
-          .then(r => {
-            if (!r.ok) {
-              throw new Error(`HTTP ${r.status} ${r.statusText}`);
-            }
-            return r.json();
-          })
+        return fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`,{signal:AbortSignal.timeout(35000)})
+          .then(readCollectionResponse)
           .then(data => {
-             completedCount++;
-             if (Array.isArray(data) && data.length === 0) emptyCount++;
              const setter = setterMap[key];
               if (setter && Array.isArray(data)) {
                 let normalized = data.map(normalizeBusiness);
@@ -511,44 +507,38 @@ const App: React.FC = () => {
                   try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
                 }
               }
-             if (completedCount === keysToFetch.length) {
-                const totalFailures = emptyCount + errorCount;
-                if (totalFailures === keysToFetch.length && retries > 0) {
-                   setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
-                }
-             }
           })
           .catch(err => {
              console.warn(`⚠️ Fetch failed for [${key}] (preserving local state):`, err.message || err);
-             completedCount++;
              errorCount++;
-             if (completedCount === keysToFetch.length) {
-                const totalFailures = emptyCount + errorCount;
-                if (totalFailures === keysToFetch.length && retries > 0) {
-                   setTimeout(() => fetchData(retries - 1, specificKeys), 3000);
-                }
-             }
           });
-      });
+      }));
+      syncFailed=errorCount===keysToFetch.length;
+      if(syncFailed)return;
 
-      // 2. Utilizador (Sincronização de Reservas)
-      if (isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
-        const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}?t=${Date.now()}`);
-        if (userResp.ok) {
-          const userData = await userResp.json();
-          setUserCredits(userData.credits || 0);
-          setMyReservations(userData.reservations || []);
+      // 2. Utilizador (Sincronização de Reservas apenas no carregamento inicial/completo)
+      if (!specificKeys && isAuthenticated && !isAdmin && !isBusiness && userProfile.email) {
+        try {
+          const userResp = await fetch(`${API_BASE_URL}/api/users/${userProfile.email}?t=${Date.now()}`,{signal:AbortSignal.timeout(30000)});
+          if (userResp.ok) {
+            const userData = await userResp.json();
+            setUserCredits(userData.credits || 0);
+            if(Array.isArray(userData.reservations))setMyReservations(userData.reservations);
+          }
+        } catch (uErr) {
+          console.warn('⚠️ Falha temporária ao sincronizar reservas do utilizador:', uErr);
         }
       }
 
       // 3. Status da DB
       try {
-        console.log("🌐 A solicitar diagnóstico da base de dados...");
-        const sResp = await fetch(`${API_BASE_URL}/api/db-diagnostics?t=${Date.now()}`);
+        if(!specificKeys){
+        const sResp = await fetch(`${API_BASE_URL}/api/db-diagnostics?t=${Date.now()}`,{signal:AbortSignal.timeout(15000)});
         if (sResp.ok) {
           const statusData = await sResp.json();
           console.log("✅ Diagnóstico recebido:", statusData);
           setDbStatus(statusData);
+        }
         }
       } catch (e) {
         console.error("❌ Erro de rede ao contactar servidor:", e);
@@ -557,17 +547,22 @@ const App: React.FC = () => {
       setIsDataLoaded(true);
       setIsSyncing(false);
     } catch (error) {
+      syncFailed=true;
       console.error('Erro ao carregar dados do backend:', error);
-      if (retries > 0) {
-        setTimeout(() => fetchData(retries - 1), 3000);
-      } else {
-        setIsDataLoaded(true); // Fallback to show empty app if server is dead
-        setIsSyncing(false);
-      }
+    } finally {
+      syncNeedsFullReload.current=syncFailed;
+      syncGate.current.end(syncFailed);
+      setIsDataLoaded(true);setIsSyncing(false);
+      window.dispatchEvent(new CustomEvent('app-connection-status',{detail:{unavailable:syncFailed}}));
     }
   };
 
   // Initial Load and Sync Polling
+  useEffect(()=>{
+    const retry=()=>{syncGate.current.retry();fetchData(0);};
+    window.addEventListener('app-retry-sync',retry);
+    return()=>window.removeEventListener('app-retry-sync',retry);
+  },[isAuthenticated,isAdmin,isBusiness,userProfile.email,isDataLoaded]);
   useEffect(() => {
     // Determine if user is in any management mode
     const isManager = isAdmin || isBusiness || isStaff || isSupplier;
@@ -585,7 +580,6 @@ const App: React.FC = () => {
         // bypassCache=false: respeita a cache de 30s do servidor (db.js), que é invalidada
         // instantaneamente sempre que há uma escrita — evita sobrecarregar o Atlas a cada 2s.
         fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services'], false);
-        console.log("🔄 Real-time sync (2s interval)...");
       }, 2000); // Reduzido para 2 segundos!
     }
     
@@ -964,7 +958,7 @@ const App: React.FC = () => {
           })
         }).then(() => {
            if (isAdminUser || email === 'adminadmin@gmail.com') {
-             fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`).then(r => r.json()).then(allUsers => setUsers(allUsers || []));
+             fetch(`${API_BASE_URL}/api/users?t=${Date.now()}`).then(readCollectionResponse).then(setUsers).catch(()=>{});
            }
         });
       } catch (e) {}
@@ -2039,6 +2033,7 @@ const App: React.FC = () => {
         language={language}
         users={users}
         onUpdateUsers={async (updatedUsers) => {
+           if(!Array.isArray(updatedUsers))throw new Error('A lista de utilizadores é inválida.');
            setUsers(updatedUsers);
            try {
              await fetch(`${API_BASE_URL}/api/users/bulk`, {

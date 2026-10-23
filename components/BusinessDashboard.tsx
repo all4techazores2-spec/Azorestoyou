@@ -8140,7 +8140,7 @@ isBeauty ? (
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4">
                       <p className="text-xs text-emerald-700 font-bold leading-relaxed">
-                        💡 Estes dados obtêm-se na app criada em <strong>developers.facebook.com</strong> (produto WhatsApp Cloud API). Configure o webhook para <strong>https://azorestoyou-nyvy.onrender.com/webhook/whatsapp</strong> usando o "Verify Token" definido abaixo.
+                        💡 Estes dados obtêm-se na app criada em <strong>developers.facebook.com</strong> (produto WhatsApp Cloud API). Configure o webhook para <strong>{`${API_BASE_URL}/webhook/whatsapp`}</strong> usando o "Verify Token" definido abaixo.
                       </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

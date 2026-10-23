@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 
 import React, { useState } from 'react';
 import { Business, Language } from '../types';
@@ -47,9 +48,7 @@ const OfficeBookingModal: React.FC<OfficeBookingModalProps> = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:3001'
-        : 'https://azorestoyou-nyvy.onrender.com';
+      
 
       const resData = {
         id: Math.random().toString(36).substr(2, 9),

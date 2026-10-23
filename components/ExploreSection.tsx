@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 
 import React, { useState } from 'react';
 import { Restaurant, Activity, ExploreCategory, Language, BusSchedule, Business, AutoRepairSubCategory } from '../types';
@@ -118,9 +119,7 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
   onShowInteractiveMap,
   featuredItems = []
 }) => {
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-nyvy.onrender.com';
+  
 
   const lang = currentLanguage as Language;
   const t = (key: any) => getTranslation(lang, key);

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 import React, { useState } from 'react';
 import { Restaurant } from '../types';
 import { LogOut, Calendar, Users, Scissors, Clock, CheckCircle, BarChart3, Settings, Star, AlertCircle, Eye, X, Plus, Trash2 } from 'lucide-react';
@@ -58,9 +59,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
   };
 
   const confirmReservationWithChair = async (resv: any, chairId: string) => {
-    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3001'
-      : 'https://azorestoyou-nyvy.onrender.com';
+    
     try {
       const res = await fetch(`${API_BASE_URL}/api/reservations/${resv.id || resv._id}`, {
         method: 'PUT',
@@ -91,9 +90,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
   const loadChairsData = async () => {
     try {
-      const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:3001'
-        : 'https://azorestoyou-nyvy.onrender.com';
+      
       const resChairs = await fetch(`${API_BASE_URL}/api/chairs?businessId=${business.id}`);
       if (resChairs.ok) {
         const dataChairs = await resChairs.json();
@@ -309,9 +306,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                   <tbody>
                     {reservations.map((r) => {
                       const updateStatus = async (newStatus: string) => {
-                        const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                          ? 'http://localhost:3001'
-                          : 'https://azorestoyou-nyvy.onrender.com';
+                        
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/reservations/${r.id || r._id}`, {
                             method: 'PUT',
@@ -478,9 +473,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                     <button
                       onClick={async () => {
                         if (!newChairName.trim()) return;
-                        const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                          ? 'http://localhost:3001'
-                          : 'https://azorestoyou-nyvy.onrender.com';
+                        
                         try {
                           const res = await fetch(`${API_BASE_URL}/api/chairs`, {
                             method: 'POST',
@@ -524,9 +517,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                 const statusColor = colorMap[chair.status] || '#10B981';
 
                 const handleStatusUpdate = async (status: string) => {
-                  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                    ? 'http://localhost:3001'
-                    : 'https://azorestoyou-nyvy.onrender.com';
+                  
                   try {
                     if (status === 'blocked' || status === 'cleaning') {
                       const date = new Date().toISOString().split('T')[0];
@@ -558,9 +549,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
                 const handleDeleteChair = async () => {
                   if (!confirm('Deseja mesmo eliminar esta cadeira?')) return;
-                  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                    ? 'http://localhost:3001'
-                    : 'https://azorestoyou-nyvy.onrender.com';
+                  
                   try {
                     const res = await fetch(`${API_BASE_URL}/api/chairs/${chair.id}`, {
                       method: 'DELETE'
@@ -575,9 +564,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
                 const handleStartService = async () => {
                   if (!chair.currentAppointmentId) return;
-                  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                    ? 'http://localhost:3001'
-                    : 'https://azorestoyou-nyvy.onrender.com';
+                  
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
@@ -602,9 +589,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
 
                 const handleReleaseChair = async () => {
                   if (!chair.currentAppointmentId) return;
-                  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                    ? 'http://localhost:3001'
-                    : 'https://azorestoyou-nyvy.onrender.com';
+                  
                   try {
                     await fetch(`${API_BASE_URL}/api/reservations/${chair.currentAppointmentId}`, {
                       method: 'PUT',
@@ -718,9 +703,7 @@ const BarberProDashboard: React.FC<BarberProDashboardProps> = ({ business, onLog
                       {chair.status !== 'available' && chair.status !== 'Reservada' && chair.status !== 'Em Atendimento' && (
                         <button
                           onClick={async () => {
-                            const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-                              ? 'http://localhost:3001'
-                              : 'https://azorestoyou-nyvy.onrender.com';
+                            
                             try {
                               const activeB = chairBlocks.find(b => (b.chairId === chair.id || b.chairId === chair.chairId) && b.status !== 'completed' && b.status !== 'cancelled');
                               if (activeB) {

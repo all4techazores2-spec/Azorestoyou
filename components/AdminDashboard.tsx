@@ -186,7 +186,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const res = await fetch(`${API_BASE_URL}/api/news`);
       if (res.ok) {
         const data = await res.json();
-        setAdminNews(data);
+        if(Array.isArray(data))setAdminNews(data);
       }
     } catch (e) {
       console.error(e);

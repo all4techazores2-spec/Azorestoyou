@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { Itinerary, Language, Hotel, Car } from '../types';
 import { Check, Car as CarIcon, BedDouble, Calendar, ArrowRight, Ban, Star, MapPin, ChevronDown, Hotel as HotelIcon, Home, SlidersHorizontal, X } from 'lucide-react';
@@ -43,9 +44,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({
   cars = [],
   onShowMap
 }) => {
-  const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3001'
-    : 'https://azorestoyou-nyvy.onrender.com';
+  
 
   const [nights, setNights] = useState(currentItinerary?.nights || 3);
   const [carDays, setCarDays] = useState(currentItinerary?.carDays || 3);

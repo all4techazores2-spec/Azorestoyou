@@ -1,4 +1,4 @@
-const CACHE_NAME = 'azores-toyou-v3';
+const CACHE_NAME = 'azores-toyou-render-20261020';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
