@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { findEmbeddedImages, externalizeImages } from '../server/community-media-migration.js';
+const image='data:image/png;base64,aGVsbG8=';
+const source={restaurants:[{id:1,image}],users:[{profile:{avatar:image}}],social_profiles:[{id:'p',avatar:image}],posts:[{id:7,authorAvatar:image,images:[image,'https://example.com/existing.png'],comments:[{image}]}]};
+const before=structuredClone(source);let calls=0;
+const migrated=await externalizeImages(source,async()=>{calls++;return 'https://res.cloudinary.com/example/photo.png';});
+assert.equal(calls,1);assert.equal(findEmbeddedImages(source).length,5);assert.equal(findEmbeddedImages(migrated).length,0);assert.deepEqual(source,before);assert.deepEqual(migrated.restaurants,source.restaurants);assert.equal(migrated.posts[0].images[1],source.posts[0].images[1]);assert.equal(migrated.posts[0].id,7);
+console.log('PASS deduplication, nested images, unchanged source, unrelated businesses and existing URLs');
+assert.deepEqual(await externalizeImages(migrated,async()=>{throw Error('Must not upload twice');}),migrated);console.log('PASS repeat migration does nothing');
+await assert.rejects(externalizeImages(source,async()=>{throw Error('Offline');}),/Offline/);assert.deepEqual(source,before);console.log('PASS failed upload preserves originals');
+await assert.rejects(externalizeImages(source,async()=>image),/HTTPS/);console.log('PASS embedded upload response rejected');

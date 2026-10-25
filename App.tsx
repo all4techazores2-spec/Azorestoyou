@@ -42,7 +42,7 @@ import BarberLogin from './components/BarberLogin';
 import AzoresLogo from './components/AzoresLogo';
 import HotelRoomService from './components/HotelRoomService';
 import FavoritesModal from './components/FavoritesModal';
-import CommunitySection from './components/CommunitySection';
+const CommunitySection = React.lazy(() => import('./components/CommunitySection'));
 import { Menu, X, User, LogOut, Compass, MapPin, Bell, AlertCircle, Phone, ShieldAlert, LayoutDashboard, RefreshCw, ArrowRight, LogIn, UtensilsCrossed, Scissors } from 'lucide-react';
 import SOSModal from './components/SOSModal';
 import HomeSection from './components/HomeSection';
@@ -2991,6 +2991,7 @@ const App: React.FC = () => {
 
                 {/* Discovery Views */}
                 {exploreCategory === 'community' && (
+                  <React.Suspense fallback={<p role="status" className="p-8 text-center">A abrir a comunidade…</p>}>
                   <CommunitySection 
                     onLogout={handleLogout}
                     isAuthenticated={isAuthenticated}
@@ -3020,6 +3021,7 @@ const App: React.FC = () => {
                       }
                     }}
                   />
+                  </React.Suspense>
                 )}
                 {exploreCategory === 'marketplace' && (
                   <MarketplaceSection 

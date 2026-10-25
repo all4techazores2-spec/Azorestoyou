@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, Lock, Camera, CheckCircle, ArrowLeft, Calendar, CreditCard, MessageCircle, Users, LogOut, Sliders } from 'lucide-react';
@@ -58,6 +59,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [avatar, setAvatar] = useState(userProfile?.avatar || '');
   const [newPassword, setNewPassword] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const avatars = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
@@ -69,6 +72,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   ];
 
   const handleSave = () => {
+    if (uploadingAvatar) return;
     onUpdateProfile({ 
       name, 
       email, 
@@ -84,15 +88,29 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     }, 2000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    e.target.value = '';
+    if (!file || uploadingAvatar) return;
+    setUploadError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setUploadError('Escolhe uma fotografia JPG, PNG ou WebP até 5 MB.');
+      return;
     }
+    setUploadingAvatar(true);
+    try {
+      const body = new FormData(); body.append('image', file);
+      const response = await fetch(API_BASE_URL + '/api/upload?folder=azores4you/profiles&requireCloud=true', {
+        method: 'POST', body, signal: AbortSignal.timeout(90000)
+      });
+      const result = await response.json();
+      if (!response.ok || typeof result.url !== 'string' || !result.url.startsWith('https://')) {
+        throw new Error('Não foi possível carregar a fotografia. Tenta novamente.');
+      }
+      setAvatar(result.url);
+    } catch {
+      setUploadError('Não foi possível carregar a fotografia. A fotografia anterior foi mantida.');
+    } finally { setUploadingAvatar(false); }
   };
 
   return (
@@ -362,11 +380,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                           </div>
                         </div>
 
+{uploadError && <p role="alert" className="text-sm text-red-600">{uploadError}</p>}
                         <button 
+                          disabled={uploadingAvatar}
                           onClick={handleSave}
                           className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-blue-600/20 mt-6"
                         >
-                          Guardar Alterações
+                          {uploadingAvatar ? 'A carregar fotografia…' : 'Guardar Alterações'}
                         </button>
                       </>
                     )}

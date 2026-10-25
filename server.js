@@ -874,6 +874,9 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
                                    process.env.CLOUDINARY_API_KEY && 
                                    process.env.CLOUDINARY_API_SECRET;
                                    
+    if (!isCloudinaryConfigured && req.query.requireCloud === 'true') {
+        return res.status(503).json({ error: 'O armazenamento de fotografias está indisponível. Tenta novamente.' });
+    }
     if (!isCloudinaryConfigured) {
         console.warn("⚠️ Cloudinary environment variables are not configured. Falling back to Base64 storage.");
         const base64Data = req.file.buffer.toString('base64');
@@ -912,6 +915,9 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             height: uploadResult.height
         });
     } catch (err) {
+        if (req.query.requireCloud === 'true') {
+            return res.status(503).json({ error: 'Não foi possível guardar a fotografia no armazenamento.' });
+        }
         console.error("❌ Cloudinary Upload failed. Gracefully falling back to Base64 storage:", err);
         const base64Data = req.file.buffer.toString('base64');
         const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
