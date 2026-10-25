@@ -175,23 +175,14 @@ export const readDB = async (bypassCache = false) => {
             
             // Start a new fetch and lock it with retry logic
             activeFetchPromise = (async () => {
-                let retries = 3;
-                while (retries > 0) {
-                    try {
-                        // .lean() returns plain JS object - much lighter on memory than Mongoose documents
-                        const doc = await DBModel.findOne({ key: 'master_db' }).lean().maxTimeMS(60000);
-                        const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
-                        memoryCache = data;
-                        lastCacheTime = Date.now();
-                        return data;
-                    } catch (err) {
-                        retries--;
-                        console.error(`⚠️ ReadDB Retry (${3-retries}/3):`, err.message);
-                        if (retries === 0) throw err;
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                    }
-                }
-                return DEFAULT_DB;
+                // Bound the entire driver operation, including server selection and retries.
+                // Leave time for the API response before the client's 35-second deadline.
+                const doc = await DBModel.findOne({ key: 'master_db' })
+                    .lean().maxTimeMS(15000).setOptions({ timeoutMS: 20000 });
+                const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
+                memoryCache = data;
+                lastCacheTime = Date.now();
+                return data;
             })();
             
             const result = await activeFetchPromise;

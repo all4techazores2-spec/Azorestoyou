@@ -52,6 +52,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
+          signal: AbortSignal.timeout(30000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
         });
@@ -79,8 +80,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
           setError(errData.error || "Credenciais inválidas.");
           return;
         }
+        setError("Não foi possível iniciar sessão. Tenta novamente.");
+        return;
       } catch (err) {
-        console.warn("⚠️ Ligação ao endpoint de auth falhou. A usar fallback offline local:", err);
+        setError("Não foi possível contactar o servidor. Tenta novamente dentro de alguns instantes.");
+        return;
+      } finally {
+        setIsLoading(false);
       }
     }
 

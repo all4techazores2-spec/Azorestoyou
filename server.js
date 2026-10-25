@@ -162,15 +162,10 @@ const ALL_BUSINESS_COLLECTIONS = [
 const ALL_KEYS = [...ALL_BUSINESS_COLLECTIONS, 'users', 'posts', 'social_profiles', 'hotel_room_qr_codes', 'hotel_room_requests'];
 
 // --- CORE API ROUTES (MANUAL REGISTRATION FOR GUARANTEED MATCH) ---
-app.get('/api/health', async (req, res) => {
-    try {
-        // Query database (bypass cache) to keep MongoDB Atlas active
-        await readDB(true);
-        res.json({ status: 'ok', database: 'active', uptime: process.uptime(), timestamp: new Date().toISOString() });
-    } catch (err) {
-        console.warn("⚠️ Health check DB warning:", err.message);
-        res.json({ status: 'degraded', database: 'error', error: err.message, uptime: process.uptime(), timestamp: new Date().toISOString() });
-    }
+// Liveness must not wait for a database read or refresh the shared data cache.
+app.get('/api/health', (req, res) => {
+    const db = getDbStatus();
+    res.json({ status: 'ok', database: db.isMongo ? 'connected' : (db.isConfigured ? 'disconnected' : 'local'), uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 app.get('/api/test', (req, res) => res.send("Backend API is ALIVE - Registered at top"));
@@ -3013,16 +3008,34 @@ const startServer = () => {
         setTimeout(() => { syncRegionalNews().catch(err => console.error('⚠️ Initial news sync failed:', err.message)); }, 8000);
         setInterval(() => { syncRegionalNews().catch(err => console.error('⚠️ Periodic news sync failed:', err.message)); }, 30 * 60 * 1000);
 
-        // Force fresh deploy trigger to Render: 2026-06-07T21:52:50Z active
-        const selfPing = () => {
-            const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-            axios.get(`${url}/api/health?t=${Date.now()}`)
-                .then(() => console.log('💓 Keep-alive ping enviado'))
-                .catch(err => console.log('⚠️ Erro no self-ping (normal em startup)'));
-        };
-        
-        setInterval(selfPing, 60000); 
-        setTimeout(selfPing, 5000); 
+        // Best effort only: a suspended process cannot wake itself.
+        // An external monitor can call /api/health independently of this timer.
+        const pingBaseUrl = process.env.RENDER_EXTERNAL_URL;
+        if (pingBaseUrl) {
+            let pingInFlight = false;
+            const selfPing = async () => {
+                if (pingInFlight) return;
+                pingInFlight = true;
+                try {
+                    await axios.get(pingBaseUrl.replace(/\/$/, '') + '/api/health', {
+                        timeout: 10000,
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                } catch (err) {
+                    console.warn('Keep-alive temporariamente indisponível:', err.code || 'request_failed');
+                } finally {
+                    pingInFlight = false;
+                }
+            };
+            const pingInterval = setInterval(selfPing, 5 * 60 * 1000);
+            const initialPing = setTimeout(selfPing, 5000);
+            pingInterval.unref();
+            initialPing.unref();
+            server.once('close', () => {
+                clearInterval(pingInterval);
+                clearTimeout(initialPing);
+            });
+        }
     });
 
     server.keepAliveTimeout = 120000;
