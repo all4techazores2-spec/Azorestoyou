@@ -499,12 +499,12 @@ const App: React.FC = () => {
                   setCache(`azores_cache_${key}`, merged);
                   try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(merged)); } catch(e) {}
                 } else {
-                  // Nota: já não é preciso proteger contra "respostas vazias" aqui — o db.js
-                  // agora propaga erros de leitura em vez de devolver dados vazios como se
-                  // fossem válidos, por isso uma resposta 200 com array vazio é sempre real.
-                  setter(normalized);
-                  setCache(`azores_cache_${key}`, normalized);
-                  try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+                  setter((prev: any) => {
+                    if (JSON.stringify(prev) === JSON.stringify(normalized)) return prev;
+                    setCache(`azores_cache_${key}`, normalized);
+                    try { localStorage.setItem(`azores_cache_${key}`, JSON.stringify(normalized)); } catch(e) {}
+                    return normalized;
+                  });
                 }
               }
           })
@@ -572,15 +572,14 @@ const App: React.FC = () => {
       fetchData();
     }
     
-    // Poll for all users (clients and managers) for full real-time synchronization
+    // Poll for real-time synchronization (6s for managers/staff, 30s for clients/guests)
     let syncInterval: any;
     if (isDataLoaded) {
+      const pollDelay = (isBusiness || isStaff || isAdmin) ? 6000 : 30000;
       syncInterval = setInterval(() => {
-        // Sincronização ultra-rápida (2s) limitada às categorias de reservas para máxima performance.
-        // bypassCache=false: respeita a cache de 30s do servidor (db.js), que é invalidada
-        // instantaneamente sempre que há uma escrita — evita sobrecarregar o Atlas a cada 2s.
+        if (typeof document !== 'undefined' && document.hidden) return;
         fetchData(0, ['restaurants', 'hotels', 'cars', 'beauty', 'shops', 'services'], false);
-      }, 2000); // Reduzido para 2 segundos!
+      }, pollDelay);
     }
     
     return () => {

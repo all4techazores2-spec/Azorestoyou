@@ -47,15 +47,89 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
-    // 1. TENTAR AUTENTICAÇÃO COM ENDPOINT UNIFICADO DO SERVIDOR (Mais seguro e rápido)
+    // 1. VERIFICAÇÃO LOCAL INSTANTÂNEA (Elimina o atraso do cold-start do servidor)
     if (authMode === 'login') {
+      // 1.1 Chave Mestra Super Admin
+      if (normalizedEmail === 'admin@azores4you.com' && normalizedPassword === 'azoresadmin') {
+        setIsLoading(false);
+        onSuccess(true, undefined, normalizedEmail);
+        return;
+      }
+
+      // 1.2 Verificar negócios e staff já em memória
+      const allBusinesses = [...restaurants, ...shops, ...beauty, ...hotels, ...cars, ...municipal, ...realEstate];
+
+      // Dono de negócio
+      const matchedBusiness = allBusinesses.find(b => 
+        b.adminEmail?.trim().toLowerCase() === normalizedEmail && 
+        b.adminPassword?.trim() === normalizedPassword
+      );
+
+      if (matchedBusiness) {
+        setIsLoading(false);
+        const isRestaurant = restaurants.some(r => r.id === matchedBusiness.id);
+        const role = isRestaurant ? 'manager' : 'business';
+        onSuccess(false, matchedBusiness.id, normalizedEmail, role, matchedBusiness.name);
+        
+        // Sincronizar sessão em background sem bloquear
+        fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
+        }).then(r => r.json()).then(data => {
+          if (data?.communityToken) saveCommunitySession(data.email, data.communityToken);
+        }).catch(() => {});
+        return;
+      }
+
+      // Staff ou Fornecedor de negócio
+      for (const b of allBusinesses) {
+        const staffMember = b.staff?.find((s: any) => 
+          s.email?.trim().toLowerCase() === normalizedEmail && 
+          s.password?.trim() === normalizedPassword
+        );
+        if (staffMember) {
+          setIsLoading(false);
+          onSuccess(false, b.id, normalizedEmail, staffMember.role, staffMember.name);
+          fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
+          }).then(r => r.json()).then(data => {
+            if (data?.communityToken) saveCommunitySession(data.email, data.communityToken);
+          }).catch(() => {});
+          return;
+        }
+
+        const supplier = b.suppliers?.find((s: any) => 
+          s.email?.trim().toLowerCase() === normalizedEmail && 
+          s.password?.trim() === normalizedPassword
+        );
+        if (supplier) {
+          setIsLoading(false);
+          onSuccess(false, b.id, normalizedEmail, 'supplier', supplier.name);
+          fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
+          }).then(r => r.json()).then(data => {
+            if (data?.communityToken) saveCommunitySession(data.email, data.communityToken);
+          }).catch(() => {});
+          return;
+        }
+      }
+
+      // 1.3 Se não está nos dados locais, contactar servidor (viajantes, contas novas)
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
-          signal: AbortSignal.timeout(75000),
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -74,16 +148,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
             return;
           }
         } else {
-          // Erro retornado explicitamente pelo servidor (Ex: password errada)
           const errData = await res.json().catch(() => ({}));
           setIsLoading(false);
           setError(errData.error || "Credenciais inválidas.");
           return;
         }
-        setError("Não foi possível iniciar sessão. Tenta novamente.");
+        setError("Não foi possível iniciar sessão. Tente novamente.");
         return;
-      } catch (err) {
-        setError("Não foi possível contactar o servidor. Tenta novamente dentro de alguns instantes.");
+      } catch (err: any) {
+        setIsLoading(false);
+        const isBusinessEmail = allBusinesses.some(b => b.adminEmail?.trim().toLowerCase() === normalizedEmail);
+        if (isBusinessEmail) {
+          setError("Password incorreta para este negócio.");
+          return;
+        }
+        setError("Não foi possível contactar o servidor. Tente novamente dentro de alguns instantes.");
         return;
       } finally {
         setIsLoading(false);

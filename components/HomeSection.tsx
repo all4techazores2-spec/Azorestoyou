@@ -34,71 +34,105 @@ const HomeSection: React.FC<HomeSectionProps> = ({
   const [slides, setSlides] = useState<any[]>([]);
   const t = (key: any) => getTranslation(language, key);
 
-  const [news, setNews] = useState<any[]>([]);
+  const cleanNewsText = (txt?: string) => {
+    if (!txt) return '';
+    return txt
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const DEFAULT_REGIONAL_NEWS = [
+    {
+      id: 'n_santa_clara',
+      title: 'Santa Clara vence em casa e consolida subida na Liga',
+      description: 'A equipa açoriana somou mais três pontos valiosos frente aos seus adeptos, demonstrando grande atitude e eficácia desportiva.',
+      content: 'O Santa Clara garantiu uma vitória categórica por 2-0 frente aos seus adeptos. A equipa demonstrou excelente coesão defensiva e eficácia ofensiva, garantindo o resultado na segunda parte. Esta vitória consolida a posição na parte superior da tabela classificativa e gera enorme otimismo para as próximas jornadas desportivas.',
+      date: '25/10/2026',
+      time: '15:30',
+      image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
+      sliderImages: [
+        'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop'
+      ],
+      island: 'São Miguel'
+    },
+    {
+      id: 'n_regional_1',
+      title: 'Governo dos Açores anuncia novos investimentos ambientais',
+      description: 'Nova verba destina-se à preservação dos trilhos naturais e miradouros, protegendo a biodiversidade única das nove ilhas.',
+      content: 'Com o objetivo de promover o turismo sustentável, o Governo Regional anunciou um pacote financeiro exclusivo para a requalificação e limpeza de miradouros, trilhos pedestres e áreas protegidas. O plano arranca já este mês em São Miguel, Terceira e Pico, estendendo-se posteriormente a todas as restantes ilhas do arquipélago.',
+      date: '25/10/2026',
+      time: '12:15',
+      image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&auto=format&fit=crop',
+      sliderImages: [],
+      island: 'Terceira'
+    },
+    {
+      id: 'n_regional_2',
+      title: 'Festival de Chamarritas atrai milhares à ilha do Pico',
+      description: 'O evento cultural tradicional celebra a música regional e danças típicas, juntando locais e turistas numa festa única.',
+      content: 'A ilha do Pico acolheu este fim de semana a maior edição de sempre do Festival Anual de Chamarritas. O evento contou com atuações improvisadas de tocadores locais e danças de roda tradicionais que se prolongaram pela noite dentro, atraindo milhares de visitantes continentais e internacionais.',
+      date: '24/10/2026',
+      time: '21:00',
+      image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop',
+      sliderImages: [],
+      island: 'Pico'
+    },
+    {
+      id: 'n_regional_3',
+      title: 'Novas ligações marítimas inter-ilhas entram em funcionamento',
+      description: 'Aumento da frequência de ferries pretende melhorar a mobilidade local e facilitar deslocações turísticas no arquipélago.',
+      content: 'Entrou hoje em vigor o novo horário alargado para a frota de ferries inter-ilhas. A medida visa facilitar a mobilidade diária dos açorianos e oferecer alternativas mais flexíveis para turistas que viajam entre ilhas vizinhas, especialmente nos grupos central e ocidental.',
+      date: '24/10/2026',
+      time: '09:45',
+      image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=500&auto=format&fit=crop',
+      sliderImages: [],
+      island: 'Faial'
+    }
+  ];
+
+  const [news, setNews] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem('azores_cached_news');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_REGIONAL_NEWS;
+  });
+  const [showAllNews, setShowAllNews] = useState(false);
   const [selectedNews, setSelectedNews] = useState<any | null>(null);
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/news`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.length > 0) {
-            setNews(data);
-            return;
-          }
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    fetch(`${API_BASE_URL}/api/news`, { signal: controller.signal })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        clearTimeout(timeoutId);
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setNews(data);
+          try {
+            localStorage.setItem('azores_cached_news', JSON.stringify(data));
+          } catch (e) {}
         }
-      } catch (e) {
-        console.error(e);
-      }
-      setNews([
-        {
-          id: 'n_santa_clara',
-          title: 'Santa Clara vence em casa e consolida subida na Liga',
-          description: 'A equipa açoriana somou mais três pontos valiosos frente aos seus adeptos, demonstrando grande atitude e eficácia desportiva.',
-          content: 'O Santa Clara garantiu uma vitória categórica por 2-0 frente aos seus adeptos. A equipa demonstrou excelente coesão defensiva e eficácia ofensiva, garantindo o resultado na segunda parte. Esta vitória consolida a posição na parte superior da tabela classificativa e gera enorme otimismo para as próximas jornadas desportivas.',
-          date: '05/07/2026',
-          time: '15:30',
-          image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
-          sliderImages: [
-            'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1540747737956-37872404a87a?w=500&auto=format&fit=crop'
-          ]
-        },
-        {
-          id: 'n_regional_1',
-          title: 'Governo dos Açores anuncia novos investimentos ambientais',
-          description: 'Nova verba destina-se à preservação dos trilhos naturais e miradouros, protegendo a biodiversidade única das nove ilhas.',
-          content: 'Com o objetivo de promover o turismo sustentável, o Governo Regional anunciou um pacote financeiro exclusivo para a requalificação e limpeza de miradouros, trilhos pedestres e áreas protegidas. O plano arranca já este mês em São Miguel, Terceira e Pico, estendendo-se posteriormente a todas as restantes ilhas do arquipélago.',
-          date: '05/07/2026',
-          time: '12:15',
-          image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&auto=format&fit=crop',
-          sliderImages: []
-        },
-        {
-          id: 'n_regional_2',
-          title: 'Festival de Chamarritas atrai milhares à ilha do Pico',
-          description: 'O evento cultural tradicional celebra a música regional e danças típicas, juntando locais e turistas numa festa única.',
-          content: 'A ilha do Pico acolheu este fim de semana a maior edição de sempre do Festival Anual de Chamarritas. O evento contou com atuações improvisadas de tocadores locais e danças de roda tradicionais que se prolongaram pela noite dentro, atraindo milhares de visitantes continentais e internacionais.',
-          date: '04/07/2026',
-          time: '21:00',
-          image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop',
-          sliderImages: []
-        },
-        {
-          id: 'n_regional_3',
-          title: 'Novas ligações marítimas inter-ilhas entram em funcionamento',
-          description: 'Aumento da frequência de ferries pretende melhorar a mobilidade local e facilitar deslocações turísticas no arquipélago.',
-          content: 'Entrou hoje em vigor o novo horário alargado para a frota de ferries inter-ilhas. A medida visa facilitar a mobilidade diária dos açorianos e oferecer alternativas mais flexíveis para turistas que viajam entre ilhas vizinhas, especialmente nos grupos central e ocidental.',
-          date: '04/07/2026',
-          time: '09:45',
-          image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=500&auto=format&fit=crop',
-          sliderImages: []
-        }
-      ]);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
     };
-    fetchNews();
   }, []);
 
   const defaultSlides = [
@@ -427,40 +461,71 @@ const HomeSection: React.FC<HomeSectionProps> = ({
       </div>
 
       {/* Regional News Grid */}
-      <div className="space-y-4 px-6 pb-10 flex flex-col items-center">
+      <div className="space-y-4 px-6 pb-12 flex flex-col items-center">
         <h3 className="text-lg font-black text-slate-800 uppercase tracking-tighter text-center w-full">Notícias da Região</h3>
         
         <div className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl space-y-5 text-slate-200">
-          {news.map((item) => (
-            <div 
-              key={item.id || item.title} 
-              className="flex items-start gap-4 pb-4 border-b border-white/5 last:border-b-0 last:pb-0"
-            >
-              <div className="w-20 h-20 bg-slate-950 rounded-2xl overflow-hidden shrink-0 border border-white/5">
-                <img src={item.image} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">
-                  <span>{item.date}</span>
-                  <span>·</span>
-                  <span>{item.time}</span>
-                </div>
-                <h4 className="text-white font-black text-xs mt-1 leading-snug line-clamp-1">{item.title}</h4>
-                <p className="text-slate-400 text-[10px] font-semibold mt-1 line-clamp-2 leading-relaxed">
-                  {item.description}
-                </p>
-                <button
-                  onClick={() => {
-                    setSelectedNews(item);
-                    setIsNewsModalOpen(true);
-                  }}
-                  className="mt-2.5 px-3.5 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
-                >
-                  Ver Notícia
-                </button>
-              </div>
+          {news.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs font-bold">
+              A atualizar notícias da região...
             </div>
-          ))}
+          ) : (
+            news.slice(0, showAllNews ? news.length : 4).map((item) => (
+              <div 
+                key={item.id || item.title} 
+                className="flex items-start gap-4 pb-4 border-b border-white/5 last:border-b-0 last:pb-0"
+              >
+                <div className="w-20 h-20 bg-slate-950 rounded-2xl overflow-hidden shrink-0 border border-white/5">
+                  <img 
+                    src={item.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop'} 
+                    alt={cleanNewsText(item.title)} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (target.src !== 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop') {
+                        target.src = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">
+                    <span>{item.date}</span>
+                    <span>·</span>
+                    <span>{item.time}</span>
+                    {item.island && (
+                      <>
+                        <span>·</span>
+                        <span className="text-emerald-400">{item.island}</span>
+                      </>
+                    )}
+                  </div>
+                  <h4 className="text-white font-black text-xs mt-1 leading-snug line-clamp-2">{cleanNewsText(item.title)}</h4>
+                  <p className="text-slate-400 text-[10px] font-semibold mt-1 line-clamp-2 leading-relaxed">
+                    {cleanNewsText(item.description)}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedNews(item);
+                      setIsNewsModalOpen(true);
+                    }}
+                    className="mt-2.5 px-3.5 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all font-bold"
+                  >
+                    Ver Notícia
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+
+          {news.length > 4 && (
+            <button
+              onClick={() => setShowAllNews(prev => !prev)}
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5"
+            >
+              {showAllNews ? 'Mostrar Menos' : `Ver Mais Notícias (${news.length})`}
+            </button>
+          )}
         </div>
 
         <NewsDetailModal 

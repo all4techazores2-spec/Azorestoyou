@@ -415,13 +415,26 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
       });
     }, 2500);
   };
-  const [news, setNews] = useState<any[]>([
+  const cleanNewsText = (txt?: string) => {
+    if (!txt) return '';
+    return txt
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const DEFAULT_DESKTOP_NEWS = [
     {
       id: 'n_santa_clara',
       title: 'Santa Clara vence em casa e consolida subida na Liga',
       description: 'A equipa açoriana somou mais três pontos valiosos frente aos seus adeptos, demonstrando grande atitude e eficácia desportiva.',
       content: 'O Santa Clara garantiu uma vitória categórica por 2-0 frente aos seus adeptos. A equipa demonstrou excelente coesão defensiva e eficácia ofensiva, garantindo o resultado na segunda parte. Esta vitória consolida a posição na parte superior da tabela classificativa e gera enorme otimismo para as próximas jornadas desportivas.',
-      date: '19/07/2026',
+      date: '25/10/2026',
       time: '15:30',
       image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500&auto=format&fit=crop',
       island: 'São Miguel'
@@ -431,7 +444,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
       title: 'Governo dos Açores anuncia novos investimentos ambientais',
       description: 'Nova verba destina-se à preservação dos trilhos naturais e miradouros, protegendo a biodiversidade única das nove ilhas.',
       content: 'Com o objetivo de promover o turismo sustentável, o Governo Regional anunciou um pacote financeiro exclusivo para a requalificação e limpeza de miradouros, trilhos pedestres e áreas protegidas. O plano arranca já este mês em São Miguel, Terceira e Pico, estendendo-se posteriormente a todas as restantes ilhas do arquipélago.',
-      date: '19/07/2026',
+      date: '25/10/2026',
       time: '12:15',
       image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&auto=format&fit=crop',
       island: 'Terceira'
@@ -441,7 +454,7 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
       title: 'Festival de Chamarritas atrai milhares à ilha do Pico',
       description: 'O evento cultural tradicional celebra a música regional e danças típicas, juntando locais e turistas numa festa única.',
       content: 'A ilha do Pico acolheu este fim de semana a maior edição de sempre do Festival Anual de Chamarritas. O evento contou com atuações improvisadas de tocadores locais e danças de roda tradicionais que se prolongaram pela noite dentro, atraindo milhares de visitantes continentais e internacionais.',
-      date: '18/07/2026',
+      date: '24/10/2026',
       time: '21:00',
       image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop',
       island: 'Pico'
@@ -451,24 +464,47 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
       title: 'Novas ligações marítimas inter-ilhas entram em funcionamento',
       description: 'Aumento da frequência de ferries pretende melhorar a mobilidade local e facilitar deslocações turísticas no arquipélago.',
       content: 'Entrou hoje em vigor o novo horário alargado para a frota de ferries inter-ilhas. A medida visa facilitar a mobilidade diária dos açorianos e oferecer alternativas mais flexíveis para turistas que viajam entre ilhas vizinhas, especialmente nos grupos central e ocidental.',
-      date: '18/07/2026',
+      date: '24/10/2026',
       time: '09:45',
       image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=500&auto=format&fit=crop',
       island: 'Faial'
     }
-  ]);
+  ];
+
+  const [news, setNews] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem('azores_cached_news');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e) {}
+    return DEFAULT_DESKTOP_NEWS;
+  });
   const [selectedNewsIsland, setSelectedNewsIsland] = useState('Todas');
   const [selectedNews, setSelectedNews] = useState<any | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/news`)
-      .then(r => r.json())
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+
+    fetch(`${API_BASE_URL}/api/news`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        clearTimeout(timer);
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
           setNews(data);
+          try { localStorage.setItem('azores_cached_news', JSON.stringify(data)); } catch(e) {}
         }
       })
-      .catch(err => console.error("Error fetching news:", err));
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, []);
 
   const ptRestaurants = getRestaurants('pt') || [];
@@ -1026,9 +1062,15 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                       {item.island}
                     </span>
                     <img 
-                      src={item.image.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} 
-                      alt={item.title} 
+                      src={item.image ? (item.image.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`) : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop'} 
+                      alt={cleanNewsText(item.title)} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        if (target.src !== 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop') {
+                          target.src = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop';
+                        }
+                      }}
                     />
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between">
@@ -1037,10 +1079,10 @@ const DesktopView: React.FC<DesktopViewProps> = (props) => {
                         {item.date} • {item.time}
                       </span>
                       <h4 className="text-sm font-black text-slate-900 leading-snug group-hover:text-green-600 transition-colors line-clamp-2 mb-2">
-                        {item.title}
+                        {cleanNewsText(item.title)}
                       </h4>
                       <p className="text-xs text-slate-450 line-clamp-3 leading-relaxed font-bold">
-                        {item.description}
+                        {cleanNewsText(item.description)}
                       </p>
                     </div>
                     <div className="text-[10px] font-black text-green-605 uppercase tracking-widest mt-4 flex items-center gap-1 group-hover:text-green-700">
