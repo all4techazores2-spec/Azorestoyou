@@ -226,8 +226,47 @@ export const readDB = async (bypassCache = false) => {
     }
 };
 
-export const writeDB = async (data) => {
-    // 1. Gravar SEMPRE localmente no db.json para manter o espelhamento
+// Background Cloud Sync Queue (Non-blocking high performance)
+let pendingCloudSyncData = null;
+let isSyncingToCloud = false;
+
+const executeCloudSync = async () => {
+    if (isSyncingToCloud || !pendingCloudSyncData || !isMongoConnected) return;
+
+    isSyncingToCloud = true;
+    const dataToSync = pendingCloudSyncData;
+    pendingCloudSyncData = null;
+
+    let retries = 3;
+    while (retries > 0) {
+        try {
+            await DBModel.collection.updateOne(
+                { key: 'master_db' },
+                { $set: { data: dataToSync, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+                { upsert: true }
+            );
+            console.log("✅ Data persisted to MongoDB successfully (Cloud mirrored in background).");
+            break;
+        } catch (err) {
+            retries--;
+            console.error(`❌ PERSISTENCE ERROR (Retries left: ${retries}):`, err.message);
+            if (retries === 0) {
+                console.warn("⚠️ Cloud write failed after all retries. Local POS remains operational with local db.json.");
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+    }
+
+    isSyncingToCloud = false;
+    // Se entraram novos dados durante o sync anterior, executa novo ciclo imediatamente
+    if (pendingCloudSyncData) {
+        setImmediate(executeCloudSync);
+    }
+};
+
+export const writeDB = async (data, { waitForCloud = false } = {}) => {
+    // 1. Gravar SEMPRE localmente no db.json e atualizar memória IMEDIATAMENTE (< 5ms)
     try {
         fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
         memoryCache = data;
@@ -239,26 +278,12 @@ export const writeDB = async (data) => {
 
     // 2. Se o MongoDB estiver configurado e ligado, persistir na Cloud
     if (isMongoConnected) {
-        let retries = 3;
-        while (retries > 0) {
-            try {
-                // Bypass Mongoose casting/validation for massive JSON object to fix 30-second hang
-                await DBModel.collection.updateOne(
-                    { key: 'master_db' },
-                    { $set: { data, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
-                    { upsert: true }
-                );
-                console.log("✅ Data persisted to MongoDB successfully (Cloud mirrored).");
-                return;
-            } catch (err) {
-                retries--;
-                console.error(`❌ PERSISTENCE ERROR (Retries left: ${retries}):`, err.message);
-                if (retries === 0) {
-                    console.warn("⚠️ Cloud write failed after all retries. Local POS remains operational with local db.json.");
-                } else {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
+        pendingCloudSyncData = data;
+        if (waitForCloud) {
+            await executeCloudSync();
+        } else {
+            // Não bloqueia a resposta HTTP do cliente: sincronização acontece em background
+            setImmediate(executeCloudSync);
         }
     } else {
         console.warn("⚠️ MongoDB not connected. Working in Local JSON Mode (db.json).");

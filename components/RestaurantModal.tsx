@@ -340,10 +340,10 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
       // 2. Notificar App Principal
       onReserveSuccess?.(data, restaurant.name, restaurant.id);
 
-      // 3. Se houver pré-pedido em restaurante, enviar para a cozinha
+      // 3. Se houver pré-pedido em restaurante, notificar cozinha de forma assíncrona (não bloqueia a confirmação)
       if (restaurant.businessType === 'restaurant' && preorderSelected && orderItems.length > 0) {
         console.log('Enviando pedido para a cozinha...');
-        await fetch(`${API_BASE_URL}/api/restaurants/${restaurant.id}/orders`, {
+        fetch(`${API_BASE_URL}/api/restaurants/${restaurant.id}/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -351,7 +351,7 @@ const RestaurantModal: React.FC<RestaurantModalProps> = ({
             type: 'pre-order',
             table: 'Reserva Online'
           }),
-        });
+        }).catch(err => console.warn('Aviso pré-pedido cozinha (ignorado):', err));
       }
 
       // 4. Se pagou com pontos e é beleza, descontar créditos
