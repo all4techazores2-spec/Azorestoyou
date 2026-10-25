@@ -52,7 +52,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, onGue
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
-          signal: AbortSignal.timeout(30000),
+          signal: AbortSignal.timeout(75000),
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword })
         });

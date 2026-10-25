@@ -467,7 +467,7 @@ const App: React.FC = () => {
 
       await Promise.all(keysToFetch.map(key => {
         const bypass = (specificKeys && specificKeys.length > 0 && bypassCache) ? '&bypassCache=true' : '';
-        return fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`,{signal:AbortSignal.timeout(35000)})
+        return fetch(`${API_BASE_URL}/api/${key}?t=${Date.now()}${bypass}`,{signal:AbortSignal.timeout(75000)})
           .then(readCollectionResponse)
           .then(data => {
              const setter = setterMap[key];

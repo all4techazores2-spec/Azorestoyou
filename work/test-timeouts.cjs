@@ -17,7 +17,7 @@ vm.runInNewContext(health,{app:{get:(path,fn)=>route=fn},getDbStatus:()=>({isMon
 let response;route({}, {json:v=>response=v});assert.equal(response.status,'ok');assert.equal(response.database,'disconnected');console.log('PASS health without database read');
 const db=fs.readFileSync('db.js','utf8');const read=db.slice(db.indexOf('export const readDB'),db.indexOf('export const writeDB')).replace('export const readDB','globalThis.readDB');
 let queries=0,fail=false;const context={isMongoConnected:true,memoryCache:null,lastCacheTime:0,CACHE_TTL_MS:30000,activeFetchPromise:null,DEFAULT_DB:{restaurants:[]},Date,console,
-DBModel:{findOne(){queries++;return {lean(){return this},maxTimeMS(ms){assert.equal(ms,15000);return this},setOptions(options){assert.equal(options.timeoutMS,20000);return fail?Promise.reject(Error('timeout')):Promise.resolve({data:{restaurants:[{id:'test'}]}});}}}}};
+DBModel:{findOne(){queries++;return {lean(){return this},maxTimeMS(ms){assert.equal(ms,45000);return this},setOptions(options){assert.equal(options.timeoutMS,60000);return fail?Promise.reject(Error('timeout')):Promise.resolve({data:{restaurants:[{id:'test'}]}});}}}}};
 vm.createContext(context);vm.runInContext(read,context);
 const [a,b]=await Promise.all([context.readDB(),context.readDB()]);assert.equal(queries,1);assert.equal(a,b);assert.equal(a.restaurants[0].id,'test');console.log('PASS shared database read');
 fail=true;const cached=await context.readDB(true);assert.equal(cached,a);assert.equal(context.activeFetchPromise,null);console.log('PASS cache preserved on database timeout');

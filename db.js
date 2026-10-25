@@ -176,9 +176,9 @@ export const readDB = async (bypassCache = false) => {
             // Start a new fetch and lock it with retry logic
             activeFetchPromise = (async () => {
                 // Bound the entire driver operation, including server selection and retries.
-                // Leave time for the API response before the client's 35-second deadline.
+                // Allow slow Atlas reads while remaining below the client's 75-second deadline.
                 const doc = await DBModel.findOne({ key: 'master_db' })
-                    .lean().maxTimeMS(15000).setOptions({ timeoutMS: 20000 });
+                    .lean().maxTimeMS(45000).setOptions({ timeoutMS: 60000 });
                 const data = doc ? { ...DEFAULT_DB, ...doc.data } : DEFAULT_DB;
                 memoryCache = data;
                 lastCacheTime = Date.now();
