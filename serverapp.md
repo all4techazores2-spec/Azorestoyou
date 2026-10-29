@@ -5,7 +5,7 @@ Este documento serve como referência para a configuração de produção da pla
 ## 1. Arquitetura de Produção
 A aplicação está dividida em duas partes para máxima performance:
 - **Frontend:** Ficheiros estáticos publicados manualmente no **Cloudflare Workers**, no Worker `azorestoyou`, ligado a `azorestoyou.pt` e `www.azorestoyou.pt`.
-- **Backend (API):** Alojado no **Render** (`https://azorestoyou-1-5a87.onrender.com`).
+- **Backend (API):** Alojado no **Render** (`https://azorestoyou-w7wm.onrender.com`).
 - **Media:** Fotografias e vídeos no **Cloudinary**, apresentados por links HTTPS.
 - **Dados:** Base de dados **MongoDB**, com a ligação definida no ambiente do servidor.
 

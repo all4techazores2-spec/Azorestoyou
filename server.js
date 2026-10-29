@@ -115,7 +115,7 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const PUBLIC_BACKEND_URL = (process.env.RENDER_EXTERNAL_URL || 'https://azorestoyou-1-5a87.onrender.com').replace(/\/$/, '');
+const PUBLIC_BACKEND_URL = (process.env.RENDER_EXTERNAL_URL || 'https://azorestoyou-w7wm.onrender.com').replace(/\/$/, '');
 
 // Configuração de CORS ultra-robusta
 const allowedOrigins = [
