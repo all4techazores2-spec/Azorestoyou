@@ -2350,16 +2350,16 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   const startProductEdit = (idx: number) => {
     const product = products[idx];
     const existsInMenu = !isBeauty && !isShop
-      ? (business.dishes || []).some(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase())
+      ? (business.dishes || []).some(d => d.id === product?.id || (d.name && product?.name && d.name.toLowerCase() === product.name.toLowerCase()))
       : isBeauty
-        ? (business.services || []).some(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase())
+        ? (business.services || []).some(s => s.id === product?.id || (s.name && product?.name && s.name.toLowerCase() === product.name.toLowerCase()))
         : false;
 
     setEditingProduct({ 
       idx, 
       product: { 
         ...product, 
-        inMenu: (product as any).inMenu !== undefined ? (product as any).inMenu : existsInMenu 
+        inMenu: (product as any)?.inMenu !== undefined ? (product as any).inMenu : existsInMenu 
       } 
     });
   };
@@ -2376,8 +2376,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
       if (!isBeauty && !isShop) {
         let updatedDishes = [...(business.dishes || [])];
-        const isInMenu = (product as any).inMenu;
-        const dishIdx = updatedDishes.findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+        const isInMenu = (product as any)?.inMenu;
+        const dishIdx = updatedDishes.findIndex(d => d.id === product?.id || (d.name && product?.name && d.name.toLowerCase() === product.name.toLowerCase()));
 
         if (isInMenu) {
           const dishData = {
@@ -2387,8 +2387,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
             price: product.price,
             image: product.image,
             category: product.category || 'Ementa',
-            promoPrice: (product as any).promoPrice,
-            promoType: (product as any).promoType
+            promoPrice: (product as any)?.promoPrice,
+            promoType: (product as any)?.promoType
           };
           if (dishIdx !== -1) {
             updatedDishes[dishIdx] = { ...updatedDishes[dishIdx], ...dishData };
@@ -2403,8 +2403,8 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
         updatesToSave.dishes = updatedDishes;
       } else if (isBeauty) {
         let updatedServices = [...(business.services || [])];
-        const isInMenu = (product as any).inMenu;
-        const serviceIdx = updatedServices.findIndex(s => s.id === product.id || s.name.toLowerCase() === product.name.toLowerCase());
+        const isInMenu = (product as any)?.inMenu;
+        const serviceIdx = updatedServices.findIndex(s => s.id === product?.id || (s.name && product?.name && s.name.toLowerCase() === product.name.toLowerCase()));
 
         if (isInMenu) {
           const serviceData = {
@@ -2436,14 +2436,14 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
 
   const handleEditPosProduct = (product: any) => {
     // 1. Search in dishes
-    const dishIdx = (business.dishes || []).findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+    const dishIdx = (business.dishes || []).findIndex(d => d.id === product?.id || (d.name && product?.name && d.name.toLowerCase() === product.name.toLowerCase()));
     if (dishIdx !== -1) {
       startDishEdit(dishIdx);
       return;
     }
 
     // 2. Search in products
-    const prodIdx = (products || []).findIndex(p => p.id === product.id || p.name.toLowerCase() === product.name.toLowerCase());
+    const prodIdx = (products || []).findIndex(p => p.id === product?.id || (p.name && product?.name && p.name.toLowerCase() === product.name.toLowerCase()));
     if (prodIdx !== -1) {
       startProductEdit(prodIdx);
       return;
@@ -2464,26 +2464,26 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({
   };
 
   const handleDeletePosProduct = (product: any) => {
-    if (!confirm(`Tem a certeza que deseja eliminar o produto "${product.name}"?`)) {
+    if (!confirm(`Tem a certeza que deseja eliminar o produto "${product?.name || ''}"?`)) {
       return;
     }
 
     // 1. Search and remove from dishes
-    const dishIdx = (business.dishes || []).findIndex(d => d.id === product.id || d.name.toLowerCase() === product.name.toLowerCase());
+    const dishIdx = (business.dishes || []).findIndex(d => d.id === product?.id || (d.name && product?.name && d.name.toLowerCase() === product.name.toLowerCase()));
     if (dishIdx !== -1) {
       const updatedDishes = (business.dishes || []).filter((_, i) => i !== dishIdx);
       handleUpdate({ dishes: updatedDishes });
-      alert(`Produto "${product.name}" eliminado com sucesso!`);
+      alert(`Produto "${product?.name || ''}" eliminado com sucesso!`);
       return;
     }
 
     // 2. Search and remove from products
-    const prodIdx = (products || []).findIndex(p => p.id === product.id || p.name.toLowerCase() === product.name.toLowerCase());
+    const prodIdx = (products || []).findIndex(p => p.id === product?.id || (p.name && product?.name && p.name.toLowerCase() === product.name.toLowerCase()));
     if (prodIdx !== -1) {
       const updatedProducts = (products || []).filter((_, i) => i !== prodIdx);
       setProducts(updatedProducts);
       handleUpdate({ products: updatedProducts });
-      alert(`Produto "${product.name}" eliminado com sucesso!`);
+      alert(`Produto "${product?.name || ''}" eliminado com sucesso!`);
       return;
     }
 
@@ -4338,25 +4338,25 @@ return t;
           {activeTab === 'pos' && (() => {
             const posProducts = [
               ...(isBeauty ? (business.services || []).map(s => ({ ...s, category: (s as any).category || 'Estética' })) : (business.dishes || []).map(d => ({ ...d, id: d.id || d.name, category: d.category || 'Ementa' }))),
-              ...(products || []).filter(p => p.category !== 'Stock Interno' && !isBeauty && !isShop ? !(business.dishes || []).some(d => d.id === p.id || d.name.toLowerCase() === p.name.toLowerCase()) : true).map(p => ({ ...p, category: p.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
+              ...(products || []).filter(p => p && p.category !== 'Stock Interno' && !isBeauty && !isShop ? !(business.dishes || []).some(d => d && (d.id === p.id || (d.name && p.name && d.name.toLowerCase() === p.name.toLowerCase()))) : true).map(p => ({ ...p, category: p?.category || (isBeauty ? 'Estética' : isShop ? 'Outros' : 'Bebidas') })),
               ...(isBeauty ? MOCK_BEAUTY_SERVICES.filter(ms => 
                 !deletedMockProductIds.includes(ms.id) &&
-                !(business.services || []).some(s => s.name === ms.name) &&
-                !(products || []).some(p => p.name === ms.name)
+                !(business.services || []).some(s => s && s.name === ms.name) &&
+                !(products || []).some(p => p && p.name === ms.name)
               ) : isShop ? [] : MOCK_POS_PRODUCTS.filter(mp => 
                 !deletedMockProductIds.includes(mp.id) &&
-                !(business.dishes || []).some(d => d.name === mp.name) &&
-                !(products || []).some(p => p.name === mp.name)
+                !(business.dishes || []).some(d => d && d.name === mp.name) &&
+                !(products || []).some(p => p && p.name === mp.name)
               ))
             ];
             
             // Para restaurante: usar posCategories (dinâmico) em vez do array hardcoded
             const activePosCategories = isBeauty ? BEAUTY_POS_CATEGORIES : isShop ? SHOP_POS_CATEGORIES : posCategories;
-            const currentCategories = Array.from(new Set(posProducts.map(p => p.category)));
+            const currentCategories = Array.from(new Set(posProducts.map(p => p?.category || 'Outros')));
             // allCats: apenas categorias que têm produtos em stock + "Todos" sempre visível
-            const categoriesWithProducts = new Set(posProducts.map(p => p.category));
-            const hasDayPromos = posProducts.some(p => (p as any).promoType === 'day' || p.category === 'Pratos do Dia');
-            const hasWeekPromos = posProducts.some(p => (p as any).promoType === 'week' || p.category === 'Pratos da Semana');
+            const categoriesWithProducts = new Set(posProducts.map(p => p?.category || 'Outros'));
+            const hasDayPromos = posProducts.some(p => (p as any)?.promoType === 'day' || p?.category === 'Pratos do Dia');
+            const hasWeekPromos = posProducts.some(p => (p as any)?.promoType === 'week' || p?.category === 'Pratos da Semana');
             const allCats = isBeauty
               ? ['Todos', ...Array.from(new Set([...BEAUTY_POS_CATEGORIES, ...currentCategories])).filter(c => c === 'Todos' || (BEAUTY_POS_CATEGORIES.includes(c) && categoriesWithProducts.has(c)))]
               : isShop
@@ -4369,17 +4369,17 @@ return t;
                 ].filter((c, i, arr) => arr.indexOf(c) === i);
 
             const filteredBySearch = posProducts.filter(p => 
-              p.name.toLowerCase().includes(posSearchQuery.toLowerCase()) ||
-              p.category.toLowerCase().includes(posSearchQuery.toLowerCase())
+              ((p?.name || '').toLowerCase().includes(posSearchQuery.toLowerCase())) ||
+              ((p?.category || '').toLowerCase().includes(posSearchQuery.toLowerCase()))
             );
 
             const filtered = posCategory === 'Todos' 
               ? filteredBySearch 
               : posCategory === 'Pratos do Dia' 
-                ? filteredBySearch.filter(p => (p as any).promoType === 'day' || p.category === 'Pratos do Dia')
+                ? filteredBySearch.filter(p => (p as any)?.promoType === 'day' || p?.category === 'Pratos do Dia')
                 : posCategory === 'Pratos da Semana'
-                  ? filteredBySearch.filter(p => (p as any).promoType === 'week' || p.category === 'Pratos da Semana')
-                  : filteredBySearch.filter(p => p.category === posCategory);
+                  ? filteredBySearch.filter(p => (p as any)?.promoType === 'week' || p?.category === 'Pratos da Semana')
+                  : filteredBySearch.filter(p => p?.category === posCategory);
 
             return (
               <>
@@ -5523,7 +5523,7 @@ return t;
                           {/* Clientes List */}
                           <div className="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-1">
                             {fiadoClients.filter(c => 
-                              c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                              (c.name || '').toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
                               (c.nif && c.nif.includes(clientSearchQuery)) ||
                               (c.phone && c.phone.includes(clientSearchQuery))
                             ).length === 0 ? (
@@ -5532,7 +5532,7 @@ return t;
                               </div>
                             ) : (
                               fiadoClients.filter(c => 
-                                c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                                (c.name || '').toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
                                 (c.nif && c.nif.includes(clientSearchQuery)) ||
                                 (c.phone && c.phone.includes(clientSearchQuery))
                               ).map(client => {

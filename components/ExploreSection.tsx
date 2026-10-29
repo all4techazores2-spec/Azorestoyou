@@ -905,8 +905,8 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
       data = data.map(a => {
         const mapped = listaTrilhosSaoMiguel.find(t =>
           a.id === t.id ||
-          a.title.toLowerCase().includes(t.nome.toLowerCase()) ||
-          a.title.toLowerCase().includes(t.codigo.toLowerCase()) ||
+          (a.title || '').toLowerCase().includes((t.nome || '').toLowerCase()) ||
+          (a.title || '').toLowerCase().includes((t.codigo || '').toLowerCase()) ||
           a.id.includes(t.codigo)
         );
         if (mapped) {
@@ -1497,9 +1497,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
     const filtered = items.filter(s => {
       const matchIsland = isAllIslands || s.island === targetIsland;
       const matchSearch = !restaurantSearch ||
-        s.name.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-        s.description.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-        s.island.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        (s.name || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        (s.description || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+        (s.island || '').toLowerCase().includes(restaurantSearch.toLowerCase()) ||
         (s.subcategory && s.subcategory.toLowerCase().includes(restaurantSearch.toLowerCase())) ||
         (s.concelho && s.concelho.toLowerCase().includes(restaurantSearch.toLowerCase()));
       return matchIsland && matchSearch;
@@ -2380,9 +2380,9 @@ const ExploreSection: React.FC<ExploreSectionProps> = ({
                       const currentIsland = targetIsland || 'PDL';
                       const matches = busSchedules.filter(s => {
                         if (s.island !== currentIsland) return false;
-                        if (busCompany !== 'all' && !s.company.toLowerCase().includes(busCompany.toLowerCase())) return false;
-                        const sOrigin = s.origin.toLowerCase();
-                        const sDest = s.destination.toLowerCase();
+                        if (busCompany !== 'all' && !(s.company || '').toLowerCase().includes(busCompany.toLowerCase())) return false;
+                        const sOrigin = (s.origin || '').toLowerCase();
+                        const sDest = (s.destination || '').toLowerCase();
                         const bOrigin = busOrigin.toLowerCase();
                         const bDest = busDestination.toLowerCase();
                         return (sOrigin.includes(bOrigin) || bOrigin.includes(sOrigin)) &&
